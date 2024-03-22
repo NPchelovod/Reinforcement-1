@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class TestCommand : IExternalCommand
+    public class SlabSchedulesCommand : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,

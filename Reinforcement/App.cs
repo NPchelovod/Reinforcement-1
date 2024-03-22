@@ -53,6 +53,7 @@ namespace Reinforcement
             a.CreateRibbonTab(tabName);
             RibbonPanel panelReinforcement = a.CreateRibbonPanel(tabName, panelName);
             RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, panel2Name);
+            RibbonPanel panelSchedules = a.CreateRibbonPanel(tabName, panel3Name);
 
             CreateButton("С торца", "С торца", "Reinforcement.RcEndCommand", Properties.Resources.ES_dot1,
                 "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelReinforcement);
@@ -80,7 +81,8 @@ namespace Reinforcement
             CreateButton("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
                 "Применение фильтров для цвета арматуры", "Команда работает только в шаблоне ЕС", panelDrawing);
 
-
+            CreateButton("Спецификации на Пм", "Спецификации на Пм", "Reinforcement.SlabSchedulesCommand", Properties.Resources.ES_Slab,
+                "Копирование спецификаций на плиту", "Команда работает только в шаблоне ЕС", panelSchedules);
 
             SplitButtonData breakLinesData = new SplitButtonData("Линия обрыва", "Линия обрыва");
 

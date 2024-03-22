@@ -69,7 +69,7 @@
     <Compile Include="RcAddCommand.cs" />
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
-    <Compile Include="TestCommand.cs" />
+    <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="RcFonCommand.cs" />
     <Compile Include="RcHomutCommand.cs" />
     <Compile Include="RcLineCommand.cs" />
@@ -84,6 +84,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\ES_Wall.png" />
+    <None Include="Resources\ES_Slab.png" />
     <None Include="Resources\ES_RColors.png" />
     <None Include="Resources\ES_Line1.png" />
     <None Include="Resources\ES_dot2.png" />

@@ -73,13 +73,14 @@ namespace Reinforcement
             var col = new FilteredElementCollector(RevitAPI.Document).OfClass(typeof(View)).Cast<View>().ToList();
 
             List<string> scheduleNamesList = new List<string>();
-            scheduleNamesList.Add("00_Пм1_Арматура_1. Каркасы пог");
-            scheduleNamesList.Add("00_Пм1_Арматура_2. Каркасы простр");
-            scheduleNamesList.Add("00_Пм1_Арматура_3. Фоновая");
-            scheduleNamesList.Add("00_Пм1_Арматура_4. Гнутые");
-            scheduleNamesList.Add("00_Пм1_Арматура_5. Прямые");
-            scheduleNamesList.Add("00_Пм1_ВРС");
-            scheduleNamesList.Add("00_Пм1_Ведомость деталей");
+            scheduleNamesList.Add("21_Пм1_Арматура_1. Каркасы пог");
+            scheduleNamesList.Add("21_Пм1_Арматура_2. Каркасы простр");
+            scheduleNamesList.Add("21_Пм1_Арматура_3. Фоновая");
+            scheduleNamesList.Add("21_Пм1_Арматура_4. Гнутые");
+            scheduleNamesList.Add("21_Пм1_Арматура_5. Прямые");
+            scheduleNamesList.Add("21_Пм1_ВРС");
+            scheduleNamesList.Add("21_Пм1_ВРС_Каркасы");
+            scheduleNamesList.Add("21_Пм1_Ведомость деталей");
             
 
             using (Transaction t = new Transaction(RevitAPI.Document, "Copy view"))
@@ -89,7 +90,7 @@ namespace Reinforcement
                 {
                     CopyScheduleView(scheduleName, "Марка конструкции", col, ConstructionMark, ViewDestination);
                 }
-                CopyScheduleView("00_Пм1_Бетон", "Марка", col, ConstructionMark, ViewDestination);
+                CopyScheduleView("21_Пм1_Бетон", "Марка", col, ConstructionMark, ViewDestination);
                 t.Commit();
             }
 
