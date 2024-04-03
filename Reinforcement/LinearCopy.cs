@@ -39,7 +39,7 @@ namespace Reinforcement
                     int length = Convert.ToInt32(vectorLngth.GetLength() * 304.8),
                         step = 200,
                         n = length / step;
-                    XYZ vector = ;
+                    XYZ vector = vectorLngth / n ;
                     TaskDialog.Show("шаг", $"{vectorLngth.GetLength() * 304.8}\n\n" +
                         $"Pt1: {pt1}\n\n" +
                         $"Pt2: {pt2}");
