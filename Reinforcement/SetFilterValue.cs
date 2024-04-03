@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SetFilterValue
 {
-    [Autodesk.Revit.Attributes.TransactionAttribute(Autodesk.Revit.Attributes.TransactionMode.Manual)]
+    [Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
     public class SetFilterValue : IExternalCommand
     {
         static AddInId addinId = new AddInId(new Guid("80E287DF-4399-4DA1-938E-95548C0B6DAF"));
