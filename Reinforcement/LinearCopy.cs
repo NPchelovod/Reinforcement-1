@@ -53,6 +53,14 @@ namespace Reinforcement
                     int a = (int)n;
                     a++;
                     var createdElements = LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, a, vector, ArrayAnchorMember.Second);
+                    if (a < 5)
+                    {
+                        MessageBox.Show("Создано " + a + " элемента");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Создано " + a + " элементов");
+                    }
                     sel.SetElementIds(createdElements); //выбрать все созданные элементы в т.ч. и первый
                     t.Commit();
                 }
@@ -60,7 +68,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Не создано ни одного элемента!");
                 return Result.Failed;
             }
 
