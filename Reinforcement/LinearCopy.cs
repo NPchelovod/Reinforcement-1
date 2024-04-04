@@ -39,12 +39,12 @@ namespace Reinforcement
                     }
                     Reference line = sel.PickObject(ObjectType.Element, "Выберите линию");
                     Element lineElement = doc.GetElement(line);
-                    DetailCurve curve = lineElement as DetailCurve;
-
-                    MessageBox.Show(asd.ToString());
+                    CurveElement curve = lineElement as CurveElement;
+                    Line ln = curve.GeometryCurve as Line;
                     // XYZ в ревит измеряется в ФУТАХ 1 фут = 304,8 мм
-                    XYZ pt1 = sel.PickPoint(),
-                        pt2 = sel.PickPoint(),
+
+                    XYZ pt1 = ln.GetEndPoint(0),
+                        pt2 = ln.GetEndPoint(1),
                         vectorLngth = pt2 - pt1;
                     double length = vectorLngth.GetLength() * 304.8;
                     int step = 200;
