@@ -29,9 +29,19 @@ namespace Reinforcement
             {
                 using (Transaction t = new Transaction(doc, "Прямолинейный массив"))
                 {
-                    t.Start();
+                    t.Start();            
                     Selection sel = uidoc.Selection;
                     ICollection<ElementId> selectedIds = sel.GetElementIds();
+                    if (selectedIds.Count == 0)
+                    {
+                        MessageBox.Show("Ничего не выбрано");
+                        return Result.Failed;
+                    }
+                    Reference line = sel.PickObject(ObjectType.Element, "Выберите линию");
+                    Element lineElement = doc.GetElement(line);
+                    DetailCurve curve = lineElement as DetailCurve;
+
+                    MessageBox.Show(asd.ToString());
                     // XYZ в ревит измеряется в ФУТАХ 1 фут = 304,8 мм
                     XYZ pt1 = sel.PickPoint(),
                         pt2 = sel.PickPoint(),
@@ -49,6 +59,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                MessageBox.Show(ex.Message);
                 return Result.Failed;
             }
 
