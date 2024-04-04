@@ -29,7 +29,7 @@ namespace Reinforcement
             {
                 using (Transaction t = new Transaction(doc, "Прямолинейный массив"))
                 {
-                    t.Start();            
+                    t.Start();
                     Selection sel = uidoc.Selection;
                     ICollection<ElementId> selectedIds = sel.GetElementIds();
                     if (selectedIds.Count == 0)
@@ -37,21 +37,22 @@ namespace Reinforcement
                         MessageBox.Show("Ничего не выбрано");
                         return Result.Failed;
                     }
+                    // XYZ в ревит измеряется в ФУТАХ 1 фут = 304,8 мм
+
                     Reference line = sel.PickObject(ObjectType.Element, "Выберите линию");
                     Element lineElement = doc.GetElement(line);
                     CurveElement curve = lineElement as CurveElement;
                     Line ln = curve.GeometryCurve as Line;
-                    // XYZ в ревит измеряется в ФУТАХ 1 фут = 304,8 мм
-
                     XYZ pt1 = ln.GetEndPoint(0),
                         pt2 = ln.GetEndPoint(1),
                         vectorLngth = pt2 - pt1;
-                    double length = vectorLngth.GetLength() * 304.8;
+                    double length = UnitUtils.ConvertFromInternalUnits(vectorLngth.GetLength(), UnitTypeId.Millimeters);
                     int step = 200;
                     double n = length / step;
                     XYZ vector = vectorLngth / n;
-                    n++;
-                    var createdElements = LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, Convert.ToInt32(n), vector, ArrayAnchorMember.Second);
+                    int a = (int)n;
+                    a++;
+                    var createdElements = LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, a, vector, ArrayAnchorMember.Second);
                     sel.SetElementIds(createdElements); //выбрать все созданные элементы в т.ч. и первый
                     t.Commit();
                 }
