@@ -36,21 +36,19 @@ namespace Reinforcement
                     XYZ pt1 = sel.PickPoint(),
                         pt2 = sel.PickPoint(),
                         vectorLngth = pt2 - pt1;
-                    int length = Convert.ToInt32(vectorLngth.GetLength() * 304.8),
-                        step = 200,
-                        n = length / step;
-                    XYZ vector = vectorLngth / n ;
-                    TaskDialog.Show("шаг", $"{vectorLngth.GetLength() * 304.8}\n\n" +
-                        $"Pt1: {pt1}\n\n" +
-                        $"Pt2: {pt2}");
-                    LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, ++n, vector, ArrayAnchorMember.Second);
+                    double length = vectorLngth.GetLength() * 304.8;
+                    int step = 200;
+                    double n = length / step;
+                    XYZ vector = vectorLngth / n;
+                    n++;
+                    var createdElements = LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, Convert.ToInt32(n), vector, ArrayAnchorMember.Second);
+                    sel.SetElementIds(createdElements); //выбрать все созданные элементы в т.ч. и первый
                     t.Commit();
                 }
 
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
                 return Result.Failed;
             }
 
