@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="CreateViewPlan.cs" />
     <Compile Include="SelectParentElement.cs" />
     <Compile Include="LinearCopy.cs" />
     <Compile Include="RevitAPI.cs" />

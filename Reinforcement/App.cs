@@ -74,11 +74,11 @@ namespace Reinforcement
                 "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
                 panelReinforcement);
 
-            CreateButton("Фоновое армирование", "Фоновое армирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
+            CreateButton("Фоновое\nармирование", "Фоновое армирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelReinforcement);
 
-            CreateButton("Выбрать родительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+            CreateButton("Выбрать\nродительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
              "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
             panelReinforcement);
 
