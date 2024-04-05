@@ -8,7 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.Revit.Attributes;
-using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Forms;
 
 namespace Reinforcement
 {
@@ -32,6 +33,7 @@ namespace Reinforcement
                     MessageBox.Show("Ничего не выбрано");
                 }
                 ICollection<ElementId> selectedIds = sel.GetElementIds();
+                List<ElementId> parentCollection = new List<ElementId>();
                 List<ElementId> collection = new List<ElementId>();
                 foreach (ElementId id in selectedIds)
                 {
@@ -44,11 +46,20 @@ namespace Reinforcement
                     }
                     else
                     {
-                        collection.Add(parentFamily.Id);
+                        parentCollection.Add(parentFamily.Id);
                     }
 
                 }
-                sel.SetElementIds(collection);
+                DialogResult dialogResult = MessageBox.Show("Выбрать родительские или обычные? (да/нет)" ,"Выбор" , MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    sel.SetElementIds(collection);
+                }
+                else if (dialogResult == DialogResult.No)
+                {
+                    sel.SetElementIds(parentCollection);
+                }
+
             }
             catch (Exception ex)
             {
