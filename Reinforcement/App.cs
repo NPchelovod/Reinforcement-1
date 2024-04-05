@@ -46,10 +46,10 @@ namespace Reinforcement
 
         public Result OnStartup(UIControlledApplication a)
         {
-            string tabName = "ЕС КР";
-            string panelName = "Армирование";
-            string panel2Name = "Оформление";
-            string panel3Name = "Спецификации";
+            string tabName = "ЕС КР", 
+                   panelName = "Армирование",
+                   panel2Name = "Оформление",
+                   panel3Name = "Спецификации";
             a.CreateRibbonTab(tabName);
             RibbonPanel panelReinforcement = a.CreateRibbonPanel(tabName, panelName);
             RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, panel2Name);
@@ -78,6 +78,10 @@ namespace Reinforcement
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelReinforcement);
 
+            CreateButton("Выбрать родительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+             "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
+            panelReinforcement);
+
             CreateButton("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
                 "Применение фильтров для цвета арматуры", "Команда работает только в шаблоне ЕС", panelDrawing);
 
@@ -99,13 +103,13 @@ namespace Reinforcement
 
             return Result.Succeeded;
         }
-        public BitmapImage Convert (Image img)
+        public BitmapImage Convert(Image img)
         {
             using (var memory = new MemoryStream())
             {
                 img.Save(memory, ImageFormat.Png);
                 memory.Position = 0;
-        
+
                 var bitmapImage = new BitmapImage();
                 bitmapImage.BeginInit();
                 bitmapImage.StreamSource = memory;
@@ -113,8 +117,8 @@ namespace Reinforcement
                 bitmapImage.EndInit();
                 return bitmapImage;
             }
-         
-        
+
+
         }
         public Result OnShutdown(UIControlledApplication a)
         {

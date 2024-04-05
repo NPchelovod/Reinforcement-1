@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="SelectParentElement.cs" />
     <Compile Include="LinearCopy.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="DrBreakLinesCommand.cs" />
@@ -85,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\ЕС_Выбор.png" />
     <None Include="Resources\ES_Wall.png" />
     <None Include="Resources\ES_Slab.png" />
     <None Include="Resources\ES_RColors.png" />
