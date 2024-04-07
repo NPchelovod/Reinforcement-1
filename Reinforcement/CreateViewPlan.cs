@@ -39,10 +39,10 @@ namespace Reinforcement
                     .ToList();
                     foreach (ViewFamilyType viewType in viewTypes)
                     {
-                        if (viewType.FamilyName == "План несущих конструкций") 
+                        if (viewType.Name == "План несущих конструкций") 
                         {
                             var viewTypeStructural = viewType.Id;
-                            var newViewplan = ViewPlan.Create(doc, viewTypeStructural, levels.ElementAt(3).Id);
+                            var newViewplan = ViewPlan.Create(doc, viewTypeStructural, levels.ElementAt(1).Id);
                         }
                     }
                     t.Commit();
