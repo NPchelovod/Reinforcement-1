@@ -60,7 +60,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CreateViewPlan.cs" />
+    <Compile Include="MainViewWall.xaml.cs">
+      <DependentUpon>MainViewWall.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SelectParentElement.cs" />
     <Compile Include="LinearCopy.cs" />
     <Compile Include="RevitAPI.cs" />
@@ -72,6 +76,7 @@
     <Compile Include="RcAddCommand.cs" />
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
+    <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="RcFonCommand.cs" />
     <Compile Include="RcHomutCommand.cs" />
@@ -112,6 +117,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="MainViewWall.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

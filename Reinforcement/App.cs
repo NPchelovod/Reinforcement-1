@@ -88,6 +88,9 @@ namespace Reinforcement
             CreateButton("Спецификации на Пм", "Спецификации на Пм", "Reinforcement.SlabSchedulesCommand", Properties.Resources.ES_Slab,
                 "Копирование спецификаций на плиту", "Команда работает только в шаблоне ЕС", panelSchedules);
 
+            CreateButton("Спецификации на Ядж", "Спецификации на Ядж", "Reinforcement.WallSchedulesCommand", Properties.Resources.ES_Wall,
+                "Копирование спецификаций на Ядж", "Команда работает только в шаблоне ЕС", panelSchedules);
+
             SplitButtonData breakLinesData = new SplitButtonData("Линия обрыва", "Линия обрыва");
 
             SplitButton breakLines = panelDrawing.AddItem(breakLinesData) as SplitButton;
