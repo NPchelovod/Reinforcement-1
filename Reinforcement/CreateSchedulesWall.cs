@@ -32,7 +32,7 @@ namespace Reinforcement
                     dependentView = view.Document.GetElement(newViewId) as View;
                     string viewDestinationIndex = viewDestination.Split('_')[0];
                     string dependentViewName = dependentView.Name;
-                    string newViewName = dependentViewName.Replace("00", viewDestinationIndex).Replace(" копия 1", "").Replace("Пм1", constructionMark);
+                    string newViewName = dependentViewName.Replace("21", viewDestinationIndex).Replace(" копия 1", "").Replace("Ядж1-01", constructionMark);
                     dependentView.Name = newViewName;
                     parameter = dependentView.LookupParameter("ADSK_Назначение вида");
                     parameter.Set(ViewDestination);

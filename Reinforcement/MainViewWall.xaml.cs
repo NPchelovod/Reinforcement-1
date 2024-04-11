@@ -31,7 +31,7 @@ namespace Reinforcement
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             Hide();
-            (DataContext as CreateSchedules).SchedulesDuplication();
+            (DataContext as CreateSchedulesWall).SchedulesDuplication();
             Close();
         }
 
