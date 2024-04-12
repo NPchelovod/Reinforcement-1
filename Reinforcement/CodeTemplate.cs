@@ -28,9 +28,11 @@ namespace Reinforcement
             Document doc = uidoc.Document;
             try
             {
+                //Тут пишем основной код
             }
             catch (Exception ex)
             {
+                //Код в случае ошибки
                 MessageBox.Show("Чет пошло не так!" + ex.Message);
                 return Result.Failed;
             }
