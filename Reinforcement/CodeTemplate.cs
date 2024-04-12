@@ -28,7 +28,12 @@ namespace Reinforcement
             Document doc = uidoc.Document;
             try
             {
-                //Тут пишем основной код
+                using (Transaction t = new Transaction(doc, "действие"))
+                {
+                    t.Start();
+                    //Тут пишем основной код
+                    t.Commit();
+                }
             }
             catch (Exception ex)
             {

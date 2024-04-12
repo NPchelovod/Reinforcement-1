@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
     <Compile Include="CreateViewPlan.cs" />
