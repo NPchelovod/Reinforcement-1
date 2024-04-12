@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
+    <Compile Include="CodeTemplate.cs" />
     <Compile Include="CreateViewPlan.cs" />
     <Compile Include="MainViewWall.xaml.cs">
       <DependentUpon>MainViewWall.xaml</DependentUpon>

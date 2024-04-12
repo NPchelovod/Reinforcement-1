@@ -11,6 +11,7 @@ using Autodesk.Revit.Attributes;
 using System.Windows.Controls;
 using System.Windows.Forms;
 
+
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -48,7 +49,6 @@ namespace Reinforcement
                     {
                         parentCollection.Add(parentFamily.Id);
                     }
-
                 }
                 DialogResult dialogResult = MessageBox.Show("Выбрать родительские или обычные? (да/нет)" ,"Выбор" , MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -59,7 +59,6 @@ namespace Reinforcement
                 {
                     sel.SetElementIds(parentCollection);
                 }
-
             }
             catch (Exception ex)
             {
@@ -69,5 +68,4 @@ namespace Reinforcement
             return Result.Succeeded;
         }
     }
-
 }
