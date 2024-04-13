@@ -40,8 +40,8 @@ namespace Reinforcement
                     selectOption = returnSelectOption;
                     var elementId =  reference.ElementId;
                     Element element =  doc.GetElement(elementId);
-                    Options options = new Options();
-                    options.View = uidoc.ActiveView;
+                    Options options = new Options();//Можно написать так: Options options = new Options()
+                    options.View = uidoc.ActiveView;//                    {View = uidoc.ActiveView};s
                     GeometryElement geometry = element.get_Geometry(options);
                     foreach (GeometryObject geometryObject in geometry)
                     {
@@ -53,12 +53,14 @@ namespace Reinforcement
                         }
                     };
                     var asd = geometry.ToList();
+                    //doc.Create.NewFamilyInstance(Line, FamilySymbol, uidoc.ActiveView);
                     /*
                     XYZ pt1 = new XYZ (0, 0, 0);
                     XYZ pt2 = new XYZ (10, 0, 1000);
                     Line line = Line.CreateBound(pt1, pt2);
                     doc.Create.NewDetailCurve(uidoc.ActiveView, sline);
                     */
+                    
                     MessageBox.Show(asd.ToString());
                     t.Commit();
                 }

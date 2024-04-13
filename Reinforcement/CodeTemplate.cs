@@ -38,7 +38,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!" + ex.Message);
+                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;
             }
             return Result.Succeeded;
