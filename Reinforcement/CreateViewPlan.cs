@@ -4,6 +4,7 @@ using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,6 +15,7 @@ namespace Reinforcement
 
     public class CreateViewPlan : IExternalCommand
     {
+        public List<Level> Levels { get; set; } = new List<Level>();
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -21,7 +23,7 @@ namespace Reinforcement
         {
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Document doc = uidoc.Document;
+            Document doc = uidoc.Document;          
             try
             {
                 using (Transaction t = new Transaction(doc, "Создание вида"))
@@ -32,11 +34,13 @@ namespace Reinforcement
                     .ToElements()
                     .OfType<ViewFamilyType>()
                     .ToList();
-                    var levels = new FilteredElementCollector(doc)
+                     Levels = new FilteredElementCollector(doc)
                     .OfClass(typeof(Level))
                     .ToElements()
                     .OfType<Level>()
                     .ToList();
+                    var dialogueView = new MainViewCreateViewPlan(levels);
+                    dialogueView.ShowDialog();
                     foreach (ViewFamilyType viewType in viewTypes)
                     {
                         if (viewType.Name == "План несущих конструкций") 
