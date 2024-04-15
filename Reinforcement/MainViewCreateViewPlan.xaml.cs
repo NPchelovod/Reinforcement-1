@@ -29,7 +29,7 @@ namespace Reinforcement
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             Hide();
-            (DataContext as CreateViewPlan).Levels;
+           // (DataContext as CreateViewPlan).Levels;
             Close();
         }
 

@@ -39,14 +39,14 @@ namespace Reinforcement
                     .ToElements()
                     .OfType<Level>()
                     .ToList();
-                    var dialogueView = new MainViewCreateViewPlan(levels);
+                    var dialogueView = new MainViewCreateViewPlan(Levels);
                     dialogueView.ShowDialog();
                     foreach (ViewFamilyType viewType in viewTypes)
                     {
                         if (viewType.Name == "План несущих конструкций") 
                         {
                             var viewTypeStructural = viewType.Id;
-                            var newViewplan = ViewPlan.Create(doc, viewTypeStructural, levels.ElementAt(1).Id);
+                            var newViewplan = ViewPlan.Create(doc, viewTypeStructural, Levels.ElementAt(1).Id);
                         }
                     }
                     t.Commit();
