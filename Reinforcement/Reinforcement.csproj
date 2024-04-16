@@ -60,12 +60,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
-    <Compile Include="ViewModelCreateViewPlan.cs" />
+    <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
+    <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
+      <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="RcShpilkaCommand.cs" />
     <Compile Include="ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
-    <Compile Include="CommandCreateViewPlan.cs" />
     <Compile Include="MainViewWall.xaml.cs">
       <DependentUpon>MainViewWall.xaml</DependentUpon>
     </Compile>
@@ -80,9 +83,6 @@
     <Compile Include="RcAddCommand.cs" />
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
-    <Compile Include="MainViewCreateViewPlan.xaml.cs">
-      <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
-    </Compile>
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="RcFonCommand.cs" />
@@ -124,15 +124,15 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="CreateViewPlan\MainViewCreateViewPlan.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainViewWall.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="MainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="MainViewCreateViewPlan.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
