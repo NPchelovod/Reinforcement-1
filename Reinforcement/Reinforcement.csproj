@@ -65,8 +65,8 @@
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
-    <Compile Include="RcShpilkaCommand.cs" />
-    <Compile Include="ReinforceWallSection.cs" />
+    <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
+    <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
     <Compile Include="MainViewWall.xaml.cs">
@@ -80,15 +80,15 @@
     <Compile Include="MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RcAddCommand.cs" />
+    <Compile Include="CreateReinforceFamily\RcAddCommand.cs" />
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
-    <Compile Include="RcFonCommand.cs" />
-    <Compile Include="RcHomutCommand.cs" />
-    <Compile Include="RcLineCommand.cs" />
-    <Compile Include="RcEndCommand.cs" />
+    <Compile Include="CreateReinforceFamily\RcFonCommand.cs" />
+    <Compile Include="CreateReinforceFamily\RcHomutCommand.cs" />
+    <Compile Include="CreateReinforceFamily\RcLineCommand.cs" />
+    <Compile Include="CreateReinforceFamily\RcEndCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
