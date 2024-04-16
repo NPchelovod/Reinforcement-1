@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,20 +18,26 @@ using System.Windows.Shapes;
 namespace Reinforcement
 {
     /// <summary>
-    /// Логика взаимодействия для UserControl1.xaml
+    /// Логика взаимодействия для MainViewCreateViewPlan.xaml
     /// </summary>
     public partial class MainViewCreateViewPlan : Window
     {
-        public MainViewCreateViewPlan(List<Level> levels)
+        public MainViewCreateViewPlan(ViewModelCreateViewPlan Levels)
         {
             InitializeComponent();
-            DataContext = levels;
+            DataContext = Levels;
         }
-        private void Button_Click(object sender, RoutedEventArgs e)
+
+        
+        private void Click_Create(object sender, RoutedEventArgs e)
         {
             Hide();
-           // (DataContext as CreateViewPlan).Levels;
+            (DataContext as ViewModelCreateViewPlan).CreateViewPlan();            
             Close();
+        }
+        private void Click_Cancel(object sender, RoutedEventArgs e)
+        {          
+            Close();                  
         }
 
     }

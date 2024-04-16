@@ -17,7 +17,7 @@
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Click="Button_Click" Margin="5" Padding="5" Content="Создать" Width="80" />
-            <Button Margin="5" Padding="5" Content="Отмена" Width="80" />
+            <Button Click="Click_Cancel" Margin="5" Padding="5" Content="Отмена" Width="80" />
 
         </StackPanel>
     </StackPanel>

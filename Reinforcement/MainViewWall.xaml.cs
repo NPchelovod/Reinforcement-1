@@ -21,7 +21,7 @@ namespace Reinforcement
     /// </summary>
     public partial class MainViewWall : Window
     {
-        
+
         public MainViewWall(CreateSchedulesWall createSchedulesWall)
         {
             InitializeComponent();
@@ -34,9 +34,12 @@ namespace Reinforcement
             (DataContext as CreateSchedulesWall).SchedulesDuplication();
             Close();
         }
-
-        
-
+        private void Click_Cancel(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
+
+
     }
+}
 

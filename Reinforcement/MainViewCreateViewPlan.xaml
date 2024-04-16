@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Reinforcement"
              mc:Ignorable="d" 
-        d:DataContext="{d:DesignInstance local:CreateViewPlan}"
+             d:DataContext="{d:DesignInstance local:ViewModelCreateViewPlan}"
              Height="135" Width="350">
     <StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="226">
@@ -14,15 +14,15 @@
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <TextBlock Margin="5" Text="Уровень: "/>
-            <ComboBox ItemsSource="{Binding levels}"
-                      SelectedItem="{Binding selectedLevel}"
-                      DisplayMemberPath="Definition.Name"
+            <ComboBox ItemsSource="{Binding Levels}"
+                      SelectedItem="{Binding SelectedLevel}"
+                      DisplayMemberPath="Name"
                     Margin="5"
                      Width="170" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button Margin="5" Padding="5" Content="Создать" Width="80" />
-            <Button Margin="5" Padding="5" Content="Отмена" Width="80" />
+            <Button Click="Click_Create" Margin="5" Padding="5" Content="Создать" Width="80" />
+            <Button Click="Click_Cancel" Margin="5" Padding="5" Content="Отмена" Width="80" />
         </StackPanel>
     </StackPanel>
 </Window>
