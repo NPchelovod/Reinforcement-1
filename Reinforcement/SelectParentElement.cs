@@ -53,11 +53,11 @@ namespace Reinforcement
                 DialogResult dialogResult = MessageBox.Show("Выбрать родительские или обычные? (да/нет)" ,"Выбор" , MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
-                    sel.SetElementIds(collection);
+                    sel.SetElementIds(parentCollection);
                 }
                 else if (dialogResult == DialogResult.No)
                 {
-                    sel.SetElementIds(parentCollection);
+                    sel.SetElementIds(collection);
                 }
             }
             catch (Exception ex)

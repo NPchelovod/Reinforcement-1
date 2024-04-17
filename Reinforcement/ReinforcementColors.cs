@@ -6,6 +6,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Documents;
@@ -84,8 +85,18 @@ namespace Reinforcement
 
                 t.Commit();
             }
+            int i = 1; 
+            while (i <= 6)
+            {
+                if (nameValue != null)
+                i++;
+            }
 
-            return Result.Succeeded;
+                return Result.Succeeded;
+
+
+
+
             }
             
         }

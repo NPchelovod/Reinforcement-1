@@ -16,7 +16,7 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class CodeTemplate : IExternalCommand
+    public class CreateReinfTag : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -32,10 +32,27 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
             try //ловим ошибку
             {
+                Selection sel = uidoc.Selection;
+                var reference = sel.PickObject(ObjectType.Element);
+                var elementId = reference.ElementId;
+                var element = doc.GetElement(elementId);
+                FamilyInstance family= element as FamilyInstance;
+                var famName = family.Symbol.FamilyName;
+                var category = family.Category;
                 using (Transaction t = new Transaction(doc, "действие"))
                 {
                     t.Start();
-                    //Тут пишем основной код для изменения элементов модели
+                    switch (famName)
+                    {
+                        case "ЕС_А-21 - П-стержень":
+                            var leaderEndPoint = sel.PickPoint();
+                            var point = sel.PickPoint();
+                            var tag = IndependentTag.Create(doc, doc.ActiveView.Id, reference, true, TagMode.TM_ADDBY_CATEGORY, TagOrientation.Horizontal, point);
+                            tag.LeaderEndCondition = LeaderEndCondition.Free;
+                            tag.TagHeadPosition = point;
+                           // tag.LeaderEnd = leaderEndPoint; //в 2024 ревите появился метод tag.SetLeaderEnd() а в 21 его нет(
+                        break;
+                    }
                     t.Commit();
                 }
             }
