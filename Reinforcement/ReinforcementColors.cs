@@ -85,18 +85,9 @@ namespace Reinforcement
 
                 t.Commit();
             }
-            int i = 1; 
-            while (i <= 6)
-            {
-                if (nameValue != null)
-                i++;
-            }
+
 
                 return Result.Succeeded;
-
-
-
-
             }
             
         }
