@@ -67,6 +67,10 @@
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
+    <Compile Include="PickFilter\PickWithFilter.cs" />
+    <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
+      <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
+    </Compile>
     <Compile Include="RenameLevels.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
@@ -138,7 +142,12 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="PickFilter\MainViewPickWithFilter.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if exist "$(ProgramData)\Autodesk\REVIT\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
