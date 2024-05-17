@@ -67,6 +67,7 @@
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
+    <Compile Include="RenameLevels.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
@@ -74,7 +75,7 @@
       <DependentUpon>MainViewWall.xaml</DependentUpon>
     </Compile>
     <Compile Include="SelectParentElement.cs" />
-    <Compile Include="LinearCopy.cs" />
+    <Compile Include="LinearCopy\LinearCopy.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="DrBreakLinesCommand.cs" />
     <Compile Include="DrBreakLineCommand.cs" />
