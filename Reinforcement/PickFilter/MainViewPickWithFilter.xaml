@@ -9,7 +9,7 @@
     <StackPanel Margin="0,0,0,7">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="226">
             <TextBlock Margin="5" Text="Тип элемента: "/>
-            <TextBox Margin="5" Width="128" x:Name="constrTypeName" />
+            <TextBox  Margin="5" Width="128" x:Name="textLabel"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Click="Click_Select" Margin="5" Padding="5" Content="Выбрать" Width="105" />
