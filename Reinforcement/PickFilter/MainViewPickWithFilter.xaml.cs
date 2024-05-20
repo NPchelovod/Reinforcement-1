@@ -18,11 +18,22 @@ namespace Reinforcement.PickFilter
     /// <summary>
     /// Логика взаимодействия для UserControl1.xaml
     /// </summary>
-    public partial class UserControl1 : UserControl
+    public partial class MainViewPickWithFilter : Window
     {
-        public UserControl1()
+        public MainViewPickWithFilter()
         {
             InitializeComponent();
+            DataContext = constrTypeName;
+        }
+        private void Click_Select(object sender, RoutedEventArgs e)
+        {      
+            Hide()
+
+            Close();
+        }
+        private void Click_Cancel(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

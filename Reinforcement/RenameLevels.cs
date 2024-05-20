@@ -41,9 +41,17 @@ namespace Reinforcement
                     .ToElements()
                     .OfType<Level>()
                     .ToList();
+                    var orderedLevels = from level in levels
+                                        orderby level.Elevation ascending
+                                        select level;   
+                    List<Level> listLevels = orderedLevels.ToList();
                     for (int i = 0; i < levels.Count; i++)
                     {
-                        levels[i].Name = $"{i + 1}_этаж_основной";
+                        listLevels[i].Name = $"{i + 1}_эт";
+                    }
+                    for (int i = 0; i < levels.Count; i++)
+                    {
+                        listLevels[i].Name = $"{i + 1}_этаж_основной";
                     }
 
                     t.Commit();

@@ -67,7 +67,7 @@
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
-    <Compile Include="PickFilter\PickWithFilter.cs" />
+    <Compile Include="PickFilter\CommandPickWithFilter.cs" />
     <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
