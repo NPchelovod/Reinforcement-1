@@ -56,11 +56,11 @@ namespace Reinforcement
                         int digitCount = height.Count();
                         if (listLevels[i].Elevation > 0)
                         {
-                            listLevels[i].Name = $"{i} этаж основной на отм. {height.Insert(digitCount - 3, ",").Insert(0, "+")}";
+                            listLevels[i].Name = $"{i} этаж на отм. {height.Insert(digitCount - 3, ",").Insert(0, "+")}";
                         }
                         else
                         {
-                            listLevels[i].Name = $"{i} этаж основной на отм. {height.Insert(1, ",").Insert(1, "0")}";
+                            listLevels[i].Name = $"{i} этаж на отм. {height.Insert(1, ",").Insert(1, "0")}";
                         }
                     }
 
