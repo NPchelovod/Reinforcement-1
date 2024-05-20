@@ -32,7 +32,7 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
             try //ловим ошибку
             {
-                using (Transaction t = new Transaction(doc, "действие"))
+                using (Transaction t = new Transaction(doc, "Переименовать уровни"))
                 {
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
@@ -45,13 +45,23 @@ namespace Reinforcement
                                         orderby level.Elevation ascending
                                         select level;   
                     List<Level> listLevels = orderedLevels.ToList();
-                    for (int i = 0; i < levels.Count; i++)
+                    for (int i = 1; i < levels.Count; i++)
                     {
-                        listLevels[i].Name = $"{i + 1}_эт";
+                        listLevels[i].Name = $"{i}_эт";
                     }
-                    for (int i = 0; i < levels.Count; i++)
+                    for (int i = 1; i < levels.Count; i++)
                     {
-                        listLevels[i].Name = $"{i + 1}_этаж_основной";
+                        //string height = UnitUtils.ConvertFromInternalUnits(listLevels[i].Elevation, UnitTypeId.Meters).ToString();
+                       string height = listLevels[i].LookupParameter("Фасад").AsValueString() ;
+                        int digitCount = height.Count();
+                        if (listLevels[i].Elevation > 0)
+                        {
+                            listLevels[i].Name = $"{i} этаж основной на отм. {height.Insert(digitCount - 3, ",").Insert(0, "+")}";
+                        }
+                        else
+                        {
+                            listLevels[i].Name = $"{i} этаж основной на отм. {height.Insert(1, ",").Insert(1, "0")}";
+                        }
                     }
 
                     t.Commit();
