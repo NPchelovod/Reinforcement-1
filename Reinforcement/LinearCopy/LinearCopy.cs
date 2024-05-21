@@ -48,8 +48,8 @@ namespace Reinforcement
                         vectorLngth = pt2 - pt1;
                     double length = UnitUtils.ConvertFromInternalUnits(vectorLngth.GetLength(), UnitTypeId.Millimeters); //перевод в мм
 
-                    int step = 3000; //copy step
-
+                    int step = 650; //copy step
+                    
                     double n = length / step;
                     XYZ vector = vectorLngth / n;
                     int a = (int)n;

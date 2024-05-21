@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,7 +35,8 @@ namespace Reinforcement.PickFilter
         }
         private void Click_Cancel(object sender, RoutedEventArgs e)
         {
-            Close();
+            CommandPickWithFilter.constrTypeName = "stop";
+            Close();          
         }
     }
 }

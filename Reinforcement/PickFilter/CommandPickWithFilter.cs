@@ -34,6 +34,10 @@ namespace Reinforcement
                 //Тут пишем основной код для изменения элементов модели
                 var dialogueView = new MainViewPickWithFilter();
                 dialogueView.ShowDialog();
+                if (constrTypeName == "stop")
+                {
+                    return Result.Cancelled;
+                }
                 ISelectionFilter selFilter = new MassSelectionFilterTypeName();
                 IList<Element> eList = RevitAPI.UiDocument.Selection.PickElementsByRectangle(selFilter, "Выберите че то");
                 List<ElementId> ids = new List<ElementId>();
