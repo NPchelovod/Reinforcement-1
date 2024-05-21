@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Forms;
+using static Reinforcement.ViewModelPickWithFilter;
 
 namespace Reinforcement
 {
@@ -29,23 +30,19 @@ namespace Reinforcement
             {
                 RevitAPI.Initialize(commandData);
             }
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
             try //ловим ошибку
             {
-
                 //Тут пишем основной код для изменения элементов модели
                 var dialogueView = new MainViewPickWithFilter();
                 dialogueView.ShowDialog();
-                ISelectionFilter selFilter = new MassSelectionFilter();
-                IList<Element> eList = uidoc.Selection.PickElementsByRectangle(selFilter, "Выберите че то");
+                ISelectionFilter selFilter = new MassSelectionFilterTypeName();
+                IList<Element> eList = RevitAPI.UiDocument.Selection.PickElementsByRectangle(selFilter, "Выберите че то");
                 List<ElementId> ids = new List<ElementId>();
                 foreach (Element e in eList)
                 {
                     ids.Add(e.Id);
                 }
-                uidoc.Selection.SetElementIds(ids);
+                RevitAPI.UiDocument.Selection.SetElementIds(ids);
             }
             catch (Exception ex)
             {
@@ -55,23 +52,24 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-    }
-    public class MassSelectionFilter : ISelectionFilter
-    {
-        string elemTypeValue = "Дж";
-        public bool AllowElement(Element element)
+        public static string constrTypeName { get; set; }
+
+        public class MassSelectionFilterTypeName : ISelectionFilter
         {
-            if (element.LookupParameter("• Тип элемента").AsString() == elemTypeValue)
+            public bool AllowElement(Element element)
             {
-                return true;
+                if (element.LookupParameter("• Тип элемента").AsString() == constrTypeName)
+                {
+                    return true;
+                }
+                return false;
             }
-            return false;
-        }
 
-        public bool AllowReference(Reference refer, XYZ point)
-        {
-            return false;
-        }
+            public bool AllowReference(Reference refer, XYZ point)
+            {
+                return false;
+            }
 
+        }
     }
 }

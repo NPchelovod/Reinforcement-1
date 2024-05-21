@@ -23,13 +23,14 @@ namespace Reinforcement.PickFilter
         public MainViewPickWithFilter()
         {
             InitializeComponent();
-            DataContext = textLabel;
+            DataContext = textName;
         }
         private void Click_Select(object sender, RoutedEventArgs e)
         {
             Hide();
-            (DataContext as ViewModelPickWithFilter).constrTypeName = textLabel.Text;
+            CommandPickWithFilter.constrTypeName = textName.Text;
             Close();
+
         }
         private void Click_Cancel(object sender, RoutedEventArgs e)
         {

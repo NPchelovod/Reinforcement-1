@@ -71,7 +71,6 @@
     <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PickFilter\ViewModelPickWithFilter.cs" />
     <Compile Include="RenameLevels.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
