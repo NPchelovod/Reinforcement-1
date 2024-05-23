@@ -67,6 +67,9 @@
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
+    <Compile Include="LinearCopy\MainViewLinearCopyElement.xaml.cs">
+      <DependentUpon>MainViewLinearCopyElement.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PickFilter\CommandPickWithFilter.cs" />
     <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
@@ -79,7 +82,7 @@
       <DependentUpon>MainViewWall.xaml</DependentUpon>
     </Compile>
     <Compile Include="SelectParentElement.cs" />
-    <Compile Include="LinearCopy\LinearCopy.cs" />
+    <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="DrBreakLinesCommand.cs" />
     <Compile Include="DrBreakLineCommand.cs" />
@@ -134,6 +137,10 @@
     <Page Include="CreateViewPlan\MainViewCreateViewPlan.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="LinearCopy\MainViewLinearCopyElement.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="MainViewWall.xaml">
       <Generator>MSBuild:Compile</Generator>

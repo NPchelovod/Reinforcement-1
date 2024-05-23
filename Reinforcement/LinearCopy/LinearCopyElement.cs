@@ -4,6 +4,8 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using Reinforcement.LinearCopy;
+using Reinforcement.PickFilter;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,6 +19,7 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class LinearCopyElement : IExternalCommand
     {
+        public static string copyStep { get; set; }
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -25,6 +28,12 @@ namespace Reinforcement
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
+            var dialogueView = new MainViewLinearCopyElement();
+            dialogueView.ShowDialog();
+            if (copyStep == "stop")
+            {
+                return Result.Cancelled;
+            }
             try
             {
                 using (Transaction t = new Transaction(doc, "Прямолинейный массив"))
@@ -47,8 +56,8 @@ namespace Reinforcement
                         pt2 = ln.GetEndPoint(1),
                         vectorLngth = pt2 - pt1;
                     double length = UnitUtils.ConvertFromInternalUnits(vectorLngth.GetLength(), UnitTypeId.Millimeters); //перевод в мм
-
-                    int step = 3000; //copy step
+                    
+                    int step = int.Parse(copyStep); //copy step
                     
                     double n = length / step;
                     XYZ vector = vectorLngth / n;
