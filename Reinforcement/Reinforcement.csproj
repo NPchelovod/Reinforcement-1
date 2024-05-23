@@ -105,6 +105,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\ES_SelectWithFilter.png" />
     <None Include="Resources\ЕС_Выбор.png" />
     <None Include="Resources\ES_Wall.png" />
     <None Include="Resources\ES_Slab.png" />

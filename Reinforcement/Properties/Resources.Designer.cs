@@ -183,6 +183,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ES_SelectWithFilter {
+            get {
+                object obj = ResourceManager.GetObject("ES_SelectWithFilter", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ES_Slab {
             get {
                 object obj = ResourceManager.GetObject("ES_Slab", resourceCulture);

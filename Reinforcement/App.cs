@@ -48,11 +48,14 @@ namespace Reinforcement
             string tabName = "ЕС КР", 
                    panelName = "Армирование",
                    panel2Name = "Оформление",
-                   panel3Name = "Спецификации";
+                   panel3Name = "Спецификации",
+                   panel4Name = "Выбор";
             a.CreateRibbonTab(tabName);
             RibbonPanel panelReinforcement = a.CreateRibbonPanel(tabName, panelName);
             RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, panel2Name);
             RibbonPanel panelSchedules = a.CreateRibbonPanel(tabName, panel3Name);
+            RibbonPanel panelSelection = a.CreateRibbonPanel(tabName, panel4Name);
+
 
             CreateButton("С торца", "С торца", "Reinforcement.RcEndCommand", Properties.Resources.ES_dot1,
                 "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelReinforcement);
@@ -89,6 +92,10 @@ namespace Reinforcement
 
             CreateButton("Спецификации на Ядж", "Спецификации на Ядж", "Reinforcement.WallSchedulesCommand", Properties.Resources.ES_Wall,
                 "Копирование спецификаций на Ядж", "Команда работает только в шаблоне ЕС", panelSchedules);
+
+            CreateButton("Выбор с фильтром", "Выбор с фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
+    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection); ;
+
 
             SplitButtonData breakLinesData = new SplitButtonData("Линия обрыва", "Линия обрыва");
 
