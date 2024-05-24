@@ -70,6 +70,7 @@
     <Compile Include="LinearCopy\MainViewLinearCopyElement.xaml.cs">
       <DependentUpon>MainViewLinearCopyElement.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PastePerforationToSlab.cs" />
     <Compile Include="PickFilter\CommandPickWithFilter.cs" />
     <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
