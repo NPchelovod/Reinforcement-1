@@ -162,14 +162,14 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if exist "$(ProgramData)\Autodesk\REVIT\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
-if exist "$(ProgramData)\Autodesk\REVIT\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
-if exist "$(AppData)\Autodesk\REVIT\Addins\2024" copy "$(ProjectDir)*.addin" "$(AppData)\Autodesk\REVIT\Addins\2024"
-if exist "$(AppData)\Autodesk\REVIT\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Autodesk\REVIT\Addins\2024"
-if exist "$(ProgramData)\Autodesk\REVIT\Addins\2021" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
-if exist "$(ProgramData)\Autodesk\REVIT\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
-if exist "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021"
-if exist "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021"</PostBuildEvent>
+    <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
+if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
+if exist "$(AppData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(AppData)\Autodesk\REVIT\Addins\2024"
+if exist "$(AppData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Autodesk\REVIT\Addins\2024"
+if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
+if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
+if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021"
+if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

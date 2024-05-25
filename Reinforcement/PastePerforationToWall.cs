@@ -64,15 +64,15 @@ namespace Reinforcement
                             }
                         }
                     }
-                    ISelectionFilter selFilterSlab = new SelectionFilterSlab();
-                    sel = uidoc.Selection.PickObject(ObjectType.Element, selFilterSlab);
+                    ISelectionFilter selFilterWall = new SelectionFilterWall();
+                    sel = uidoc.Selection.PickObject(ObjectType.Element, selFilterWall);
                     element = doc.GetElement(sel);
                     ElementId levelId = element.LevelId;
                     Level level = doc.GetElement(levelId) as Level;
-                    foreach (var lineObj in lines)
+                    foreach (var polyLine in lines)
                     {
-                        XYZ maxPt = lineObj.GetOutline().MaximumPoint;
-                        XYZ minPt = lineObj.GetOutline().MinimumPoint;
+                        XYZ maxPt = polyLine.GetOutline().MaximumPoint;
+                        XYZ minPt = polyLine.GetOutline().MinimumPoint;
                         var center = (maxPt + minPt) / 2;
                         FilteredElementCollector col = new FilteredElementCollector(doc);
                         IList<Element> symbols = col.OfClass(typeof(FamilySymbol))
@@ -91,25 +91,31 @@ namespace Reinforcement
                         var wallLocation = element.get_BoundingBox(doc.ActiveView);
                         XYZ wallMin = wallLocation.Min,
                             wallMax = wallLocation.Max;
-                        Line l1 = Line.CreateBound(minPt, maxPt);
-                        var test = doc.Create.NewDetailCurve(doc.ActiveView, l1);
-                       
-                        FamilyInstance familyInstance = doc.Create.NewFamilyInstance(center, symbol, element ,Autodesk.Revit.DB.Structure.StructuralType.UnknownFraming);
-                        var diagLength = minPt.DistanceTo(maxPt);
-                        XYZ pt1 = new  XYZ(minPt.X, maxPt.Y, minPt.Z);
-                        var height = minPt.DistanceTo(pt1);
-                        var width = maxPt.DistanceTo(pt1);
-                        // height = UnitUtils.ConvertFromInternalUnits(height, UnitTypeId.Millimeters);
-                        // width = UnitUtils.ConvertFromInternalUnits(width, UnitTypeId.Millimeters);
-                        //familyInstance.LookupParameter("Отметка от уровня").Set(0);
-                       familyInstance.LookupParameter("ADSK_Отверстие_Высота").Set(10);
-                        if (height > width)
+                        bool a = wallMin.X < center.X &
+                                 wallMin.Y < center.Y &
+                                 wallMax.X > center.X &
+                                 wallMax.Y > center.Y;
+                        if (a)
                         {
-                            //familyInstance.LookupParameter("ADSK_Отверстие_Ширина").Set(height);
-                        }
-                        else
-                        {
-                           // familyInstance.LookupParameter("ADSK_Отверстие_Ширина").Set(width);
+                            Line l1 = Line.CreateBound(minPt, maxPt);
+                            //var test = doc.Create.NewDetailCurve(doc.ActiveView, l1);
+                            FamilyInstance familyInstance = doc.Create.NewFamilyInstance(center, symbol, element, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                            var diagLength = minPt.DistanceTo(maxPt);
+                            XYZ pt1 = new XYZ(minPt.X, maxPt.Y, minPt.Z);
+                            var height = minPt.DistanceTo(pt1);
+                            var width = maxPt.DistanceTo(pt1);
+                            // height = UnitUtils.ConvertFromInternalUnits(height, UnitTypeId.Millimeters);
+                            // width = UnitUtils.ConvertFromInternalUnits(width, UnitTypeId.Millimeters);
+                            familyInstance.LookupParameter("Отметка от уровня").Set(0);
+                            familyInstance.LookupParameter("ADSK_Отверстие_Высота").Set(0.2);
+                            if (height > width)
+                            {
+                                //familyInstance.LookupParameter("ADSK_Отверстие_Ширина").Set(height);
+                            }
+                            else
+                            {
+                                // familyInstance.LookupParameter("ADSK_Отверстие_Ширина").Set(width);
+                            }
                         }
                     }
                     t.Commit();
@@ -139,7 +145,7 @@ namespace Reinforcement
                 return false;
             }
         }
-        public class SelectionFilterSlab : ISelectionFilter
+        public class SelectionFilterWall : ISelectionFilter
         {
             public bool AllowElement(Element element)
             {
