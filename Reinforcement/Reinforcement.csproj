@@ -94,6 +94,7 @@
     <Compile Include="CreateReinforceFamily\RcAddCommand.cs" />
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
+    <Compile Include="Test\SetDimensionTextPosition.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="CreateReinforceFamily\RcFonCommand.cs" />
