@@ -126,7 +126,7 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-        public static string FamName { get; set; } = "ЕС_А-23 - Шпилька";
+        public static string FamName { get; set; } = "ЕС_А-23_Шпилька";
         public static string exampleName { get; set; } = "А240";
 
     }

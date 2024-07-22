@@ -59,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_А-01 - Фоновая";
+        public static  string FamName { get; set; } = "ЕС_А-01_Фоновая";
 
     }
     }
