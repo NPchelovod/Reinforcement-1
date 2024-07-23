@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="CreateReinfTag.cs" />
+    <Compile Include="CreateViewBySelectedWalls.cs" />
     <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
     <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
