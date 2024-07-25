@@ -30,8 +30,22 @@ namespace Reinforcement
             button.ToolTip = toolTip;
             button.LongDescription = longDescription;
         }
+
         public PushButtonData CreateButtonForSplit(string name, string text, string className, Image img, string toolTip,
             string longDescription)
+        {
+            PushButtonData buttonData =
+                new PushButtonData(name, text, Assembly.GetExecutingAssembly().Location, className);
+            ImageSource imageSource = Convert(img);
+            buttonData.LargeImage = imageSource;
+            buttonData.Image = imageSource;
+            buttonData.ToolTip = toolTip;
+            buttonData.LongDescription = longDescription;
+            return buttonData;
+        }
+
+        public PushButtonData CreateButtonData(string name, string text, string className, Image img, string toolTip,
+            string longDescription, RibbonPanel panel)
         {
             PushButtonData buttonData =
                 new PushButtonData(name, text, Assembly.GetExecutingAssembly().Location, className);
@@ -84,8 +98,12 @@ namespace Reinforcement
              "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
             panelReinforcement);
 
-            CreateButton("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
-                "Применение фильтров для цвета арматуры", "Команда работает только в шаблоне ЕС", panelDrawing);
+                //Create buttons for changing colors of elements on the active view
+            RibbonItemData reinfColors = CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
+                "Применение фильтров для цвета арматуры", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
+            RibbonItemData openColors = CreateButtonData("Цвета отверстий", "Цвета отверстий", "Reinforcement.OpeningsColors", Properties.Resources.ES_OpColors,
+                "Применение фильтров для цвета отверстий", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
+            IList<RibbonItem> stackedItems = panelDrawing.AddStackedItems(openColors, reinfColors);
 
             CreateButton("Спецификации на Пм", "Спецификации на Пм", "Reinforcement.SlabSchedulesCommand", Properties.Resources.ES_Slab,
                 "Копирование спецификаций на плиту", "Команда работает только в шаблоне ЕС", panelSchedules);
