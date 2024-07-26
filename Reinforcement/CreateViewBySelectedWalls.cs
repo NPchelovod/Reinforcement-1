@@ -92,7 +92,6 @@ namespace Reinforcement
                     using (Transaction t = new Transaction(doc, "Создание вида стен"))
                     {
                         t.Start();
-
                         ViewSection.CreateSection(doc,viewFamilyType.Id, sectionBox);
                         t.Commit();
                     }
