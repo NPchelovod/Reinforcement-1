@@ -64,6 +64,7 @@ namespace Reinforcement
                     int a = (int)n;
                     a++;
                     var createdElements = LinearArray.ArrayElementsWithoutAssociation(doc, uidoc.ActiveView, selectedIds, a, vector, ArrayAnchorMember.Second);
+                    a--;
                     if (a < 5)
                     {
                         MessageBox.Show("Создано " + a + " элемента");
