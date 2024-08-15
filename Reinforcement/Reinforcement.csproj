@@ -61,7 +61,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="CreateReinfTag.cs" />
-    <Compile Include="CreateViewBySelectedWalls.cs" />
+    <Compile Include="ReinforceBasementWalls\CreateViewBySelectedWalls.cs" />
     <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
     <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
@@ -78,6 +78,8 @@
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
     <Compile Include="OpeningsColors.cs" />
+    <Compile Include="ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
+    <Compile Include="ReinforceBasementWalls\ReinforceWall.cs" />
     <Compile Include="RenameLevels.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
