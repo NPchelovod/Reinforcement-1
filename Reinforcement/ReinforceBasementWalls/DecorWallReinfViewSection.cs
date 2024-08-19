@@ -275,33 +275,34 @@ namespace Reinforcement
                             .Select(x=> x.get_BoundingBox(activeView))
                             .Where(bb => bb.Max.Z > maxPtZFloor)
                             .ToList(); //create list of bounding boxes of walls higher than floor
-                        foreach (BoundingBoxXYZ box in listWallsBoundingBoxes)
+                        if (listWallsBoundingBoxes.Count > 0)
                         {
-                            if (activeView.RightDirection.X == 1)
+                            foreach (BoundingBoxXYZ box in listWallsBoundingBoxes)
                             {
-                                topEndPoint1 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                topEndPoint2 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                            }
-                            else if (activeView.RightDirection.X == -1)
-                            {
-                                topEndPoint1 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                topEndPoint2 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-
-                            }
-                            else if (activeView.RightDirection.Y == -1)
-                            {
-                                topEndPoint1 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                topEndPoint2 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                            }
-                            else if (activeView.RightDirection.Y == 1)
-                            {
-                                topEndPoint1 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                topEndPoint2 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-
-                            }//get points to create line
-                            Line topLine = Line.CreateBound(topEndPoint1, topEndPoint2);
-                            doc.Create.NewFamilyInstance(topLine, symbolBrakeLine.First(), activeView);
-                        }//create brake lines on top
+                                if (activeView.RightDirection.X == 1)
+                                {
+                                    topEndPoint1 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                    topEndPoint2 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                }
+                                else if (activeView.RightDirection.X == -1)
+                                {
+                                    topEndPoint1 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                    topEndPoint2 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                }
+                                else if (activeView.RightDirection.Y == -1)
+                                {
+                                    topEndPoint1 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                    topEndPoint2 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                }
+                                else if (activeView.RightDirection.Y == 1)
+                                {
+                                    topEndPoint1 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                    topEndPoint2 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
+                                }//get points to create line
+                                Line topLine = Line.CreateBound(topEndPoint1, topEndPoint2);
+                                doc.Create.NewFamilyInstance(topLine, symbolBrakeLine.First(), activeView);
+                            }//create brake lines on top
+                        }
                         Line bottomLine = Line.CreateBound(botEndPoint1, botEndPoint2);
                         doc.Create.NewFamilyInstance(bottomLine, symbolBrakeLine.First(), activeView);
                        

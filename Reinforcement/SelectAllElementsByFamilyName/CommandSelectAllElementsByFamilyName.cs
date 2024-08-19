@@ -2,6 +2,8 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using Reinforcement.PickFilter;
+using Reinforcement.SelectAllElementsByFamilyName;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,8 +19,10 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class SelectAllElementByFamilyName : IExternalCommand
+    public class CommandSelectAllElementsByFamilyName : IExternalCommand
     {
+        public static string famTypeName { get; set; }
+
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -32,15 +36,23 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
             Selection sel = uidoc.Selection;
-
-            string famname = "ADSK_ЭУ_Узел_Линии разрыва";
+            var dialogueView = new MainViewSelectAllElementsByFamilyName();
+            dialogueView.ShowDialog();
+            if (famTypeName == "stop")
+            {
+                return Result.Cancelled;
+            }
   
             ElementClassFilter filter = new ElementClassFilter(typeof(FamilyInstance));         
             var collection = new FilteredElementCollector(doc)
-                .OfClass(typeof(Family))
-                .Where(x => x.Name == famname)
+                .OfClass(typeof(FamilySymbol))
+                .Where(x => x.Name == famTypeName)
                 .ToList();
-            sel.SetElementIds(collection.FirstOrDefault().GetDependentElements(filter));
+            if (collection.Count == 0)
+            {
+                return Result.Failed;
+            }
+                sel.SetElementIds(collection.FirstOrDefault().GetDependentElements(filter));
 
             return Result.Succeeded;
         }

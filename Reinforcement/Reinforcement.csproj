@@ -81,6 +81,9 @@
     <Compile Include="ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
     <Compile Include="ReinforceBasementWalls\ReinforceWall.cs" />
     <Compile Include="RenameLevels.cs" />
+    <Compile Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml.cs">
+      <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
@@ -99,7 +102,7 @@
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
     <Compile Include="Test\SetDimensionTextPosition.cs" />
-    <Compile Include="SelectAllElementByFamilyName.cs" />
+    <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
@@ -163,6 +166,10 @@
     <Page Include="PickFilter\MainViewPickWithFilter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup />
