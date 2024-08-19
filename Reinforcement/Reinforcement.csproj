@@ -99,6 +99,8 @@
     <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
     <Compile Include="Test\SetDimensionTextPosition.cs" />
+    <Compile Include="SelectAllElementByFamilyName.cs" />
+    <Compile Include="Test\TEST.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="CreateReinforceFamily\RcFonCommand.cs" />

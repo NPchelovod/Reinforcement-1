@@ -34,8 +34,6 @@ namespace Reinforcement
             Element lineElement = doc.GetElement(line);
             CurveElement curveElement = lineElement as CurveElement;
             Line curve = curveElement.GeometryCurve as Line;
-
-
             try //ловим ошибку
             {
                 using (Transaction t = new Transaction(doc, "Армирование стены"))
