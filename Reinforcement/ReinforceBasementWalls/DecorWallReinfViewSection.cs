@@ -273,7 +273,7 @@ namespace Reinforcement
                         }//get points to create line
                         IList<BoundingBoxXYZ> listWallsBoundingBoxes = wallList
                             .Select(x=> x.get_BoundingBox(activeView))
-                            .Where(bb => bb.Min.Z > minPtXFloor)
+                            .Where(bb => bb.Max.Z > maxPtZFloor)
                             .ToList(); //create list of bounding boxes of walls higher than floor
                         foreach (BoundingBoxXYZ box in listWallsBoundingBoxes)
                         {
