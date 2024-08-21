@@ -49,12 +49,6 @@ namespace Reinforcement
                 .Cast<FamilySymbol>()
                 .ToList(); //get family symbol of brake line
 
-            List<Grid> gridList =  new FilteredElementCollector(doc, activeView.Id)
-                .OfClass(typeof(Grid))
-                .ToElements()
-                .Cast<Grid>()
-                .ToList(); //get all grids on activeView
-
             List<Floor> floorList =  new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(Floor))
                 .ToElements()
@@ -66,6 +60,8 @@ namespace Reinforcement
                 .ToElements()
                 .Cast<Wall>()
                 .ToList();  //get all walls on activeView
+
+            IList<Line> gridLinesList = new List<Line>();//to create dimensions
 
             double minPtXWall = wallList.First().get_BoundingBox(activeView).Min.X,
                    minPtYWall = wallList.First().get_BoundingBox(activeView).Min.Y,
@@ -82,7 +78,6 @@ namespace Reinforcement
                    maxPtYFloor = floorList.First().get_BoundingBox(activeView).Max.Y,
                    maxPtZFloor = floorList.First().get_BoundingBox(activeView).Max.Z; //initialize floor points and start foreach
 
-            IList<Line> gridLinesList = new List<Line>();//to create dimensions
             var viewScale = activeView.Scale;
             foreach (Wall wall in wallList)
             {
@@ -140,15 +135,70 @@ namespace Reinforcement
                 {
                     maxPtZFloor = floor.get_BoundingBox(activeView).Max.Z;
                 }
-            }
+            }//get min and max points of floors in active view
             try //ловим ошибку
             {
                 using (TransactionGroup tg = new TransactionGroup(doc, "Оформление вида стен подвала"))
                 {
                     tg.Start();
-                    using (Transaction t1 = new Transaction(doc, "Изменение осей"))
+                    using (Transaction t1 = new Transaction(doc, "Изменение обрезки вида стен"))
                     {
                         t1.Start();
+                        ViewCropRegionShapeManager cropRegion = activeView.GetCropRegionShapeManager();
+                        int cropCount = 1;
+                        IList<Wall> wallsFromLeftToRight = wallList
+                            .Where(w => w.get_BoundingBox(activeView).Max.Z < maxPtZFloor)                           
+                            .ToList();//take only walls that under the floor
+
+                        if (activeView.RightDirection.X == 1)
+                        {
+                            wallsFromLeftToRight = wallsFromLeftToRight
+                                .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
+                                .OrderBy(w => w.get_BoundingBox(activeView).Min.X)
+                                .ToList();
+                        }
+                        else if (activeView.RightDirection.X == -1)
+                        {
+
+                        }
+                        else if (activeView.RightDirection.Y == -1)
+                        {
+
+                        }
+                        else if (activeView.RightDirection.Y == 1)
+                        {
+
+                        }//get points to create line
+                        int n = 0;
+                        while (n < cropCount)
+                        {
+                            cropRegion.SplitRegionHorizontally(0, 0.30, 0.70);
+                            n++;
+                        }
+                        IList<CurveLoop> curveLoopList = cropRegion.GetCropShape();
+                        /*
+var x = RevitAPI.ToMm(activeView.CropBox.Max.X);
+BoundingBoxXYZ box = new BoundingBoxXYZ();
+box.Max = new XYZ(32.0, -108.0, 0);
+box.Min = new XYZ(-25.0, -122.0, -3.2);
+activeView.CropBox = box;
+Options opt = new Options 
+{
+    View = activeView
+};
+*/
+                        //set cropbox
+
+                        t1.Commit();
+                    }
+                    List<Grid> gridList =  new FilteredElementCollector(doc, activeView.Id)
+                             .OfClass(typeof(Grid))
+                             .ToElements()
+                             .Cast<Grid>()
+                             .ToList(); //get all grids on activeView here because of changing cropbox
+                    using (Transaction t2 = new Transaction(doc, "Изменение осей"))
+                    {
+                        t2.Start();
                         //Тут пишем основной код для изменения элементов модели
                         foreach (Grid grid in gridList)
                         {
@@ -175,23 +225,11 @@ namespace Reinforcement
                             gridLinesList.Add(newGridCurve);
                             grid.SetCurveInView(DatumExtentType.ViewSpecific, activeView, newGridCurve);
                         }
-                        /*
-                        var x = RevitAPI.ToMm(activeView.CropBox.Max.X);
-                        BoundingBoxXYZ box = new BoundingBoxXYZ();
-                        box.Max = new XYZ(32.0, -108.0, 0);
-                        box.Min = new XYZ(-25.0, -122.0, -3.2);
-                        activeView.CropBox = box;
-                        Options opt = new Options 
-                        {
-                            View = activeView
-                        };
-                        */
-                        //set cropbox
-                        t1.Commit();
+                        t2.Commit();
                     }
-                    using (Transaction t2 = new Transaction(doc, "Создание размерных линий"))
+                    using (Transaction t3 = new Transaction(doc, "Создание размерных линий"))
                     {
-                        t2.Start();
+                        t3.Start();
                         var referenceArray = new ReferenceArray();
                         var referenceArrayLeftRight = new ReferenceArray();
                         Options opt = new Options()
@@ -240,14 +278,14 @@ namespace Reinforcement
                         endpoint2 = new XYZ(grid2.GetEndPoint(0).X, grid2.GetEndPoint(0).Y, grid2.GetEndPoint(0).Z + RevitAPI.ToFoot(5 * viewScale));
                         lineDim = Line.CreateBound(endpoint1, endpoint2);
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayLeftRight); //create dimension between first and last grids
-                        t2.Commit();
+                        t3.Commit();
                     }
-                    using (Transaction t3 = new Transaction(doc, "Создание линий разрыва"))
+                    using (Transaction t4 = new Transaction(doc, "Создание линий разрыва"))
                     {
-                        t3.Start();
-                        XYZ botEndPoint1 = new XYZ(), 
-                            botEndPoint2 = new XYZ(), 
-                            topEndPoint1 = new XYZ(), 
+                        t4.Start();
+                        XYZ botEndPoint1 = new XYZ(),
+                            botEndPoint2 = new XYZ(),
+                            topEndPoint1 = new XYZ(),
                             topEndPoint2 = new XYZ();
                         if (activeView.RightDirection.X == 1)
                         {
@@ -305,7 +343,7 @@ namespace Reinforcement
                         }
                         Line bottomLine = Line.CreateBound(botEndPoint1, botEndPoint2);
                         doc.Create.NewFamilyInstance(bottomLine, symbolBrakeLine.First(), activeView);
-                       
+
                         var addVector = new XYZ(0,0,RevitAPI.ToFoot(6 * viewScale));
                         Line leftLine = Line.CreateBound(botEndPoint1.Add(addVector),botEndPoint1);
                         doc.Create.NewFamilyInstance(leftLine, symbolBrakeLine.First(), activeView);
@@ -313,8 +351,9 @@ namespace Reinforcement
                         doc.Create.NewFamilyInstance(rightLine, symbolBrakeLine.First(), activeView);
 
 
-                        t3.Commit();
+                        t4.Commit();
                     }
+
                     tg.Assimilate();
                 }
             }

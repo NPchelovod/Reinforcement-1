@@ -10,17 +10,10 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class ReinforceWall : IExternalCommand
+    public class ReinforceWall
     {
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+        public Result Do()
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
             UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
