@@ -263,7 +263,7 @@ namespace Reinforcement
                                 .First()
                                 .OrderByDescending(n => n.Length)
                                 .First() as Line;
-                            IList<double> cropBoxLineMinY = new List<double>()
+                            IList<double> cropBoxLineY = new List<double>()
                             {cropBoxLine.GetEndPoint(0).Y, cropBoxLine.GetEndPoint(1).Y};
                             double cropBoxLength = cropBoxLine.Length;
                             while (i < wallsSTMFromLeftToRight.Count - 1)
@@ -274,10 +274,10 @@ namespace Reinforcement
                                 {
                                     cropRegion.SplitRegionHorizontally
                                         (cropRegionCount, 
-                                        (RevitAPI.ToFoot(800) + Math.Abs((first - cropBoxLineMinY.Min())) )/ cropBoxLength, 
-                                        (Math.Abs((second - cropBoxLineMinY.Min())) - RevitAPI.ToFoot(800)) / cropBoxLength);
+                                        (1-(Math.Abs((cropBoxLineY.Max() - first)) - RevitAPI.ToFoot(800)) / cropBoxLength), 
+                                        (1-(RevitAPI.ToFoot(800) + Math.Abs(( cropBoxLineY.Max() - second))) / cropBoxLength));
                                     cropRegionCount++;
-                                    cropBoxLength = cropBoxLength - (Math.Abs((second - cropBoxLineMinY.Min())) - RevitAPI.ToFoot(800));
+                                    cropBoxLength = cropBoxLineY.Max() - second;
                                 }
                             }
                         }//set cropbox
