@@ -126,48 +126,14 @@ namespace Reinforcement
                     {
                         t1.Start();
                         ViewCropRegionShapeManager cropRegion = activeView.GetCropRegionShapeManager();
-                        
+
                         CurveLoop cropBoxBounds = new CurveLoop();
 
                         IList<Wall> wallsFromLeftToRight = wallList
-                            .Where(w => w.get_BoundingBox(activeView).Max.Z < maxPtZFloor)                           
+                            .Where(w => w.get_BoundingBox(activeView).Max.Z < maxPtZFloor)
                             .ToList();//take only walls that under the floor
 
                         if (activeView.RightDirection.X == 1)
-                        {
-                            XYZ minPtCropBox = new XYZ(minPtXWall - RevitAPI.ToFoot(800), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(800));
-                            XYZ maxPtCropBox = new XYZ(maxPtXWall + RevitAPI.ToFoot(800), activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(800));
-                            XYZ minUpPtCropBox = new XYZ(minPtCropBox.X, activeView.Origin.Y, maxPtCropBox.Z);
-                            XYZ maxDnPtCropBox = new XYZ(maxPtCropBox.X, activeView.Origin.Y, minPtCropBox.Z);
-
-                            Curve curve1 = Line.CreateBound(minPtCropBox, minUpPtCropBox),
-                                curve2 = Line.CreateBound(minUpPtCropBox, maxPtCropBox),
-                                curve3 = Line.CreateBound(maxPtCropBox, maxDnPtCropBox),
-                                curve4 = Line.CreateBound(maxDnPtCropBox, minPtCropBox);
-
-                            IList<Curve> curves = new List<Curve>()
-                            {curve1, curve2, curve3, curve4 };                          
-                            cropBoxBounds = CurveLoop.Create(curves);
-                           // cropRegion.SetCropShape(cropBoxBounds);                           
-                            IList<Wall> wallsSTMFromLeftToRight = wallsFromLeftToRight
-                                .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
-                                .OrderBy(w => w.get_BoundingBox(activeView).Min.X)
-                                .ToList();// order STM walls from min to max                                                                   
-                            int i = 0;
-                            int cropRegionCount = 0;
-                            double cropBoxLength = Math.Abs(activeView.CropBox.Min.X) + Math.Abs(activeView.CropBox.Max.X);
-                            while (i < wallsSTMFromLeftToRight.Count - 1)
-                            {
-                                var first = wallsSTMFromLeftToRight.ElementAt(i).get_BoundingBox(activeView).Max.X;  
-                                var second = wallsSTMFromLeftToRight.ElementAt(++i).get_BoundingBox(activeView).Min.X;                              
-                                if (Math.Abs(second) - Math.Abs(first) > RevitAPI.ToFoot(3000)) //length between two STM more than 3000 mm
-                                {            
-                                   cropRegion.SplitRegionHorizontally(cropRegionCount, second / cropBoxLength, first / cropBoxLength);
-                                   cropRegionCount++;
-                                }                               
-                            }
-                        }//set cropbox
-                        else if (activeView.RightDirection.X == -1)
                         {
                             XYZ minPtCropBox = new XYZ(minPtXWall - RevitAPI.ToFoot(800), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(800));
                             XYZ maxPtCropBox = new XYZ(maxPtXWall + RevitAPI.ToFoot(800), activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(800));
@@ -196,15 +162,19 @@ namespace Reinforcement
                                 var second = wallsSTMFromLeftToRight.ElementAt(++i).get_BoundingBox(activeView).Min.X;
                                 if (Math.Abs(second) - Math.Abs(first) > RevitAPI.ToFoot(3000)) //length between two STM more than 3000 mm
                                 {
-                                    cropRegion.SplitRegionHorizontally(cropRegionCount, second / cropBoxLength, 0.8);
-                                   cropRegionCount++;
+                                    cropRegion.SplitRegionHorizontally(cropRegionCount, second / cropBoxLength, first / cropBoxLength);
+                                    cropRegionCount++;
                                 }
                             }
+                        }//TODO
+                        else if (activeView.RightDirection.X == -1)
+                        {
 
-                        }
+
+                        }//TODO
                         else if (activeView.RightDirection.Y == -1)
                         {
-                            XYZ minPtCropBox = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(800), minPtZWall - RevitAPI.ToFoot(800));
+                            /*XYZ minPtCropBox = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(800), minPtZWall - RevitAPI.ToFoot(800));
                             XYZ maxPtCropBox = new XYZ(activeView.Origin.X, maxPtYWall + RevitAPI.ToFoot(800), maxPtZFloor + RevitAPI.ToFoot(800));
                             XYZ minUpPtCropBox = new XYZ(activeView.Origin.X, minPtCropBox.Y,  maxPtCropBox.Z);
                             XYZ maxDnPtCropBox = new XYZ(activeView.Origin.X, maxPtCropBox.Y,  minPtCropBox.Z);
@@ -216,21 +186,36 @@ namespace Reinforcement
                             IList<Curve> curves = new List<Curve>()
                             {curve1, curve2, curve3, curve4 };
                             cropBoxBounds = CurveLoop.Create(curves);
-                            //cropRegion.SetCropShape(cropBoxBounds);                        
+                            //cropRegion.SetCropShape(cropBoxBounds); 
+                            */
                             IList<Wall> wallsSTMFromLeftToRight = wallsFromLeftToRight
                                 .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
-                                .OrderBy(w => w.get_BoundingBox(activeView).Min.Y)
-                                .ToList();// order STM walls from min to max
+                                .OrderByDescending(w => w.get_BoundingBox(activeView).Min.Y)
+                                .ToList();// order STM walls from max to min
                             int i = 0;
                             int cropRegionCount = 0;
-                            double cropBoxLength = Math.Abs(activeView.CropBox.Min.Y) + Math.Abs(activeView.CropBox.Max.Y);
+                            Line cropBoxLine = activeView
+                                .GetCropRegionShapeManager()
+                                .GetCropShape()
+                                .First()
+                                .OrderByDescending(n => n.Length)
+                                .First() as Line;
+                            IList<double> cropBoxLineY = new List<double>()
+                            {cropBoxLine.GetEndPoint(0).Y, cropBoxLine.GetEndPoint(1).Y};
+                            double cropBoxLength = cropBoxLine.Length;
+                            double sum = 0;
+                            var cropBoxOffset = RevitAPI.ToFoot(800);
                             while (i < wallsSTMFromLeftToRight.Count - 1)
                             {
-                                var first = wallsSTMFromLeftToRight.ElementAt(i).get_BoundingBox(activeView).Max.Y;
-                                var second = wallsSTMFromLeftToRight.ElementAt(++i).get_BoundingBox(activeView).Min.Y;
-                                if (Math.Abs(second) - Math.Abs(first) > RevitAPI.ToFoot(3000)) //length between two STM more than 3000 mm
+                                var first = wallsSTMFromLeftToRight.ElementAt(i).get_BoundingBox(activeView).Min.Y;
+                                var second = wallsSTMFromLeftToRight.ElementAt(++i).get_BoundingBox(activeView).Max.Y;
+                                if (Math.Abs(second - first) > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
                                 {
-                                     cropRegion.SplitRegionHorizontally(cropRegionCount, 0.3, 0.6);
+                                    cropRegion.SplitRegionHorizontally
+                                        (cropRegionCount,
+                                        (Math.Abs(first - cropBoxLineY.Max()) + cropBoxOffset - sum) / (cropBoxLength - sum),
+                                        (Math.Abs(second - cropBoxLineY.Max()) - cropBoxOffset - sum) / (cropBoxLength - sum));
+                                    sum = Math.Abs(second - cropBoxLineY.Max()) - cropBoxOffset;
                                     cropRegionCount++;
                                 }
                             }
@@ -238,11 +223,10 @@ namespace Reinforcement
                         }
                         else if (activeView.RightDirection.Y == 1)
                         {
-                            XYZ minPtCropBox = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(800), minPtZWall - RevitAPI.ToFoot(800));
+                          /*  XYZ minPtCropBox = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(800), minPtZWall - RevitAPI.ToFoot(800));
                             XYZ maxPtCropBox = new XYZ(activeView.Origin.X, maxPtYWall + RevitAPI.ToFoot(800), maxPtZFloor + RevitAPI.ToFoot(800));
                             XYZ minUpPtCropBox = new XYZ(activeView.Origin.X, minPtCropBox.Y,  maxPtCropBox.Z);
                             XYZ maxDnPtCropBox = new XYZ(activeView.Origin.X, maxPtCropBox.Y,  minPtCropBox.Z);
-
                             Curve curve1 = Line.CreateBound(minPtCropBox, minUpPtCropBox);
                             Curve curve2 = Line.CreateBound(minUpPtCropBox, maxPtCropBox);
                             Curve curve3 = Line.CreateBound(maxPtCropBox, maxDnPtCropBox);
@@ -250,7 +234,8 @@ namespace Reinforcement
                             IList<Curve> curves = new List<Curve>()
                             {curve1, curve2, curve3, curve4 };
                             cropBoxBounds = CurveLoop.Create(curves);
-                            //cropRegion.SetCropShape(cropBoxBounds);                        
+                            //cropRegion.SetCropShape(cropBoxBounds);  
+                          */
                             IList<Wall> wallsSTMFromLeftToRight = wallsFromLeftToRight
                                 .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
                                 .OrderBy(w => w.get_BoundingBox(activeView).Min.Y)
@@ -266,21 +251,24 @@ namespace Reinforcement
                             IList<double> cropBoxLineY = new List<double>()
                             {cropBoxLine.GetEndPoint(0).Y, cropBoxLine.GetEndPoint(1).Y};
                             double cropBoxLength = cropBoxLine.Length;
+                            double sum = 0;
                             while (i < wallsSTMFromLeftToRight.Count - 1)
                             {
                                 var first = wallsSTMFromLeftToRight.ElementAt(i).get_BoundingBox(activeView).Max.Y;
                                 var second = wallsSTMFromLeftToRight.ElementAt(++i).get_BoundingBox(activeView).Min.Y;
-                                if (Math.Abs(second) - Math.Abs(first) > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
+                                var cropBoxOffset = RevitAPI.ToFoot(800);
+                                if (Math.Abs(second - first) > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
                                 {
                                     cropRegion.SplitRegionHorizontally
-                                        (cropRegionCount, 
-                                        (1-(Math.Abs((cropBoxLineY.Max() - first)) - RevitAPI.ToFoot(800)) / cropBoxLength), 
-                                        (1-(RevitAPI.ToFoot(800) + Math.Abs(( cropBoxLineY.Max() - second))) / cropBoxLength));
+                                        (cropRegionCount,
+                                        Math.Abs(first - cropBoxLineY.Min()) + cropBoxOffset / (cropBoxLength - sum),
+                                        Math.Abs(second - cropBoxLineY.Min()) - cropBoxOffset / (cropBoxLength - sum));
                                     cropRegionCount++;
-                                    cropBoxLength = cropBoxLineY.Max() - second;
+                                    sum = Math.Abs(second - cropBoxLineY.Min()) - cropBoxOffset;
+                                    cropBoxLength = cropBoxLength - sum;
                                 }
                             }
-                        }//set cropbox
+                        }//TODO
                         t1.Commit();
                     }
                     List<Grid> gridList =  new FilteredElementCollector(doc, activeView.Id)
