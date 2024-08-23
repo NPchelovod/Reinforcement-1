@@ -21,7 +21,7 @@ namespace Reinforcement
 
     public class CommandSelectAllElementsByFamilyName : IExternalCommand
     {
-        public static string famTypeName { get; set; }
+        public static string FamTypeName { get; set; }
 
         public Result Execute(
             ExternalCommandData commandData,
@@ -38,22 +38,46 @@ namespace Reinforcement
             Selection sel = uidoc.Selection;
             var dialogueView = new MainViewSelectAllElementsByFamilyName();
             dialogueView.ShowDialog();
-            if (famTypeName == "stop")
+            if (FamTypeName == "stop")
             {
                 return Result.Cancelled;
             }
-  
-            ElementClassFilter filter = new ElementClassFilter(typeof(FamilyInstance));         
+
+            ElementClassFilter filter = new ElementClassFilter(typeof(FamilyInstance));
             var collection = new FilteredElementCollector(doc)
-                .OfClass(typeof(FamilySymbol))
-                .Where(x => x.Name == famTypeName)
+                .OfClass(typeof(Family))
+                .Where(x => x.Name == FamTypeName)
                 .ToList();
             if (collection.Count == 0)
             {
                 return Result.Failed;
             }
-                sel.SetElementIds(collection.FirstOrDefault().GetDependentElements(filter));
+            sel.SetElementIds(collection.FirstOrDefault().GetDependentElements(filter));
+            DialogResult dialogResult = MessageBox.Show("Показать элементы на виде?", "Перебор элементов", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
 
+                int n = 0;
+                while (n < collection.FirstOrDefault().GetDependentElements(filter).Count)
+                {
+                    var elementId = collection.FirstOrDefault().GetDependentElements(filter).ElementAt(n);
+                    var element = doc.GetElement(elementId);
+                    var viewId = element.OwnerViewId;
+                    uidoc.ActiveView = doc.GetElement(viewId) as Autodesk.Revit.DB.View;
+                    // uidoc.ShowElements(element);
+                    dialogResult = MessageBox.Show("Показать далее?", "Перебор элементов", MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.No)
+                    {
+                        return Result.Succeeded;
+                    }
+                    n++;
+                }
+            }
+            else if (dialogResult == DialogResult.No)
+
+            {
+                return Result.Succeeded;
+            }
             return Result.Succeeded;
         }
     }

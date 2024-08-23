@@ -141,7 +141,6 @@ namespace Reinforcement
                                 .OrderByDescending(w => w.get_BoundingBox(activeView).Min.X)
                                 .ToList();// order STM walls from max to min
                             int i = 0;
-                            int cropRegionCount = 0;
                             Line cropBoxLine = activeView
                                 .GetCropRegionShapeManager()
                                 .GetCropShape()

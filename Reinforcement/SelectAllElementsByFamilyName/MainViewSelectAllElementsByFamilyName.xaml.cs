@@ -29,13 +29,13 @@ namespace Reinforcement.SelectAllElementsByFamilyName
         private void Click_Select(object sender, RoutedEventArgs e)
         {
             Hide();
-            CommandSelectAllElementsByFamilyName.famTypeName = textName.Text;
+            CommandSelectAllElementsByFamilyName.FamTypeName = textName.Text;
             Close();
 
         }
         private void Click_Cancel(object sender, RoutedEventArgs e)
         {
-            CommandSelectAllElementsByFamilyName.famTypeName = "stop";
+            CommandSelectAllElementsByFamilyName.FamTypeName = "stop";
             Close();          
         }
     }
