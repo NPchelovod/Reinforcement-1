@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="CreateReinfTag.cs" />
+    <Compile Include="Stage1\DecorViewPlanStage1.cs" />
     <Compile Include="RefreshView.cs" />
     <Compile Include="ReinforceBasementWalls\CreateViewBySelectedWalls.cs" />
     <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
@@ -173,7 +174,9 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Stage2\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2024"

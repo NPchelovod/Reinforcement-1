@@ -40,8 +40,10 @@ namespace Reinforcement
             {
                 MessageBox.Show("Не выбран активный вид стен!\n");
                 return Result.Failed;
-            }//check if activeView is setion view
+            }//check if activeView is section view
+
             List<Grid> gridList = new List<Grid>(); //create list to collect grids after cropBox change
+            IList<Line> gridLinesList = new List<Line>();//to create dimensions
 
             List<FamilySymbol> symbolBrakeLine =  new FilteredElementCollector(doc)
                 .OfClass(typeof(FamilySymbol))
@@ -63,7 +65,6 @@ namespace Reinforcement
                 .Cast<Wall>()
                 .ToList();  //get all walls on activeView
 
-            IList<Line> gridLinesList = new List<Line>();//to create dimensions
 
             double minPtXWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min.X)
