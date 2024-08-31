@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using View = Autodesk.Revit.DB.View;
 
 namespace Reinforcement
@@ -214,9 +215,9 @@ namespace Reinforcement
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayUpDown); //create dimension between first and last grids
 
                         //creating dims for walls
-                        List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
+                       // List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
 
-                        foreach (var wall in wallListDiafragm)
+                        foreach (var wall in wallList)
                         {
                             //creating dims X direction
                             EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
@@ -226,12 +227,6 @@ namespace Reinforcement
                             Line edgeLineX = null;
                             foreach (Edge edge in edges)
                             {
-                                /*if (edge.Reference == null)
-                                {
-                                    uidoc.ShowElements(wall);
-                                    t2.Commit();
-                                    return Result.Succeeded;
-                                }*/
 
                                 Line edgeLine = edge.AsCurve() as Line;
                                 var directionY = Math.Abs(edgeLine.Direction.Y);
@@ -251,6 +246,9 @@ namespace Reinforcement
                             {
                                 continue;
                             }
+                           
+                            
+
                             foreach (Grid grid in YGridList)
                             {
                                 Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
@@ -305,6 +303,14 @@ namespace Reinforcement
                             {
                                 continue;
                             }
+                            /*
+                            if (referenceArray.Size == 1)
+                            {
+                                uidoc.ShowElements(wall);
+                                t2.Commit();
+                                return Result.Succeeded;
+                            }
+                            */
                             foreach (Grid grid in XGridList)
                             {
                                 Line gridCurve = grid.get_Geometry(opt).First() as Line;
