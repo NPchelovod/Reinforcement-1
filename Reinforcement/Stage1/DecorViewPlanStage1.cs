@@ -211,19 +211,39 @@ namespace Reinforcement
                         {
                             //creating dims X direction
                             EdgeArray edges = wall.get_Geometry(opt).Select(x => x as Solid).First().Edges; //get wall edges
+                            List<Line> edgeLinesY = new List<Line>();
+                            List<Edge> wallEdgesY = new List<Edge>();
+                            ReferenceArray referenceArray = new ReferenceArray();
                             foreach (Edge edge in edges)
                             {
-                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE)
+                                Line edgeLine = edge.AsCurve() as Line;
+                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && Math.Abs(edgeLine.Direction.Y) == 1)
                                 {
-
-                                }
+                                    edgeLinesY.Add(edgeLine);
+                                    wallEdgesY.Add(edge);
+                                    //referenceArray.Append(edge.Reference);
+                                }                               
                             }
-
-
-                            endpoint1 = new XYZ(gridY1.GetEndPoint(0).X, gridY1.GetEndPoint(0).Y + RevitAPI.ToFoot(5 * viewScale), gridY1.GetEndPoint(0).Z);
-                            endpoint2 = new XYZ(gridY2.GetEndPoint(0).X, gridY2.GetEndPoint(0).Y + RevitAPI.ToFoot(5 * viewScale), gridY2.GetEndPoint(0).Z);
+                            foreach(Line grid in gridLinesListY)
+                            {
+                                foreach (Line edge in edgeLinesY)
+                                {
+                                    if (grid.Intersect(edge) == SetComparisonResult.Superset)
+                                    {
+                                        referenceArray.Append(grid.Reference);
+                                    }
+                                    if (grid.Intersect(edge) == SetComparisonResult.Disjoint)
+                                    {
+                                        referenceArray.Append(edge.Reference);
+                                    }
+                                }
+                            }//check for intersection between walls and grids
+                               
+                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(5 * viewScale), edgeLinesY.First().Origin.Z);
+                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(5 * viewScale), edgeLinesY.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
-                            doc.Create.NewDimension(activeView, lineDim, referenceArrayLeftRight); //create dimension
+                            doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
+                               
                         }
 
                         t2.Commit();
