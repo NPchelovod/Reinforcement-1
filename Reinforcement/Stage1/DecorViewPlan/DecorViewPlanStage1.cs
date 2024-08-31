@@ -2,6 +2,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using Reinforcement.Stage1.DecorViewPlan;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,6 +39,13 @@ namespace Reinforcement
                 ComputeReferences = true,
                 View = activeView
             };
+
+            Options optFloor = new Options()
+            {
+                ComputeReferences = true,
+                View = activeView,
+                IncludeNonVisibleObjects = true
+            };//options for joined walls
 
             List<Line> gridLinesListX = new List<Line>();
             List<Line> gridLinesListY = new List<Line>(); //to create dims
@@ -91,14 +99,14 @@ namespace Reinforcement
                         foreach (Grid grid in gridList)
                         {
                             //check grids if they are 3D set to 2D
-                           /*if (grid.GetDatumExtentTypeInView(DatumEnds.End0, activeView) == DatumExtentType.Model)
-                            {
-                                grid.SetDatumExtentType(DatumEnds.End0, activeView, DatumExtentType.ViewSpecific);
-                            }
-                            if (grid.GetDatumExtentTypeInView(DatumEnds.End1, activeView) == DatumExtentType.Model)
-                            {
-                                grid.SetDatumExtentType(DatumEnds.End1, activeView, DatumExtentType.ViewSpecific);
-                            }*/
+                            /*if (grid.GetDatumExtentTypeInView(DatumEnds.End0, activeView) == DatumExtentType.Model)
+                             {
+                                 grid.SetDatumExtentType(DatumEnds.End0, activeView, DatumExtentType.ViewSpecific);
+                             }
+                             if (grid.GetDatumExtentTypeInView(DatumEnds.End1, activeView) == DatumExtentType.Model)
+                             {
+                                 grid.SetDatumExtentType(DatumEnds.End1, activeView, DatumExtentType.ViewSpecific);
+                             }*/
                             IList<Curve> curveList = grid.GetCurvesInView(DatumExtentType.ViewSpecific, activeView);
                             Curve curve = curveList.First();
                             Line line = curve as Line;
@@ -138,7 +146,7 @@ namespace Reinforcement
                             }
                         }
                         t1.Commit();
-                    }                 
+                    }
                     using (Transaction t2 = new Transaction(doc, "Добавление размерных линий"))
                     {
                         t2.Start();
@@ -191,9 +199,9 @@ namespace Reinforcement
 
                         var gridX1 = gridLinesListX.ElementAt(0) as Line;
                         var gridX2 = gridLinesListX.ElementAt(1) as Line;
-                        endpoint1 = new XYZ(gridX1.GetEndPoint(0).X + RevitAPI.ToFoot(12 * viewScale), gridX1.GetEndPoint(0).Y, gridX1.GetEndPoint(0).Z );
-                        endpoint2 = new XYZ(gridX2.GetEndPoint(0).X + RevitAPI.ToFoot(12 * viewScale), gridX2.GetEndPoint(0).Y, gridX2.GetEndPoint(0).Z );
-                        lineDim = Line.CreateBound(endpoint1,endpoint2);
+                        endpoint1 = new XYZ(gridX1.GetEndPoint(0).X + RevitAPI.ToFoot(12 * viewScale), gridX1.GetEndPoint(0).Y, gridX1.GetEndPoint(0).Z);
+                        endpoint2 = new XYZ(gridX2.GetEndPoint(0).X + RevitAPI.ToFoot(12 * viewScale), gridX2.GetEndPoint(0).Y, gridX2.GetEndPoint(0).Z);
+                        lineDim = Line.CreateBound(endpoint1, endpoint2);
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayX); //create dimension between all grids
 
                         endpoint1 = new XYZ(gridY1.GetEndPoint(0).X, gridY1.GetEndPoint(0).Y + RevitAPI.ToFoot(5 * viewScale), gridY1.GetEndPoint(0).Z);
@@ -206,48 +214,131 @@ namespace Reinforcement
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayUpDown); //create dimension between first and last grids
 
                         //creating dims for walls
+                        List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
 
-                        foreach (var wall in wallList)
+                        foreach (var wall in wallListDiafragm)
                         {
                             //creating dims X direction
-                            EdgeArray edges = wall.get_Geometry(opt).Select(x => x as Solid).First().Edges; //get wall edges
+                            EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
                             List<Line> edgeLinesY = new List<Line>();
                             List<Edge> wallEdgesY = new List<Edge>();
                             ReferenceArray referenceArray = new ReferenceArray();
+                            Line edgeLineX = null;
                             foreach (Edge edge in edges)
                             {
+                                /*if (edge.Reference == null)
+                                {
+                                    uidoc.ShowElements(wall);
+                                    t2.Commit();
+                                    return Result.Succeeded;
+                                }*/
+
                                 Line edgeLine = edge.AsCurve() as Line;
-                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && Math.Abs(edgeLine.Direction.Y) == 1)
+                                var directionY = Math.Abs(edgeLine.Direction.Y);
+                                var directionX = Math.Abs(edgeLine.Direction.X);
+                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
                                 {
                                     edgeLinesY.Add(edgeLine);
                                     wallEdgesY.Add(edge);
                                     referenceArray.Append(edge.Reference);
-                                }                               
-                            }
-                            foreach(Line grid in gridLinesListY)
-                            {
-                                foreach (Line edge in edgeLinesY)
+                                }
+                                else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
                                 {
-                                    if (grid.Intersect(edge) == SetComparisonResult.Superset)
+                                    edgeLineX = edgeLine;
+                                }
+                            }
+                            if (referenceArray.Size == 0)
+                            {
+                                continue;
+                            }
+                            foreach (Grid grid in YGridList)
+                            {
+                                Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
+                                var intersectX = gridCurve.Intersect(edgeLineX, out var res);
+                                int i = 0;
+                                if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                {
+                                    referenceArray.Append(gridCurve.Reference);                                   
+                                }
+                                else if (intersectX == SetComparisonResult.Overlap)
+                                {
+                                    foreach (Line edge in edgeLinesY)
                                     {
-                                        referenceArray.Append(grid.Reference);
-                                    }
-                                    if (grid.Intersect(edge) == SetComparisonResult.Disjoint)
-                                    {
+                                        if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                        {
+                                            referenceArray.set_Item(i, gridCurve.Reference);
+                                            break;
+                                        }
+                                        i++;
                                     }
                                 }
-                            }//check for intersection between walls and grids
-                               
-                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(5 * viewScale), edgeLinesY.First().Origin.Z);
-                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(5 * viewScale), edgeLinesY.First().Origin.Z);
+                            }//check for intersection between walls and grids, and find nearest grid to wall
+
+                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(6 * viewScale), edgeLinesY.First().Origin.Z);
+                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(6 * viewScale), edgeLinesY.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
-                            doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                               
+                            var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
+                            MoveTextInDimension.Move(dimension, viewScale);
+
+                            //creating dims Y direction
+                            List<Line> edgeLinesX = new List<Line>();
+                            List<Edge> wallEdgesX = new List<Edge>();
+                            referenceArray = new ReferenceArray();
+                            Line edgeLineY = null;
+                            foreach (Edge edge in edges)
+                            {
+                                Line edgeLine = edge.AsCurve() as Line;
+                                var directionY = Math.Abs(edgeLine.Direction.Y);
+                                var directionX = Math.Abs(edgeLine.Direction.X);
+                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
+                                {
+                                    edgeLinesX.Add(edgeLine);
+                                    wallEdgesX.Add(edge);
+                                    referenceArray.Append(edge.Reference);
+                                }
+                                else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
+                                {
+                                    edgeLineY = edgeLine;
+                                }
+                            }
+                            if (referenceArray.Size == 0)
+                            {
+                                continue;
+                            }
+                            foreach (Grid grid in XGridList)
+                            {
+                                Line gridCurve = grid.get_Geometry(opt).First() as Line;
+                                var intersectY = gridCurve.Intersect(edgeLineY, out var res);
+                                int i = 0;
+                                if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                {
+                                    referenceArray.Append(gridCurve.Reference);
+                                }
+                                else if (intersectY == SetComparisonResult.Overlap)
+                                {
+                                    foreach (Line edge in edgeLinesX)
+                                    {
+                                        if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                        {
+                                            referenceArray.set_Item(i, gridCurve.Reference);
+                                            break;
+                                        }
+                                        i++;
+                                    }
+                                }
+                            }//check for intersection between walls and grids, and find nearest grid to wall
+
+                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(6 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
+                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(6 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
+                            lineDim = Line.CreateBound(endpoint1, endpoint2);
+                            dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
+                            MoveTextInDimension.Move(dimension, viewScale);
+
                         }
 
                         t2.Commit();
-                    }    
-                    
+                    }
+
                     tg.Assimilate();
                 }
             }
