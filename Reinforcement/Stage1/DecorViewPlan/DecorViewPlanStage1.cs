@@ -272,11 +272,11 @@ namespace Reinforcement
                                 }
                             }//check for intersection between walls and grids, and find nearest grid to wall
 
-                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(6 * viewScale), edgeLinesY.First().Origin.Z);
-                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(6 * viewScale), edgeLinesY.First().Origin.Z);
+                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
+                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
                             var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            MoveTextInDimension.Move(dimension, viewScale);
+                            MoveTextInDimension.Move(dimension, viewScale, activeView);
 
                             //creating dims Y direction
                             List<Line> edgeLinesX = new List<Line>();
@@ -334,11 +334,11 @@ namespace Reinforcement
                                 }
                             }//check for intersection between walls and grids, and find nearest grid to wall
 
-                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(6 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
-                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(6 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
+                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
+                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
                             dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            MoveTextInDimension.Move(dimension, viewScale);
+                            MoveTextInDimension.Move(dimension, viewScale, activeView);
 
                         }
 
