@@ -221,7 +221,7 @@ namespace Reinforcement
                                 {
                                     edgeLinesY.Add(edgeLine);
                                     wallEdgesY.Add(edge);
-                                    //referenceArray.Append(edge.Reference);
+                                    referenceArray.Append(edge.Reference);
                                 }                               
                             }
                             foreach(Line grid in gridLinesListY)
@@ -234,7 +234,6 @@ namespace Reinforcement
                                     }
                                     if (grid.Intersect(edge) == SetComparisonResult.Disjoint)
                                     {
-                                        referenceArray.Append(edge.Reference);
                                     }
                                 }
                             }//check for intersection between walls and grids
