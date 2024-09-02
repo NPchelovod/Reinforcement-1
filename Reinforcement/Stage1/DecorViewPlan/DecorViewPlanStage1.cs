@@ -148,6 +148,9 @@ namespace Reinforcement
                         }
                         t1.Commit();
                     }
+
+                        List<Dimension> dimensions = new List<Dimension>();//create list of dimension for t3 transaction
+
                     using (Transaction t2 = new Transaction(doc, "Добавление размерных линий"))
                     {
                         t2.Start();
@@ -215,7 +218,7 @@ namespace Reinforcement
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayUpDown); //create dimension between first and last grids
 
                         //creating dims for walls
-                       // List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
+                        //List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
 
                         foreach (var wall in wallList)
                         {
@@ -246,8 +249,6 @@ namespace Reinforcement
                             {
                                 continue;
                             }
-                           
-                            
 
                             foreach (Grid grid in YGridList)
                             {
@@ -256,7 +257,7 @@ namespace Reinforcement
                                 int i = 0;
                                 if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                 {
-                                    referenceArray.Append(gridCurve.Reference);                                   
+                                    referenceArray.Append(gridCurve.Reference);
                                 }
                                 else if (intersectX == SetComparisonResult.Overlap)
                                 {
@@ -276,7 +277,8 @@ namespace Reinforcement
                             endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
                             var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            MoveTextInDimension.Move(dimension, viewScale, activeView);
+
+                            dimensions.Add(dimension);
 
                             //creating dims Y direction
                             List<Line> edgeLinesX = new List<Line>();
@@ -338,13 +340,19 @@ namespace Reinforcement
                             endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
                             dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            MoveTextInDimension.Move(dimension, viewScale, activeView);
-
+                            dimensions.Add(dimension);
                         }
-
                         t2.Commit();
+                        using (Transaction t3 = new Transaction(doc, "Перевдинуть размеры"))
+                        {
+                            t3.Start();
+                            foreach (Dimension dim in dimensions)
+                            {
+                                MoveTextInDimension.Move(dim, viewScale, activeView);
+                            }
+                            t3.Commit();
+                        }
                     }
-
                     tg.Assimilate();
                 }
             }

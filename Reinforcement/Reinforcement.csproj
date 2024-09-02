@@ -107,6 +107,7 @@
     <Compile Include="Test\SetDimensionTextPosition.cs" />
     <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
+    <Compile Include="Test\TestmoveDims.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="SlabSchedulesCommand.cs" />
     <Compile Include="CreateReinforceFamily\RcFonCommand.cs" />
@@ -123,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\ES_DecorViewPlanStage1.bmp" />
     <None Include="Resources\ES_OpColors.png" />
     <None Include="Resources\ES_SelectWithFilter.png" />
     <None Include="Resources\ЕС_Выбор.png" />

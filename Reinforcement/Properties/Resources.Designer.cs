@@ -83,6 +83,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ES_DecorViewPlanStage1 {
+            get {
+                object obj = ResourceManager.GetObject("ES_DecorViewPlanStage1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ES_dobor {
             get {
                 object obj = ResourceManager.GetObject("ES_dobor", resourceCulture);

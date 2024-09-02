@@ -124,6 +124,10 @@ namespace Reinforcement
             breakLines.AddPushButton(CreateButtonForSplit("Линия разрыва", "Линия разрыва", "Reinforcement.DrBreakLinesCommand", Properties.Resources.ES_breakLines,
                 "Размещение линии разрыва", $"Имя семейства должно быть {DrBreakLinesCommand.FamName}"));
 
+            CreateButton("Оформление\nвида", "Оформление вида", "Reinforcement.DecorViewPlanStage1", Properties.Resources.ES_DecorViewPlanStage1,
+            "Оформление вида для стадии П", "",
+            panelDrawing);
+
 
 
 
