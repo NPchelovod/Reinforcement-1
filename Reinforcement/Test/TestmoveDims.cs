@@ -39,9 +39,9 @@ namespace Reinforcement
                     var sel = uidoc.Selection;
                     var list = sel.GetElementIds();
                     var elem = list.First();
-                    var dim = doc.GetElement(elem) as Dimension; 
-
-                    MoveTextInDimension.Move(dim, doc.ActiveView.Scale, doc.ActiveView);
+                    var dim = doc.GetElement(elem) as Dimension;
+                    var oldPos = dim.Segments.get_Item(0).TextPosition;
+                    dim.Segments.get_Item(0).TextPosition = Transform.CreateTranslation(new XYZ(-3,0,0)).OfPoint(oldPos);
                     t.Commit();
                 }
             }

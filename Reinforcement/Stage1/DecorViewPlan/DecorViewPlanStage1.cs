@@ -230,7 +230,6 @@ namespace Reinforcement
                             Line edgeLineX = null;
                             foreach (Edge edge in edges)
                             {
-
                                 Line edgeLine = edge.AsCurve() as Line;
                                 var directionY = Math.Abs(edgeLine.Direction.Y);
                                 var directionX = Math.Abs(edgeLine.Direction.X);
@@ -238,7 +237,7 @@ namespace Reinforcement
                                 {
                                     edgeLinesY.Add(edgeLine);
                                     wallEdgesY.Add(edge);
-                                    referenceArray.Append(edge.Reference);
+                                    referenceArray.Insert(edge.Reference, referenceArray.Size);
                                 }
                                 else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
                                 {
@@ -249,7 +248,6 @@ namespace Reinforcement
                             {
                                 continue;
                             }
-
                             foreach (Grid grid in YGridList)
                             {
                                 Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
@@ -257,7 +255,7 @@ namespace Reinforcement
                                 int i = 0;
                                 if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                 {
-                                    referenceArray.Append(gridCurve.Reference);
+                                    referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
                                 }
                                 else if (intersectX == SetComparisonResult.Overlap)
                                 {
@@ -265,7 +263,7 @@ namespace Reinforcement
                                     {
                                         if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
                                         {
-                                            referenceArray.set_Item(i, gridCurve.Reference);
+                                            referenceArray.set_Item(i, new Reference(grid));
                                             break;
                                         }
                                         i++;
@@ -276,10 +274,10 @@ namespace Reinforcement
                             endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
                             endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
+                            referenceArray.ReverseIterator();
                             var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-
                             dimensions.Add(dimension);
-
+                            
                             //creating dims Y direction
                             List<Line> edgeLinesX = new List<Line>();
                             List<Edge> wallEdgesX = new List<Edge>();
@@ -315,12 +313,12 @@ namespace Reinforcement
                             */
                             foreach (Grid grid in XGridList)
                             {
-                                Line gridCurve = grid.get_Geometry(opt).First() as Line;
+                                Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
                                 var intersectY = gridCurve.Intersect(edgeLineY, out var res);
                                 int i = 0;
                                 if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                 {
-                                    referenceArray.Append(gridCurve.Reference);
+                                    referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
                                 }
                                 else if (intersectY == SetComparisonResult.Overlap)
                                 {
@@ -328,7 +326,7 @@ namespace Reinforcement
                                     {
                                         if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
                                         {
-                                            referenceArray.set_Item(i, gridCurve.Reference);
+                                            referenceArray.set_Item(i, new Reference(grid));
                                             break;
                                         }
                                         i++;
@@ -341,17 +339,15 @@ namespace Reinforcement
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
                             dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
                             dimensions.Add(dimension);
-                        }
-                        t2.Commit();
-                        using (Transaction t3 = new Transaction(doc, "Перевдинуть размеры"))
-                        {
-                            t3.Start();
+                            
                             foreach (Dimension dim in dimensions)
                             {
                                 MoveTextInDimension.Move(dim, viewScale, activeView);
                             }
-                            t3.Commit();
+                            
+                            dimensions.Clear();
                         }
+                        t2.Commit();
                     }
                     tg.Assimilate();
                 }

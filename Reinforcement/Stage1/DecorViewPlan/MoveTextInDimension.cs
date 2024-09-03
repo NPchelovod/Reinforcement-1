@@ -35,58 +35,55 @@ namespace Reinforcement.Stage1.DecorViewPlan
                     if (dimension.Value <= RevitAPI.ToFoot(maxValue))
                     {
                         XYZ oldTextPosition = dimension.TextPosition;
-                        XYZ newTextPosition = new XYZ(oldTextPosition.X - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Y, oldTextPosition.Z);
-                        dimension.ResetTextPosition();
+                        XYZ newTextPosition = Transform.CreateTranslation(new XYZ(- RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
                         dimension.TextPosition = newTextPosition;
                     }
                 }
                 else
                 {
-                    var list = dimension.Segments
-                       .Cast<DimensionSegment>()
-                        .OrderBy(x => x.Origin.X)
-                        .ToList();
+                    var list = dimension.Segments;
+                       //.Cast<DimensionSegment>()
+                       // .OrderBy(x => x.Origin.X)
+                       // .ToList();
                     int n = 0;
                     while (n + 1 < dimension.NumberOfSegments)
                     {
-                        var dim1 = list.ElementAt(n);
-                        var dim2 = list.ElementAt(++n);
+                        var dim1 = list.get_Item(n);
+                        var dim2 = list.get_Item(++n);
+                       if (dim1.TextPosition.X < dim2.TextPosition.X
+                            && dim1.Value <= RevitAPI.ToFoot(maxValue))
+                        {
+                            XYZ oldTextPosition = dim1.TextPosition;
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(- RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
+                            dim1.TextPosition = newTextPosition;
+                        }
+                        if (dim1.TextPosition.X > dim2.TextPosition.X
+                            && dim1.Value <= RevitAPI.ToFoot(maxValue))
+                        {
+                            XYZ oldTextPosition = dim1.TextPosition;
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
+
+                            dim1.TextPosition = newTextPosition;
+                        }
+                        if (dim1.TextPosition.X > dim2.TextPosition.X
+                            && dim2.Value <= RevitAPI.ToFoot(maxValue))
+                        {
+                            XYZ oldTextPosition = dim2.TextPosition;
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(- RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
+
+                            dim2.TextPosition = newTextPosition;
+                        }
                         if (dim1.TextPosition.X < dim2.TextPosition.X
-                            && dim1.Value <= RevitAPI.ToFoot(maxValue))
-                        {
-                            XYZ oldTextPosition = dim1.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Y, oldTextPosition.Z);
-                            dim1.TextPosition = newTextPosition;
-                        }
-                        if(dim1.TextPosition.X > dim2.TextPosition.X
-                            && dim1.Value <= RevitAPI.ToFoot(maxValue))
-                        {
-                            XYZ oldTextPosition = dim1.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X + RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Y, oldTextPosition.Z);
-
-                            dim1.TextPosition = newTextPosition;
-                        }
-                        if(dim1.TextPosition.X > dim2.TextPosition.X
                             && dim2.Value <= RevitAPI.ToFoot(maxValue))
                         {
                             XYZ oldTextPosition = dim2.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Y, oldTextPosition.Z);
-
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
                             dim2.TextPosition = newTextPosition;
                         }
-                        if(dim1.TextPosition.X < dim2.TextPosition.X
-                            && dim2.Value <= RevitAPI.ToFoot(maxValue))
-                        {
-                            XYZ oldTextPosition = dim2.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X + RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Y, oldTextPosition.Z);
-
-                            dim2.TextPosition = newTextPosition;
-                        }
-
                     }
-
                 } //move dim text to left or right if value smaller than maxValue mm
             }
+            
             else if (Math.Abs(line.Direction.Y) == 1)
             {
                 if (dimension.NumberOfSegments == 0)
@@ -94,7 +91,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                     if (dimension.Value <= RevitAPI.ToFoot(maxValue))
                     {
                         XYZ oldTextPosition = dimension.TextPosition;
-                        XYZ newTextPosition = new XYZ(oldTextPosition.X, oldTextPosition.Y - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Z);
+                        XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0, - RevitAPI.ToFoot(offSet * viewScale), 0)).OfPoint(oldTextPosition);
 
                         dimension.TextPosition = newTextPosition;
                     }
@@ -114,7 +111,8 @@ namespace Reinforcement.Stage1.DecorViewPlan
                             && dim1.Value <= RevitAPI.ToFoot(maxValue))
                         {
                             XYZ oldTextPosition = dim1.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X, oldTextPosition.Y - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Z);
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0, - RevitAPI.ToFoot(offSet * viewScale), 0))
+                                                           .OfPoint(oldTextPosition);
 
                             dim1.TextPosition = newTextPosition;
                         }
@@ -122,7 +120,8 @@ namespace Reinforcement.Stage1.DecorViewPlan
                             && dim1.Value <= RevitAPI.ToFoot(maxValue))
                         {
                             XYZ oldTextPosition = dim1.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X, oldTextPosition.Y + RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Z);
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0, RevitAPI.ToFoot(offSet * viewScale), 0))
+                                                           .OfPoint(oldTextPosition);
 
                             dim1.TextPosition = newTextPosition;
                         }
@@ -130,7 +129,8 @@ namespace Reinforcement.Stage1.DecorViewPlan
                             && dim2.Value <= RevitAPI.ToFoot(maxValue))
                         {
                             XYZ oldTextPosition = dim2.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X, oldTextPosition.Y - RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Z);
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0, - RevitAPI.ToFoot(offSet * viewScale), 0))
+                                                           .OfPoint(oldTextPosition);
 
                             dim2.TextPosition = newTextPosition;
                         }
@@ -138,14 +138,15 @@ namespace Reinforcement.Stage1.DecorViewPlan
                             && dim2.Value <= RevitAPI.ToFoot(maxValue))
                         {
                             XYZ oldTextPosition = dim2.TextPosition;
-                            XYZ newTextPosition = new XYZ(oldTextPosition.X, oldTextPosition.Y + RevitAPI.ToFoot(offSet * viewScale), oldTextPosition.Z);
+                            XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0,  RevitAPI.ToFoot(offSet * viewScale), 0))
+                                                           .OfPoint(oldTextPosition);
 
                             dim2.TextPosition = newTextPosition;
                         }
 
                     }
                 } //move dim text to left or right if value smaller than maxValue mm
-
+            
 
             }
         }
