@@ -126,7 +126,7 @@ namespace Reinforcement
                             if (Math.Abs(line.Direction.Y) == 1)
                             {
                                 var endpoint1Y = minPtFloor.First().Y - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
-                                var endpoint2Y = maxPtFloor.First().Y + RevitAPI.ToFoot(15*viewScale); //calcualte offset from floor
+                                var endpoint2Y = maxPtFloor.First().Y + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
 
                                 XYZ endpoint1 = new XYZ(startXPtGrid, endpoint1Y, startZPtGrid);
                                 XYZ endpoint2 = new XYZ(endXPtGrid, endpoint2Y, endZPtGrid);
@@ -137,7 +137,7 @@ namespace Reinforcement
                             else if (Math.Abs(line.Direction.X) == 1)
                             {
                                 var endpoint1X = minPtFloor.First().X - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
-                                var endpoint2X = maxPtFloor.First().X + RevitAPI.ToFoot(15*viewScale); //calcualte offset from floor
+                                var endpoint2X = maxPtFloor.First().X + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
 
                                 XYZ endpoint1 = new XYZ(endpoint1X, startYPtGrid, startZPtGrid);
                                 XYZ endpoint2 = new XYZ(endpoint2X, endYPtGrid, endZPtGrid);
@@ -148,9 +148,6 @@ namespace Reinforcement
                         }
                         t1.Commit();
                     }
-
-                        List<Dimension> dimensions = new List<Dimension>();//create list of dimension for t3 transaction
-
                     using (Transaction t2 = new Transaction(doc, "Добавление размерных линий"))
                     {
                         t2.Start();
@@ -222,6 +219,7 @@ namespace Reinforcement
 
                         foreach (var wall in wallList)
                         {
+                            List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
                             //creating dims X direction
                             EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
                             List<Line> edgeLinesY = new List<Line>();
