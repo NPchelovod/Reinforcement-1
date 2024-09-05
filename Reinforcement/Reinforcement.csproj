@@ -184,8 +184,8 @@
   <PropertyGroup>
     <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
 if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2024"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(AppData)\Autodesk\REVIT\Addins\2024"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Autodesk\REVIT\Addins\2024"
+if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2024"
+if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2024"
 if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
 if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\REVIT\Addins\2021"
 if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\REVIT\Addins\2021"
