@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -43,7 +44,18 @@ namespace Reinforcement
                     //Get viewports
                     var colViewPorts = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Viewports).OfClass(typeof(FamilySymbol));
 
+                    //Create an empty sheet
+                    ElementId titleBlockTypeId = new ElementId(218938);
+                    var newSheet = ViewSheet.Create(doc, titleBlockTypeId);
+
+
+                    RevitAPI.ToFoot(300);
+                    
+
                     t.Commit();
+
+                   
+
                 }
             }
             catch (Exception ex)
