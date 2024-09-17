@@ -17,6 +17,7 @@ namespace Reinforcement
     public class CommandCreateViewPlan : IExternalCommand
     {
         public List<Level> Levels { get; set; } = new List<Level>();
+        public string MarkElevation { get; set; }
 
         public Result Execute(
             ExternalCommandData commandData,
