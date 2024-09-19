@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="GetLengthElectricalWiring.cs" />
     <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
     <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
