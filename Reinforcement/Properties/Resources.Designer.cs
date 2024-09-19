@@ -63,19 +63,9 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ES_breakLine {
+        internal static System.Drawing.Bitmap ES_BreakLine {
             get {
-                object obj = ResourceManager.GetObject("ES_breakLine", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_breakLines {
-            get {
-                object obj = ResourceManager.GetObject("ES_breakLines", resourceCulture);
+                object obj = ResourceManager.GetObject("ES_BreakLine", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -106,26 +96,6 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ES_dot {
             get {
                 object obj = ResourceManager.GetObject("ES_dot", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_dot1 {
-            get {
-                object obj = ResourceManager.GetObject("ES_dot1", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_dot2 {
-            get {
-                object obj = ResourceManager.GetObject("ES_dot2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -166,6 +136,16 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ES_Line1 {
             get {
                 object obj = ResourceManager.GetObject("ES_Line1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_NoteLine {
+            get {
+                object obj = ResourceManager.GetObject("ES_NoteLine", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

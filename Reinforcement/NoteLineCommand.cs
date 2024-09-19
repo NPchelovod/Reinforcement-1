@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class DrBreakLinesCommand : IExternalCommand
+    public class NoteLineCommand : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -41,8 +41,9 @@ namespace Reinforcement
             try
             {
                 foreach (var element in symbols)
-                {   
-                    if (element.Name == FamName)
+                {
+                    ElementType elemType = element as ElementType;
+                    if (elemType.FamilyName == FamName)
                     {
                         symbol = element as FamilySymbol;
                         break;
@@ -58,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "Линейный разрыв";
+        public static  string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска";
 
     }
     }

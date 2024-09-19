@@ -3,6 +3,7 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using AW = Autodesk.Windows;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -57,81 +58,116 @@ namespace Reinforcement
             return buttonData;
         }
 
+        public AW.RibbonItem GetButton(string tabName, string panelName, string itemName)
+        {
+            AW.RibbonControl ribbon = AW.ComponentManager.Ribbon;
+            foreach (AW.RibbonTab tab in ribbon.Tabs)
+            {
+                if (tab.Name == tabName)
+                {
+                    foreach (AW.RibbonPanel panel in tab.Panels)
+                    {
+                        if (panel.Source.Title == panelName)
+                        {
+                            return panel.FindItem("CustomCtrl_%CustomCtrl_%" + tabName + "%" + panelName + "%" + itemName, true) as
+                                AW.RibbonItem;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public Result OnStartup(UIControlledApplication a)
         {
-            string tabName = "ЕС КР", 
-                   panelName = "Армирование",
-                   panel2Name = "Оформление",
-                   panel3Name = "Спецификации",
-                   panel4Name = "Выбор";
+            //Create tab
+            string tabName = "ЕС КР";
             a.CreateRibbonTab(tabName);
-            RibbonPanel panelReinforcement = a.CreateRibbonPanel(tabName, panelName);
-            RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, panel2Name);
-            RibbonPanel panelSchedules = a.CreateRibbonPanel(tabName, panel3Name);
-            RibbonPanel panelSelection = a.CreateRibbonPanel(tabName, panel4Name);
+
+            //Create panels
+            RibbonPanel panelSpds = a.CreateRibbonPanel(tabName, "СПДС");
+            RibbonPanel panelSketchReinf = a.CreateRibbonPanel(tabName, "Схематичное армирование");
+            RibbonPanel panelDetailReinf = a.CreateRibbonPanel(tabName, "Детальное армирование");
+            RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, "Оформление");
+            RibbonPanel panelSelection = a.CreateRibbonPanel(tabName, "Выбор");
 
 
-            CreateButton("С торца", "С торца", "Reinforcement.RcEndCommand", Properties.Resources.ES_dot1,
-                "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelReinforcement);
 
-            CreateButton("Спецификации", "Спецификации", "Reinforcement.CreateSchedules", Properties.Resources.ES_Line1,
-                "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelReinforcement);
 
-            CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_Line1,
-                "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
-                panelReinforcement);
+            //1. PanelSpds
+             RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
+                "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}", panelSpds);
+             RibbonItemData noteLine = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand", Properties.Resources.ES_NoteLine,
+                 "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand.FamName}", panelSpds);
+             IList<RibbonItem> stackedItemsLines = panelSpds.AddStackedItems(breakLine, noteLine);
 
+             var btnBreakLine = GetButton(tabName, panelSpds.Name, "Линия обрыва");
+             var btnNoteLine = GetButton(tabName, panelSpds.Name, "Выноска");
+
+             btnBreakLine.Size = AW.RibbonItemSize.Large;
+             btnBreakLine.ShowText = false;
+
+             btnNoteLine.Size = AW.RibbonItemSize.Large;
+             btnNoteLine.ShowText = false;
+
+
+            //2. PanelSketchReinf
             CreateButton("Доборные стержни", "Доборные\nстержни", "Reinforcement.RcAddCommand",
                 Properties.Resources.ES_dobor,
                 "Размещение доборных арматурных стержней", $"Имя семейства должно быть {RcAddCommand.FamName}",
-                panelReinforcement);
-
-            CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_homut,
-                "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
-                panelReinforcement);
+                panelSketchReinf);
 
             CreateButton("Фоновое\nармирование", "Фоновое армирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
-                panelReinforcement);
+                panelSketchReinf);
 
-            CreateButton("Выбрать\nродительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
-             "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
-            panelReinforcement);
+            //3. PanelDetailReinf
+            CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_dot,
+                "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelDetailReinf);
 
-                //Create buttons for changing colors of elements on the active view
+            CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_Line1,
+                "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
+                panelDetailReinf);
+
+            CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_homut,
+                "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
+                panelDetailReinf);
+
+            //4. PanelDrawing
+            //Create buttons for changing colors of elements on the active view
             RibbonItemData reinfColors = CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
                 "Применение фильтров для цвета арматуры", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
             RibbonItemData openColors = CreateButtonData("Цвета отверстий", "Цвета отверстий", "Reinforcement.OpeningsColors", Properties.Resources.ES_OpColors,
                 "Применение фильтров для цвета отверстий", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
             IList<RibbonItem> stackedItems = panelDrawing.AddStackedItems(openColors, reinfColors);
 
-            CreateButton("Спецификации на Пм", "Спецификации на Пм", "Reinforcement.SlabSchedulesCommand", Properties.Resources.ES_Slab,
-                "Копирование спецификаций на плиту", "Команда работает только в шаблоне ЕС", panelSchedules);
+            var btnReinfColors = GetButton(tabName, panelDrawing.Name, "Цвета арматуры");
+            var btnOpenColors = GetButton(tabName, panelDrawing.Name, "Цвета отверстий");
 
-            CreateButton("Спецификации на Ядж", "Спецификации на Ядж", "Reinforcement.WallSchedulesCommand", Properties.Resources.ES_Wall,
-                "Копирование спецификаций на Ядж", "Команда работает только в шаблоне ЕС", panelSchedules);
+            btnReinfColors.Size = AW.RibbonItemSize.Large;
+            btnReinfColors.ShowText = false;
 
-            CreateButton("Выбор с фильтром", "Выбор с фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
-    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection); ;
+            btnOpenColors.Size = AW.RibbonItemSize.Large;
+            btnOpenColors.ShowText = false;
 
 
-            SplitButtonData breakLinesData = new SplitButtonData("Линия обрыва", "Линия обрыва");
-
-            SplitButton breakLines = panelDrawing.AddItem(breakLinesData) as SplitButton;
-
-            breakLines.AddPushButton(CreateButtonForSplit("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_breakLine,
-                "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}"));
-            breakLines.AddPushButton(CreateButtonForSplit("Линия разрыва", "Линия разрыва", "Reinforcement.DrBreakLinesCommand", Properties.Resources.ES_breakLines,
-                "Размещение линии разрыва", $"Имя семейства должно быть {DrBreakLinesCommand.FamName}"));
 
             CreateButton("Оформление\nвида", "Оформление вида", "Reinforcement.DecorViewPlanStage1", Properties.Resources.ES_DecorViewPlanStage1,
             "Оформление вида для стадии П", "",
             panelDrawing);
 
 
+            //5. PanelSelection
+            CreateButton("Выбрать\nродительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+             "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
+            panelSelection);
+
+            CreateButton("Выбор с фильтром", "Выбор с фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
+    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection); 
 
 
-
+            
+            
             return Result.Succeeded;
         }
         public BitmapImage Convert(Image img)
@@ -151,6 +187,9 @@ namespace Reinforcement
 
 
         }
+
+
+
         public Result OnShutdown(UIControlledApplication a)
         {
             return Result.Succeeded;

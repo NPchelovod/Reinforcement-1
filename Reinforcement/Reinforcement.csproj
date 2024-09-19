@@ -40,6 +40,9 @@
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2020\Revit.exe</StartProgram>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AdWindows">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\AdWindows.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="RevitAPI">
@@ -66,6 +69,7 @@
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="CreateReinforceFamily\RcShpilkaCommand.cs" />
+    <Compile Include="NoteLineCommand.cs" />
     <Compile Include="LinearCopy\MainViewLinearCopyElement.xaml.cs">
       <DependentUpon>MainViewLinearCopyElement.xaml</DependentUpon>
     </Compile>
@@ -92,7 +96,6 @@
     <Compile Include="SelectParentElement.cs" />
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="RevitAPI.cs" />
-    <Compile Include="DrBreakLinesCommand.cs" />
     <Compile Include="DrBreakLineCommand.cs" />
     <Compile Include="MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
@@ -120,7 +123,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
-    <None Include="Resources\ES_DecorViewPlanStage1.bmp" />
+    <None Include="Resources\ES_NoteLine.png" />
+    <None Include="Resources\ES_BreakLine.png" />
+    <None Include="Resources\ES_dot.png" />
     <None Include="Resources\ES_OpColors.png" />
     <None Include="Resources\ES_SelectWithFilter.png" />
     <None Include="Resources\ЕС_Выбор.png" />
@@ -132,12 +137,10 @@
     <None Include="Resources\ES_dot1.png" />
     <None Include="Resources\title.png" />
     <None Include="Resources\ES_title.png" />
-    <None Include="Resources\ES_breakLine.png" />
     <None Include="Resources\ES_breakLines.png" />
     <None Include="Resources\ES_line.png" />
     <None Include="Resources\ES_homut.png" />
     <None Include="Resources\ES_fon.png" />
-    <None Include="Resources\ES_dot.png" />
     <None Include="Resources\ES_dobor.png" />
   </ItemGroup>
   <ItemGroup>
