@@ -37,6 +37,7 @@ namespace Reinforcement
             float d25Sum = 0;
             float d32Sum = 0;
             float d40Sum = 0;
+            float d50Sum = 0;
             float totalLength = 0;
             float totalLengthCheck = 0;
 
@@ -52,6 +53,8 @@ namespace Reinforcement
             {
                 { "_d25", length => d25Sum += length },
                 { "_d25 d25", length => d25Sum += (length * 2) },
+                { "_d25 d25 d25", length => d25Sum += (length * 3) },
+                { "_d25 d25 d25 d25", length => d25Sum += (length * 4) },
                 { "_d32", length => d32Sum += length },
                 { "_d32 d25", length =>
                 {
@@ -59,12 +62,34 @@ namespace Reinforcement
                     d32Sum += length;
                 }},
                 { "_d32 d32", length => d32Sum += (length * 2) },
+                { "_d32 d40", length =>
+                {
+                    d32Sum += length;
+                    d40Sum += length;
+                }},
                 { "_d32 d32 d25", length =>
                 {
                     d25Sum += length;
                     d32Sum += (length * 2);
                 }},
-                { "_d40", length => d40Sum += length }
+                { "_d32 d32 d32", length => d32Sum += (length * 3) },
+                { "_d32 d50", length =>
+                {
+                    d32Sum += length;
+                    d50Sum += length;
+                }},
+                { "_d40", length => d40Sum += length },
+                { "_d50", length => d50Sum += length }
+                { "_d32 d32 d40", length =>
+                {
+                    d40Sum += length;
+                    d32Sum += (length * 2);
+                }},
+                { "_d25 d40", length =>
+                {
+                    d25Sum += length;
+                    d40Sum += length;
+                }},
             };
 
             //Calculate lengths of electicalWiring
@@ -119,7 +144,7 @@ namespace Reinforcement
             //    }
             //}
             bool flag = (totalLength == totalLengthCheck);
-            MessageBox.Show($"Сумма d25 равна {d25Sum}\n Сумма d32 равна {d32Sum}\n Сумма d40 равна {d40Sum} \n Корректность подсчета {flag}");
+            MessageBox.Show($"Сумма d25 равна {d25Sum}\n Сумма d32 равна {d32Sum}\n Сумма d40 равна {d40Sum} \n Сумма d50 равна {d50Sum} \n Корректность подсчета {flag}");
 
             return Result.Succeeded;
         }
