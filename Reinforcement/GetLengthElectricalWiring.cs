@@ -79,7 +79,7 @@ namespace Reinforcement
                     d50Sum += length;
                 }},
                 { "_d40", length => d40Sum += length },
-                { "_d50", length => d50Sum += length }
+                { "_d50", length => d50Sum += length },
                 { "_d32 d32 d40", length =>
                 {
                     d40Sum += length;
