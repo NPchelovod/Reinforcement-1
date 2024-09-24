@@ -45,30 +45,34 @@ namespace Reinforcement
 
             ElementClassFilter filter = new ElementClassFilter(typeof(FamilyInstance));
             var collection = new FilteredElementCollector(doc)
-                .OfClass(typeof(Family))
-                .Where(x => x.Name == FamTypeName)
+                .OfClass(typeof(FamilyInstance))
+                .Cast<FamilyInstance>()
+                .Where(x => x.Symbol.Family.Name == FamTypeName)
                 .ToList();
             if (collection.Count == 0)
             {
                 return Result.Failed;
             }
-            sel.SetElementIds(collection.FirstOrDefault().GetDependentElements(filter));
+            sel.SetElementIds(collection.Select(x => x.Id).ToList());
             DialogResult dialogResult = MessageBox.Show("Показать элементы на виде?", "Перебор элементов", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.Yes)
             {
-
                 int n = 0;
-                while (n < collection.FirstOrDefault().GetDependentElements(filter).Count)
+                while (n < collection.Count)
                 {
-                    var elementId = collection.FirstOrDefault().GetDependentElements(filter).ElementAt(n);
+                    var elementId = collection.ElementAt(n).Id;
                     var element = doc.GetElement(elementId);
                     var viewId = element.OwnerViewId;
-                    uidoc.ActiveView = doc.GetElement(viewId) as Autodesk.Revit.DB.View;
-                    // uidoc.ShowElements(element);
-                    dialogResult = MessageBox.Show("Показать далее?", "Перебор элементов", MessageBoxButtons.YesNo);
-                    if (dialogResult == DialogResult.No)
+                    var view = doc.GetElement(viewId) as Autodesk.Revit.DB.View;
+                    if (uidoc.ActiveView.Title != view.Title)
                     {
-                        return Result.Succeeded;
+                        uidoc.ActiveView = view;
+                        // uidoc.ShowElements(element);
+                        dialogResult = MessageBox.Show("Показать далее?", "Перебор элементов", MessageBoxButtons.YesNo);
+                        if (dialogResult == DialogResult.No)
+                        {
+                            return Result.Succeeded;
+                        }
                     }
                     n++;
                 }
