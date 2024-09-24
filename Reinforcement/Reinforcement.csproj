@@ -88,6 +88,8 @@
     <Compile Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml.cs">
       <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SetPilesByDWG.cs" />
+    <Compile Include="Stage1\DecorViewPlan\DecorViewPlanStage1.cs" />
     <Compile Include="Stage1\DecorViewPlan\MoveTextInDimension.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
