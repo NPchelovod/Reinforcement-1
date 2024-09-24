@@ -78,6 +78,18 @@ namespace Reinforcement
             return null;
         }
 
+        public IList<RibbonItem> CreateStackedItems(RibbonPanel panel, RibbonItemData firstItem,
+            RibbonItemData secondItem, string firstButtonName, string secondButtonName, string tabName)
+        {
+            IList<RibbonItem> stackedItems = panel.AddStackedItems(firstItem, secondItem);
+            var firstRibbonItem = GetButton(tabName, panel.Name, firstButtonName);
+            var secondRibbonItem = GetButton(tabName, panel.Name, secondButtonName);
+            firstRibbonItem.Size = AW.RibbonItemSize.Large;
+            secondRibbonItem.ShowText = false;
+
+            return stackedItems;
+        }
+        
         public Result OnStartup(UIControlledApplication a)
         {
             //Create tab
@@ -99,16 +111,9 @@ namespace Reinforcement
                 "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}", panelSpds);
              RibbonItemData noteLine = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand", Properties.Resources.ES_NoteLine,
                  "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand.FamName}", panelSpds);
-             IList<RibbonItem> stackedItemsLines = panelSpds.AddStackedItems(breakLine, noteLine);
 
-             var btnBreakLine = GetButton(tabName, panelSpds.Name, "Линия обрыва");
-             var btnNoteLine = GetButton(tabName, panelSpds.Name, "Выноска");
-
-             btnBreakLine.Size = AW.RibbonItemSize.Large;
-             btnBreakLine.ShowText = false;
-
-             btnNoteLine.Size = AW.RibbonItemSize.Large;
-             btnNoteLine.ShowText = false;
+             IList<RibbonItem> stackedItemsLines =
+                 CreateStackedItems(panelSpds, breakLine, noteLine, "Линия обрыва", "Выноска", tabName);
 
 
             //2. PanelSketchReinf
