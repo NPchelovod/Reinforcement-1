@@ -83,8 +83,8 @@
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
     <Compile Include="OpeningsColors.cs" />
-    <Compile Include="ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
-    <Compile Include="ReinforceBasementWalls\ReinforceWall.cs" />
+    <Compile Include="Stage2\ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
+    <Compile Include="Stage2\ReinforceBasementWalls\ReinforceWall.cs" />
     <Compile Include="RenameLevels.cs" />
     <Compile Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml.cs">
       <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
@@ -181,9 +181,7 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Stage2\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\Revit\Addins\2024"
