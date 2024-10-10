@@ -21,6 +21,7 @@ namespace Reinforcement
 
     public class DecorWallReinfViewSection : IExternalCommand
     {
+        //Family name of brake line
         public static string FamNameBrakeLine { get; } = "Линейный обрыв";
 
         public Result Execute(
@@ -36,36 +37,44 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
             Autodesk.Revit.DB.View activeView = uidoc.ActiveView;
+
+            //check if activeView is section view
             if (activeView.ViewType != ViewType.Section)
             {
                 MessageBox.Show("Не выбран активный вид стен!\n");
                 return Result.Failed;
-            }//check if activeView is section view
+            }
 
-            List<Grid> gridList = new List<Grid>(); //create list to collect grids after cropBox change
-            IList<Line> gridLinesList = new List<Line>();//to create dimensions
+            //create list to collect grids after cropBox change
+            List<Grid> gridList = new List<Grid>();
 
+            //to create dimensions
+            IList<Line> gridLinesList = new List<Line>();
+
+            //get family symbol of brake line
             List<FamilySymbol> symbolBrakeLine =  new FilteredElementCollector(doc)
                 .OfClass(typeof(FamilySymbol))
                 .WhereElementIsElementType()
                 .ToElements()
                 .Where(x=> x.Name == FamNameBrakeLine)
                 .Cast<FamilySymbol>()
-                .ToList(); //get family symbol of brake line
+                .ToList();
 
+            //get all floors on activeView
             List<Floor> floorList =  new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(Floor))
                 .ToElements()
                 .Cast<Floor>()
-                .ToList(); //get all floors on activeView
+                .ToList();
 
+            //get all walls on activeView
             List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(Wall))
                 .ToElements()
                 .Cast<Wall>()
-                .ToList();  //get all walls on activeView
+                .ToList();
 
-
+            //get min and max points of walls in active view
             double minPtXWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min.X)
                 .OrderBy(w => w)
@@ -90,8 +99,9 @@ namespace Reinforcement
                    maxPtZWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Max.Z)
                 .OrderByDescending(w => w)
-                .First(); //get min and max points of walls in active view
+                .First();
 
+            //get min and max points of floors in active view
             double minPtXFloor = floorList
                 .Select(w => w.get_BoundingBox(activeView).Min.X)
                 .OrderBy(w => w)
@@ -116,7 +126,7 @@ namespace Reinforcement
                    maxPtZFloor = floorList
                 .Select(w => w.get_BoundingBox(activeView).Max.Z)
                 .OrderByDescending(w => w)
-                .First(); //get min and max points of floors in active view
+                .First(); 
             var viewScale = activeView.Scale;
 
             try //ловим ошибку
