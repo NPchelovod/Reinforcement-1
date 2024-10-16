@@ -208,20 +208,47 @@ namespace Reinforcement
                         int i = 0;
                         while (i < wallsSTMFromRightToLeft.Count - 1)
                         {
-                            var last = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Min).X;
-                            var preLast = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[++i].get_BoundingBox(activeView).Max).X;
-                            var cropBoxOffset = RevitAPI.ToFoot(800);
+                            //check min and max points for last and preLast walls, depends of coordinates by view (not Global)
+                            LocationCurve locationCurve = wallsSTMFromRightToLeft[i].Location as LocationCurve;
+                            var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).X;
+                            var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
+                            double last = Math.Min(pt0, pt1);
+                            /*
+                            var min = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Min);
+                            var max = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Max);
+                            var last = Math.Min(min.X, max.X);
+                                                        NOT WORKING BECAUSE OF ROTATION OF WALLS REALTIVELY TO PROJECT COORD
+
+                            */
+                            i++;
+
+                            locationCurve = wallsSTMFromRightToLeft[i].Location as LocationCurve;
+                            pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).X;
+                            pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
+                            double preLast = Math.Max(pt0, pt1);
+
+                            /*
+                            min = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Min);
+                            max = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Max);
+                            var preLast = Math.Max(min.X, max.X);
+                                                         NOT WORKING BECAUSE OF ROTATION OF WALLS REALTIVELY TO PROJECT COORD
+                            */
+
+                            var cropBoxOffset = RevitAPI.ToFoot(600);
                             
-                            if (Math.Abs(last - preLast) > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
+                            if (last - preLast > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
                             {
                                 cropRegion.SplitRegionHorizontally
                                     (0,
-                                    (Math.Abs(preLast - startpoint.X)  + cropBoxOffset) / cropBoxLength,
-                                    (Math.Abs(last - startpoint.X)) / cropBoxLength);
-                                cropBoxLength = (Math.Abs(last)  + cropBoxOffset);
+                                    (preLast - cropBoxLineMinPtX  + cropBoxOffset) / cropBoxLength,
+                                    (last - cropBoxLineMinPtX - cropBoxOffset) / cropBoxLength);
+                                cropBoxLength = (last + cropBoxOffset);
                             }
+
                         }
+
                         t1.Commit();
+
                     }
                     using (Transaction t2 = new Transaction(doc, "Изменение осей"))
                     {
@@ -282,82 +309,39 @@ namespace Reinforcement
                             .ToList();
 
                         //get reference from first and last grid
-                        foreach (Grid grid in gridList)
-                        {
-                            Line line = grid.get_Geometry(opt).First() as Line;
+                        Line leftGrid = gridListFromLeftToRight.First().get_Geometry(opt).Select(x => x as Line).First();
+                        Line rightGrid = gridListFromLeftToRight.Last().get_Geometry(opt).Select(x => x as Line).First();
 
-                        }
+                        XYZ offset5mm = new XYZ(0, 0, RevitAPI.ToFoot(5 * viewScale));
+                        XYZ offset12mm = new XYZ(0, 0, RevitAPI.ToFoot(12 * viewScale));
+                        XYZ point1 = leftGrid.GetEndPoint(0);
+                        XYZ point2 = rightGrid.GetEndPoint(0);
 
+                        referenceArrayLeftRight.Append(leftGrid.Reference); referenceArrayLeftRight.Append(rightGrid.Reference);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        /*
-                        var referenceArray = new ReferenceArray();
-                        var referenceArrayLeftRight = new ReferenceArray();
-                        Options opt = new Options()
-                        {
-                            ComputeReferences = true,
-                            View = activeView
-                        };
-                        double[] ptXArray = new double[0], ptYArray = new double[0];
-                        Reference[] referencesLine = new Reference[0]; //initialize this massive to get left and right grids
-
-                        foreach (Grid grid in gridList)
-                        {
-                            Line line = grid.get_Geometry(opt).First() as Line;
-                            ptXArray = ptXArray.Append(line.GetEndPoint(0).X).ToArray();
-                            ptYArray = ptYArray.Append(line.GetEndPoint(0).Y).ToArray();
-                            referencesLine = referencesLine.Append(line.Reference).ToArray();
-
-                            Reference refLine = line.Reference;
-                            referenceArray.Insert(refLine, referenceArray.Size);
-                        }//create reference array from grids to create dimension
-
-                        if (activeView.RightDirection.X == 1 || activeView.RightDirection.X == -1)
-                        {
-                            var indexOfMax = Array.IndexOf(ptXArray, ptXArray.Max());
-                            var indexOfMin = Array.IndexOf(ptXArray, ptXArray.Min());
-                            referenceArrayLeftRight.Insert(referencesLine.ElementAt(indexOfMin), 0);
-                            referenceArrayLeftRight.Insert(referencesLine.ElementAt(indexOfMax), 1);
-                        }
-                        else if (activeView.RightDirection.Y == 1 || activeView.RightDirection.Y == -1)
-                        {
-                            var indexOfMax = Array.IndexOf(ptYArray, ptYArray.Max());
-                            var indexOfMin = Array.IndexOf(ptYArray, ptYArray.Min());
-                            referenceArrayLeftRight.Insert(referencesLine.ElementAt(indexOfMin), 0);
-                            referenceArrayLeftRight.Insert(referencesLine.ElementAt(indexOfMax), 1);
-
-                        }//add to referenceArrayLeftRight grids
-                        var grid1 = gridLinesList.ElementAt(0) as Line;
-                        var grid2 = gridLinesList.ElementAt(1) as Line;
-
-                        XYZ endpoint1 = new XYZ(grid1.GetEndPoint(0).X, grid1.GetEndPoint(0).Y, grid1.GetEndPoint(0).Z + RevitAPI.ToFoot(12 * viewScale));
-                        XYZ endpoint2 = new XYZ(grid2.GetEndPoint(0).X, grid2.GetEndPoint(0).Y, grid2.GetEndPoint(0).Z + RevitAPI.ToFoot(12 * viewScale));
-                        Line lineDim = Line.CreateBound(endpoint1,endpoint2);
-                        doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension between all grids
-
-                        endpoint1 = new XYZ(grid1.GetEndPoint(0).X, grid1.GetEndPoint(0).Y, grid1.GetEndPoint(0).Z + RevitAPI.ToFoot(5 * viewScale));
-                        endpoint2 = new XYZ(grid2.GetEndPoint(0).X, grid2.GetEndPoint(0).Y, grid2.GetEndPoint(0).Z + RevitAPI.ToFoot(5 * viewScale));
-                        lineDim = Line.CreateBound(endpoint1, endpoint2);
+                        Line lineDim = Line.CreateBound(point1 + offset5mm, point2 + offset5mm);
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayLeftRight); //create dimension between first and last grids
-                        */
+
+                        for (int i = 0; i < gridListFromLeftToRight.Count; i++)
+                        {
+                            var reference = gridListFromLeftToRight[i].get_Geometry(opt).Select((x) => x as Line).First().Reference;
+                            referenceArray.Append(reference);
+                        }
+
+                        lineDim = Line.CreateBound(point1 + offset12mm, point2 + offset12mm);
+                        doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension between all grids
                         t3.Commit();
                     }
                     using (Transaction t4 = new Transaction(doc, "Создание линий разрыва"))
                     {
                         t4.Start();
+                        
+                        
+
+
+
+
+                        /*
                         XYZ botEndPoint1 = new XYZ(),
                             botEndPoint2 = new XYZ(),
                             topEndPoint1 = new XYZ(),
@@ -382,10 +366,12 @@ namespace Reinforcement
                             botEndPoint1 = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
                             botEndPoint2 = new XYZ(activeView.Origin.X, maxPtYWall + RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
                         }//get points to create line
+
                         IList<BoundingBoxXYZ> listWallsBoundingBoxes = wallList
                             .Select(x=> x.get_BoundingBox(activeView))
                             .Where(bb => bb.Max.Z > maxPtZFloor)
                             .ToList(); //create list of bounding boxes of walls higher than floor
+
                         if (listWallsBoundingBoxes.Count > 0)
                         {
                             foreach (BoundingBoxXYZ box in listWallsBoundingBoxes)
@@ -422,7 +408,7 @@ namespace Reinforcement
                         doc.Create.NewFamilyInstance(leftLine, symbolBrakeLine.First(), activeView);
                         Line rightLine = Line.CreateBound(botEndPoint2,botEndPoint2.Add(addVector));
                         doc.Create.NewFamilyInstance(rightLine, symbolBrakeLine.First(), activeView);
-
+                        */
 
                         t4.Commit();
                     }
