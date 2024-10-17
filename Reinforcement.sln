@@ -5,16 +5,27 @@ VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reinforcement", "Reinforcement\Reinforcement.csproj", "{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildPlugin", "BuildPlugin\BuildPlugin.csproj", "{24BC0060-170A-49B3-B08C-17B0814FE654}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Build|Any CPU = Build|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Build|Any CPU.ActiveCfg = Debug|Any CPU
+		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Build|Any CPU.Build.0 = Debug|Any CPU
 		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0543E3EF-F8D6-470B-9370-B7A7E2C8E108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Build|Any CPU.ActiveCfg = Build|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Build|Any CPU.Build.0 = Build|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24BC0060-170A-49B3-B08C-17B0814FE654}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

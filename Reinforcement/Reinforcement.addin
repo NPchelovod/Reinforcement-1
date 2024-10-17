@@ -2,7 +2,7 @@
 <RevitAddIns>
 	<AddIn Type="Application">
     <Name>Application Reinforcement</Name>
-    <Assembly>Reinforcement.dll</Assembly>
+    <Assembly>ENSPlugin\Reinforcement.dll</Assembly>
     <FullClassName>Reinforcement.App</FullClassName>
     <ClientId>2c410dd7-90da-48e1-9c42-cbdb212304c6</ClientId>
     <VendorId>com.typepad.thebuildingcoder</VendorId>

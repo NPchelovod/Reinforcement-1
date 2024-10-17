@@ -39,6 +39,12 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2020\Revit.exe</StartProgram>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Build|AnyCPU'">
+    <OutputPath>bin\Build\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
       <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2021\AdWindows.dll</HintPath>
@@ -184,14 +190,14 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\Revit\Addins\2024"
-if exist "$(ProgramData)\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\Revit\Addins\2024"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\Revit\Addins\2024"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Roaming\Autodesk\Revit\Addins\2024"
-if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\Revit\Addins\2021"
-if exist "$(ProgramData)\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\Revit\Addins\2021"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "$(AppData)\Roaming\Autodesk\Revit\Addins\2021"
-if exist "$(AppData)\Roaming\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Roaming\Autodesk\Revit\Addins\2021"</PostBuildEvent>
+    <PostBuildEvent>:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"
+:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024"
+:: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
+:: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021"
+:: Эта строка закомментирована
+
+
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
