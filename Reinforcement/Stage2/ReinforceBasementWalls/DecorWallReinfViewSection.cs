@@ -11,8 +11,8 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Markup.Localizer;
 
 namespace Reinforcement
@@ -82,16 +82,13 @@ namespace Reinforcement
             }
 
             //get all walls on activeView           
-             List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
+            List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
                  .OfClass(typeof(Wall))
                  .ToElements()
                  .Cast<Wall>()
                  .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Стм" || x.LookupParameter("• Тип элемента").AsString() == "Дж")
                  .ToList();
-           /* ISelectionFilter selFilter = new MassSelectionFilterTypeName();
-            List<Wall> wallList = sel.PickElementsByRectangle(selFilter,"Выделите все стены")
-                .Select(x => x as Wall)
-                .ToList();*/
+
             if (wallList.Count == 0)
             {
                 MessageBox.Show("Не найдено ни одной стены!");
@@ -103,31 +100,65 @@ namespace Reinforcement
                 return Result.Failed;
             }
 
+            //Get active view transform
+            Transform viewTransform = activeView.CropBox.Transform;
+
             //get min and max points of walls in active view
+            #region min and max points X (left/right) and Y (up/down) is coordinates of view, Z is global coordinate
             double minPtXWall = wallList
-                .Select(w => w.get_BoundingBox(activeView).Min.X)
+                .Select(w =>
+                {
+                    var locationCurve = w.Location as LocationCurve;
+                    var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).X;
+                    var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
+                    return Math.Min(pt0, pt1);
+                })
                 .OrderBy(w => w)
-                .First(),
-                   minPtYWall = wallList
-                .Select(w => w.get_BoundingBox(activeView).Min.Y)
+                .First();
+
+            double minPtYWall = wallList
+                .Select(w =>
+                {
+                    var wallOffset = w.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).AsDouble();
+                    var locationCurve = w.Location as LocationCurve;
+                    var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).Y;
+                    var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).Y;
+                    return Math.Min(pt0 + wallOffset, pt1 + wallOffset);
+                })
                 .OrderBy(w => w)
-                .First(),
-                   minPtZWall = wallList
+                .First();
+
+            double maxPtXWall = wallList
+                .Select(w =>
+                {
+                    var locationCurve = w.Location as LocationCurve;
+                    var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).X;
+                    var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
+                    return Math.Max(pt0, pt1);
+                })
+                .OrderByDescending(w => w)
+                .First();
+
+            double maxPtYWall = wallList
+                .Select(w =>
+                {
+                    var wallOffset = w.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).AsDouble();
+                    var locationCurve = w.Location as LocationCurve;
+                    var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).Y;
+                    var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).Y;
+                    return Math.Max(pt0 + wallOffset, pt1 + wallOffset);
+                })
+                .OrderByDescending(w => w)
+                .First();
+
+            double minPtZWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min.Z)
                 .OrderBy(w => w)
-                .First(),
+                .First();
 
-                   maxPtXWall = wallList
-                .Select(w => w.get_BoundingBox(activeView).Max.X)
-                .OrderByDescending(w => w)
-                .First(),
-                   maxPtYWall = wallList
-                .Select(w => w.get_BoundingBox(activeView).Max.Y)
-                .OrderByDescending(w => w)
-                .First(),
-                   maxPtZWall = wallList
+            double maxPtZWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Max.Z)
-                .OrderByDescending(w => w)
+                .OrderBy(w => w)
                 .First();
 
             //get min and max points of floors in active view
@@ -156,11 +187,14 @@ namespace Reinforcement
                 .Select(w => w.get_BoundingBox(activeView).Max.Z)
                 .OrderByDescending(w => w)
                 .First();
+            #endregion
 
+            //Create dictionary with X coord to create vertical breake lines
+            Dictionary<int, double> xCoordinatesVerticalBreakeLineLast = new Dictionary<int, double>();
+            Dictionary<int, double> xCoordinatesVerticalBreakeLinePrelast = new Dictionary<int, double>();
+
+            //Get viescale
             var viewScale = activeView.Scale;
-
-            //Get active view transform
-            Transform viewTransform = activeView.CropBox.Transform;
 
             try //ловим ошибку
             {
@@ -206,6 +240,7 @@ namespace Reinforcement
                         var cropBoxLineMinPtX = startpoint.X < endpoint.X ? startpoint.X : endpoint.X;
 
                         int i = 0;
+                        int n = 0;
                         while (i < wallsSTMFromRightToLeft.Count - 1)
                         {
                             //check min and max points for last and preLast walls, depends of coordinates by view (not Global)
@@ -213,6 +248,8 @@ namespace Reinforcement
                             var pt0 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(0)).X;
                             var pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
                             double last = Math.Min(pt0, pt1);
+
+
                             /*
                             var min = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Min);
                             var max = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Max);
@@ -227,6 +264,7 @@ namespace Reinforcement
                             pt1 = viewTransform.Inverse.OfPoint(locationCurve.Curve.GetEndPoint(1)).X;
                             double preLast = Math.Max(pt0, pt1);
 
+
                             /*
                             min = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Min);
                             max = viewTransform.Inverse.OfPoint(wallsSTMFromRightToLeft[i].get_BoundingBox(activeView).Max);
@@ -234,21 +272,22 @@ namespace Reinforcement
                                                          NOT WORKING BECAUSE OF ROTATION OF WALLS REALTIVELY TO PROJECT COORD
                             */
 
-                            var cropBoxOffset = RevitAPI.ToFoot(600);
-                            
+                            var cropBoxOffset = RevitAPI.ToFoot(800);
+
                             if (last - preLast > RevitAPI.ToFoot(3000)) //length between two "Стм" more than 3000 mm
                             {
                                 cropRegion.SplitRegionHorizontally
                                     (0,
-                                    (preLast - cropBoxLineMinPtX  + cropBoxOffset) / cropBoxLength,
+                                    (preLast - cropBoxLineMinPtX + cropBoxOffset) / cropBoxLength,
                                     (last - cropBoxLineMinPtX - cropBoxOffset) / cropBoxLength);
-                                cropBoxLength = (last + cropBoxOffset);
+                                cropBoxLength = (preLast - cropBoxLineMinPtX + cropBoxOffset);
+
+                                xCoordinatesVerticalBreakeLineLast.Add(n, last - cropBoxOffset / 2);
+                                xCoordinatesVerticalBreakeLinePrelast.Add(n++, preLast + cropBoxOffset / 2);
                             }
 
                         }
-
                         t1.Commit();
-
                     }
                     using (Transaction t2 = new Transaction(doc, "Изменение осей"))
                     {
@@ -335,82 +374,77 @@ namespace Reinforcement
                     using (Transaction t4 = new Transaction(doc, "Создание линий разрыва"))
                     {
                         t4.Start();
-                        
-                        
 
-
-
-
-                        /*
-                        XYZ botEndPoint1 = new XYZ(),
-                            botEndPoint2 = new XYZ(),
-                            topEndPoint1 = new XYZ(),
-                            topEndPoint2 = new XYZ();
-                        if (activeView.RightDirection.X == 1)
+                        //Create break lines if we split crop region
+                        if (xCoordinatesVerticalBreakeLineLast.Count > 0 || xCoordinatesVerticalBreakeLinePrelast.Count > 0)
                         {
-                            botEndPoint1 = new XYZ(minPtXWall - RevitAPI.ToFoot(6 * viewScale), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                            botEndPoint2 = new XYZ(maxPtXWall + RevitAPI.ToFoot(6 * viewScale), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                        }
-                        else if (activeView.RightDirection.X == -1)
-                        {
-                            botEndPoint1 = new XYZ(maxPtXWall + RevitAPI.ToFoot(6 * viewScale), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                            botEndPoint2 = new XYZ(minPtXWall - RevitAPI.ToFoot(6 * viewScale), activeView.Origin.Y, minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                        }
-                        else if (activeView.RightDirection.Y == -1)
-                        {
-                            botEndPoint1 = new XYZ(activeView.Origin.X, maxPtYWall + RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                            botEndPoint2 = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                        }
-                        else if (activeView.RightDirection.Y == 1)
-                        {
-                            botEndPoint1 = new XYZ(activeView.Origin.X, minPtYWall - RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                            botEndPoint2 = new XYZ(activeView.Origin.X, maxPtYWall + RevitAPI.ToFoot(6 * viewScale), minPtZWall - RevitAPI.ToFoot(6 * viewScale));
-                        }//get points to create line
+                            double x1, x2;
+                            XYZ pt1, pt2, ptZ;
+                            Line line;
 
-                        IList<BoundingBoxXYZ> listWallsBoundingBoxes = wallList
-                            .Select(x=> x.get_BoundingBox(activeView))
-                            .Where(bb => bb.Max.Z > maxPtZFloor)
-                            .ToList(); //create list of bounding boxes of walls higher than floor
-
-                        if (listWallsBoundingBoxes.Count > 0)
-                        {
-                            foreach (BoundingBoxXYZ box in listWallsBoundingBoxes)
+                            foreach (var pair in xCoordinatesVerticalBreakeLineLast)
                             {
-                                if (activeView.RightDirection.X == 1)
-                                {
-                                    topEndPoint1 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                    topEndPoint2 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                }
-                                else if (activeView.RightDirection.X == -1)
-                                {
-                                    topEndPoint1 = new XYZ(box.Min.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                    topEndPoint2 = new XYZ(box.Max.X, activeView.Origin.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                }
-                                else if (activeView.RightDirection.Y == -1)
-                                {
-                                    topEndPoint1 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                    topEndPoint2 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                }
-                                else if (activeView.RightDirection.Y == 1)
-                                {
-                                    topEndPoint1 = new XYZ(activeView.Origin.X, box.Max.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                    topEndPoint2 = new XYZ(activeView.Origin.X, box.Min.Y, maxPtZFloor + RevitAPI.ToFoot(8 * viewScale));
-                                }//get points to create line
-                                Line topLine = Line.CreateBound(topEndPoint1, topEndPoint2);
-                                doc.Create.NewFamilyInstance(topLine, symbolBrakeLine.First(), activeView);
-                            }//create brake lines on top
+                                var ptX = pair.Value;
+                                ptZ = new XYZ(0, 0, maxPtZFloor - viewTransform.Origin.Z + RevitAPI.ToFoot(6 * viewScale));
+                                pt1 = viewTransform.OfPoint(new XYZ(ptX, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                                pt2 = viewTransform.OfPoint(new XYZ(ptX, 0, 0)) + ptZ;
+
+                                Line verticalLine = Line.CreateBound(pt2, pt1);
+                                doc.Create.NewFamilyInstance(verticalLine, symbolBrakeLine.First(), activeView);
+                            }
+                            foreach (var pair in xCoordinatesVerticalBreakeLinePrelast)
+                            {
+                                var ptX = pair.Value;
+                                ptZ = new XYZ(0, 0, maxPtZFloor - viewTransform.Origin.Z + RevitAPI.ToFoot(6 * viewScale));
+                                pt1 = viewTransform.OfPoint(new XYZ(ptX, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                                pt2 = viewTransform.OfPoint(new XYZ(ptX, 0, 0)) + ptZ;
+
+                                Line verticalLine = Line.CreateBound(pt1, pt2);
+                                doc.Create.NewFamilyInstance(verticalLine, symbolBrakeLine.First(), activeView);
+                            }
+
+                            //Create bottom horizontal brake line
+                            for (int i = 0; i + 1 < xCoordinatesVerticalBreakeLineLast.Count; i++)
+                            {
+                                x1 = xCoordinatesVerticalBreakeLineLast[i + 1];
+                                x2 = xCoordinatesVerticalBreakeLinePrelast[i];
+                                pt1 = viewTransform.OfPoint(new XYZ(x1, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                                pt2 = viewTransform.OfPoint(new XYZ(x2, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                                line = Line.CreateBound(pt1, pt2);
+                                doc.Create.NewFamilyInstance(line, symbolBrakeLine.First(), activeView);
+                            }
+
+                            //Create last and first break lines
+                            x1 = xCoordinatesVerticalBreakeLineLast.First().Value;
+                            pt1 = viewTransform.OfPoint(new XYZ(x1, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                            pt2 = viewTransform.OfPoint(new XYZ(maxPtXWall + RevitAPI.ToFoot(6 * viewScale), minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                            line = Line.CreateBound(pt1, pt2);
+                            doc.Create.NewFamilyInstance(line, symbolBrakeLine.First(), activeView);
+
+                            x2 = xCoordinatesVerticalBreakeLinePrelast.Last().Value;
+                            pt1 = viewTransform.OfPoint(new XYZ(minPtXWall - RevitAPI.ToFoot(6 * viewScale), minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                            pt2 = viewTransform.OfPoint(new XYZ(x2, minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                            line = Line.CreateBound(pt1, pt2);
+                            doc.Create.NewFamilyInstance(line, symbolBrakeLine.First(), activeView);
+
                         }
-                        Line bottomLine = Line.CreateBound(botEndPoint1, botEndPoint2);
-                        doc.Create.NewFamilyInstance(bottomLine, symbolBrakeLine.First(), activeView);
+                        else
+                        {
+                            //Translate points from view coord to global
+                            XYZ pt1 = viewTransform.OfPoint(new XYZ(minPtXWall - RevitAPI.ToFoot(6 * viewScale), minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
+                            XYZ pt2 = viewTransform.OfPoint(new XYZ(maxPtXWall + RevitAPI.ToFoot(6 * viewScale), minPtYWall - RevitAPI.ToFoot(6 * viewScale), 0));
 
-                        var addVector = new XYZ(0,0,RevitAPI.ToFoot(6 * viewScale));
-                        Line leftLine = Line.CreateBound(botEndPoint1.Add(addVector),botEndPoint1);
-                        doc.Create.NewFamilyInstance(leftLine, symbolBrakeLine.First(), activeView);
-                        Line rightLine = Line.CreateBound(botEndPoint2,botEndPoint2.Add(addVector));
-                        doc.Create.NewFamilyInstance(rightLine, symbolBrakeLine.First(), activeView);
-                        */
-
+                            Line bottomLine = Line.CreateBound(pt1, pt2);
+                            doc.Create.NewFamilyInstance(bottomLine, symbolBrakeLine.First(), activeView);
+                        }
                         t4.Commit();
+                    }
+                    using (Transaction t5 = new Transaction(doc, "Армирование стен"))
+                    {
+                        t5.Start();
+
+
+                        t5.Commit();
                     }
                     tg.Assimilate();
                 }
