@@ -12,7 +12,7 @@ namespace BuildPlugin
 {
     internal class Program
     {
-        private static string projectName = "Revit ENS plugin";
+        private static string projectName = "Revit ENS plugin 2024";
         private static string version = "1.0";
         static void Main(string[] args)
         {
@@ -40,6 +40,7 @@ namespace BuildPlugin
             project.Version = new Version(version);
             project.BuildMsi();
 
+            projectName = "Revit ENS Plugin 2021";
             project = new Project()
             {
                 OutFileName = "ENS plugin 2021",
