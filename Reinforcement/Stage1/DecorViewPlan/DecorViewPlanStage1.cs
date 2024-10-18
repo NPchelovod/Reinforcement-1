@@ -215,9 +215,9 @@ namespace Reinforcement
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayUpDown); //create dimension between first and last grids
 
                         //creating dims for walls
-                        //List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsValueString() == "Дж").ToList();
+                        List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж").ToList();
 
-                        foreach (var wall in wallList)
+                        foreach (var wall in wallListDiafragm)
                         {
                             List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
                             //creating dims X direction

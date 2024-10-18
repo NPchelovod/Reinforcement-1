@@ -122,7 +122,7 @@ namespace Reinforcement
                 "Размещение доборных арматурных стержней", $"Имя семейства должно быть {RcAddCommand.FamName}",
                 panelSketchReinf);
 
-            CreateButton("Фоновое\nармирование", "Фоновое армирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
+            CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelSketchReinf);
 
@@ -157,17 +157,17 @@ namespace Reinforcement
 
 
 
-            CreateButton("Оформление\nвида", "Оформление вида", "Reinforcement.DecorViewPlanStage1", Properties.Resources.ES_DecorViewPlanStage1,
+            CreateButton("Оформление вида", "Оформление\nвида", "Reinforcement.DecorViewPlanStage1", Properties.Resources.ES_DecorViewPlanStage1,
             "Оформление вида для стадии П", "",
             panelDrawing);
 
 
             //5. PanelSelection
-            CreateButton("Выбрать\nродительское", "Выбрать родительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+            CreateButton("Выбрать родительское", "Выбрать\nродительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
              "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
             panelSelection);
 
-            CreateButton("Выбор с фильтром", "Выбор с фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
+            CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
     "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection); 
 
 
