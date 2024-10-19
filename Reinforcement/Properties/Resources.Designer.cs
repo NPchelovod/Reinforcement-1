@@ -63,6 +63,36 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Axes {
+            get {
+                object obj = ResourceManager.GetObject("Axes", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Axes_orient {
+            get {
+                object obj = ResourceManager.GetObject("Axes_orient", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Elevation {
+            get {
+                object obj = ResourceManager.GetObject("Elevation", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ES_BreakLine {
             get {
                 object obj = ResourceManager.GetObject("ES_BreakLine", resourceCulture);
@@ -206,6 +236,16 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ES_Wall {
             get {
                 object obj = ResourceManager.GetObject("ES_Wall", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Section {
+            get {
+                object obj = ResourceManager.GetObject("Section", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -85,6 +85,8 @@ namespace Reinforcement
             var firstRibbonItem = GetButton(tabName, panel.Name, firstButtonName);
             var secondRibbonItem = GetButton(tabName, panel.Name, secondButtonName);
             firstRibbonItem.Size = AW.RibbonItemSize.Large;
+            firstRibbonItem.ShowText = false;
+            secondRibbonItem.Size = AW.RibbonItemSize.Large;
             secondRibbonItem.ShowText = false;
 
             return stackedItems;
@@ -114,6 +116,22 @@ namespace Reinforcement
 
              IList<RibbonItem> stackedItemsLines =
                  CreateStackedItems(panelSpds, breakLine, noteLine, "Линия обрыва", "Выноска", tabName);
+
+             RibbonItemData axis = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisCommand", Properties.Resources.Axes,
+                 "Размещение строительной оси", $"Имя семейства должно быть {AxisCommand.FamName}", panelSpds);
+             RibbonItemData axisDirection = CreateButtonData("Ориентация оси", "Ориентация оси", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
+                 "Размещение указателя ориентация оси", $"Имя семейства должно быть {AxisDirectionCommand.FamName}", panelSpds);
+
+             IList<RibbonItem> stackedItemsAxis =
+                 CreateStackedItems(panelSpds, axis, axisDirection, "Строительная ось", "Ориентация оси", tabName);
+
+             RibbonItemData section = CreateButtonData("Разрез", "Разрез", "Reinforcement.SectionCommand", Properties.Resources.Section,
+                 "Размещение условного разреза", $"Имя семейства должно быть {SectionCommand.FamName}", panelSpds);
+             RibbonItemData elevation = CreateButtonData("Высотная отметка", "Высотная отметка", "Reinforcement.ElevationCommand", Properties.Resources.Elevation,
+                 "Размещение высотной отметки", $"Имя семейства должно быть {ElevationCommand.FamName}", panelSpds);
+
+             IList<RibbonItem> stackedSectionElevation =
+                 CreateStackedItems(panelSpds, section, elevation, "Разрез", "Высотная отметка", tabName);
 
 
             //2. PanelSketchReinf
