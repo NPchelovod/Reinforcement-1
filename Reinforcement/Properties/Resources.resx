@@ -127,6 +127,12 @@
   <data name="Elevation" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Elevation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ES_Additional_rebars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_Additional_rebars.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_Background_rebars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_Background_rebars.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="ES_BreakLine" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_BreakLine.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -157,8 +163,20 @@
   <data name="ES_OpColors" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_OpColors.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ES_PilesFromDwg" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_PilesFromDwg.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="ES_RColors" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_RColors.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_RebarBracket" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_RebarBracket.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_RebarFromSide" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_RebarFromSide.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_RebarInFront" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_RebarInFront.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ES_Select" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ЕС_Выбор.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -168,6 +186,12 @@
   </data>
   <data name="ES_Slab" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_Slab.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_Specification" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_Specification.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_ViewsForSlab" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_ViewsForSlab.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ES_Wall" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_Wall.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

@@ -138,6 +138,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\ES_PilesFromDwg.png" />
+    <None Include="Resources\ES_Background_rebars.png" />
+    <None Include="Resources\ES_Additional_rebars.png" />
+    <None Include="Resources\ES_ViewsForSlab.png" />
+    <None Include="Resources\ES_Specification.png" />
+    <None Include="Resources\ES_RebarInFront.png" />
+    <None Include="Resources\ES_RebarFromSide.png" />
+    <None Include="Resources\ES_RebarBracket.png" />
+    <None Include="Resources\ES_AdditionalRebars.png" />
     <None Include="Resources\Section.png" />
     <None Include="Resources\Elevation.png" />
     <None Include="Resources\Axes_orient.png" />
@@ -198,11 +207,11 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"
-:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024"
-:: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
-:: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021"
-:: Эта строка закомментирована
+    <PostBuildEvent>if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"
+if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024"
+if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
+if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021"
+
 
 
 </PostBuildEvent>

@@ -104,6 +104,7 @@ namespace Reinforcement
             RibbonPanel panelDetailReinf = a.CreateRibbonPanel(tabName, "Детальное армирование");
             RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, "Оформление");
             RibbonPanel panelSelection = a.CreateRibbonPanel(tabName, "Выбор");
+            RibbonPanel panelSAPR = a.CreateRibbonPanel(tabName, "САПР");
 
 
 
@@ -136,23 +137,23 @@ namespace Reinforcement
 
             //2. PanelSketchReinf
             CreateButton("Доборные стержни", "Доборные\nстержни", "Reinforcement.RcAddCommand",
-                Properties.Resources.ES_dobor,
+                Properties.Resources.ES_Additional_rebars,
                 "Размещение доборных арматурных стержней", $"Имя семейства должно быть {RcAddCommand.FamName}",
                 panelSketchReinf);
 
-            CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_fon,
+            CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_Background_rebars,
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelSketchReinf);
 
             //3. PanelDetailReinf
-            CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_dot,
+            CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_RebarInFront,
                 "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelDetailReinf);
 
-            CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_Line1,
+            CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_RebarFromSide,
                 "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
                 panelDetailReinf);
 
-            CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_homut,
+            CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_RebarBracket,
                 "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
                 panelDetailReinf);
 
@@ -186,11 +187,23 @@ namespace Reinforcement
             panelSelection);
 
             CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
-    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection); 
+    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection);
+
+            //6. PanelSAPR
+
+            CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CreateSchedules", Properties.Resources.ES_Specification,
+             "Позволяет скопировать спецификации с заменой марки конструкции", "Выбираются исходные спецификации и программой создаются аналогичные, но с изменением марки конструкции",
+            panelSAPR);
+            CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
+             "Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане",
+            panelSAPR);
+            CreateButton("Подложки для плит", "Подложки\nдля плит", "Reinforcement.CommandCreateViewPlan", Properties.Resources.ES_ViewsForSlab,
+             "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе",
+            panelSAPR);
 
 
-            
-            
+
+
             return Result.Succeeded;
         }
         public BitmapImage Convert(Image img)

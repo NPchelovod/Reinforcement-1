@@ -93,6 +93,26 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ES_Additional_rebars {
+            get {
+                object obj = ResourceManager.GetObject("ES_Additional_rebars", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_Background_rebars {
+            get {
+                object obj = ResourceManager.GetObject("ES_Background_rebars", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ES_BreakLine {
             get {
                 object obj = ResourceManager.GetObject("ES_BreakLine", resourceCulture);
@@ -193,9 +213,49 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ES_PilesFromDwg {
+            get {
+                object obj = ResourceManager.GetObject("ES_PilesFromDwg", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ES_RColors {
             get {
                 object obj = ResourceManager.GetObject("ES_RColors", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_RebarBracket {
+            get {
+                object obj = ResourceManager.GetObject("ES_RebarBracket", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_RebarFromSide {
+            get {
+                object obj = ResourceManager.GetObject("ES_RebarFromSide", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_RebarInFront {
+            get {
+                object obj = ResourceManager.GetObject("ES_RebarInFront", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -226,6 +286,26 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ES_Slab {
             get {
                 object obj = ResourceManager.GetObject("ES_Slab", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_Specification {
+            get {
+                object obj = ResourceManager.GetObject("ES_Specification", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_ViewsForSlab {
+            get {
+                object obj = ResourceManager.GetObject("ES_ViewsForSlab", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

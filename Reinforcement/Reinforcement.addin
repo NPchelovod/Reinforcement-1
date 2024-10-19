@@ -5,7 +5,9 @@
     <Assembly>ENSPlugin\Reinforcement.dll</Assembly>
     <FullClassName>Reinforcement.App</FullClassName>
     <ClientId>2c410dd7-90da-48e1-9c42-cbdb212304c6</ClientId>
-    <VendorId>com.typepad.thebuildingcoder</VendorId>
-    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+    <VendorId>EniseyStroy_ConstructiveDepartament</VendorId>
+    <VendorDescription>
+		Если у вас возникла ошибка, откройте рукодоство пользователя к плагину "ЕС_КР". Если работали по инструкции, но ошибка все равно выходит, то обратитесь к Вадиму Медведеву. Если он будет не занят и у него будет настроение, то он вам поможет
+	</VendorDescription>
   </AddIn>
 </RevitAddIns>
