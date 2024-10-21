@@ -40,7 +40,7 @@ namespace Reinforcement
                 .FirstOrDefault();
 
             //Уровень Этаж -2
-            var level = col.OfClass(typeof(Level))
+            var level = collection.OfClass(typeof(Level))
                 .Where(x => x.Name == "Этаж -2")
                 .Cast<Level>()
                 .FirstOrDefault();
