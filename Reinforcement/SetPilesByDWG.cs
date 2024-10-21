@@ -31,12 +31,12 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            FilteredElementCollector col = new FilteredElementCollector(doc);
+            FilteredElementCollector collection = new FilteredElementCollector(doc);
 
             //Типоразмер нужной сваи
-            var pile = col.OfClass(typeof(FamilySymbol))
-                .Where(x => x.Name == "Бурокасательная d450 l=19000")
-                .Cast<FamilySymbol>()
+            var pile = collection.OfClass(typeof(Family))
+                .Where(x => x.Name == "ADSK_Свая_Cерия 1.011.1-10 в.1, ID10383329")
+                .Cast<Family>()
                 .FirstOrDefault();
 
             //Уровень Этаж -2
@@ -49,7 +49,7 @@ namespace Reinforcement
             var dwg = doc.GetElement(sel);
             if (!(dwg is ImportInstance))
             {
-                MessageBox.Show("Выбрана не подложка!\n" + "Класс должен быть ImportInstance");
+                MessageBox.Show("Выбрана не подложка!\n" + "Категория должен быть ImportInstance");
                 return Result.Failed;
             }
 
