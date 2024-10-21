@@ -34,9 +34,9 @@ namespace Reinforcement
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
             //Типоразмер нужной сваи
-            var pile = collection.OfClass(typeof(Family))
+            var pile = collection.OfClass(typeof(FamilySymbol))
                 .Where(x => x.Name == "ADSK_Свая_Cерия 1.011.1-10 в.1, ID10383329")
-                .Cast<Family>()
+                .Cast<FamilySymbol>()
                 .FirstOrDefault();
 
             //Уровень Этаж -2
