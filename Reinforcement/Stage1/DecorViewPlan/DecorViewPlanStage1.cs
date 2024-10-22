@@ -100,14 +100,14 @@ namespace Reinforcement
                         foreach (Grid grid in gridList)
                         {
                             //check grids if they are 3D set to 2D
-                            /*if (grid.GetDatumExtentTypeInView(DatumEnds.End0, activeView) == DatumExtentType.Model)
+                            if (grid.GetDatumExtentTypeInView(DatumEnds.End0, activeView) == DatumExtentType.Model)
                              {
                                  grid.SetDatumExtentType(DatumEnds.End0, activeView, DatumExtentType.ViewSpecific);
                              }
                              if (grid.GetDatumExtentTypeInView(DatumEnds.End1, activeView) == DatumExtentType.Model)
                              {
                                  grid.SetDatumExtentType(DatumEnds.End1, activeView, DatumExtentType.ViewSpecific);
-                             }*/
+                             }
                             IList<Curve> curveList = grid.GetCurvesInView(DatumExtentType.ViewSpecific, activeView);
                             Curve curve = curveList.First();
                             Line line = curve as Line;
