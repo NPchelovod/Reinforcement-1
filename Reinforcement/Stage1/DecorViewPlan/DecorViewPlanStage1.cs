@@ -214,6 +214,10 @@ namespace Reinforcement
                         lineDim = Line.CreateBound(endpoint1, endpoint2);
                         doc.Create.NewDimension(activeView, lineDim, referenceArrayUpDown); //create dimension between first and last grids
 
+
+
+
+
                         //creating dims for walls
                         List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж").ToList();
 
