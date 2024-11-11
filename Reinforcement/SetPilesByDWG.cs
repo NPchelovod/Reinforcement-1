@@ -34,22 +34,28 @@ namespace Reinforcement
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
             //Типоразмер нужной сваи
-            var pile = collection.OfClass(typeof(FamilySymbol))
-                .Where(x => x.Name == "ADSK_Свая_Cерия 1.011.1-10 в.1, ID10383329")
-                .Cast<FamilySymbol>()
+            var pileId = collection.OfClass(typeof(Family))
+                .Where(x => x.Name == "ЕС_Буронабивная свая")
+                .Cast<Family>()
+                .FirstOrDefault()
+                .GetFamilySymbolIds()
                 .FirstOrDefault();
 
-            //Уровень Этаж -2
-            var level = collection.OfClass(typeof(Level))
-                .Where(x => x.Name == "Этаж -2")
+            var pile = doc.GetElement(pileId) as FamilySymbol;
+
+            //Самый нижний уровень
+            var check = new FilteredElementCollector(doc).OfClass(typeof(Level)).ToElements();
+
+            var level = new FilteredElementCollector(doc).OfClass(typeof(Level))
                 .Cast<Level>()
+                .OrderBy(x => x.Elevation)
                 .FirstOrDefault();
 
             Reference sel = uidoc.Selection.PickObject(ObjectType.Element);          
             var dwg = doc.GetElement(sel);
             if (!(dwg is ImportInstance))
             {
-                MessageBox.Show("Выбрана не подложка!\n" + "Категория должен быть ImportInstance");
+                MessageBox.Show("Выбрана не подложка!\n" + "Категория должна быть ImportInstance");
                 return Result.Failed;
             }
 
@@ -71,6 +77,11 @@ namespace Reinforcement
                 {
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
+                    if (pile != null && !pile.IsActive)
+                    {
+                        pile.Activate();
+                        doc.Regenerate();
+                    }
                     foreach (XYZ point in geomList) 
                     {
                         doc.Create.NewFamilyInstance(point, pile, level, Autodesk.Revit.DB.Structure.StructuralType.Footing);

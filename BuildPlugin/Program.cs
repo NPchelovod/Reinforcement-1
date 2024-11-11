@@ -31,9 +31,9 @@ namespace BuildPlugin
                 Dirs = new Dir[]
                 {
                     new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
-                        new File(@"C:\Users\KMedvedev\source\repos\Reinforcement\Reinforcement\Reinforcement.addin"),
+                        new File(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\Reinforcement.addin"),
                         new Dir(@"ENSPlugin",
-                        new DirFiles(@"C:\Users\KMedvedev\source\repos\Reinforcement\Reinforcement\bin\Debug\*.*"))),
+                        new DirFiles(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\bin\Debug\*.*"))),
 
                 },
             };
@@ -56,9 +56,9 @@ namespace BuildPlugin
                 Dirs = new Dir[]
                 {
                     new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2021\",
-                        new File(@"C:\Users\KMedvedev\source\repos\Reinforcement\Reinforcement\Reinforcement.addin"),
+                        new File(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\Reinforcement.addin"),
                         new Dir(@"ENSPlugin",
-                        new DirFiles(@"C:\Users\KMedvedev\source\repos\Reinforcement\Reinforcement\bin\Debug\*.*")))
+                        new DirFiles(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\bin\Debug\*.*")))
                 },
             };
             project.Version = new Version(version);
