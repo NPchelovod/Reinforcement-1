@@ -124,6 +124,9 @@
   <data name="Axes_orient" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Axes_orient.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ElectricalWiring" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ElectricalWiring.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Elevation" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Elevation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -195,6 +198,12 @@
   </data>
   <data name="ES_Wall" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_Wall.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="PRebarEqual" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\PRebarEqual.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="PRebarNotEqual" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\PRebarNotEqual.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Section" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Section.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

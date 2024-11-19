@@ -83,6 +83,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ElectricalWiring {
+            get {
+                object obj = ResourceManager.GetObject("ElectricalWiring", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Elevation {
             get {
                 object obj = ResourceManager.GetObject("Elevation", resourceCulture);
@@ -316,6 +326,26 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ES_Wall {
             get {
                 object obj = ResourceManager.GetObject("ES_Wall", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PRebarEqual {
+            get {
+                object obj = ResourceManager.GetObject("PRebarEqual", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PRebarNotEqual {
+            get {
+                object obj = ResourceManager.GetObject("PRebarNotEqual", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

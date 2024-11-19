@@ -157,6 +157,15 @@ namespace Reinforcement
                 "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
                 panelDetailReinf);
 
+            RibbonItemData pRebarEqual = CreateButtonData("П-стержень равнополочный", "П-стержень равнополочный", "Reinforcement.PRebarEqualCommand", Properties.Resources.PRebarEqual,
+                 "Размещение равнополочного п-стержня", $"Имя семейства должно быть {PRebarEqualCommand.FamName}", panelDetailReinf);
+            RibbonItemData pRebarNotEqual = CreateButtonData("П-стержень неравнополочный", "П-стержень неравнополочный", "Reinforcement.PRebarNotEqualCommand", Properties.Resources.PRebarNotEqual,
+                 "Размещение неравнополочного п-стержня", $"Имя семейства должно быть {PRebarNotEqualCommand.FamName}", panelDetailReinf);
+
+            IList<RibbonItem> stackedPRebars =
+                 CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
+
+
             //4. PanelDrawing
             //Create buttons for changing colors of elements on the active view
             RibbonItemData reinfColors = CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
@@ -199,6 +208,9 @@ namespace Reinforcement
             panelSAPR);
             CreateButton("Подложки для плит", "Подложки\nдля плит", "Reinforcement.CommandCreateViewPlan", Properties.Resources.ES_ViewsForSlab,
              "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе",
+            panelSAPR);
+            CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
+             "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Если считает неточно, значит электрики поменяли что-то, хотя клялись, что скажут если будет с их стороны изменение",
             panelSAPR);
 
 

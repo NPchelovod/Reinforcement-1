@@ -77,6 +77,8 @@
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
+    <Compile Include="SPDS&amp;PS\PRebarNotEqualCommand.cs" />
+    <Compile Include="SPDS&amp;PS\PRebarEqualCommand.cs" />
     <Compile Include="SPDS&amp;PS\SectionCommand.cs" />
     <Compile Include="SPDS&amp;PS\ElevationCommand.cs" />
     <Compile Include="SPDS&amp;PS\AxisDirectionCommand.cs" />
@@ -138,6 +140,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\PRebarNotEqual.png" />
+    <None Include="Resources\PRebarEqual.png" />
+    <None Include="Resources\ElectricalWiring.png" />
     <None Include="Resources\ES_PilesFromDwg.png" />
     <None Include="Resources\ES_Background_rebars.png" />
     <None Include="Resources\ES_Additional_rebars.png" />
