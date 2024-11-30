@@ -134,6 +134,14 @@ namespace Reinforcement
              IList<RibbonItem> stackedSectionElevation =
                  CreateStackedItems(panelSpds, section, elevation, "Разрез", "Высотная отметка", tabName);
 
+            RibbonItemData serif = CreateButtonData("Засечка", "Засечка", "Reinforcement.SerifCommand", Properties.Resources.Section,
+                 "Размещение засечки", $"Имя семейства должно быть {SerifCommand.FamName}", panelSpds);
+            RibbonItemData arrowView = CreateButtonData("Стрелка вида", "Стрелка вида", "Reinforcement.ArrowViewCommand", Properties.Resources.Elevation,
+                "Размещение стрелки вида", $"Имя семейства должно быть {ArrowViewCommand.FamName}", panelSpds);
+
+            IList<RibbonItem> stackedSerifArrow =
+                CreateStackedItems(panelSpds, serif, arrowView, "Засечка", "Стрелка вида", tabName);
+
 
             //2. PanelSketchReinf
             CreateButton("Доборные стержни", "Доборные\nстержни", "Reinforcement.RcAddCommand",
@@ -144,6 +152,15 @@ namespace Reinforcement
             CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_Background_rebars,
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelSketchReinf);
+
+            RibbonItemData distrPRebar = CreateButtonData("Распределение П и Г-стержней", "Распределение П и Г-стержней", "Reinforcement.PRebarDistribCommand", Properties.Resources.Section,
+                 "Размещение распределения П и Г-стержней", $"Имя семейства должно быть {PRebarDistribCommand.FamName}", panelSketchReinf);
+            RibbonItemData distrHomut = CreateButtonData("Распределение хомутов", "Распределение хомутов", "Reinforcement.HomutDistribCommand", Properties.Resources.Elevation,
+                "Размещение распределения хомутов", $"Имя семейства должно быть {HomutDistribCommand.FamName}", panelSketchReinf);
+
+            IList<RibbonItem> stackedDistrRebars =
+                CreateStackedItems(panelSketchReinf, distrPRebar, distrHomut, "Распределение П и Г-стержней", "Распределение хомутов", tabName);
+
 
             //3. PanelDetailReinf
             CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_RebarInFront,
@@ -165,6 +182,14 @@ namespace Reinforcement
             IList<RibbonItem> stackedPRebars =
                  CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
 
+            RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.Section,
+                 "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
+            RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Elevation,
+                "Размещение шпильки", $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
+
+            IList<RibbonItem> stackedGRebarShpilka =
+                CreateStackedItems(panelDetailReinf, gRebar, shpilka, "Г-стержень", "Шпилька", tabName);
+
 
             //4. PanelDrawing
             //Create buttons for changing colors of elements on the active view
@@ -183,20 +208,23 @@ namespace Reinforcement
             btnOpenColors.Size = AW.RibbonItemSize.Large;
             btnOpenColors.ShowText = false;
 
+            CreateButton("Оформление\nопалубочного плана", "Оформление\nопалубочного плана", "Reinforcement.DecorViewPlanStage1", Properties.Resources.Elevation,
+            "Команда наносит размеры на оси, образмеривает Дж и наносит на них марки", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
+            panelDrawing);
 
-
-            CreateButton("Оформление вида", "Оформление\nвида", "Reinforcement.DecorViewPlanStage1", Properties.Resources.ES_DecorViewPlanStage1,
-            "Оформление вида для стадии П", "",
+            CreateButton("Оформление\nопалубочного разреза", "Оформление\nопалубочного разреза", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Elevation,
+            "Команда образмеривает стены, подрезает вид, наносит линии обрыва", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
             panelDrawing);
 
 
             //5. PanelSelection
-            CreateButton("Выбрать родительское", "Выбрать\nродительское", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
-             "Выбрать родительское семейство из спецификации", "Позволяет найти родительское семейство детали",
+            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+             "Позволяет выделить родительское семейство для скрытой аннотации детали", "Позволяет упростить поиск деталей с ошибочными размерами через спецификацию",
             panelSelection);
 
-            CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
-    "Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection);
+    //        CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
+    //"Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection);
+
 
             //6. PanelSAPR
 
@@ -210,11 +238,8 @@ namespace Reinforcement
              "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе",
             panelSAPR);
             CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
-             "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Если считает неточно, значит электрики поменяли что-то, хотя клялись, что скажут если будет с их стороны изменение",
+             "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Если считает неточно, значит электрики поменяли что-то, хотя Сергей Молочков обещал, что скажут если будет с их стороны изменение",
             panelSAPR);
-
-
-
 
             return Result.Succeeded;
         }

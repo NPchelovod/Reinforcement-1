@@ -77,8 +77,13 @@
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
     </Compile>
     <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
+    <Compile Include="SPDS&amp;PS\HomutDistribCommand.cs" />
+    <Compile Include="SPDS&amp;PS\PRebarDistribCommand.cs" />
     <Compile Include="SPDS&amp;PS\PRebarNotEqualCommand.cs" />
     <Compile Include="SPDS&amp;PS\PRebarEqualCommand.cs" />
+    <Compile Include="SPDS&amp;PS\ArrowViewCommand.cs" />
+    <Compile Include="SPDS&amp;PS\RcGRebarCommand.cs" />
+    <Compile Include="SPDS&amp;PS\SerifCommand.cs" />
     <Compile Include="SPDS&amp;PS\SectionCommand.cs" />
     <Compile Include="SPDS&amp;PS\ElevationCommand.cs" />
     <Compile Include="SPDS&amp;PS\AxisDirectionCommand.cs" />
@@ -213,7 +218,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"
-if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024"
+if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024\ENSPlugin"
 if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
 if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021"
 
