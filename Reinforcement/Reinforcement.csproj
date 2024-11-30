@@ -145,6 +145,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\Auto_plan.png" />
+    <None Include="Resources\Arrow_of_view.png" />
+    <None Include="Resources\Shpilka.png" />
+    <None Include="Resources\Serif.png" />
+    <None Include="Resources\PRebarDistrib.png" />
+    <None Include="Resources\HomutDistrib.png" />
+    <None Include="Resources\GRebar.png" />
+    <None Include="Resources\Auto_razrez.png" />
     <None Include="Resources\PRebarNotEqual.png" />
     <None Include="Resources\PRebarEqual.png" />
     <None Include="Resources\ElectricalWiring.png" />

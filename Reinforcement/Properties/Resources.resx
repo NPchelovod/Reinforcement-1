@@ -118,6 +118,15 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Arrow_of_view" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Arrow_of_view.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Auto_plan" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Auto_plan.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Auto_razrez" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Auto_razrez.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Axes" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Axes.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -199,6 +208,15 @@
   <data name="ES_Wall" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_Wall.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="GRebar" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GRebar.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="HomutDistrib" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\HomutDistrib.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="PRebarDistrib" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\PRebarDistrib.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="PRebarEqual" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\PRebarEqual.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -207,5 +225,11 @@
   </data>
   <data name="Section" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Section.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Serif" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Serif.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Shpilka" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Shpilka.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

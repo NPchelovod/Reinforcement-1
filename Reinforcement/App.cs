@@ -107,8 +107,6 @@ namespace Reinforcement
             RibbonPanel panelSAPR = a.CreateRibbonPanel(tabName, "САПР");
 
 
-
-
             //1. PanelSpds
              RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
                 "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}", panelSpds);
@@ -134,9 +132,9 @@ namespace Reinforcement
              IList<RibbonItem> stackedSectionElevation =
                  CreateStackedItems(panelSpds, section, elevation, "Разрез", "Высотная отметка", tabName);
 
-            RibbonItemData serif = CreateButtonData("Засечка", "Засечка", "Reinforcement.SerifCommand", Properties.Resources.Section,
+            RibbonItemData serif = CreateButtonData("Засечка", "Засечка", "Reinforcement.SerifCommand", Properties.Resources.Serif,
                  "Размещение засечки", $"Имя семейства должно быть {SerifCommand.FamName}", panelSpds);
-            RibbonItemData arrowView = CreateButtonData("Стрелка вида", "Стрелка вида", "Reinforcement.ArrowViewCommand", Properties.Resources.Elevation,
+            RibbonItemData arrowView = CreateButtonData("Стрелка вида", "Стрелка вида", "Reinforcement.ArrowViewCommand", Properties.Resources.Arrow_of_view,
                 "Размещение стрелки вида", $"Имя семейства должно быть {ArrowViewCommand.FamName}", panelSpds);
 
             IList<RibbonItem> stackedSerifArrow =
@@ -153,9 +151,9 @@ namespace Reinforcement
                 "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
                 panelSketchReinf);
 
-            RibbonItemData distrPRebar = CreateButtonData("Распределение П и Г-стержней", "Распределение П и Г-стержней", "Reinforcement.PRebarDistribCommand", Properties.Resources.Section,
+            RibbonItemData distrPRebar = CreateButtonData("Распределение П и Г-стержней", "Распределение П и Г-стержней", "Reinforcement.PRebarDistribCommand", Properties.Resources.PRebarDistrib,
                  "Размещение распределения П и Г-стержней", $"Имя семейства должно быть {PRebarDistribCommand.FamName}", panelSketchReinf);
-            RibbonItemData distrHomut = CreateButtonData("Распределение хомутов", "Распределение хомутов", "Reinforcement.HomutDistribCommand", Properties.Resources.Elevation,
+            RibbonItemData distrHomut = CreateButtonData("Распределение хомутов", "Распределение хомутов", "Reinforcement.HomutDistribCommand", Properties.Resources.HomutDistrib,
                 "Размещение распределения хомутов", $"Имя семейства должно быть {HomutDistribCommand.FamName}", panelSketchReinf);
 
             IList<RibbonItem> stackedDistrRebars =
@@ -182,9 +180,9 @@ namespace Reinforcement
             IList<RibbonItem> stackedPRebars =
                  CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
 
-            RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.Section,
+            RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.GRebar,
                  "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
-            RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Elevation,
+            RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Shpilka,
                 "Размещение шпильки", $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
 
             IList<RibbonItem> stackedGRebarShpilka =
@@ -208,11 +206,11 @@ namespace Reinforcement
             btnOpenColors.Size = AW.RibbonItemSize.Large;
             btnOpenColors.ShowText = false;
 
-            CreateButton("Оформление\nопалубочного плана", "Оформление\nопалубочного плана", "Reinforcement.DecorViewPlanStage1", Properties.Resources.Elevation,
+            CreateButton("Оформить\nплан", "Оформить\nплан", "Reinforcement.DecorViewPlanStage1", Properties.Resources.Auto_plan,
             "Команда наносит размеры на оси, образмеривает Дж и наносит на них марки", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
             panelDrawing);
 
-            CreateButton("Оформление\nопалубочного разреза", "Оформление\nопалубочного разреза", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Elevation,
+            CreateButton("Оформить\nразрез", "Оформить\nразрез", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Auto_razrez,
             "Команда образмеривает стены, подрезает вид, наносит линии обрыва", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
             panelDrawing);
 

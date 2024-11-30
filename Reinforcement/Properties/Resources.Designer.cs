@@ -63,6 +63,36 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Arrow_of_view {
+            get {
+                object obj = ResourceManager.GetObject("Arrow_of_view", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Auto_plan {
+            get {
+                object obj = ResourceManager.GetObject("Auto_plan", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Auto_razrez {
+            get {
+                object obj = ResourceManager.GetObject("Auto_razrez", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Axes {
             get {
                 object obj = ResourceManager.GetObject("Axes", resourceCulture);
@@ -333,6 +363,36 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap GRebar {
+            get {
+                object obj = ResourceManager.GetObject("GRebar", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap HomutDistrib {
+            get {
+                object obj = ResourceManager.GetObject("HomutDistrib", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap PRebarDistrib {
+            get {
+                object obj = ResourceManager.GetObject("PRebarDistrib", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap PRebarEqual {
             get {
                 object obj = ResourceManager.GetObject("PRebarEqual", resourceCulture);
@@ -356,6 +416,26 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap Section {
             get {
                 object obj = ResourceManager.GetObject("Section", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Serif {
+            get {
+                object obj = ResourceManager.GetObject("Serif", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Shpilka {
+            get {
+                object obj = ResourceManager.GetObject("Shpilka", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
