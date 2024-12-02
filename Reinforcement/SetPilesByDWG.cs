@@ -33,13 +33,29 @@ namespace Reinforcement
 
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
+            string familyName = "ЕС_Буронабивная свая";
+
+            //Проверка есть ли в проекте "ЕС_Буронабивная свая"
+            bool famExist = collection
+                .OfClass(typeof(Family))
+                .Cast<Family>()
+                .Any(family => family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase));
+
+            if (famExist)
+            {
+                MessageBox.Show($"Не найдено семейство {familyName}!");
+                return Result.Failed;
+            }
+
+
             //Типоразмер нужной сваи
             var pileId = collection.OfClass(typeof(Family))
-                .Where(x => x.Name == "ЕС_Буронабивная свая")
+                .Where(x => x.Name == familyName)
                 .Cast<Family>()
                 .FirstOrDefault()
                 .GetFamilySymbolIds()
                 .FirstOrDefault();
+
 
             var pile = doc.GetElement(pileId) as FamilySymbol;
 
