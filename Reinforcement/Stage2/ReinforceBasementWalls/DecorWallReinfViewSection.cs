@@ -88,13 +88,14 @@ namespace Reinforcement
                  .Cast<Wall>()
                  .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Стм" || x.LookupParameter("• Тип элемента").AsString() == "Дж")
                  .ToList();
-
+            /*
             if (wallList.Count == 0)
             {
                 MessageBox.Show("Не найдено ни одной стены!");
                 return Result.Failed;
             }
-            else if (!wallList.Any(x => x.LookupParameter("• Тип элемента").AsString() == "Стм"))
+            */
+            if (!wallList.Any(x => x.LookupParameter("• Тип элемента").AsString() == "Стм"))
             {
                 MessageBox.Show("Не найдено ни одной стены Стм!");
                 return Result.Failed;
