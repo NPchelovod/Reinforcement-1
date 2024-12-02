@@ -41,7 +41,7 @@ namespace Reinforcement
                 .Cast<Family>()
                 .Any(family => family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase));
 
-            if (famExist)
+            if (!famExist)
             {
                 MessageBox.Show($"Не найдено семейство {familyName}!");
                 return Result.Failed;
