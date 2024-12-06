@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class SlabSchedulesCommand : IExternalCommand
+    public class CommandSlabSchedules : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -37,7 +37,7 @@ namespace Reinforcement
             }
 
             var reference = RevitAPI.Document;
-            var createSchedules = new CreateSchedules(reference);
+            var createSchedules = new ViewModelCreateSchedules(/*reference*/);
             var view = new MainView(createSchedules);
             view.ShowDialog();
 

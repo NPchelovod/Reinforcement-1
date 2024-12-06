@@ -31,7 +31,8 @@ namespace Reinforcement
             try
             {
                 Selection sel = uidoc.Selection;
-                IList<Reference> sec = sel.PickObjects(ObjectType.Element, "Выберите поперечное сечение стержня");
+                ISelectionFilter selFilter = new SelectionFilter();
+                IList<Reference> sec = sel.PickObjects(ObjectType.Element, selFilter,"Выберите поперечное сечение стержня");
                 IList<XYZ> Pt = new List<XYZ>();
                 Options options = new Options();
                 options.View = uidoc.ActiveView;
@@ -39,18 +40,6 @@ namespace Reinforcement
                 foreach (Reference secObj in sec)
                 {
                     Element element = doc.GetElement(secObj);
-                    /*
-                    var geometryElement = element.get_Geometry(options);
-                    foreach (var geom in geometryElement)
-                    {
-                        MessageBox.Show(geom.ToString());
-                    };
-                    //Pt.Add(maxPt); Pt.Add(minPt);  
-                    */
-                    /*
-                    var boundingBox = element.get_BoundingBox(uidoc.ActiveView);
-                    Pt.Add(boundingBox.Min); Pt.Add(boundingBox.Max);
-                    */
                     LocationPoint locationPts = element.Location as LocationPoint;
                     diameter = element.LookupParameter("• Диаметр").AsDouble();
                     //diameter = UnitUtils.ConvertFromInternalUnits(diameter, UnitTypeId.Millimeters);                      
@@ -97,13 +86,16 @@ namespace Reinforcement
                         using (Transaction t = new Transaction(doc, "Создание шпильки"))
                         {
                             t.Start();
-                            FamilyInstance familyInstance = doc.Create.NewFamilyInstance(line, symbol, uidoc.ActiveView);
+                            var detailLine = doc.Create.NewDetailCurve(uidoc.ActiveView, line);
+                            var baseLine = detailLine.GeometryCurve as Line;
+                            FamilyInstance familyInstance = doc.Create.NewFamilyInstance(baseLine, symbol, uidoc.ActiveView);
                             familyInstance.LookupParameter("Объемный вид").Set(1);
+                            familyInstance.LookupParameter("Вид с торца").Set(0);
                             familyInstance.LookupParameter("Заливка").Set(0);
                             familyInstance.LookupParameter("Радиус основы").Set(diameter / 2);
                             familyInstance.LookupParameter("• Диаметр").Set(UnitUtils.ConvertToInternalUnits(6, UnitTypeId.Millimeters));
                             familyInstance.LookupParameter("Длина отгиба").Set(UnitUtils.ConvertToInternalUnits(30, UnitTypeId.Millimeters));
-                            var asd = symbol.Family;
+                            doc.Delete(detailLine.Id);
                             t.Commit();
                         }
                         break;
@@ -126,6 +118,26 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
+
+        public class SelectionFilter  : ISelectionFilter
+        {
+            public bool AllowElement(Element element)
+            {
+                FamilyInstance instance = element as FamilyInstance;
+                if (instance.Symbol.FamilyName.ToLower().Contains("точка"))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            public bool AllowReference(Reference reference, XYZ point)
+            {
+                return false;
+            }
+
+        }
+
         public static string FamName { get; set; } = "ЕС_А-23_Шпилька";
         public static string exampleName { get; set; } = "А240";
 

@@ -52,7 +52,7 @@ namespace Reinforcement
                 uidoc.PostRequestForElementTypePlacement(symbol);
                 return Result.Succeeded;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Result.Failed;
             }

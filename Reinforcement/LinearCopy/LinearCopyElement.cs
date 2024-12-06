@@ -80,7 +80,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Не создано ни одного элемента!");
+                MessageBox.Show("Не создано ни одного элемента!" + ex.Message);
                 return Result.Failed;
             }
 

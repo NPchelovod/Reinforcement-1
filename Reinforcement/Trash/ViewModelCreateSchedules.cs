@@ -10,12 +10,8 @@ using System.Windows.Controls;
 
 namespace Reinforcement
 {
-    public class CreateSchedules
+    public class ViewModelCreateSchedules
     {
-        public CreateSchedules(Document document)
-        {
-
-        }
         public string ConstructionMark { get; set; }
         public string ViewDestination { get; set; }
 

@@ -45,6 +45,9 @@
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
       <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2021\AdWindows.dll</HintPath>
@@ -71,6 +74,12 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
+    <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
+    <Compile Include="RelayCommand.cs" />
+    <Compile Include="CopySelectedSchedules\ViewCopySelectedSchedules.xaml.cs">
+      <DependentUpon>ViewCopySelectedSchedules.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CopySelectedSchedules\ViewModelCopySelectedSchedules.cs" />
     <Compile Include="GetLengthElectricalWiring.cs" />
     <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
     <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
@@ -103,15 +112,16 @@
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
     <Compile Include="OpeningsColors.cs" />
-    <Compile Include="Stage2\ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
-    <Compile Include="Stage2\ReinforceBasementWalls\ReinforceWall.cs" />
+    <Compile Include="ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
+    <Compile Include="ReinforceBasementWalls\ReinforceWall.cs" />
     <Compile Include="RenameLevels.cs" />
     <Compile Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml.cs">
       <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
     </Compile>
     <Compile Include="SetPilesByDWG.cs" />
-    <Compile Include="Stage1\DecorViewPlan\DecorViewPlanStage1.cs" />
-    <Compile Include="Stage1\DecorViewPlan\MoveTextInDimension.cs" />
+    <Compile Include="DecorViewPlan\DecorViewPlanStage1.cs" />
+    <Compile Include="DecorViewPlan\MoveTextInDimension.cs" />
+    <Compile Include="Test\FileName.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />
     <Compile Include="CodeTemplate.cs" />
@@ -122,7 +132,7 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
-    <Compile Include="MainView.xaml.cs">
+    <Compile Include="Trash\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
     <Compile Include="SPDS&amp;PS\RcAddCommand.cs" />
@@ -133,7 +143,7 @@
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
-    <Compile Include="SlabSchedulesCommand.cs" />
+    <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcHomutCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcLineCommand.cs" />
@@ -144,7 +154,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="CreateSchedules.cs" />
+    <Compile Include="Trash\ViewModelCreateSchedules.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
@@ -200,6 +210,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="CopySelectedSchedules\ViewCopySelectedSchedules.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="CreateViewPlan\MainViewCreateViewPlan.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -212,7 +226,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="MainView.xaml">
+    <Page Include="Trash\MainView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

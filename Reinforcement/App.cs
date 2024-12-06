@@ -29,7 +29,7 @@ namespace Reinforcement
             button.LargeImage = imageSource;
             button.Image = imageSource;
             button.ToolTip = toolTip;
-            button.LongDescription = longDescription;
+            button.LongDescription = longDescription;      
         }
 
         public PushButtonData CreateButtonForSplit(string name, string text, string className, Image img, string toolTip,

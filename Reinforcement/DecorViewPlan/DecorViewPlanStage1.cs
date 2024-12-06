@@ -57,11 +57,25 @@ namespace Reinforcement
                 .Cast<Floor>()
                 .OrderByDescending(x => x.get_Geometry(opt).Select(n => n as Solid).First().Volume) //the biggest floor will be firsst in list
                 .ToList(); //get all floors on activeView
+
+            if (floorList.Count == 0)
+            {
+                MessageBox.Show("На виде должна быть плита!");
+                return Result.Failed;
+            }
+
             List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(Wall))
                 .ToElements()
                 .Cast<Wall>()
                 .ToList();  //get all walls on activeView
+
+            if (wallList.Count == 0)
+            {
+                MessageBox.Show("На виде должны быть стены!");
+                return Result.Failed;
+            }
+
             List<XYZ> minPtWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min)
                 .ToList();
@@ -80,6 +94,13 @@ namespace Reinforcement
                 .Cast<Grid>()
                 .ToList(); //get all grids on activeView
 
+            if (gridList.Count == 0)
+            {
+                MessageBox.Show("На виде должны быть оси!");
+                return Result.Failed;
+            }
+
+
             List<Grid> XGridList = gridList
                 .Where(x => Math.Abs(x.get_Geometry(opt).Select(n => n as Line).First().Direction.X) == 1)
                 .ToList();
@@ -90,7 +111,7 @@ namespace Reinforcement
 
             try //ловим ошибкуs
             {
-                using (TransactionGroup tg = new TransactionGroup(doc, "Оформление плана для Стадии П"))
+                using (TransactionGroup tg = new TransactionGroup(doc, "Оформление плана"))
                 {
                     tg.Start();
                     using (Transaction t1 = new Transaction(doc, "Изменение осей"))

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,34 +13,27 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Autodesk.Revit.DB;
 
-namespace Reinforcement
+namespace Reinforcement.CopySelectedSchedules
 {
     /// <summary>
-    /// Логика взаимодействия для MainView.xaml
+    /// Логика взаимодействия для ViewCopySelectedSchedules.xaml
     /// </summary>
-    public partial class MainView : Window
+    public partial class ViewCopySelectedSchedules : Window
     {
-
-        public MainView(CreateSchedules createSchedules)
+        public ViewCopySelectedSchedules(ViewModelCopySelectedSchedules viewModel)
         {
+            DataContext = viewModel;
             InitializeComponent();
-            DataContext = createSchedules;
         }
-
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Hide();
-            (DataContext as CreateSchedules).SchedulesDuplication();
-            Close();
+
         }
         private void Click_Cancel(object sender, RoutedEventArgs e)
         {
+            DialogResult = false;
             Close();
         }
-
-
     }
 }
-
