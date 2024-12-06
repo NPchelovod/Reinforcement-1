@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class PRebarEqualCommand : IExternalCommand
+    public class SoilBorderCommand : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -35,23 +35,23 @@ namespace Reinforcement
 
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
+            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
 
-            IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-            FamilySymbol symbol = null;
+            ElementType elementType = null;
 
             try
             {
-                foreach (var element in symbols)
-                {   
+                foreach (var element in elementTypes)
+                {
                     ElementType elemType = element as ElementType;
-                    if (elemType.FamilyName == FamName)
+                    if (elemType.Name == FamName)
                     {
-                        symbol = element as FamilySymbol;
+                        elementType = elemType;
                         break;
                     }
                 }
 
-                uidoc.PostRequestForElementTypePlacement(symbol);
+                uidoc.PostRequestForElementTypePlacement(elementType);
                 return Result.Succeeded;
             }
             catch (Exception ex)
@@ -60,7 +60,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_А-21_П-равнопол";
+        public static  string FamName { get; set; } = "Граница грунта (М50)";
 
     }
     }

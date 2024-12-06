@@ -118,11 +118,11 @@ namespace Reinforcement
 
              RibbonItemData axis = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisCommand", Properties.Resources.Axes,
                  "Размещение строительной оси", $"Имя семейства должно быть {AxisCommand.FamName}", panelSpds);
-             RibbonItemData axisDirection = CreateButtonData("Ориентация оси", "Ориентация оси", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
-                 "Размещение указателя ориентация оси", $"Имя семейства должно быть {AxisDirectionCommand.FamName}", panelSpds);
+             RibbonItemData axisDirection = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
+                 "Размещение строительной оси с возможностью преобразования в указатель ориентации оси", $"Имя семейства должно быть {AxisDirectionCommand.FamName}", panelSpds);
 
              IList<RibbonItem> stackedItemsAxis =
-                 CreateStackedItems(panelSpds, axis, axisDirection, "Строительная ось", "Ориентация оси", tabName);
+                 CreateStackedItems(panelSpds, axis, axisDirection, "Строительная ось", "Строительная ось", tabName);
 
              RibbonItemData section = CreateButtonData("Разрез", "Разрез", "Reinforcement.SectionCommand", Properties.Resources.Section,
                  "Размещение условного разреза", $"Имя семейства должно быть {SectionCommand.FamName}", panelSpds);

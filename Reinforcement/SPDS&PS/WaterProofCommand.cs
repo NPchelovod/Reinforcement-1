@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class PRebarEqualCommand : IExternalCommand
+    public class WaterProofCommand : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -35,14 +35,13 @@ namespace Reinforcement
 
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
-
             IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
             FamilySymbol symbol = null;
 
             try
             {
                 foreach (var element in symbols)
-                {   
+                {
                     ElementType elemType = element as ElementType;
                     if (elemType.FamilyName == FamName)
                     {
@@ -60,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_А-21_П-равнопол";
+        public static  string FamName { get; set; } = "ЕС_Условная ось";
 
     }
     }
