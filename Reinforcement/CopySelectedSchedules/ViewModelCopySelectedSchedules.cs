@@ -103,6 +103,7 @@ namespace Reinforcement.CopySelectedSchedules
 
                         foreach (var filter in filters)
                         {
+                            int index = 0;
                             ScheduleFieldId paramId = filter.FieldId;
                             ScheduleField field = definition.GetField(paramId);
                             string paramName = field.GetName();
@@ -110,7 +111,7 @@ namespace Reinforcement.CopySelectedSchedules
                             if (paramName.ToLower().Contains("марка констр")) 
                             {
                                 filter.SetValue(ConstrMark);
-                                int index = field.FieldIndex;
+                                //int index = field.FieldIndex;
                                 definition.SetFilter(index, filter);
                             }
 
