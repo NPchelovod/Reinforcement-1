@@ -34,10 +34,9 @@ namespace Reinforcement.CopySelectedSchedules
             var window = new ViewCopySelectedSchedules(viewModel);
 
             viewModel.CloseRequest += (s, e) => window.Close();
-
             window.ShowDialog();
 
-            if (window.DialogResult == true)
+            if (viewModel.DialogResult == true)
             {
                 return Result.Succeeded;
             }

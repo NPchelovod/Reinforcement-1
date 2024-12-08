@@ -20,10 +20,10 @@ namespace Reinforcement.CopySelectedSchedules
         {
             CopySchedulesCommand = new RelayCommand(CopySchedules, CanCopySchedules);
         }
-
+        
+        public bool DialogResult { get; set; }
         private string constrMark;
         private string viewDestination;
-
         public string ConstrMark
         {
             get { return constrMark; }
@@ -45,6 +45,7 @@ namespace Reinforcement.CopySelectedSchedules
                 CommandManager.InvalidateRequerySuggested();
             }
         }
+
         public event PropertyChangedEventHandler PropertyChanged;
         void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -83,9 +84,41 @@ namespace Reinforcement.CopySelectedSchedules
                         .ToList();
                     foreach (var view in viewList)
                     {
-                        view.Duplicate(ViewDuplicateOption.Duplicate);
+                        var newScheduleId = view.Duplicate(ViewDuplicateOption.Duplicate);      
+                        var newSchedule = doc.GetElement(newScheduleId) as ViewSchedule;
+
+                        //set view destination
+                        newSchedule.LookupParameter("ADSK_Назначение вида").Set(ViewDestination);
+
+                        //rename schedule view
+                        string oldName = newSchedule.Name;
+                        string newName = oldName.Substring(0, oldName.IndexOf(" копия")).Replace("Конструкция", ConstrMark);
+                        //get index of "копия"                          
+
+                        newSchedule.Name = newName;
+                        
+                        //get schedule view filters
+                        ScheduleDefinition definition = newSchedule.Definition;
+                        IList<ScheduleFilter> filters = definition.GetFilters();
+
+                        foreach (var filter in filters)
+                        {
+                            ScheduleFieldId paramId = filter.FieldId;
+                            ScheduleField field = definition.GetField(paramId);
+                            string paramName = field.GetName();
+
+                            if (paramName.ToLower().Contains("марка констр")) 
+                            {
+                                filter.SetValue(ConstrMark);
+                                int index = field.FieldIndex;
+                                definition.SetFilter(index, filter);
+                            }
+
+                        }
+                        
                         RaiseCloseRequest();
                     }
+                    DialogResult = true;
 
                     t.Commit();
                 }

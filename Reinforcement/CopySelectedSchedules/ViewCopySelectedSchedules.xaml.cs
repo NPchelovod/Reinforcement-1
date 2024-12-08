@@ -32,7 +32,6 @@ namespace Reinforcement.CopySelectedSchedules
         }
         private void Click_Cancel(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
             Close();
         }
     }
