@@ -119,6 +119,7 @@ namespace Reinforcement.CopySelectedSchedules
                         
                         RaiseCloseRequest();
                     }
+
                     DialogResult = true;
 
                     t.Commit();
