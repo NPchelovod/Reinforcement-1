@@ -191,7 +191,9 @@ namespace Reinforcement
             RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.GRebar,
                  "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
             RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Shpilka,
-                "Размещение шпильки", $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
+                "Размещение шпильки", 
+                $"Для размещения нужно выделить два арматурных стержня в сечении по которым построится шпилька\n" +
+                $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
 
             IList<RibbonItem> stackedGRebarShpilka =
                 CreateStackedItems(panelDetailReinf, gRebar, shpilka, "Г-стержень", "Шпилька", tabName);
@@ -226,7 +228,7 @@ namespace Reinforcement
 
 
             //5. PanelSelection
-            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
              "Позволяет выделить родительское семейство детали из спецификации", 
              "1. Выделить нужную деталь в строчке спецификации\n" +
              "2. Нажать на кнопку\n" +
