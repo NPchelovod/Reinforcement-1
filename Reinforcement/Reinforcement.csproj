@@ -122,7 +122,7 @@
       <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
     </Compile>
     <Compile Include="SetPilesByDWG.cs" />
-    <Compile Include="DecorViewPlan\DecorViewPlanStage1.cs" />
+    <Compile Include="DecorViewPlan\DecorViewPlan.cs" />
     <Compile Include="DecorViewPlan\MoveTextInDimension.cs" />
     <Compile Include="Test\FileName.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />

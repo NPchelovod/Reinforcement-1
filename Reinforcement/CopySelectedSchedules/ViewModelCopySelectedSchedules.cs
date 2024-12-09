@@ -20,7 +20,8 @@ namespace Reinforcement.CopySelectedSchedules
         {
             CopySchedulesCommand = new RelayCommand(CopySchedules, CanCopySchedules);
         }
-        
+        public RelayCommand CopySchedulesCommand { get; set; }
+
         public bool DialogResult { get; set; }
         private string constrMark;
         private string viewDestination;
@@ -52,7 +53,6 @@ namespace Reinforcement.CopySelectedSchedules
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public RelayCommand CopySchedulesCommand { get; set; }
 
         public event EventHandler CloseRequest;
         private void RaiseCloseRequest()
@@ -62,8 +62,10 @@ namespace Reinforcement.CopySelectedSchedules
 
         private bool CanCopySchedules(object param)
         {
-            return !string.IsNullOrWhiteSpace(ConstrMark) && !string.IsNullOrWhiteSpace(ViewDestination) 
-                && ViewDestination.Contains("_");
+            return !string.IsNullOrWhiteSpace(ConstrMark) 
+                && !string.IsNullOrWhiteSpace(ViewDestination) 
+                && ViewDestination.Contains("_") 
+                && ViewDestination.Count() > 3;
         }
 
         public void CopySchedules()
@@ -79,10 +81,28 @@ namespace Reinforcement.CopySelectedSchedules
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
                     var viewId = sel.GetElementIds();
+
+                    if (viewId.Count == 0)
+                    {
+                        MessageBox.Show("Не выбрано ни одной спецификации!");
+                        return;
+                    }
+
+                    foreach (var x in viewId)
+                    {
+                        var element = doc.GetElement(x);
+                        if (!(element is ViewSchedule))
+                        {
+                            MessageBox.Show("Не выбрано ни одной спецификации!");
+                            return;
+                        }
+                    }
+
                     List<View> viewList = viewId
                         .Select(x => doc.GetElement(x))
                         .Cast<View>()
                         .ToList();
+
 
                     foreach (var view in viewList)
                     {
@@ -94,14 +114,15 @@ namespace Reinforcement.CopySelectedSchedules
 
                         //rename schedule view
                         string oldName = newSchedule.Name;
+                        string[] oldNameParts = oldName.Split('_');
                         string newName = oldName
                             .Substring(0, oldName.IndexOf(" копия"))
-                            .Replace("Конструкция", ConstrMark)
-                            .Replace("00", ViewDestination.Substring(0, 2));
-
-                        
+                            .Replace(oldNameParts[1], ConstrMark)
+                            .Replace(oldNameParts[0], ViewDestination.Substring(0, 2));                   
                         newSchedule.Name = newName;
                         
+
+
                         //get schedule view filters
                         ScheduleDefinition definition = newSchedule.Definition;
                         IList<ScheduleFilter> filters = definition.GetFilters();
@@ -116,12 +137,10 @@ namespace Reinforcement.CopySelectedSchedules
                             if (paramName.ToLower().Contains("марка констр")) 
                             {
                                 filter.SetValue(ConstrMark);
-                                //int index = field.FieldIndex;
                                 definition.SetFilter(index, filter);
                             }
                             index++;
                         }
-                        
                         RaiseCloseRequest();
                     }
 

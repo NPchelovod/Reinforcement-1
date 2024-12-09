@@ -19,7 +19,7 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class DecorViewPlanStage1 : IExternalCommand
+    public class DecorViewPlan : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,

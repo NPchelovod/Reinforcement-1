@@ -214,8 +214,10 @@ namespace Reinforcement
             btnOpenColors.Size = AW.RibbonItemSize.Large;
             btnOpenColors.ShowText = false;
 
-            CreateButton("Оформить\nплан", "Оформить\nплан", "Reinforcement.DecorViewPlanStage1", Properties.Resources.Auto_plan,
-            "Команда наносит размеры на оси, образмеривает Дж и наносит на них марки", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
+            CreateButton("Оформить\nплан", "Оформить\nплан", "Reinforcement.DecorViewPlan", Properties.Resources.Auto_plan,
+            "Команда передвигает оси, наносит размеры между ними и образмеривает Дж",
+            "На плане должны быть стены Дж и плита пола.\n" +
+            "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
             panelDrawing);
 
             //CreateButton("Оформить\nразрез", "Оформить\nразрез", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Auto_razrez,
@@ -224,8 +226,12 @@ namespace Reinforcement
 
 
             //5. PanelSelection
-            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
-             "Позволяет выделить родительское семейство для скрытой аннотации детали", "Позволяет упростить поиск деталей с ошибочными размерами через спецификацию",
+            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+             "Позволяет выделить родительское семейство детали из спецификации", 
+             "1. Выделить нужную деталь в строчке спецификации\n" +
+             "2. Нажать на кнопку\n" +
+             "3. Нажать Да для выбора родительского семейства\n" +
+             "4. Перейти на любой другой вид.\nТеперь можно поменять свойства детали",
             panelSelection);
 
     //        CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
@@ -235,7 +241,8 @@ namespace Reinforcement
             //6. PanelSAPR
 
             CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
-             "Позволяет скопировать спецификации с заменой марки конструкции", "Для работы плагина нужно сначала выделить нужные спецификации для копирования, а потом нажать на кнопку",
+             "Позволяет скопировать спецификации с заменой марки конструкции", 
+             "Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку",
             panelSAPR);
             CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
              "Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане. Нужно не забывать кусты свай подвинуть под центр тяжести конструкций (при необходимости)",
