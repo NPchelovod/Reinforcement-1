@@ -19,6 +19,8 @@ namespace Reinforcement
         public List<Level> Levels { get; set; } = new List<Level>();
         public string MarkElevation { get; set; }
 
+        public string Prefix { get; set; }
+
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,

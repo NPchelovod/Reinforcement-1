@@ -21,6 +21,8 @@ namespace Reinforcement
 
         public string MarkElevation { get; set; }
 
+        public string Prefix { get; set; }
+
         public Level SelectedLevel { get; set; }
         public void CreateViewPlan()
         {
@@ -58,8 +60,12 @@ namespace Reinforcement
                             viewsList.Add(ViewPlan.Create(doc, viewTypeStructural, SelectedLevel.Id));
                             Parameter viewName = viewsList[i].get_Parameter(viewNameId);
                             Parameter viewportName = viewsList[i].get_Parameter(viewportId);
-                            viewName.Set($"22_{MarkElevation.Substring(0, 3)}_{armText[i + 3]}");
+                            viewName.Set($"{Prefix}_{MarkElevation.Substring(0, 3)}_{armText[i + 3]}");
                             viewportName.Set($"{armText[i]} {MarkElevation}");
+                            Parameter directory = viewsList[i].LookupParameter("◦ Директория");
+                            directory.SetValueString($"{Prefix}_РД");
+                            Parameter chapter = viewsList[i].LookupParameter("◦ Раздел");
+                            chapter.SetValueString("АРМ_Пм");
                         }                                                                      
                         
                         //Create the sheet and rename
