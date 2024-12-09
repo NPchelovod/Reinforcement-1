@@ -59,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_Условная ось";
+        public static  string FamName { get; set; } = "1/50";
 
     }
     }

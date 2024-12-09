@@ -158,6 +158,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\WaterProof.png" />
+    <None Include="Resources\SoilBorder.png" />
+    <None Include="Resources\ConcreteJoint.png" />
     <None Include="Resources\Auto_plan.png" />
     <None Include="Resources\Arrow_of_view.png" />
     <None Include="Resources\Shpilka.png" />

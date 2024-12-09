@@ -113,6 +113,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ConcreteJoint {
+            get {
+                object obj = ResourceManager.GetObject("ConcreteJoint", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ElectricalWiring {
             get {
                 object obj = ResourceManager.GetObject("ElectricalWiring", resourceCulture);
@@ -436,6 +446,26 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap Shpilka {
             get {
                 object obj = ResourceManager.GetObject("Shpilka", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SoilBorder {
+            get {
+                object obj = ResourceManager.GetObject("SoilBorder", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap WaterProof {
+            get {
+                object obj = ResourceManager.GetObject("WaterProof", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

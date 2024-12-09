@@ -116,15 +116,23 @@ namespace Reinforcement
              IList<RibbonItem> stackedItemsLines =
                  CreateStackedItems(panelSpds, breakLine, noteLine, "Линия обрыва", "Выноска", tabName);
 
-             RibbonItemData axis = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisCommand", Properties.Resources.Axes,
-                 "Размещение строительной оси", $"Имя семейства должно быть {AxisCommand.FamName}", panelSpds);
+             RibbonItemData concreteJoint = CreateButtonData("Шов бетонирования", "Шов бетонирования", "Reinforcement.ConcreteJointCommand", Properties.Resources.ConcreteJoint,
+                 "Размещение шва бетонирования в масштабе М50", $"Имя семейства должно быть {ConcreteJointCommand.FamName}", panelSpds);
              RibbonItemData axisDirection = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
                  "Размещение строительной оси с возможностью преобразования в указатель ориентации оси", $"Имя семейства должно быть {AxisDirectionCommand.FamName}", panelSpds);
 
              IList<RibbonItem> stackedItemsAxis =
-                 CreateStackedItems(panelSpds, axis, axisDirection, "Строительная ось", "Строительная ось", tabName);
+                 CreateStackedItems(panelSpds, concreteJoint, axisDirection, "Шов бетонирования", "Строительная ось", tabName);
 
-             RibbonItemData section = CreateButtonData("Разрез", "Разрез", "Reinforcement.SectionCommand", Properties.Resources.Section,
+            RibbonItemData soilBorder = CreateButtonData("Граница грунта", "Граница грунта", "Reinforcement.SoilBorderCommand", Properties.Resources.SoilBorder,
+                 "Размещение границы грунта в масштабе М50", $"Имя семейства должно быть {SoilBorderCommand.FamName}", panelSpds);
+            RibbonItemData waterProof = CreateButtonData("Гидроизоляция", "Гидроизоляция", "Reinforcement.WaterProofCommand", Properties.Resources.WaterProof,
+                "Размещение гидроизоляции в масштабе М50", $"Имя семейства должно быть {WaterProofCommand.FamName}", panelSpds);
+
+            IList<RibbonItem> stackedItemsSequence =
+                CreateStackedItems(panelSpds, soilBorder, waterProof, "Граница грунта", "Гидроизоляция", tabName);
+
+            RibbonItemData section = CreateButtonData("Разрез", "Разрез", "Reinforcement.SectionCommand", Properties.Resources.Section,
                  "Размещение условного разреза", $"Имя семейства должно быть {SectionCommand.FamName}", panelSpds);
              RibbonItemData elevation = CreateButtonData("Высотная отметка", "Высотная отметка", "Reinforcement.ElevationCommand", Properties.Resources.Elevation,
                  "Размещение высотной отметки", $"Имя семейства должно быть {ElevationCommand.FamName}", panelSpds);
