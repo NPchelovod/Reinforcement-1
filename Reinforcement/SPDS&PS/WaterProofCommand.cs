@@ -59,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "1/50";
+        public static  string FamName { get; set; } = "ЕС_Гидроизоляция";
 
     }
     }

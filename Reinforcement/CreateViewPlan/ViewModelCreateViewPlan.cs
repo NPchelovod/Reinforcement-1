@@ -63,9 +63,9 @@ namespace Reinforcement
                             viewName.Set($"{Prefix}_{MarkElevation.Substring(0, 3)}_{armText[i + 3]}");
                             viewportName.Set($"{armText[i]} {MarkElevation}");
                             Parameter directory = viewsList[i].LookupParameter("◦ Директория");
-                            directory.SetValueString($"{Prefix}_РД");
+                            directory.Set($"{Prefix}_РД");
                             Parameter chapter = viewsList[i].LookupParameter("◦ Раздел");
-                            chapter.SetValueString("АРМ_Пм");
+                            chapter.Set("АРМ_Пм");
                         }                                                                      
                         
                         //Create the sheet and rename
