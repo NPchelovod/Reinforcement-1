@@ -62,7 +62,8 @@ namespace Reinforcement.CopySelectedSchedules
 
         private bool CanCopySchedules(object param)
         {
-            return !string.IsNullOrWhiteSpace(ConstrMark) && !string.IsNullOrWhiteSpace(ViewDestination);
+            return !string.IsNullOrWhiteSpace(ConstrMark) && !string.IsNullOrWhiteSpace(ViewDestination) 
+                && ViewDestination.Contains("_");
         }
 
         public void CopySchedules()
@@ -82,6 +83,7 @@ namespace Reinforcement.CopySelectedSchedules
                         .Select(x => doc.GetElement(x))
                         .Cast<View>()
                         .ToList();
+
                     foreach (var view in viewList)
                     {
                         var newScheduleId = view.Duplicate(ViewDuplicateOption.Duplicate);      
@@ -92,18 +94,21 @@ namespace Reinforcement.CopySelectedSchedules
 
                         //rename schedule view
                         string oldName = newSchedule.Name;
-                        string newName = oldName.Substring(0, oldName.IndexOf(" копия")).Replace("Конструкция", ConstrMark);
-                        //get index of "копия"                          
+                        string newName = oldName
+                            .Substring(0, oldName.IndexOf(" копия"))
+                            .Replace("Конструкция", ConstrMark)
+                            .Replace("00", ViewDestination.Substring(0, 2));
 
+                        
                         newSchedule.Name = newName;
                         
                         //get schedule view filters
                         ScheduleDefinition definition = newSchedule.Definition;
                         IList<ScheduleFilter> filters = definition.GetFilters();
 
+                        int index = 0;
                         foreach (var filter in filters)
                         {
-                            int index = 0;
                             ScheduleFieldId paramId = filter.FieldId;
                             ScheduleField field = definition.GetField(paramId);
                             string paramName = field.GetName();
@@ -114,7 +119,7 @@ namespace Reinforcement.CopySelectedSchedules
                                 //int index = field.FieldIndex;
                                 definition.SetFilter(index, filter);
                             }
-
+                            index++;
                         }
                         
                         RaiseCloseRequest();

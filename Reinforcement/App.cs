@@ -234,8 +234,8 @@ namespace Reinforcement
 
             //6. PanelSAPR
 
-            CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CreateSchedules", Properties.Resources.ES_Specification,
-             "Позволяет скопировать спецификации с заменой марки конструкции", "Выбираются исходные спецификации и программой создаются аналогичные, но с изменением марки конструкции",
+            CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
+             "Позволяет скопировать спецификации с заменой марки конструкции", "Для работы плагина нужно сначала выделить нужные спецификации для копирования, а потом нажать на кнопку",
             panelSAPR);
             CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
              "Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане",
