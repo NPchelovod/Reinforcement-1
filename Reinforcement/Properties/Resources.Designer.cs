@@ -313,16 +313,6 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ES_Select {
-            get {
-                object obj = ResourceManager.GetObject("ES_Select", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap ES_SelectWithFilter {
             get {
                 object obj = ResourceManager.GetObject("ES_SelectWithFilter", resourceCulture);
@@ -466,6 +456,16 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap WaterProof {
             get {
                 object obj = ResourceManager.GetObject("WaterProof", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ЕС_Выбор {
+            get {
+                object obj = ResourceManager.GetObject("ЕС_Выбор", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

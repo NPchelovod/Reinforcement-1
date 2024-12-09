@@ -224,7 +224,7 @@ namespace Reinforcement
 
 
             //5. PanelSelection
-            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ES_Select,
+            CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
              "Позволяет выделить родительское семейство для скрытой аннотации детали", "Позволяет упростить поиск деталей с ошибочными размерами через спецификацию",
             panelSelection);
 
