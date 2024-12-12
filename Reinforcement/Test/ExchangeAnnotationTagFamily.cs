@@ -32,6 +32,7 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
 
             string newName = "ЕС_Аннотация_Текст_Выноска 2,5 мм";
+            string newTypeName = "Текст стрелка";
 
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
@@ -41,7 +42,7 @@ namespace Reinforcement
                 .FirstOrDefault()
                 .GetFamilySymbolIds()
                 .Select(x => doc.GetElement(x))
-                .Where(x => x.Name == "Текст стрелка")
+                .Where(x => x.Name == newTypeName)
                 .FirstOrDefault().Id;
 
 
