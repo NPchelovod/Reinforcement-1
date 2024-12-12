@@ -43,7 +43,7 @@ namespace Reinforcement
                 Line curve = (Line)grid.Curve;
                 string direction = curve.Direction.ToString();
 
-                text = string.Concat(text,"  ", name, direction, "\n");
+                text = string.Concat(text, name," - ", direction, "\n");
             }
 
 
