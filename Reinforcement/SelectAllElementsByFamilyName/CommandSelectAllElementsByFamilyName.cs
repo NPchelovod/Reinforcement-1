@@ -44,23 +44,39 @@ namespace Reinforcement
             }
 
             ElementClassFilter filter = new ElementClassFilter(typeof(FamilyInstance));
+            ElementClassFilter filterTag = new ElementClassFilter(typeof(IndependentTag));
+
+            IList <ElementId> listId = new List <ElementId>();
             var collection = new FilteredElementCollector(doc)
                 .OfClass(typeof(FamilyInstance))
                 .Cast<FamilyInstance>()
                 .Where(x => x.Symbol.Family.Name == FamTypeName)
+                .Select(x => x.Id)
                 .ToList();
+            listId = collection;
             if (collection.Count == 0)
             {
-                return Result.Failed;
+
+                var collectionTag = new FilteredElementCollector(doc)
+                .OfClass(typeof(Family))
+                .Cast<Family>()
+                .Where(x => x.Name == FamTypeName)
+                .FirstOrDefault()
+                .GetDependentElements(filterTag);
+                listId = collectionTag;
+                if (collectionTag.Count == 0)
+                {
+                    return Result.Failed;
+                }
             }
-            sel.SetElementIds(collection.Select(x => x.Id).ToList());
+            sel.SetElementIds(listId.ToList());
             DialogResult dialogResult = MessageBox.Show("Показать элементы на виде?", "Перебор элементов", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.Yes)
             {
                 int n = 0;
-                while (n < collection.Count)
+                while (n < listId.Count)
                 {
-                    var elementId = collection.ElementAt(n).Id;
+                    var elementId = listId[n];
                     var element = doc.GetElement(elementId);
                     var viewId = element.OwnerViewId;
                     var view = doc.GetElement(viewId) as Autodesk.Revit.DB.View;
@@ -78,7 +94,6 @@ namespace Reinforcement
                 }
             }
             else if (dialogResult == DialogResult.No)
-
             {
                 return Result.Succeeded;
             }
