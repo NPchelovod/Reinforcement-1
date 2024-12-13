@@ -7,14 +7,14 @@
              mc:Ignorable="d" 
              Title="Уведомление" Background="Transparent" Topmost="True" ShowInTaskbar="False" AllowsTransparency="True"
              Height="80" Width="300" WindowStyle="None"
-             BorderBrush="#FF222933" BorderThickness="0,0,3,3"
+             VerticalAlignment="Bottom"
              SizeToContent="Height">
     <Window.Effect>
         <DropShadowEffect/>
     </Window.Effect>
-    <Grid Background="#FF3B4453">
+    <Grid>
         <!-- Полупрозрачный фон -->
-        <Border Background="#FF3B4453" IsHitTestVisible="False" />
+        <Border Background="#80000000" IsHitTestVisible="False" CornerRadius="10" />
         <TextBlock x:Name="NotificationBlock" 
                    Foreground="White" 
                    FontSize="12" 

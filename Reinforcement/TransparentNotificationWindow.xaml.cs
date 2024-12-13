@@ -25,18 +25,24 @@ namespace Reinforcement
         public TransparentNotificationWindow(string message, UIDocument uidoc)
         {
             InitializeComponent();
-
             NotificationBlock.Text = message;
-            var app = uidoc.Application;
-            
-            //Get drawing area coordinates
-            var windowSize = app.DrawingAreaExtents;
-            Left = windowSize.Left;
-            Top = windowSize.Top + 22;
+            Loaded += (s, e) =>
+            {
+                UpdateLayout();
 
-            //Left = SystemParameters.PrimaryScreenWidth - Width - 25;
-            //Top = SystemParameters.PrimaryScreenHeight - Height - 80;
+                var app = uidoc.Application;
 
+                //Get drawing area coordinates
+                var windowSize = app.DrawingAreaExtents;
+
+                Measure(new Size(Width, double.PositiveInfinity));
+                double desiredHeight = DesiredSize.Height;
+
+                Left = windowSize.Right - Width - 22;
+                Top = windowSize.Bottom - desiredHeight -20;
+                //Left = SystemParameters.PrimaryScreenWidth - Width - 25;
+                //Top = SystemParameters.PrimaryScreenHeight - Height - 80;
+            };
         }
         private void CloseButton_Click (object sender, RoutedEventArgs e)
         {
