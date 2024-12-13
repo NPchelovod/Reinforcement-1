@@ -126,6 +126,7 @@
     <Compile Include="DecorViewPlan\MoveTextInDimension.cs" />
     <Compile Include="Test\CheckGridsDirection.cs" />
     <Compile Include="Test\ChangeFamilyType.cs" />
+    <Compile Include="Test\ElementChangerListener.cs" />
     <Compile Include="Test\FileName.cs" />
     <Compile Include="Test\ReinforceWallSection.cs" />
     <Compile Include="CreateSchedulesWall.cs" />

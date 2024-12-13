@@ -4,14 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Reinforcement.PickFilter"
-             mc:Ignorable="d" Height="130" Width="300" WindowStartupLocation="CenterScreen">
+             mc:Ignorable="d" Height="120" Width="300" WindowStartupLocation="CenterScreen" SizeToContent="WidthAndHeight">
     <Window.Effect>
         <DropShadowEffect/>
     </Window.Effect>
     <StackPanel Margin="0,0,0,7">
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="226">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="291">
             <TextBlock Margin="5" Text="Имя типоразмера: "/>
-            <TextBox  x:Name="textName" Margin="5" Width="128" />
+            <TextBox  x:Name="textName" Margin="5" Width="166" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Click="Click_Select" Margin="5" Padding="5" Content="Выбрать" Width="80" />

@@ -105,13 +105,18 @@ namespace Reinforcement
                             t.Start();
                             var detailLine = doc.Create.NewDetailCurve(uidoc.ActiveView, line);
                             var baseLine = detailLine.GeometryCurve as Line;
+                            int lengthEnds = 40;
+                            if (baseLine.Length < RevitAPI.ToFoot(110))
+                            {
+                                lengthEnds -= 10;
+                            }
                             FamilyInstance familyInstance = doc.Create.NewFamilyInstance(baseLine, symbol, uidoc.ActiveView);
                             familyInstance.LookupParameter("Объемный вид").Set(1);
                             familyInstance.LookupParameter("Вид с торца").Set(0);
                             familyInstance.LookupParameter("Заливка").Set(0);
                             familyInstance.LookupParameter("Радиус основы").Set(diameterBend / 2);
                             familyInstance.LookupParameter("• Диаметр").Set(RevitAPI.ToFoot(6));
-                            familyInstance.LookupParameter("Длина отгиба").Set(RevitAPI.ToFoot(40));
+                            familyInstance.LookupParameter("Длина отгиба").Set(RevitAPI.ToFoot(lengthEnds));
                             doc.Delete(detailLine.Id);
                             t.Commit();
                         }

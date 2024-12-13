@@ -80,11 +80,17 @@ namespace Reinforcement
                     var element = doc.GetElement(elementId);
                     var viewId = element.OwnerViewId;
                     var view = doc.GetElement(viewId) as Autodesk.Revit.DB.View;
+
                     if (uidoc.ActiveView.Title != view.Title)
                     {
                         uidoc.ActiveView = view;
+
                         // uidoc.ShowElements(element);
-                        dialogResult = MessageBox.Show("Показать далее?", "Перебор элементов", MessageBoxButtons.YesNo);
+                        if (listId.Count > 1)
+                        {
+
+                            dialogResult = MessageBox.Show("Показать далее?", "Перебор элементов", MessageBoxButtons.YesNo);
+                        }
                         if (dialogResult == DialogResult.No)
                         {
                             return Result.Succeeded;

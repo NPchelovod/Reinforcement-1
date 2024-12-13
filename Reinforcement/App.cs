@@ -92,19 +92,19 @@ namespace Reinforcement
             return stackedItems;
         }
         
-        public Result OnStartup(UIControlledApplication a)
+        public Result OnStartup(UIControlledApplication app)
         {
             //Create tab
             string tabName = "ЕС КР";
-            a.CreateRibbonTab(tabName);
+            app.CreateRibbonTab(tabName);
 
             //Create panels
-            RibbonPanel panelSpds = a.CreateRibbonPanel(tabName, "СПДС");
-            RibbonPanel panelSketchReinf = a.CreateRibbonPanel(tabName, "Схематичное армирование");
-            RibbonPanel panelDetailReinf = a.CreateRibbonPanel(tabName, "Детальное армирование");
-            RibbonPanel panelDrawing = a.CreateRibbonPanel(tabName, "Оформление");
-            RibbonPanel panelSelection = a.CreateRibbonPanel(tabName, "Выбор");
-            RibbonPanel panelSAPR = a.CreateRibbonPanel(tabName, "САПР");
+            RibbonPanel panelSpds = app.CreateRibbonPanel(tabName, "СПДС");
+            RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
+            RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
+            RibbonPanel panelDrawing = app.CreateRibbonPanel(tabName, "Оформление");
+            RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
+            RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
 
 
             //1. PanelSpds
@@ -256,9 +256,15 @@ namespace Reinforcement
             CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
              "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n1. Подготавливается подложка в DWG;\n2. Импорт САПР, расчленить",
             panelSAPR);
-
+            //app.ViewActivated += App_ViewActivated;
             return Result.Succeeded;
         }
+
+        private void App_ViewActivated(object sender, Autodesk.Revit.UI.Events.ViewActivatedEventArgs e)
+        {
+            TaskDialog.Show("title", $"{e.CurrentActiveView.Name}");
+        }
+
         public BitmapImage Convert(Image img)
         {
             using (var memory = new MemoryStream())

@@ -14,7 +14,7 @@
     </Window.Effect>
     <Grid>
         <!-- Полупрозрачный фон -->
-        <Border Background="#80000000" IsHitTestVisible="False" CornerRadius="10" />
+        <Border Background="#35000000" IsHitTestVisible="False" CornerRadius="10" />
         <TextBlock x:Name="NotificationBlock" 
                    Foreground="White" 
                    FontSize="12" 
