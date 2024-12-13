@@ -5,8 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Reinforcement"
              mc:Ignorable="d" 
-             Title="Уведомление" WindowStyle="None" AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False"
-             Height="80" Width="300">
+             Title="Уведомление" Background="Transparent" Topmost="True" ShowInTaskbar="False" AllowsTransparency="True"
+             Height="80" Width="300" WindowStyle="None">
+    <Window.Effect>
+        <DropShadowEffect/>
+    </Window.Effect>
     <Grid Background="#66000000">
         <!-- Полупрозрачный фон -->
         <Border Background="#66000000" IsHitTestVisible="False" />
