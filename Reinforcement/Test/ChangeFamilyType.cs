@@ -16,7 +16,7 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class ExchangeAnnotationTagFamily : IExternalCommand
+    public class ChangeFamilyType : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,

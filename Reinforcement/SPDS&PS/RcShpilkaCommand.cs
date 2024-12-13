@@ -3,6 +3,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Reinforcement
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
             //Create window instance
-            var notification = new TransparentNotificationWindow("Выберите поперечное сечение стержня");
+            var notification = new TransparentNotificationWindow("Выберите поперечное\nсечение стержня", uidoc);
             
             try
             {
@@ -38,16 +39,27 @@ namespace Reinforcement
                 notification.Show();
                 IList<Reference> sec = sel.PickObjects(ObjectType.Element, selFilter,"Выберите поперечное сечение стержня");
                 notification.Close();
+
+                if (sec.Count == 0)
+                {
+                    MessageBox.Show("Ничего не выбрано");
+                    return Result.Failed;
+                }
                 IList<XYZ> Pt = new List<XYZ>();
                 Options options = new Options();
                 options.View = uidoc.ActiveView;
                 double diameter = 0;
+                double diameterBend = 0;
                 foreach (Reference secObj in sec)
                 {
                     Element element = doc.GetElement(secObj);
                     LocationPoint locationPts = element.Location as LocationPoint;
                     diameter = element.LookupParameter("• Диаметр").AsDouble();
-                    //diameter = UnitUtils.ConvertFromInternalUnits(diameter, UnitTypeId.Millimeters);                      
+                    diameterBend = diameter;
+                    if (diameterBend < RevitAPI.ToFoot(2.5 * 6))
+                    {
+                        diameterBend = RevitAPI.ToFoot(2.5 * 6);
+                    }
                     Pt.Add(locationPts.Point);
                 }
                 XYZ xyz =  Pt.ElementAt(0).Subtract(Pt.ElementAt(1));
@@ -97,9 +109,9 @@ namespace Reinforcement
                             familyInstance.LookupParameter("Объемный вид").Set(1);
                             familyInstance.LookupParameter("Вид с торца").Set(0);
                             familyInstance.LookupParameter("Заливка").Set(0);
-                            familyInstance.LookupParameter("Радиус основы").Set(diameter / 2);
-                            familyInstance.LookupParameter("• Диаметр").Set(UnitUtils.ConvertToInternalUnits(6, UnitTypeId.Millimeters));
-                            familyInstance.LookupParameter("Длина отгиба").Set(UnitUtils.ConvertToInternalUnits(30, UnitTypeId.Millimeters));
+                            familyInstance.LookupParameter("Радиус основы").Set(diameterBend / 2);
+                            familyInstance.LookupParameter("• Диаметр").Set(RevitAPI.ToFoot(6));
+                            familyInstance.LookupParameter("Длина отгиба").Set(RevitAPI.ToFoot(40));
                             doc.Delete(detailLine.Id);
                             t.Commit();
                         }

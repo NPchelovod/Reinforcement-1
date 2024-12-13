@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,14 +22,20 @@ namespace Reinforcement
     /// </summary>
     public partial class TransparentNotificationWindow : Window
     {
-        public TransparentNotificationWindow(string message)
+        public TransparentNotificationWindow(string message, UIDocument uidoc)
         {
             InitializeComponent();
 
             NotificationBlock.Text = message;
+            var app = uidoc.Application;
+            
+            //Get drawing area coordinates
+            var windowSize = app.DrawingAreaExtents;
+            Left = windowSize.Left;
+            Top = windowSize.Top + 22;
 
-            Left = SystemParameters.PrimaryScreenWidth - Width - 25;
-            Top = SystemParameters.PrimaryScreenHeight - Height - 80;
+            //Left = SystemParameters.PrimaryScreenWidth - Width - 25;
+            //Top = SystemParameters.PrimaryScreenHeight - Height - 80;
 
         }
         private void CloseButton_Click (object sender, RoutedEventArgs e)

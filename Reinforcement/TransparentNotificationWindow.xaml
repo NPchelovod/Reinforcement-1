@@ -6,20 +6,20 @@
              xmlns:local="clr-namespace:Reinforcement"
              mc:Ignorable="d" 
              Title="Уведомление" Background="Transparent" Topmost="True" ShowInTaskbar="False" AllowsTransparency="True"
-             Height="80" Width="300" WindowStyle="None">
+             Height="80" Width="300" WindowStyle="None"
+             BorderBrush="#FF222933" BorderThickness="0,0,3,3"
+             SizeToContent="Height">
     <Window.Effect>
         <DropShadowEffect/>
     </Window.Effect>
-    <Grid Background="#66000000">
+    <Grid Background="#FF3B4453">
         <!-- Полупрозрачный фон -->
-        <Border Background="#66000000" IsHitTestVisible="False" />
+        <Border Background="#FF3B4453" IsHitTestVisible="False" />
         <TextBlock x:Name="NotificationBlock" 
                    Foreground="White" 
-                   FontSize="14" 
-                   HorizontalAlignment="Center" 
-                   VerticalAlignment="Center" 
-                   TextWrapping="Wrap"
-                   IsHitTestVisible="False"/>
+                   FontSize="12" 
+                   TextWrapping="Wrap" Margin="15"
+                   IsHitTestVisible="False" FontFamily="Verdana" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" LineHeight="6"/>
         <Button Content="X"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
