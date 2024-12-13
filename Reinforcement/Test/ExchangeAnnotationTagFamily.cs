@@ -31,19 +31,17 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            string newName = "ЕС_Аннотация_Текст_Выноска 2,5 мм";
-            string newTypeName = "Текст стрелка";
+            string newName = "ЕС_А_Выноска_КлассСтали_СтадияП";
+            string newTypeName = "";
 
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
-            var newTypeId = collection.OfClass(typeof(Family))
+            var newTypes = collection.OfClass(typeof(Family))
                 .Where(x => x.Name == newName)
                 .Cast<Family>()
                 .FirstOrDefault()
                 .GetFamilySymbolIds()
-                .Select(x => doc.GetElement(x))
-                .Where(x => x.Name == newTypeName)
-                .FirstOrDefault().Id;
+                .Select(x => doc.GetElement(x));
 
 
             Selection sel = uidoc.Selection;
@@ -59,15 +57,22 @@ namespace Reinforcement
                     foreach (var elementId in elementsId)
                     {
                         var element = doc.GetElement(elementId);
+                        newTypeName = element.Name;
+                        var newTypeId = newTypes.Where(x => x.Name == newTypeName).FirstOrDefault().Id;
+
+                        /*
                         var param1 = element.LookupParameter("Текст верх").AsValueString();
                         var param2 = element.LookupParameter("Текст низ").AsValueString();
                         var param3 = element.LookupParameter("Ширина полки").AsDouble();
+                        */
 
                         element.ChangeTypeId(newTypeId);
 
+                        /*
                         element.LookupParameter("Текст верх").Set(param1);
                         element.LookupParameter("Текст низ").Set(param2);
                         element.LookupParameter("Ширина полки").Set(param3);
+                        */
                     }
                     t.Commit();
                 }

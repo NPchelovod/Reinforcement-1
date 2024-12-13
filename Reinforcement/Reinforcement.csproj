@@ -137,6 +137,9 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
+    <Compile Include="TransparentNotificationWindow.xaml.cs">
+      <DependentUpon>TransparentNotificationWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Trash\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
@@ -233,6 +236,10 @@
     <Page Include="MainViewWall.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="TransparentNotificationWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Trash\MainView.xaml">
       <SubType>Designer</SubType>

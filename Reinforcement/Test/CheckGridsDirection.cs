@@ -32,7 +32,15 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
             Selection sel = uidoc.Selection;
 
-            var gridIds = sel.GetElementIds();
+            FilteredElementCollector collection = new FilteredElementCollector(doc);
+
+            var gridIds = collection.OfClass(typeof(Grid))
+                .Cast<Grid>()
+                .Select(x => x.Id);
+            if (gridIds.Count() == 0)
+            {
+                return Result.Failed;
+            }
 
             string text = "";
 
@@ -42,28 +50,12 @@ namespace Reinforcement
                 string name = grid.Name;
                 Line curve = (Line)grid.Curve;
                 string direction = curve.Direction.ToString();
-
                 text = string.Concat(text, name," - ", direction, "\n");
             }
 
 
             MessageBox.Show(text);
 
-            try //ловим ошибку
-            {
-                using (Transaction t = new Transaction(doc, "действие"))
-                {
-                    t.Start();
-                    //Тут пишем основной код для изменения элементов модели
-                    t.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
-                return Result.Failed;
-            }
             return Result.Succeeded;
         }
     }

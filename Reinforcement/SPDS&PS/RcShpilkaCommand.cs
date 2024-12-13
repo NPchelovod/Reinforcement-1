@@ -28,11 +28,16 @@ namespace Reinforcement
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
+            //Create window instance
+            var notification = new TransparentNotificationWindow("Выберите поперечное сечение стержня");
+            
             try
             {
                 Selection sel = uidoc.Selection;
                 ISelectionFilter selFilter = new SelectionFilter();
+                notification.Show();
                 IList<Reference> sec = sel.PickObjects(ObjectType.Element, selFilter,"Выберите поперечное сечение стержня");
+                notification.Close();
                 IList<XYZ> Pt = new List<XYZ>();
                 Options options = new Options();
                 options.View = uidoc.ActiveView;
@@ -113,10 +118,16 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;
             }
-            return Result.Succeeded;
+            finally
+            {
+                if (notification != null)
+                {
+                    notification.Close();
+                }
+            }
+            return Result.Succeeded;          
         }
 
         public class SelectionFilter  : ISelectionFilter
