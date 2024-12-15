@@ -39,7 +39,7 @@ namespace BuildPlugin
             };
             project.Version = new Version(version);
             project.BuildMsi();
-
+            /*
             projectName = "Revit ENS Plugin 2021";
             project = new Project()
             {
@@ -63,6 +63,7 @@ namespace BuildPlugin
             };
             project.Version = new Version(version);
             project.BuildMsi();
+            */
         }
     }
 }
