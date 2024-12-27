@@ -63,6 +63,13 @@ namespace Reinforcement
                     Pt.Add(locationPts.Point);
                 }
                 XYZ xyz =  Pt.ElementAt(0).Subtract(Pt.ElementAt(1));
+                //округляем до 10 знаков, а то может быть погрешность и detail line won't create            
+                xyz = new XYZ
+                    (
+                        Math.Round(xyz.X, 10),
+                        Math.Round(xyz.Y, 10),
+                        Math.Round(xyz.Z, 10)
+                    );
                 double move = diameter / 2 ;
                 XYZ subst1 = null, subst2 = null;
                 if (xyz.X < 0)
@@ -102,7 +109,7 @@ namespace Reinforcement
                         FamilySymbol symbol = elem as FamilySymbol;
                         using (Transaction t = new Transaction(doc, "Создание шпильки"))
                         {
-                            t.Start();
+                            t.Start();                       
                             var detailLine = doc.Create.NewDetailCurve(uidoc.ActiveView, line);
                             var baseLine = detailLine.GeometryCurve as Line;
                             int lengthEnds = 40;
