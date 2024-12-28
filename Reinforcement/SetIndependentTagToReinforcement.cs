@@ -40,11 +40,11 @@ namespace Reinforcement
                 {
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
-                    IndependentTag tag = IndependentTag.Create(
+                   /* IndependentTag tag = IndependentTag.Create(
                         doc,
                         tagSymbol,
                         view
-                        );
+                        );*/
 
 
 
