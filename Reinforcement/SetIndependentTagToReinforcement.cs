@@ -16,12 +16,9 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class CodeTemplate : IExternalCommand
+    public class SetIndependentTagToReinforcement : IExternalCommand
     {
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (RevitAPI.UiApplication == null)
             {
@@ -30,12 +27,33 @@ namespace Reinforcement
             UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
+            Autodesk.Revit.DB.View activeView = doc.ActiveView;
+            ElementClassFilter filterTag = new ElementClassFilter(typeof(IndependentTag));
+
+
+
+
+
             try //ловим ошибку
             {
                 using (Transaction t = new Transaction(doc, "действие"))
                 {
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
+                    IndependentTag tag = IndependentTag.Create(
+                        doc,
+                        tagSymbol,
+                        view
+                        );
+
+
+
+
+
+
+
+
+
 
                     t.Commit();
                 }

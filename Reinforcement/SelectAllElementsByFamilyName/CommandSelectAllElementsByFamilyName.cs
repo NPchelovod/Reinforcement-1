@@ -56,7 +56,6 @@ namespace Reinforcement
             listId = collection;
             if (collection.Count == 0)
             {
-
                 var collectionTag = new FilteredElementCollector(doc)
                 .OfClass(typeof(Family))
                 .Cast<Family>()
