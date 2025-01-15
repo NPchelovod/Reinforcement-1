@@ -59,11 +59,11 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="RevitAPI">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2021\RevitAPI.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2021\RevitAPIUI.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
+    <Compile Include="CheckReinfTag.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
     <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
     <Compile Include="RelayCommand.cs" />
