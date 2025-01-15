@@ -41,7 +41,7 @@ namespace Reinforcement
                 .OfClass(typeof(FamilyInstance))
                 .OfCategory(BuiltInCategory.OST_DetailComponents)
                 .ToElements()
-                .Where(x => x.Name.Contains("А500С") || x.Name.Contains("А240") || x.Name.Contains("A500C") || x.Name.Contains("A240")) //check кириллицу и латинницу
+                .Where(x => x.Name.Contains("А500") || x.Name.Contains("А240") || x.Name.Contains("A500") || x.Name.Contains("A240")) //check кириллицу и латинницу
                 .Select(x => x.Id)
                 .ToList();
 
