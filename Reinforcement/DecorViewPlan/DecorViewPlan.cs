@@ -245,6 +245,11 @@ namespace Reinforcement
                         foreach (var wall in wallListDiafragm)
                         {
                             List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
+
+
+
+
+
                             //creating dims X direction
                             EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
                             List<Line> edgeLinesY = new List<Line>();
@@ -260,7 +265,11 @@ namespace Reinforcement
                                 {
                                     edgeLinesY.Add(edgeLine);
                                     wallEdgesY.Add(edge);
-                                    referenceArray.Insert(edge.Reference, referenceArray.Size);
+                                    string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
+                                    int lastIndex = stableReference.LastIndexOf(':');
+                                    stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
+                                    var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
+                                    referenceArray.Insert(newStableReference, referenceArray.Size);
                                 }
                                 else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
                                 {
@@ -271,6 +280,7 @@ namespace Reinforcement
                             {
                                 continue;
                             }
+
                             foreach (Grid grid in YGridList)
                             {
                                 Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
@@ -301,6 +311,11 @@ namespace Reinforcement
                             var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
                             dimensions.Add(dimension);
                             
+
+
+
+
+
                             //creating dims Y direction
                             List<Line> edgeLinesX = new List<Line>();
                             List<Edge> wallEdgesX = new List<Edge>();
@@ -315,7 +330,11 @@ namespace Reinforcement
                                 {
                                     edgeLinesX.Add(edgeLine);
                                     wallEdgesX.Add(edge);
-                                    referenceArray.Append(edge.Reference);
+                                    string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
+                                    int lastIndex = stableReference.LastIndexOf(':');
+                                    stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
+                                    var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
+                                    referenceArray.Append(newStableReference);
                                 }
                                 else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
                                 {
