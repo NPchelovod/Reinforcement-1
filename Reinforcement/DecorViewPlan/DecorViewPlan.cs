@@ -68,6 +68,7 @@ namespace Reinforcement
                 .OfClass(typeof(Wall))
                 .ToElements()
                 .Cast<Wall>()
+                .Where(x => x.LevelId == activeView.GenLevel.Id && x.LookupParameter("• Тип элемента").AsString() == "Дж")
                 .ToList();  //get all walls on activeView
 
             if (wallList.Count == 0)
@@ -240,9 +241,9 @@ namespace Reinforcement
 
 
                         //creating dims for walls
-                        List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж").ToList();
+                        //List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж").ToList();
 
-                        foreach (var wall in wallListDiafragm)
+                        foreach (var wall in wallList)
                         {
                             List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
 
@@ -280,29 +281,43 @@ namespace Reinforcement
                             {
                                 continue;
                             }
-
-                            foreach (Grid grid in YGridList)
+                            var check = wall.Id.Value;
+                            bool isAllDisjoint = YGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineX, out var res) == SetComparisonResult.Disjoint);
+                            if (isAllDisjoint)
                             {
-                                Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
-                                var intersectX = gridCurve.Intersect(edgeLineX, out var res);
-                                int i = 0;
-                                if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                var wallLocation = wall.Location as LocationCurve;
+                                var wallLocationX = wallLocation.Curve.GetEndPoint(0).X;
+                                var nearestGrid = YGridList
+                                    .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).X - wallLocationX))
+                                    .First();
+                                int position = nearestGrid.Curve.GetEndPoint(0).X < wallLocationX ? 0 : 1;
+                                referenceArray.Insert(new Reference(nearestGrid), position);
+                            }
+                            else
+                            {
+                                foreach (Grid grid in YGridList)
                                 {
-                                    referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
-                                }
-                                else if (intersectX == SetComparisonResult.Overlap)
-                                {
-                                    foreach (Line edge in edgeLinesY)
+                                    Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
+                                    var intersectX = gridCurve.Intersect(edgeLineX, out var res);
+                                    int i = 0;
+                                    if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                     {
-                                        if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
-                                        {
-                                            referenceArray.set_Item(i, new Reference(grid));
-                                            break;
-                                        }
-                                        i++;
+                                        referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
                                     }
-                                }
-                            }//check for intersection between walls and grids, and find nearest grid to wall
+                                    else if (intersectX == SetComparisonResult.Overlap)
+                                    {
+                                        foreach (Line edge in edgeLinesY)
+                                        {
+                                            if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                            {
+                                                referenceArray.set_Item(i, new Reference(grid));
+                                                break;
+                                            }
+                                            i++;
+                                        }
+                                    }
+                                }//check for intersection between walls and grids, and find nearest grid to wall
+                            }
 
                             endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
                             endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
@@ -334,7 +349,7 @@ namespace Reinforcement
                                     int lastIndex = stableReference.LastIndexOf(':');
                                     stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
                                     var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
-                                    referenceArray.Append(newStableReference);
+                                    referenceArray.Insert(newStableReference, referenceArray.Size);
                                 }
                                 else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
                                 {
@@ -345,37 +360,43 @@ namespace Reinforcement
                             {
                                 continue;
                             }
-                            /*
-                            if (referenceArray.Size == 1)
-                            {
-                                uidoc.ShowElements(wall);
-                                t2.Commit();
-                                return Result.Succeeded;
-                            }
-                            */
-                            foreach (Grid grid in XGridList)
-                            {
-                                Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
-                                var intersectY = gridCurve.Intersect(edgeLineY, out var res);
-                                int i = 0;
-                                if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
-                                {
-                                    referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
-                                }
-                                else if (intersectY == SetComparisonResult.Overlap)
-                                {
-                                    foreach (Line edge in edgeLinesX)
-                                    {
-                                        if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
-                                        {
-                                            referenceArray.set_Item(i, new Reference(grid));
-                                            break;
-                                        }
-                                        i++;
-                                    }
-                                }
-                            }//check for intersection between walls and grids, and find nearest grid to wall
 
+                            isAllDisjoint = XGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineY, out var res) == SetComparisonResult.Disjoint);
+                            if (isAllDisjoint)
+                            {
+                                var wallLocation = wall.Location as LocationCurve;
+                                var wallLocationY = wallLocation.Curve.GetEndPoint(0).Y;
+                                var nearestGrid = XGridList
+                                    .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).Y - wallLocationY))
+                                    .First();
+                                int position = nearestGrid.Curve.GetEndPoint(0).Y < wallLocationY ? 0 : 1;
+                                referenceArray.Insert(new Reference(nearestGrid), position);
+                            }
+                            else
+                            {
+                                foreach (Grid grid in XGridList)
+                                {
+                                    Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
+                                    var intersectY = gridCurve.Intersect(edgeLineY, out var res);
+                                    int i = 0;
+                                    if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                    {
+                                        referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
+                                    }
+                                    else if (intersectY == SetComparisonResult.Overlap)
+                                    {
+                                        foreach (Line edge in edgeLinesX)
+                                        {
+                                            if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                            {
+                                                referenceArray.set_Item(i, new Reference(grid));
+                                                break;
+                                            }
+                                            i++;
+                                        }
+                                    }
+                                }//check for intersection between walls and grids, and find nearest grid to wall
+                            }
                             endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
                             endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
                             lineDim = Line.CreateBound(endpoint1, endpoint2);
