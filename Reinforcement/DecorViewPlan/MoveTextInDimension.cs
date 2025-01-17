@@ -25,7 +25,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
             var minY = dimension.get_BoundingBox(activeVIew).Min.Y;
             var maxY = dimension.get_BoundingBox(activeVIew).Max.Y;
 
-            var maxValue = 400;
+            var maxValue = 450;
             var offSet = 4.5;
 
             if (Math.Abs(line.Direction.X) == 1)
