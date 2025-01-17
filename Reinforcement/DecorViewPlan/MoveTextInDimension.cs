@@ -25,8 +25,8 @@ namespace Reinforcement.Stage1.DecorViewPlan
             var minY = dimension.get_BoundingBox(activeVIew).Min.Y;
             var maxY = dimension.get_BoundingBox(activeVIew).Max.Y;
 
-            var maxValue = 360;
-            var offSet = 5;
+            var maxValue = 400;
+            var offSet = 4.5;
 
             if (Math.Abs(line.Direction.X) == 1)
             {
@@ -50,6 +50,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                     {
                         var dim1 = list.get_Item(n);
                         var dim2 = list.get_Item(++n);
+                       
                        if (dim1.TextPosition.X < dim2.TextPosition.X
                             && dim1.Value <= RevitAPI.ToFoot(maxValue))
                         {
@@ -60,6 +61,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                         if (dim1.TextPosition.X > dim2.TextPosition.X
                             && dim1.Value <= RevitAPI.ToFoot(maxValue))
                         {
+
                             XYZ oldTextPosition = dim1.TextPosition;
                             XYZ newTextPosition = Transform.CreateTranslation(new XYZ(RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
 
@@ -68,6 +70,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                         if (dim1.TextPosition.X > dim2.TextPosition.X
                             && dim2.Value <= RevitAPI.ToFoot(maxValue))
                         {
+
                             XYZ oldTextPosition = dim2.TextPosition;
                             XYZ newTextPosition = Transform.CreateTranslation(new XYZ(- RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
 
@@ -76,6 +79,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                         if (dim1.TextPosition.X < dim2.TextPosition.X
                             && dim2.Value <= RevitAPI.ToFoot(maxValue))
                         {
+
                             XYZ oldTextPosition = dim2.TextPosition;
                             XYZ newTextPosition = Transform.CreateTranslation(new XYZ(RevitAPI.ToFoot(offSet * viewScale), 0, 0)).OfPoint(oldTextPosition);
                             dim2.TextPosition = newTextPosition;
@@ -90,6 +94,7 @@ namespace Reinforcement.Stage1.DecorViewPlan
                 {
                     if (dimension.Value <= RevitAPI.ToFoot(maxValue))
                     {
+
                         XYZ oldTextPosition = dimension.TextPosition;
                         XYZ newTextPosition = Transform.CreateTranslation(new XYZ(0, - RevitAPI.ToFoot(offSet * viewScale), 0)).OfPoint(oldTextPosition);
 
