@@ -42,7 +42,7 @@ namespace Reinforcement
             using (Transaction t = new Transaction(doc, "Create Toposolid"))
             {
                 t.Start();
-                Toposolid toposolid = Toposolid.Create(doc, points, )
+               
                 
 
                 t.Commit();
