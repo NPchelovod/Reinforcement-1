@@ -68,7 +68,7 @@ namespace Reinforcement
                 .OfClass(typeof(Wall))
                 .ToElements()
                 .Cast<Wall>()
-                .Where(x => x.LevelId == activeView.GenLevel.Id && x.LookupParameter("• Тип элемента").AsString() == "Дж")
+                .Where(x => x.LevelId == activeView.GenLevel.Id)
                 .ToList();  //get all walls on activeView
 
             if (wallList.Count == 0)
@@ -76,6 +76,16 @@ namespace Reinforcement
                 MessageBox.Show("На виде должны быть стены!");
                 return Result.Failed;
             }
+            wallList =  wallList
+                .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж")
+                .ToList();  //get all walls on activeView
+
+            if (wallList.Count == 0)
+            {
+                MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
+                return Result.Failed;
+            }
+
 
             List<XYZ> minPtWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min)
