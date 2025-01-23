@@ -13,14 +13,14 @@ namespace BuildPlugin
     internal class Program
     {
         private static string projectName = "Revit ENS plugin 2024";
-        private static string version = "1.0";
+        private static string version = "1.1";
         static void Main(string[] args)
         {
             var project = new Project()
             {
                 OutFileName = "ENS plugin 2024",
                 Name = projectName,
-                UI = WUI.WixUI_ProgressOnly,
+                UI = WUI.WixUI_ProgressOnly,              
                 OutDir = "output",
                 GUID = new Guid("{003886B5-89F1-480E-86A2-F93C2D8B07DB}"),
                 MajorUpgrade = MajorUpgrade.Default,
