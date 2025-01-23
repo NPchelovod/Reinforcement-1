@@ -128,7 +128,10 @@ namespace Reinforcement
                         {
                             if (tag.HasLeader && tag.MultiLeader)
                             {
-                                var locations = tag.GetTaggedLocalElements()
+                                List<LocationPoint> locations;
+                                try
+                                {
+                                    locations = tag.GetTaggedLocalElements().DefaultIfEmpty()
                                     .Cast<FamilyInstance>()
                                     .Select(x => x.GetDependentElements(filter))
                                     .SelectMany(x => x)
@@ -136,6 +139,11 @@ namespace Reinforcement
                                     .Where(x => x.Name == "Точка")
                                     .Select(x => x.Location as LocationPoint)
                                     .ToList();
+                                }
+                                catch (NullReferenceException)
+                                {
+                                    continue;
+                                }
                                 var points = locations.Select(x => x.Point).ToList();
                                 var references = tag.GetTaggedReferences();
                                 for (int i = 0; i < references.Count; i++)
@@ -145,12 +153,20 @@ namespace Reinforcement
                             }
                             else if (tag.HasLeader)
                             {
-                                var location = tag.GetTaggedLocalElements().First()
+                                LocationPoint location;
+                                try
+                                {
+                                     location = tag.GetTaggedLocalElements().FirstOrDefault()
                                     .GetDependentElements(filter)
                                     .Select(x => doc.GetElement(x))
                                     .Where(x => x.Name == "Точка")
-                                    .First()
+                                    .FirstOrDefault()
                                     .Location as LocationPoint;
+                                }
+                                catch (NullReferenceException)
+                                {
+                                    continue;
+                                }
                                 var point = location.Point;
                                 tag.SetLeaderEnd(tag.GetTaggedReferences().First(), point);
                             }
@@ -166,6 +182,7 @@ namespace Reinforcement
                 //Код в случае ошибки
                 MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;
+
             }
             return Result.Succeeded;
         }

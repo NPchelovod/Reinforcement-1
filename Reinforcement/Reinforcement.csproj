@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
+    <Compile Include="CheckReinfTag.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
     <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
