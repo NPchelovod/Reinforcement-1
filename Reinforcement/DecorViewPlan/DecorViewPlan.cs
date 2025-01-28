@@ -80,11 +80,6 @@ namespace Reinforcement
                 .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж")
                 .ToList();  //get all walls on activeView
 
-            if (wallList.Count == 0)
-            {
-                MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
-                return Result.Failed;
-            }
 
 
             List<XYZ> minPtWall = wallList
@@ -249,6 +244,13 @@ namespace Reinforcement
 
 
 
+                        if (wallList.Count == 0)
+                        {
+                            MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
+                            t2.Commit();
+                            tg.Assimilate();
+                            return Result.Succeeded;
+                        }
 
                         //creating dims for walls
                         //List<Wall> wallListDiafragm = wallList.Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж").ToList();
