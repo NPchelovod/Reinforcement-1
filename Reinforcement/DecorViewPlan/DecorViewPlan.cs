@@ -258,13 +258,11 @@ namespace Reinforcement
                         foreach (var wall in wallList)
                         {
                             List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
-
-
+                            EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
 
 
 
                             //creating dims X direction
-                            EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
                             List<Line> edgeLinesY = new List<Line>();
                             List<Edge> wallEdgesY = new List<Edge>();
                             ReferenceArray referenceArray = new ReferenceArray();
@@ -293,12 +291,11 @@ namespace Reinforcement
                             {
                                 continue;
                             }
-                            var check = wall.Id.Value;
                             bool isAllDisjoint = YGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineX, out var res) == SetComparisonResult.Disjoint);
                             if (isAllDisjoint)
                             {
                                 var wallLocation = wall.Location as LocationCurve;
-                                var wallLocationX = wallLocation.Curve.GetEndPoint(0).X;
+                                var wallLocationX = (wallLocation.Curve.GetEndPoint(0).X + wallLocation.Curve.GetEndPoint(1).X) / 2;
                                 var nearestGrid = YGridList
                                     .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).X - wallLocationX))
                                     .First();
@@ -314,7 +311,7 @@ namespace Reinforcement
                                     int i = 0;
                                     if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                     {
-                                        referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
+                                       referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
                                     }
                                     else if (intersectX == SetComparisonResult.Overlap)
                                     {
@@ -377,7 +374,7 @@ namespace Reinforcement
                             if (isAllDisjoint)
                             {
                                 var wallLocation = wall.Location as LocationCurve;
-                                var wallLocationY = wallLocation.Curve.GetEndPoint(0).Y;
+                                var wallLocationY = (wallLocation.Curve.GetEndPoint(0).Y + wallLocation.Curve.GetEndPoint(1).Y) / 2;
                                 var nearestGrid = XGridList
                                     .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).Y - wallLocationY))
                                     .First();
