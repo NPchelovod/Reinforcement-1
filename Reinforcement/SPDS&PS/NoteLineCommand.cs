@@ -59,8 +59,8 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска";
+        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_3,5 мм";
 
     }
-    }
+}
 

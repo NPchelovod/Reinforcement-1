@@ -59,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_ВысотнаяОтметкаНесколько_Вверх";
+        public static  string FamName { get; set; } = "ЕС_Высотная отметка несколько_Вверх";
 
     }
     }

@@ -41,7 +41,7 @@ namespace Reinforcement
             try
             {
                 foreach (var element in symbols)
-                {   
+                {
                     ElementType elemType = element as ElementType;
                     if (elemType.FamilyName == FamName)
                     {
@@ -59,8 +59,8 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_ОбозначениеВида";
+        public static string FamName { get; set; } = "ЕС_Обозначение вида";
 
     }
-    }
+}
 
