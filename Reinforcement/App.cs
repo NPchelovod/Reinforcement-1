@@ -256,15 +256,15 @@ namespace Reinforcement
             CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
              "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n1. Подготавливается подложка в DWG;\n2. Импорт САПР, расчленить",
             panelSAPR);
-            var controlledApp = app.ControlledApplication;
-            controlledApp.DocumentChanged += ControlledApp_DocumentChanged;
+            //var controlledApp = app.ControlledApplication;
+            //controlledApp.DocumentChanged += ControlledApp_DocumentChanged;
             return Result.Succeeded;
         }
 
-        private void ControlledApp_DocumentChanged(object sender, Autodesk.Revit.DB.Events.DocumentChangedEventArgs e)
+       /* private void ControlledApp_DocumentChanged(object sender, Autodesk.Revit.DB.Events.DocumentChangedEventArgs e)
         {
 
-        }
+        }*/
 
         public BitmapImage Convert(Image img)
         {
