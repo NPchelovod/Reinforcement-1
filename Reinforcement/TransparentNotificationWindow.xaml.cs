@@ -22,9 +22,27 @@ namespace Reinforcement
     /// </summary>
     public partial class TransparentNotificationWindow : Window
     {
-        public TransparentNotificationWindow(string message, UIDocument uidoc)
+        /// <summary>
+        /// 1. Текст сообщения.<para/>
+        /// 2. Текущий документ Revit.<para/>
+        /// 3. Время в секундах до закрытия. При значении 0 окно всегд открыто
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="uidoc"></param>
+        /// <param name="timer"></param>
+        public TransparentNotificationWindow(string message, UIDocument uidoc, int timer)
         {
             InitializeComponent();
+
+            if (timer > 0)
+            {
+                var timerThread = new System.Timers.Timer(timer * 1000);// Создаем таймер (секунды -> миллисекунды)
+                timerThread.Elapsed += (s, e) => CloseWindow();// При срабатывании таймера вызываем метод CloseWindow()
+                timerThread.AutoReset = false; // Таймер срабатывает только один раз
+                timerThread.AutoReset = false;// Таймер срабатывает только один раз
+                timerThread.Start();// Запускаем таймер
+            }
+
             NotificationBlock.Text = message;
             Loaded += (s, e) =>
             {
@@ -40,9 +58,34 @@ namespace Reinforcement
 
                 Left = windowSize.Right - Width - 22;
                 Top = windowSize.Bottom - desiredHeight -20;
-                //Left = SystemParameters.PrimaryScreenWidth - Width - 25;
-                //Top = SystemParameters.PrimaryScreenHeight - Height - 80;
             };
+
+        }
+        /// <summary>
+        /// Показывает уведомление.
+        /// </summary>
+        public static void ShowNotification(string message, UIDocument uidoc, int timer)
+        {
+            // Если окно уже открыто — закрыть его перед созданием нового
+            _currentWindow?.Close();
+
+            _currentWindow = new TransparentNotificationWindow(message, uidoc, timer);
+            _currentWindow.Show();
+        }
+        private static TransparentNotificationWindow _currentWindow;
+
+        private void CloseWindow()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _currentWindow = null;
+                Close();
+            });
+        }
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            _currentWindow = null;
         }
         private void CloseButton_Click (object sender, RoutedEventArgs e)
         {

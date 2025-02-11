@@ -1,8 +1,6 @@
 ﻿using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Nice3point;
-using Nice3point.Revit.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,7 +55,7 @@ namespace UpdaterChangeWidthAnnotationTag
 
         public UpdaterId GetUpdaterId()
         {
-            return new UpdaterId(Context.Application.ActiveAddInId,
+            return new UpdaterId(RevitAPI.UiApplication.ActiveAddInId,
                 new Guid("05EA6041-8ED1-4A7D-AF1B-660AB714678A"));
         }
 

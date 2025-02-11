@@ -11,7 +11,6 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Nice3point.Revit.Toolkit;
 using System.Drawing.Text;
 using System.Drawing;
 using Reinforcement;
@@ -27,9 +26,13 @@ namespace UpdaterChangeWidthAnnotationTag
             ref string message,
             ElementSet elements)
         {
-            var doc = Context.ActiveDocument;
-            var uiapp = Context.UiApplication;
-            var uidoc = Context.ActiveUiDocument;
+            if (RevitAPI.UiApplication == null)
+            {
+                RevitAPI.Initialize(commandData);
+            }
+            var doc = RevitAPI.Document;
+            var uiapp = RevitAPI.UiApplication;
+            var uidoc = RevitAPI.UiDocument;
 
             var parametersUpdater = new ChangeWidthAnnotationTag();
 
@@ -41,19 +44,15 @@ namespace UpdaterChangeWidthAnnotationTag
                 var filter = new ElementCategoryFilter(BuiltInCategory.OST_GenericAnnotation);
                 UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(590069)));
                 UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(590070)));
-                var window = new TransparentNotificationWindow("Авто длина аннотации вкл.", uidoc);
-                //TaskDialog.Show("Updater", "Авто длина аннотации вкл.");
-                window.Show();
+                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(10585865)));
+                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(10585866)));
+                TransparentNotificationWindow.ShowNotification("Авто длина аннотации вкл.", uidoc, 3);
             }
             else
             {
                 UpdaterRegistry.RemoveAllTriggers(parametersUpdater.GetUpdaterId());
                 UpdaterRegistry.UnregisterUpdater(parametersUpdater.GetUpdaterId());
-                var window = new TransparentNotificationWindow("Авто длина аннотации выкл.", uidoc);
-                window.Show();
-
-
-                //TaskDialog.Show("Updater", "Авто длина аннотации выкл.");
+                TransparentNotificationWindow.ShowNotification("Авто длина аннотации выкл.", uidoc, 3);
             }
             return Result.Succeeded;
         }

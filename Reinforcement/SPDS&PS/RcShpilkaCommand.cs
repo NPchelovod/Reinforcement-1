@@ -30,8 +30,7 @@ namespace Reinforcement
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
             //Create window instance
-            var notification = new TransparentNotificationWindow("Выберите поперечное\nсечение стержня", uidoc);
-            
+            var notification = new TransparentNotificationWindow("Выберите поперечное\nсечение стержня", uidoc, 0);
             try
             {
                 Selection sel = uidoc.Selection;
