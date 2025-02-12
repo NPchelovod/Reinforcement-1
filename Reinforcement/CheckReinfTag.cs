@@ -85,7 +85,6 @@ namespace Reinforcement
                             .ToList();
 
                             doc.ActiveView.HideElementsTemporary(listHideElements);
-
                             /*DialogResult dialogResult = MessageBox.Show("Показать задвоенные выноски?" ,"Выбор" , MessageBoxButtons.YesNo);
 
                             if (dialogResult == DialogResult.Yes)
