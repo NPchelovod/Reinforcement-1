@@ -81,6 +81,7 @@
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="OpenInstructionsFolder.cs" />
+    <Compile Include="ReinforcementTemplate1.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />

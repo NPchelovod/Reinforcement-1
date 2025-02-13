@@ -66,7 +66,7 @@ namespace Reinforcement
 
         }
         /// <summary>
-        /// Показывает уведомление.
+        /// Показывает уведомление. Для управления видмостью окна в коде, лучше создавать новый класс <see cref="TransparentNotificationWindow"/>
         /// </summary>
         public static void ShowNotification(string message, UIDocument uidoc, int timer)
         {

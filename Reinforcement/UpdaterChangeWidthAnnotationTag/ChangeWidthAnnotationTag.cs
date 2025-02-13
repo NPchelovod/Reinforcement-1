@@ -23,6 +23,13 @@ namespace UpdaterChangeWidthAnnotationTag
             return width;
 
         }
+        static bool IsFontInstalled(string fontName)
+        {
+            using (var fontsCollection = new System.Drawing.Text.InstalledFontCollection())
+            {
+                return fontsCollection.Families.Any(f => f.Name.Equals(fontName, StringComparison.OrdinalIgnoreCase));
+            }
+        }
         public void Execute(UpdaterData data)
         {
             Document doc = data.GetDocument();
@@ -34,6 +41,11 @@ namespace UpdaterChangeWidthAnnotationTag
                 string firstText = element.LookupParameter("Текст верх").AsString();
                 string secondText = element.LookupParameter("Текст низ").AsString();
                 var text = firstText.Count() > secondText.Count() ? firstText : secondText;
+                if (!IsFontInstalled("ISOCPEUR"))
+                {
+                    TransparentNotificationWindow.ShowNotification("Не удалось найти шрифт ISOCPEUR\nАвтоудлинение выноски не сработало", RevitAPI.UiDocument, 3);
+                    return;
+                }
                 double width = GetCharacterWidth(doc, text);
                 width = RevitAPI.ToFoot(width);
 
