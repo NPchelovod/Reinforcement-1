@@ -56,10 +56,5 @@ namespace UpdaterChangeWidthAnnotationTag
             }
             return Result.Succeeded;
         }
-
-
-
-
-
     }
 }
