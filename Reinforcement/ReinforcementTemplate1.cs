@@ -16,10 +16,8 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class TEST : IExternalCommand
+    public class ReinforcementTemplate1 : IExternalCommand
     {
-        public static string famNameBrakeLine { get; } = "Линейный обрыв";
-
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -32,13 +30,13 @@ namespace Reinforcement
             UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
- 
             try //ловим ошибку
             {
                 using (Transaction t = new Transaction(doc, "действие"))
                 {
                     t.Start();
                     //Тут пишем основной код для изменения элементов модели
+
                     t.Commit();
                 }
             }
