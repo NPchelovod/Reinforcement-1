@@ -80,6 +80,8 @@
     <Compile Include="App.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
+    <Compile Include="SetDotRebarsByDWG.cs" />
+    <Compile Include="CreateNewProjectBySchedule.cs" />
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="ReinforcementTemplate1.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
