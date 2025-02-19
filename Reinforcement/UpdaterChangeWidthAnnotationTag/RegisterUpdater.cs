@@ -19,21 +19,12 @@ namespace UpdaterChangeWidthAnnotationTag
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class RegisterUpdater : IExternalCommand
+    public static class RegisterUpdater
     {
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
-        {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            var doc = RevitAPI.Document;
-            var uiapp = RevitAPI.UiApplication;
-            var uidoc = RevitAPI.UiDocument;
+        public static AddInId addInId { get; set; }
 
+        public static void Register()
+        {
             var parametersUpdater = new ChangeWidthAnnotationTag();
 
             if (!UpdaterRegistry.IsUpdaterRegistered(parametersUpdater.GetUpdaterId()))
@@ -46,15 +37,12 @@ namespace UpdaterChangeWidthAnnotationTag
                 UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(590070)));
                 UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(10585865)));
                 UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(10585866)));
-                TransparentNotificationWindow.ShowNotification("Авто длина аннотации вкл.", uidoc, 3);
             }
             else
             {
                 UpdaterRegistry.RemoveAllTriggers(parametersUpdater.GetUpdaterId());
                 UpdaterRegistry.UnregisterUpdater(parametersUpdater.GetUpdaterId());
-                TransparentNotificationWindow.ShowNotification("Авто длина аннотации выкл.", uidoc, 3);
             }
-            return Result.Succeeded;
         }
     }
 }

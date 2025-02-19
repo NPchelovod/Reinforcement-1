@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="003886b5-89f1-480e-86a2-f93c3d9b07db" Name="Revit ENS plugin 2024" Language="1033" Codepage="Windows-1252" Version="1.0" UpgradeCode="003886b5-89f1-480e-86a2-f93c2d8b07db" Manufacturer="KMedvedev">
+    <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
+    <Media Id="1" Cabinet="Revit20ENS20plugin202024_.cab" EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="AppDataFolder" Name="AppDataFolder">
+        <Directory Id="Autodesk" Name="Autodesk">
+          <Directory Id="Revit" Name="Revit">
+            <Directory Id="Addins" Name="Addins">
+              <Directory Id="INSTALLDIR" Name="2024">
+
+                <Component Id="Component.Reinforcement.addin_2889234903" Guid="003886b5-89f1-480e-86a2-f93c0dedbf38">
+                  <File Id="Reinforcement.addin_2889234903" Source="..\Reinforcement\Reinforcement.addin" />
+                  <RemoveFolder Id="INSTALLDIR" On="uninstall" />
+
+                  <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                    <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                  </RegistryKey>
+                </Component>
+
+                <Directory Id="ENSPlugin" Name="ENSPlugin">
+
+                  <Component Id="Component.AdWindows.dll_1042071384" Guid="003886b5-89f1-480e-86a2-f93c9418e793">
+                    <File Id="AdWindows.dll_1042071384" Source="..\Reinforcement\bin\Debug\AdWindows.dll" />
+                    <RemoveFolder Id="ENSPlugin" On="uninstall" />
+
+                    <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                      <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                    </RegistryKey>
+                  </Component>
+
+                  <Component Id="Component.Reinforcement.dll_4148522120" Guid="003886b5-89f1-480e-86a2-f93cd00ff723">
+                    <File Id="Reinforcement.dll_4148522120" Source="..\Reinforcement\bin\Debug\Reinforcement.dll" />
+
+                    <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                      <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                    </RegistryKey>
+                  </Component>
+
+                  <Component Id="Component.Reinforcement.pdb_3676007568" Guid="003886b5-89f1-480e-86a2-f93c96027d3d">
+                    <File Id="Reinforcement.pdb_3676007568" Source="..\Reinforcement\bin\Debug\Reinforcement.pdb" />
+
+                    <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                      <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                    </RegistryKey>
+                  </Component>
+
+                  <Component Id="Component.RevitAssemblyResolver.dll_2138978748" Guid="003886b5-89f1-480e-86a2-f93cbc0f7380">
+                    <File Id="RevitAssemblyResolver.dll_2138978748" Source="..\Reinforcement\bin\Debug\RevitAssemblyResolver.dll" />
+
+                    <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                      <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                    </RegistryKey>
+                  </Component>
+
+                </Directory>
+              </Directory>
+
+              <Component Id="Addins" Guid="003886b5-89f1-480e-86a2-f93ce41b10bc">
+                <RemoveFolder Id="Addins" On="uninstall" />
+
+                <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                  <RegistryValue Value="0" Type="string" KeyPath="yes" />
+                </RegistryKey>
+              </Component>
+
+            </Directory>
+
+            <Component Id="Revit" Guid="003886b5-89f1-480e-86a2-f93cffc2b24f">
+              <RemoveFolder Id="Revit" On="uninstall" />
+
+              <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+                <RegistryValue Value="0" Type="string" KeyPath="yes" />
+              </RegistryKey>
+            </Component>
+
+          </Directory>
+
+          <Component Id="Autodesk" Guid="003886b5-89f1-480e-86a2-f93c94f8ab55">
+            <RemoveFolder Id="Autodesk" On="uninstall" />
+
+            <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
+              <RegistryValue Value="0" Type="string" KeyPath="yes" />
+            </RegistryKey>
+          </Component>
+
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." Schedule="afterInstallInitialize" />
+
+    <Property Id="REINSTALLMODE" Value="omus" />
+
+    <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
+      <ComponentRef Id="Component.Reinforcement.addin_2889234903" />
+      <ComponentRef Id="Component.AdWindows.dll_1042071384" />
+      <ComponentRef Id="Component.Reinforcement.dll_4148522120" />
+      <ComponentRef Id="Component.Reinforcement.pdb_3676007568" />
+      <ComponentRef Id="Component.RevitAssemblyResolver.dll_2138978748" />
+      <ComponentRef Id="Autodesk" />
+      <ComponentRef Id="Revit" />
+      <ComponentRef Id="Addins" />
+    </Feature>
+
+  </Product>
+</Wix>
+

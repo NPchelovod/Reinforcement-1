@@ -67,7 +67,7 @@ namespace UpdaterChangeWidthAnnotationTag
 
         public UpdaterId GetUpdaterId()
         {
-            return new UpdaterId(RevitAPI.UiApplication.ActiveAddInId,
+            return new UpdaterId(RegisterUpdater.addInId,
                 new Guid("05EA6041-8ED1-4A7D-AF1B-660AB714678A"));
         }
 

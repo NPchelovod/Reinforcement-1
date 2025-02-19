@@ -85,6 +85,7 @@
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="ReinforcementTemplate1.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
+    <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
     <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
