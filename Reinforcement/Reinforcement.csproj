@@ -94,6 +94,7 @@
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
+    <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
@@ -170,8 +171,9 @@
     <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
-    <Compile Include="UpdaterChangeWidthAnnotationTag\ChangeWidthAnnotationTag.cs" />
-    <Compile Include="UpdaterChangeWidthAnnotationTag\RegisterUpdater.cs" />
+    <Compile Include="Updaters\AutoHoleFloorPoint.cs" />
+    <Compile Include="Updaters\ChangeWidthAnnotationTag.cs" />
+    <Compile Include="Updaters\RegisterUpdater.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />

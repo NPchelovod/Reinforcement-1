@@ -13,7 +13,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using UpdaterChangeWidthAnnotationTag;
+using Updaters;
 #endregion
 
 namespace Reinforcement

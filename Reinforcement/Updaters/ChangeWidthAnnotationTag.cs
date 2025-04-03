@@ -10,7 +10,7 @@ using Reinforcement;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace UpdaterChangeWidthAnnotationTag
+namespace Updaters
 {
     public class ChangeWidthAnnotationTag : IUpdater
     {
