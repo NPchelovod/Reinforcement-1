@@ -25,6 +25,14 @@ namespace Updaters
 
                 if (element.Name.Contains("Кубик_Стена_Прям") || element.Name.Contains("Отверстие в стене"))
                 {
+                    var check = element.get_Parameter(new Guid("467142a7-677d-439a-9bfc-4cadb8761797"));
+                    if (check == null)
+                    {
+                        return;
+                    }
+                    if (!(element is FamilyInstance fi))
+                        continue; // это не экземпляр семейства, пропускаем
+
                     var level = doc.GetElement(element.LevelId) as Level;
                     var levelElevation = level.ProjectElevation;
                     var elementElevationLevel = element.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM).AsDouble();

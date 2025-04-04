@@ -51,11 +51,13 @@ namespace Updaters
                 UpdaterRegistry.RegisterUpdater(autoHoleFloorPoint, true);
                 var updaterId = autoHoleFloorPoint.GetUpdaterId();
 
-                var filter = new ElementCategoryFilter(BuiltInCategory.OST_GenericModel);
-                //var filter1 = new ElementClassFilter(typeof(FamilyInstance));
-                
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeAny());
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeElementAddition());
+
+                var categoryFilter = new ElementCategoryFilter(BuiltInCategory.OST_GenericModel);
+                var classFilter = new ElementClassFilter(typeof(FamilyInstance));
+
+                var combinedFilter = new LogicalAndFilter(categoryFilter, classFilter);
+                UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeElementAddition());
+                UpdaterRegistry.AddTrigger(updaterId, categoryFilter, Element.GetChangeTypeAny());
             }
             else
             {

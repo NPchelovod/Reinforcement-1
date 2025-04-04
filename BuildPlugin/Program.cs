@@ -13,7 +13,7 @@ namespace BuildPlugin
     internal class Program
     {
         private static string projectName = "Revit ENS plugin 2024" ;
-        private static string version = "1.1.3";
+        private static string version = "1.2.0";
         static void Main(string[] args)
         {
             var project = new Project()
