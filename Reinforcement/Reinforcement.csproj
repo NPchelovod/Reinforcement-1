@@ -84,6 +84,7 @@
     <Compile Include="App.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
+    <Compile Include="CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
     <Compile Include="ReinforcementList\MainViewReinforcementList.xaml.cs">
       <DependentUpon>MainViewReinforcementList.xaml</DependentUpon>
