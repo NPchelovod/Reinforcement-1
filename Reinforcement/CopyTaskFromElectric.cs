@@ -32,6 +32,13 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
             Selection sel = uidoc.Selection;
+            View activeView = doc.ActiveView;
+
+            if (!(activeView is View3D))
+            {
+                TaskDialog.Show("Ошибка", "Перейдите на 3Д вид");
+                return Result.Failed;
+            }
 
             ISelectionFilter selFilter = new SelectionFilter();
             TransparentNotificationWindow.ShowNotification("Выберите связанную модель ЭЛ", uidoc, 5);
@@ -70,13 +77,7 @@ namespace Reinforcement
             var linkedViews = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
-                .Where(x => x.Name.ToLower().Contains("этаж_основ") || x.Name.ToLower().Contains("разрез 1"))
-                .Select(x => x.Id)
-                .ToList();
-            var linkedSectionView = new FilteredElementCollector(linkedDoc)
-                .OfClass(typeof(View))
-                .Cast<View>()
-                .Where(x => x.Name.ToLower().Contains("разрез 1"))
+                .Where(x => x.Name.ToLower().Contains("задание_эл"))
                 .Select(x => x.Id)
                 .ToList();
             var listBoxes = new FilteredElementCollector(linkedDoc)
@@ -84,11 +85,17 @@ namespace Reinforcement
                 .OfCategory(BuiltInCategory.OST_ConduitFitting)
                 .Cast<FamilyInstance>()
                 .ToList();
-            /*var detailLines = new FilteredElementCollector(linkedDoc, linkedViews.Id)
+            
+            Dictionary<string, (ElementId, List<ElementId>)> detailLineToCopy = new Dictionary<string, (ElementId, List<ElementId>)>();
+            foreach (var viewId in linkedViews)
+            {
+                var detailLines = new FilteredElementCollector(linkedDoc, viewId)
                 .OfClass(typeof(CurveElement))
                 .ToElementIds()
-                .ToList();*/
-
+                .ToList();
+                var viewName = linkedDoc.GetElement(viewId).Name;
+                detailLineToCopy.Add(viewName, (viewId, detailLines));
+            }
 
             try //ловим ошибку
             {
@@ -100,24 +107,8 @@ namespace Reinforcement
                         symbolSquare.Activate();
                     if (!symbolCircle.IsActive)
                         symbolCircle.Activate();
-                    //Transform transform = linkedModel.GetTransform();
                     CopyPasteOptions copyPasteOptions = new CopyPasteOptions();
                     copyPasteOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
-
-                    /*            ElementTransformUtils.CopyElements(
-                                    linkedDoc,
-                                    linkedSectionView,
-                                    doc,
-                                    transform,
-                                    copyPasteOptions
-                                    );
-                                ElementTransformUtils.CopyElements(
-                linkedView,
-                detailLines,
-                doc.ActiveView,
-                Transform.Identity,
-                new CopyPasteOptions()
-                );*/
 
                     //Вставляем семейства коробов
                     foreach (var box in listBoxes)
@@ -127,7 +118,7 @@ namespace Reinforcement
                         ElementCategoryFilter wallAndFloorFilter = new ElementCategoryFilter(BuiltInCategory.OST_Walls);
                         ElementCategoryFilter floorFilter = new ElementCategoryFilter(BuiltInCategory.OST_Floors);
                         LogicalOrFilter filter = new LogicalOrFilter(wallAndFloorFilter, floorFilter);
-                        ReferenceIntersector intersector = new ReferenceIntersector(filter, FindReferenceTarget.Face, doc.ActiveView as View3D);
+                        ReferenceIntersector intersector = new ReferenceIntersector(filter, FindReferenceTarget.Face, activeView as View3D);
                         
                         List<XYZ> directions = new List<XYZ> {XYZ.BasisX,-XYZ.BasisX,XYZ.BasisY,-XYZ.BasisY,XYZ.BasisZ,-XYZ.BasisZ};
                         ReferenceWithContext bestRwc = null;
@@ -170,7 +161,32 @@ namespace Reinforcement
                         copyPasteOptions
                         );
                     
+                    //Копируем в новые виды линии
+                    foreach (var viewId in newViews)
+                    {
+                        //Копируем линии
+                        View view = doc.GetElement(viewId) as View;
+                        var viewName = view.Name;
+                                             
+                        detailLineToCopy.TryGetValue(viewName, out var data);
+                        View linkedView = linkedDoc.GetElement(data.Item1) as View;
+                        var detailLines = data.Item2;
+                        if (detailLines.Count == 0)
+                        {
+                            view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2")).Set("Задание ЭЛ");
+                            continue;
+                        }
+                        ElementTransformUtils.CopyElements(
+                            linkedView,
+                            detailLines,
+                            view,
+                            Transform.Identity,
+                            copyPasteOptions
+                            );
 
+                        //Задаем значение параметра Директория
+                        view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2")).Set("Задание ЭЛ");
+                    }
 
                     t.Commit();
                 }
