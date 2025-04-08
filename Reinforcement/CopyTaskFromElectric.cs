@@ -64,7 +64,7 @@ namespace Reinforcement
                 .ToList();
             if (checkFamily.Count != 2)
             {
-                TaskDialog.Show("Ошибка", "Загрузите семейства в проект: \"Короб ЭЛ_Квадратный\" и \"Короб ЭЛ_Квадратный\"");
+                TaskDialog.Show("Ошибка", "Загрузите семейства в проект: \"Короб ЭЛ_Квадратный\" и \"Короб ЭЛ_Круглый\"");
             }
             var symbolSquare = new FilteredElementCollector(doc)
                 .OfClass(typeof(FamilySymbol))
@@ -74,6 +74,11 @@ namespace Reinforcement
                 .OfClass(typeof(FamilySymbol))
                 .Cast<FamilySymbol>()
                 .First(x => x.FamilyName == "Короб ЭЛ_Круглый");
+            var views = new FilteredElementCollector(doc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Select(x => x.Name)
+                .ToList();
             var linkedViews = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
@@ -84,7 +89,19 @@ namespace Reinforcement
                 .WhereElementIsNotElementType()
                 .OfCategory(BuiltInCategory.OST_ConduitFitting)
                 .Cast<FamilyInstance>()
+                .Where(x => x.Host != null && x.HostFace != null)
                 .ToList();
+            var listBoxesExcluded = new FilteredElementCollector(linkedDoc)
+                .WhereElementIsNotElementType()
+                .OfCategory(BuiltInCategory.OST_ConduitFitting)
+                .Cast<FamilyInstance>()
+                .Where(x => x.Host == null || x.HostFace == null)
+                .Select(x =>
+                {
+                    return x.Id.ToString();
+                })
+                .ToList();
+
             
             Dictionary<string, (ElementId, List<ElementId>)> detailLineToCopy = new Dictionary<string, (ElementId, List<ElementId>)>();
             foreach (var viewId in linkedViews)
@@ -160,7 +177,7 @@ namespace Reinforcement
                         Transform.Identity,
                         copyPasteOptions
                         );
-                    
+
                     //Копируем в новые виды линии
                     foreach (var viewId in newViews)
                     {
@@ -189,6 +206,12 @@ namespace Reinforcement
                     }
 
                     t.Commit();
+                    string text = "";
+                    foreach (var str in listBoxesExcluded) 
+                    {
+                        text += str + Environment.NewLine;
+                    }
+                    TaskDialog.Show("Предупреждение", $"Не были скопированы {listBoxesExcluded.Count} элемента\n{text}");
                 }
             }
             catch (Exception ex)
