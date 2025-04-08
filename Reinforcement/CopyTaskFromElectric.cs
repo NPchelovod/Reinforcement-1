@@ -34,14 +34,45 @@ namespace Reinforcement
             Selection sel = uidoc.Selection;
 
             ISelectionFilter selFilter = new SelectionFilter();
-            TransparentNotificationWindow.ShowNotification("Выберите связанную модель ЭЛ", uidoc, 10);
-            RevitLinkInstance linkedModel = doc.GetElement(sel.PickObject(ObjectType.Element, selFilter).ElementId) as RevitLinkInstance;
+            TransparentNotificationWindow.ShowNotification("Выберите связанную модель ЭЛ", uidoc, 5);
+
+            Reference selection;
+            try
+            {
+                selection = sel.PickObject(ObjectType.Element, selFilter);
+            }
+            catch
+            {
+                TaskDialog.Show("Ошибка", "Не выбрана связанная модель");
+                return Result.Cancelled;
+            }
+
+            RevitLinkInstance linkedModel = doc.GetElement(selection.ElementId) as RevitLinkInstance;
             Document linkedDoc = linkedModel.GetLinkDocument();
 
-            var linkedView = new FilteredElementCollector(linkedDoc)
+            //проверить есть ли в проекте семейства короба эл
+            var checkFamily = new FilteredElementCollector(doc)
+                .OfClass(typeof(Family))
+                .Where(x => x.Name == "Короб ЭЛ_Квадратный" || x.Name == "Короб ЭЛ_Круглый")
+                .ToList();
+            if (checkFamily.Count != 2)
+            {
+                TaskDialog.Show("Ошибка", "Загрузите семейства в проект: \"Короб ЭЛ_Квадратный\" и \"Короб ЭЛ_Квадратный\"");
+            }
+            var symbolSquare = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>()
+                .First(x => x.FamilyName == "Короб ЭЛ_Квадратный");
+            var symbolCircle = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>()
+                .First(x => x.FamilyName == "Короб ЭЛ_Круглый");
+            var linkedViews = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
-                .FirstOrDefault(x => x.Name.ToLower().Contains("2_этаж"));
+                .Where(x => x.Name.ToLower().Contains("этаж_основ") || x.Name.ToLower().Contains("разрез 1"))
+                .Select(x => x.Id)
+                .ToList();
             var linkedSectionView = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
@@ -51,46 +82,96 @@ namespace Reinforcement
             var listBoxes = new FilteredElementCollector(linkedDoc)
                 .WhereElementIsNotElementType()
                 .OfCategory(BuiltInCategory.OST_ConduitFitting)
-                .ToElementIds()
+                .Cast<FamilyInstance>()
                 .ToList();
-
-            var detailLines = new FilteredElementCollector(linkedDoc, linkedView.Id)
+            /*var detailLines = new FilteredElementCollector(linkedDoc, linkedViews.Id)
                 .OfClass(typeof(CurveElement))
                 .ToElementIds()
-                .ToList();
+                .ToList();*/
 
-            
+
             try //ловим ошибку
             {
                 using (Transaction t = new Transaction(doc, "Копирование задания ЭЛ"))
                 {
                     t.Start();
-                    Transform transform = linkedModel.GetTransform();
+                    //activate family symbol
+                    if (!symbolSquare.IsActive)
+                        symbolSquare.Activate();
+                    if (!symbolCircle.IsActive)
+                        symbolCircle.Activate();
+                    //Transform transform = linkedModel.GetTransform();
                     CopyPasteOptions copyPasteOptions = new CopyPasteOptions();
                     copyPasteOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
 
-                    ElementTransformUtils.CopyElements(
-                        linkedDoc,
-                        linkedSectionView,
-                        doc,
-                        transform,
-                        copyPasteOptions
-                        );
-                   ElementTransformUtils.CopyElements(
-                        linkedDoc,
-                        listBoxes,
-                        doc,
-                        transform,
-                        copyPasteOptions
-                        );
+                    /*            ElementTransformUtils.CopyElements(
+                                    linkedDoc,
+                                    linkedSectionView,
+                                    doc,
+                                    transform,
+                                    copyPasteOptions
+                                    );
+                                ElementTransformUtils.CopyElements(
+                linkedView,
+                detailLines,
+                doc.ActiveView,
+                Transform.Identity,
+                new CopyPasteOptions()
+                );*/
 
-                    ElementTransformUtils.CopyElements(
-                        linkedView,
-                        detailLines,
-                        doc.ActiveView,
+                    //Вставляем семейства коробов
+                    foreach (var box in listBoxes)
+                    {
+                        XYZ coord = ((LocationPoint)box.Location).Point;
+                        XYZ orientation = box.HandOrientation;                        
+                        ElementCategoryFilter wallAndFloorFilter = new ElementCategoryFilter(BuiltInCategory.OST_Walls);
+                        ElementCategoryFilter floorFilter = new ElementCategoryFilter(BuiltInCategory.OST_Floors);
+                        LogicalOrFilter filter = new LogicalOrFilter(wallAndFloorFilter, floorFilter);
+                        ReferenceIntersector intersector = new ReferenceIntersector(filter, FindReferenceTarget.Face, doc.ActiveView as View3D);
+                        
+                        List<XYZ> directions = new List<XYZ> {XYZ.BasisX,-XYZ.BasisX,XYZ.BasisY,-XYZ.BasisY,XYZ.BasisZ,-XYZ.BasisZ};
+                        ReferenceWithContext bestRwc = null;
+                        double minProximity = double.MaxValue;
+                        //стреляем лучи и находим ближайшую грань стены/перекрытия
+                        foreach (XYZ dir in directions)
+                        {
+                            ReferenceWithContext rwc = intersector.FindNearest(coord, dir);
+                            if (rwc == null) continue;
+
+                            if (rwc.Proximity < minProximity)
+                            {
+                                bestRwc = rwc;
+                                minProximity = rwc.Proximity;
+                            }
+                        }
+                        if (bestRwc != null)
+                        {
+                            Reference reference = bestRwc.GetReference();
+                            Element wall = doc.GetElement(reference.ElementId);
+                            // можно создавать экземпляр семейства
+
+                            if (box.Symbol.FamilyName == "Короб ЭЛ_Квадратный")
+                            {
+                                doc.Create.NewFamilyInstance(reference, coord, orientation, symbolSquare);
+                            }
+                            else if (box.Symbol.FamilyName == "Короб ЭЛ_Круглый")
+                            {
+                                doc.Create.NewFamilyInstance(reference, coord, orientation, symbolCircle);
+                            }
+                        }
+                    }
+
+                    //Копируем виды из связанной модели ЭЛ
+                    var newViews = ElementTransformUtils.CopyElements(
+                        linkedDoc,
+                        linkedViews,
+                        doc,
                         Transform.Identity,
-                        new CopyPasteOptions()
+                        copyPasteOptions
                         );
+                    
+
+
                     t.Commit();
                 }
             }
@@ -102,7 +183,7 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-        
+
         public class SelectionFilter : ISelectionFilter
         {
             public bool AllowElement(Element element)
