@@ -82,7 +82,7 @@ namespace Reinforcement
             var linkedViews = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
-                .Where(x => x.Name.ToLower().Contains("задание_эл"))
+                .Where(x => x.Name.ToLower().Contains("40_эл"))
                 .Select(x => x.Id)
                 .ToList();
             var listBoxes = new FilteredElementCollector(linkedDoc)
