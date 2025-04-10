@@ -97,6 +97,7 @@
     <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />
+    <Compile Include="Test\GetAllAnnotationTagBounds.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
     <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />

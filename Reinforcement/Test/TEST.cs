@@ -5,12 +5,14 @@ using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using View = Autodesk.Revit.DB.View;
 
 namespace Reinforcement
 {
@@ -32,7 +34,8 @@ namespace Reinforcement
             UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
- 
+
+            
             try //ловим ошибку
             {
                 using (Transaction t = new Transaction(doc, "действие"))
@@ -50,5 +53,6 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
+
     }
 }
