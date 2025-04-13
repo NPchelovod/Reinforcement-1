@@ -115,15 +115,19 @@ namespace Reinforcement
                     var height = column[3].ToString().Split('+')[1].Trim();
                     double Z = double.Parse(column[2].ToString().Replace(".",",")) - double.Parse(height.Replace(".",","));
                     
+                    X = RevitAPI.ToFoot(X * 1000);
+                    Y = RevitAPI.ToFoot(Y * 1000);
+                    Z = RevitAPI.ToFoot(Z * 1000);
+
                     points.Add(new XYZ(X, Y, Z));
                 }
 
 
 
-                //Дублируем типоразмер
-                ElementType newType = existingType.Duplicate("ИГЭ №1");
+                //Дублируем типоразмер              
+                //ElementType newType = existingType.Duplicate("ИГЭ №1");
 
-                Toposolid.Create(doc, points, newType.Id, new ElementId(1751));
+                Toposolid.Create(doc, points, existingType.Id, new ElementId(1751));
 
                 t.Commit();
             }
