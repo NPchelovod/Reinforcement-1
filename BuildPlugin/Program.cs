@@ -16,6 +16,12 @@ namespace BuildPlugin
         private static string version = "1.2.0";
         static void Main(string[] args)
         {
+
+
+
+
+
+
             var project = new Project()
             {
                 OutFileName = "ENS plugin 2024 v." + version,
