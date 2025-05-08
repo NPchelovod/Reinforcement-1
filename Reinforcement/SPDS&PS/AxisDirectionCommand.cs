@@ -12,6 +12,9 @@ using System.Linq;
 
 #endregion
 
+
+
+// создание оси начало команды
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]

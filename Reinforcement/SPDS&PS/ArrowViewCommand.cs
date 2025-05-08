@@ -11,7 +11,7 @@ using System.Linq;
 
 
 #endregion
-
+// стрелка вида
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -59,7 +59,7 @@ namespace Reinforcement
             }
         }
 
-        public static string FamName { get; set; } = "ЕС_Обозначение вида";
+        public static string FamName { get; set; } = "ЕС_ОбозначениеВида";
 
     }
 }

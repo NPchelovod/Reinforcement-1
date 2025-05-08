@@ -35,31 +35,34 @@ namespace Reinforcement
             return true;
         }
     }
-
+    /*
     public class LoadAllFamiliesFromDirectory : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            LoadAllFamilies()
+            LoadAllFamilies();
             
             
             return Result.Succeeded;
 
         }
-            private void LoadAllFamilies(string directoryPath)
-            {
-                if (!Directory.Exists(directoryPath)) return;
 
-                var files = Directory.GetFiles(directoryPath);
-                foreach (var file in files)
-                {
-                    RevitAPI.Document.LoadFamily(file, new FamilyLoadOptions(), out var newFamily);
-                }
+        private void LoadAllFamilies(string directoryPath)
+        {
+            if (!Directory.Exists(directoryPath)) return;
+
+            var files = Directory.GetFiles(directoryPath);
+            foreach (var file in files)
+            {
+                RevitAPI.Document.LoadFamily(file, new FamilyLoadOptions(), out var newFamily);
             }
+        }
 
         
        
 
     }
-    }
+    
 }        
+    */
+}

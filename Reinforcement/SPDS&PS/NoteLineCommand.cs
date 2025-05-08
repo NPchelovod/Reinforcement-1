@@ -12,6 +12,8 @@ using System.Linq;
 
 #endregion
 
+
+// Выноска СПДС - начало
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -45,6 +47,7 @@ namespace Reinforcement
                     ElementType elemType = element as ElementType;
                     if (elemType.FamilyName == FamName)
                     {
+                       
                         symbol = element as FamilySymbol;
                         break;
                     }
@@ -59,7 +62,7 @@ namespace Reinforcement
             }
         }
 
-        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_3,5 мм";
+        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_3,5мм";
 
     }
 }

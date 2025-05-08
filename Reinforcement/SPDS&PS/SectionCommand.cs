@@ -59,8 +59,8 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_Разрез условно";
+        public static  string FamName { get; set; } = "ЕС_РазрезУсловно";
 
     }
-    }
+}
 
