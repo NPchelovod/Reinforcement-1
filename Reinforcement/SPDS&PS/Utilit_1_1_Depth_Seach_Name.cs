@@ -35,7 +35,7 @@ namespace Reinforcement
             {
                 // ищем максимальную подстроку в строке для этого удаляем все символы чипушные
 
-                var simvol_del = new List<string>() { ".", ",", "_", "-", "/", " ", " " };
+                var simvol_del = new List<string>() { ".", ",", "_", "-", "/",";",":", " " };
                 string FamName2 = FamName.ToLower();
                 foreach (var simvol in simvol_del)
                 {

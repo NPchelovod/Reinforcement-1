@@ -17,7 +17,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class NoteLineCommand : IExternalCommand
+    public class NoteLineCommand25mm : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -33,11 +33,9 @@ namespace Reinforcement
 
             var ww = Utilit_1_2_Creater.GetResult(FamName,  doc,  uidoc);
             return Result.Succeeded;
-            
-
         }
 
-        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_3,5мм";
+        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_2,5мм";
 
     }
 }

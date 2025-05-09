@@ -15,6 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Updaters;
+//using System.Windows.Controls;
 
 #endregion
 
@@ -110,7 +111,11 @@ namespace Reinforcement
 
             return stackedItems;
         }
-        
+
+       
+
+
+
         public Result OnStartup(UIControlledApplication app)
         {
             //Create tab
@@ -129,13 +134,20 @@ namespace Reinforcement
             //1. PanelSpds
              RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
                 "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}", panelSpds);
-             RibbonItemData noteLine = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand", Properties.Resources.ES_NoteLine,
-                 "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand.FamName}", panelSpds);
+             RibbonItemData noteLine35mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand35mm", Properties.Resources.ES_NoteLine,
+                 "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
+            
+            RibbonItemData noteLine25mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine,
+                "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
+            
 
-             IList<RibbonItem> stackedItemsLines =
-                 CreateStackedItems(panelSpds, breakLine, noteLine, "Линия обрыва", "Выноска", tabName);
+            IList<RibbonItem> stackedItemsLines =
+                 CreateStackedItems(panelSpds, breakLine, noteLine35mm, "Линия обрыва", "Выноска", tabName);
 
-             RibbonItemData concreteJoint = CreateButtonData("Шов бетонирования", "Шов бетонирования", "Reinforcement.ConcreteJointCommand", Properties.Resources.ConcreteJoint,
+
+            
+            
+            RibbonItemData concreteJoint = CreateButtonData("Шов бетонирования", "Шов бетонирования", "Reinforcement.ConcreteJointCommand", Properties.Resources.ConcreteJoint,
                  "Размещение шва бетонирования в масштабе М50", $"Имя семейства должно быть {ConcreteJointCommand.FamName}", panelSpds);
              RibbonItemData axisDirection = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
                  "Размещение строительной оси с возможностью преобразования в указатель ориентации оси", $"Имя семейства должно быть {AxisDirectionCommand.FamName}", panelSpds);

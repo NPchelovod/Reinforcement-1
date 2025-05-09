@@ -97,6 +97,7 @@
     <Compile Include="CreateNewProjectBySchedule.cs" />
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
+    <Compile Include="SPDS&amp;PS\NoteLineCommand25mm.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach_Name.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_1_2_Creater.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
@@ -132,7 +133,7 @@
     <Compile Include="SPDS&amp;PS\AxisDirectionCommand.cs" />
     <Compile Include="SPDS&amp;PS\AxisCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcShpilkaCommand.cs" />
-    <Compile Include="SPDS&amp;PS\NoteLineCommand.cs" />
+    <Compile Include="SPDS&amp;PS\NoteLineCommand35mm.cs" />
     <Compile Include="LinearCopy\MainViewLinearCopyElement.xaml.cs">
       <DependentUpon>MainViewLinearCopyElement.xaml</DependentUpon>
     </Compile>
