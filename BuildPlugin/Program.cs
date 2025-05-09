@@ -13,12 +13,9 @@ namespace BuildPlugin
     internal class Program
     {
         private static string projectName = "Revit ENS plugin 2024" ;
-        private static string version = "1.2.0";
+        private static string version = "1.2.1";
         static void Main(string[] args)
         {
-
-
-
 
 
 
@@ -37,9 +34,9 @@ namespace BuildPlugin
                 Dirs = new Dir[]
                 {
                     new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
-                        new File(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\Reinforcement.addin"),
+                        new File(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\Reinforcement.addin"),
                         new Dir(@"ENSPlugin",
-                        new DirFiles(@"%USERPROFILE%\source\repos\Vinesence\Reinforcement\Reinforcement\bin\Debug\*.*"))),
+                        new DirFiles(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\bin\Debug\*.*"))),
 
                 },
             };
