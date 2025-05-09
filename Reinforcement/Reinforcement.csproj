@@ -97,6 +97,8 @@
     <Compile Include="CreateNewProjectBySchedule.cs" />
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
+    <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach_Name.cs" />
+    <Compile Include="SPDS&amp;PS\Utilit_1_2_Creater.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />

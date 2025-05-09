@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -8,32 +8,26 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 
 #endregion
 
 namespace Reinforcement
 {
-    [Transaction(TransactionMode.Manual)]
-    public class PRebarDistribCommand : IExternalCommand
+    internal class Utilit_1_2_Creater
     {
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+        public static Result GetResult(string FamName, Document doc, UIDocument uidoc)
+
+
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
-            Document doc = uidoc.Document;
-
-            // Access current selection
-
-            Selection sel = uidoc.Selection;
+           
 
             // Retrieve elements from database
 
             FilteredElementCollector col = new FilteredElementCollector(doc);
+
 
             IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
             try
@@ -45,6 +39,7 @@ namespace Reinforcement
                     return Result.Failed;
                 }
 
+                //uidoc.PostRequestForElementTypePlacement(symbol);
                 uidoc.PostRequestForElementTypePlacement(symbol);
                 return Result.Succeeded;
             }
@@ -53,9 +48,5 @@ namespace Reinforcement
                 return Result.Failed;
             }
         }
-
-        public static  string FamName { get; set; } = "ЕС_А-01_Распределение по прямой_П-равнопол_Г";
-
     }
 }
-

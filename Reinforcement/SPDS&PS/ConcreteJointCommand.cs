@@ -60,8 +60,10 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "ЕС_Шов бетонирования_М50";
+        public static string FamName { get; set; } = "ЕС_Шов бетонирования_М50";
 
     }
-    }
+}
+
+
 

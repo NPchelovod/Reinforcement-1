@@ -41,7 +41,7 @@ namespace Reinforcement
             try
             {
                 foreach (var element in symbols)
-                {   
+                {
                     if (element.Name == FamName)
                     {
                         symbol = element as FamilySymbol;
@@ -58,8 +58,9 @@ namespace Reinforcement
             }
         }
 
-        public static  string FamName { get; set; } = "Линейный обрыв";
+        public static string FamName { get; set; } = "Линейный обрыв";
 
     }
-    }
+}
+
 

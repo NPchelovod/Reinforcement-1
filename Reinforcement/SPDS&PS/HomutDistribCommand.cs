@@ -36,18 +36,13 @@ namespace Reinforcement
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
             IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-            FamilySymbol symbol = null;
-
             try
             {
-                foreach (var element in symbols)
-                {   
-                    ElementType elemType = element as ElementType;
-                    if (elemType.FamilyName == FamName)
-                    {
-                        symbol = element as FamilySymbol;
-                        break;
-                    }
+                var symbol = Utilit_1_1_Depth_Seach_Name.GetResult(FamName, symbols);
+
+                if (symbol == null)
+                {
+                    return Result.Failed;
                 }
 
                 uidoc.PostRequestForElementTypePlacement(symbol);
