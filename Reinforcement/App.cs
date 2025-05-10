@@ -138,8 +138,11 @@ namespace Reinforcement
                  "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
             
             RibbonItemData noteLine25mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine,
-                "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
-            
+                "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand25mm.FamName}", panelSpds);
+            /*
+            CreateButton("Выноска 2,5", "Выноска 2,5", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine,
+              "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand25mm.FamName}", panelSpds);
+            */
 
             IList<RibbonItem> stackedItemsLines =
                  CreateStackedItems(panelSpds, breakLine, noteLine35mm, "Линия обрыва", "Выноска", tabName);
@@ -178,6 +181,10 @@ namespace Reinforcement
 
             IList<RibbonItem> stackedSerifArrow =
                 CreateStackedItems(panelSpds, serif, arrowView, "Засечка", "Стрелка вида", tabName);
+
+
+
+
 
 
             //2. PanelSketchReinf
