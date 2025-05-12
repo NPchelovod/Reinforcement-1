@@ -127,7 +127,7 @@ namespace Reinforcement
                 //Дублируем типоразмер              
                 //ElementType newType = existingType.Duplicate("ИГЭ №1");
 
-                Toposolid.Create(doc, points, existingType.Id, new ElementId(1751));
+                Toposolid.Create(doc, points, existingType.Id, new ElementId((long)1751));
 
                 t.Commit();
             }

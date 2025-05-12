@@ -44,7 +44,7 @@ namespace Reinforcement
                 {
                     foreach (var parameterFilter in col)
                     {
-                        if (parameterFilter.Id.IntegerValue == idsArray[i])
+                        if (parameterFilter.Id.Value == idsArray[i]) // םמגמו גלוסעמ ElementId.IntegerValue
                         {
                             filterElementsList.Add(parameterFilter);
                         } 

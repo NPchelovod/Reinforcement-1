@@ -95,7 +95,7 @@ namespace Reinforcement
             {
                 var id_axe = Convert.ToInt32(iter);
                 var parametrs_axe = Dict_Axis[iter];
-                ElementId elementId_axe = new ElementId(id_axe);
+                ElementId elementId_axe = new ElementId((long)id_axe);
                 Element element = doc.GetElement(elementId_axe);
 
                 Grid grid = doc.GetElement(elementId_axe) as Grid;

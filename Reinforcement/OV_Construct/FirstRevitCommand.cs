@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using System.Xml.Serialization;
 using System.Collections;
 using System.Runtime.Serialization.Formatters.Binary;
-using Revit_test;
+
 using System.Data;
 
 
@@ -39,7 +39,6 @@ namespace Reinforcement
             ForgeTypeId units = UnitTypeId.Millimeters;
 
             Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
-
             // в будущем можно будет менять
             string name_OB = "ОтверстиеВПерекрытии";
             Type name_class = typeof(FamilyInstance);

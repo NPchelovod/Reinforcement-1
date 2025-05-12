@@ -64,7 +64,7 @@ namespace Reinforcement
                     var parametrs_axe = iter.Value;
                     double tek_dist_x = 0;
                     double tek_dist_y = 0;
-                    double polyar_dist = 0;
+                    //double polyar_dist = 0;
 
 
 

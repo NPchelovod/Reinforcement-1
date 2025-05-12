@@ -69,7 +69,7 @@ namespace Reinforcement
                         }                                                                      
                         
                         //Create the sheet and rename
-                        ElementId titleBlockTypeId = new ElementId(218938);
+                        ElementId titleBlockTypeId = new ElementId((long)218938);
                         var newSheet = ViewSheet.Create(doc, titleBlockTypeId);
                         BuiltInParameter paramId = BuiltInParameter.SHEET_NAME;
                         Parameter sheetName = newSheet.get_Parameter(paramId);
