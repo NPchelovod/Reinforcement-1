@@ -25,7 +25,7 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
 
 
-    public class FirstRevitCommand : IExternalCommand
+    public class OV_Constuct_Command : IExternalCommand
     {
         
         static AddInId addinId = new AddInId(new Guid ("424E29F8-20DE-49CB-8CF0-8627879F97C2"));
@@ -109,7 +109,7 @@ namespace Reinforcement
             string json_Dict_sovpad_level = JsonConvert.SerializeObject(Dict_sovpad_level);
 
             string path_export = @"D:\образование\Ревит\";
-            //string path_export = @"C:\Users\KVinogradov\Desktop\сборки\";
+            path_export = @"C:\Users\KVinogradov\Desktop\сборки\";
             File.WriteAllText(path_export+"json_Dict_Axis.json", json_Dict_Axis, Encoding.UTF8);
             File.WriteAllText(path_export +"json_Dict_level_ventsId.json", json_Dict_level_ventsId, Encoding.UTF8);
             File.WriteAllText(path_export + "json_Dict_ventId_Properts.json", json_Dict_ventId_Properts, Encoding.UTF8);
@@ -122,7 +122,9 @@ namespace Reinforcement
 
             //var mc = new Utilit_3_1Create_new_plan_floor();
             //new Utilit_3_1Create_new_plan_floor();
-            new CreateNamedFloorPlansCommand();
+            //new CreateNamedFloorPlansCommand();
+            new Utilit_3_2Create_razdel();
+
             return Result.Succeeded;
 
         }

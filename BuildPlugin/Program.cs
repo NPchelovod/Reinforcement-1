@@ -1,5 +1,6 @@
 ﻿using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
 using System;
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,13 +17,35 @@ namespace BuildPlugin
     internal class Program
     {
         private static string projectName = "Revit ENS plugin 2024" ;
-        private static string version = "1.2.1";
+        private static string version = "1.2.0";
         static void Main(string[] args)
         {
 
             // Укажите путь к вашей иконке (лучше использовать абсолютный путь)
-            string iconPath = @"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\BuildPlugin\Resources\ens_icon.ico";
-           
+            string iconPath =   @"% USERPROFILE%\source\repos\Reinforcement-1\BuildPlugin\Resources\ens_icon.ico";
+            // USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\BuildPlugin\Resources\ens_icon.ico"
+            
+            string installDir = @"% USERPROFILE%\AppData\Roaming\Autodesk\Revit\Addins\2024";
+            //(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\"
+
+            string addinPath =  @"% USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\Reinforcement.addin";
+            //new File(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\Reinforcement.addin"),
+            string FilesPath = @"%USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\bin\Debug\*.*";
+            //@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\bin\Debug\*.*"
+
+            var contol_path = new List<string>()
+            {
+                iconPath,installDir, addinPath, FilesPath
+            };
+
+            foreach ( var contol in contol_path )
+            {
+                if (System.IO.File.Exists(contol))
+                {
+                    Console.WriteLine($"Файл {contol} не найден!");
+                };
+            };
+
             var project = new Project()
             {
                 OutFileName = "ENS plugin 2024 v." + version,
@@ -43,10 +66,10 @@ namespace BuildPlugin
                 },
                 Dirs = new Dir[]
                 {
-                    new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
-                        new File(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\Reinforcement.addin"),
+                    new InstallDir(installDir,
+                        new File(addinPath),
                         new Dir(@"ENSPlugin",
-                        new Files(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\bin\Debug\*.*"),
+                        new Files(FilesPath),
                         // Явно добавляем иконку в установку
                         new File(iconPath)
                         )),

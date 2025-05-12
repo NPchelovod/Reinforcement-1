@@ -129,15 +129,15 @@ namespace Reinforcement
             RibbonPanel panelDrawing = app.CreateRibbonPanel(tabName, "Оформление");
             RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
             RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
-
+            RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
 
             //1. PanelSpds
-             RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
+            RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
                 "Размещение линии обрыва", $"Имя семейства должно быть {DrBreakLineCommand.FamName}", panelSpds);
              RibbonItemData noteLine35mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand35mm", Properties.Resources.ES_NoteLine,
                  "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
-            
-            RibbonItemData noteLine25mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine,
+            /*
+            RibbonItemData noteLine25mm = CreateButtonData("Выноска", "Выноска", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine25,
                 "Размещение позиционной выноски", $"Имя семейства должно быть {NoteLineCommand25mm.FamName}", panelSpds);
             /*
             CreateButton("Выноска 2,5", "Выноска 2,5", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine,
@@ -146,10 +146,12 @@ namespace Reinforcement
 
             IList<RibbonItem> stackedItemsLines =
                  CreateStackedItems(panelSpds, breakLine, noteLine35mm, "Линия обрыва", "Выноска", tabName);
+            /*
+            CreateButton("Выноска 2,5", "Выноска 2,5", "Reinforcement.NoteLineCommand25mm", Properties.Resources.ES_NoteLine25,
+             "Размещение позиционной выноски",
+             $"Имя семейства должно быть {NoteLineCommand25mm.FamName}", panelSpds);
+            */
 
-
-            
-            
             RibbonItemData concreteJoint = CreateButtonData("Шов бетонирования", "Шов бетонирования", "Reinforcement.ConcreteJointCommand", Properties.Resources.ConcreteJoint,
                  "Размещение шва бетонирования в масштабе М50", $"Имя семейства должно быть {ConcreteJointCommand.FamName}", panelSpds);
              RibbonItemData axisDirection = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
@@ -295,7 +297,15 @@ namespace Reinforcement
              "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n1. Подготавливается подложка в DWG;\n2. Импорт САПР, расчленить",
             panelSAPR);
 
-            //7. Updater
+
+
+            // 7. panelOV временная 
+            CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
+             "Позволяет создать",
+             "Для работы плагина нужно ",
+            panelOV);
+
+            //8. Updater
             RegisterUpdater.addInId = app.ActiveAddInId;
             RegisterUpdater.Register();
             

@@ -30,6 +30,24 @@ namespace Reinforcement
                 }
             }
 
+            int LongestCommonSubstring(string s1, string s2)
+            {
+                int maxLength = 0;
+                int[,] dp = new int[s1.Length + 1, s2.Length + 1];
+
+                for (int i = 1; i <= s1.Length; i++)
+                {
+                    for (int j = 1; j <= s2.Length; j++)
+                    {
+                        if (s1[i - 1] == s2[j - 1])
+                        {
+                            dp[i, j] = dp[i - 1, j - 1] + 1;
+                            maxLength = Math.Max(maxLength, dp[i, j]);
+                        }
+                    }
+                }
+                return maxLength;
+            }
 
             if (contol_proxod == false)
             {
@@ -58,7 +76,7 @@ namespace Reinforcement
                         FamName_sravn = FamName_sravn.Replace(simvol, "");
                     }
                     // количество пересечений
-                    int count = FamName2.Zip(FamName_sravn, (c1, c2) => c1 == c2).Count(match => match);
+                    int count = LongestCommonSubstring(FamName2, FamName_sravn);//FamName2.Zip(FamName_sravn, (c1, c2) => c1 == c2).Count(match => match);
                     if (count > simvol_sovpad)
                     {
                         simvol_sovpad = count;
@@ -76,7 +94,7 @@ namespace Reinforcement
 
                             symbol = element as FamilySymbol;
                             contol_proxod = true;
-                            TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName}: {name_sovpad}");
+                            TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
                             
                             break;
                         }

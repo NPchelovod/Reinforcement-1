@@ -22,36 +22,15 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
+
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
-            // Access current selection
 
-            Selection sel = uidoc.Selection;
-
-            // Retrieve elements from database
-
-            FilteredElementCollector col = new FilteredElementCollector(doc);
-
-            IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-            try
-            {
-                var symbol = Utilit_1_1_Depth_Seach_Name.GetResult(FamName, symbols);
-
-                if (symbol == null)
-                {
-                    return Result.Failed;
-                }
-
-                uidoc.PostRequestForElementTypePlacement(symbol);
-                return Result.Succeeded;
-            }
-            catch (Exception)
-            {
-                return Result.Failed;
-            }
+            var ww = Utilit_1_2_Creater.GetResult(FamName, doc, uidoc);
+            return Result.Succeeded;
         }
 
         public static  string FamName { get; set; } = "ЕС_А-01_Распределение хомута";
