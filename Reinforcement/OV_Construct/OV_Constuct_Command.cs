@@ -123,7 +123,7 @@ namespace Reinforcement
             //var mc = new Utilit_3_1Create_new_plan_floor();
             //new Utilit_3_1Create_new_plan_floor();
             //new CreateNamedFloorPlansCommand();
-            new Utilit_3_2Create_razdel();
+            var c = Utilit_3_1Create_new_floor.Create_new_floor(Dict_sovpad_level, units, ref message, elements, doc);
 
             return Result.Succeeded;
 

@@ -110,7 +110,8 @@
     <Compile Include="OV_Construct\Utilit_2_4Dict_numerateOV.cs" />
     <Compile Include="OV_Construct\Utilit_2_5_ReDict_numOV_spisokOV.cs" />
     <Compile Include="OV_Construct\Utilit_2_6ListPovtor_OV_on_Plans.cs" />
-    <Compile Include="OV_Construct\Utilit_3_1Create_new_plan_floor.cs" />
+    <Compile Include="OV_Construct\Utilit_3_1Create_new_floor.cs" />
+    <Compile Include="OV_Construct\Utilit_3_3Create_new_plan_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_2Create_razdel.cs" />
     <Compile Include="ReinforcementList\MainViewReinforcementList.xaml.cs">
       <DependentUpon>MainViewReinforcementList.xaml</DependentUpon>
