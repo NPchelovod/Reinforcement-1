@@ -15,6 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Updaters;
+using System.Diagnostics;
 //using System.Windows.Controls;
 
 #endregion
@@ -298,12 +299,14 @@ namespace Reinforcement
             panelSAPR);
 
 
-
+            /*
             // 7. panelOV временная 
             CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
              "Позволяет создать",
              "Для работы плагина нужно ",
             panelOV);
+            */
+
 
             //8. Updater
             RegisterUpdater.addInId = app.ActiveAddInId;
@@ -319,23 +322,41 @@ namespace Reinforcement
 
         public BitmapImage Convert(Image img)
         {
-            using (var memory = new MemoryStream())
+            if (img == null)
             {
-                img.Save(memory, ImageFormat.Png);
-                memory.Position = 0;
+                {
+                    throw new ArgumentNullException(nameof(img), "Изображение не может быть null.");
+                }
+            }
 
-                var bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                return bitmapImage;
+            try
+            {
+                using (var memory = new MemoryStream())
+                {
+
+                    img.Save(memory, ImageFormat.Png);
+                    memory.Position = 0;
+
+                    var bitmapImage = new BitmapImage();
+
+                    bitmapImage.BeginInit();
+                    bitmapImage.StreamSource = memory;
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.EndInit();
+
+                    return bitmapImage;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                // Логирование ошибки, если нужно
+                Debug.WriteLine($"Ошибка при создании BitmapImage: {ex.Message}");
+                return null; // или вернуть заглушку
             }
 
 
         }
-
-
 
         public Result OnShutdown(UIControlledApplication a)
         {

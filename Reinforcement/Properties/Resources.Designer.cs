@@ -249,6 +249,7 @@ namespace Reinforcement.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        /*
         internal static System.Drawing.Bitmap ES_NoteLine25
         {
             get
@@ -257,6 +258,7 @@ namespace Reinforcement.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        */
 
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
