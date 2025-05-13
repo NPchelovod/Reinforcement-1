@@ -18,10 +18,22 @@ namespace Reinforcement
 
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
-            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-            IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
 
-            ElementType elementType = null;
+            IList<Element> sravn_iter;
+
+            if (Type_seach == "elementTypes")
+            {
+                IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
+                sravn_iter = elementTypes;
+            }
+            else
+            {
+                IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
+                sravn_iter = symbols;
+            }
+
+
+                ElementType elementType = null;
             ElementType symbol = null;
 
 
@@ -29,36 +41,19 @@ namespace Reinforcement
 
             foreach (var FamName in FamNames)
             {
-                if (Type_seach == "elementTypes")
+                
+                foreach (var element in sravn_iter)
                 {
-                    foreach (var element in elementTypes)
+                    elementType = element as ElementType;
+                    if (elementType.Name == FamName)
                     {
-                        elementType = element as ElementType;
-                        if (elementType.Name == FamName)
-                        {
+                        contol_proxod = true;
+                        uidoc.PostRequestForElementTypePlacement(elementType);
 
-                            contol_proxod = true;
-                            break;
-                        }
+                        break;
                     }
                 }
-
-                else
-                {
-                    foreach (var element in symbols)
-                    {
-                        ElementType elemType = element as ElementType;
-                        if (elemType.FamilyName == FamName)
-                        {
-
-                            symbol = element as FamilySymbol;
-                            contol_proxod = true;
-                            break;
-                        }
-                    }
-
-
-                }
+                
 
             }
 
@@ -76,75 +71,37 @@ namespace Reinforcement
                 int count = 0;
 
                 Element element_gotov = null;
-                if (Type_seach == "elementTypes")
+                
+                foreach (var element in sravn_iter)
                 {
-                    foreach (var element in elementTypes)
+                    ElementType elemType = element as ElementType;
+                    string potenc_name_sovpad = elemType.FamilyName;
+
+                    FamName_sravn = Utilit_Helper.unific_sravn_string(FamName_sravn);
+
+                    // количество пересечений
+                    count = Utilit_Helper.LongestCommonSubstring(FamName2, FamName_sravn);
+                    if (count > simvol_sovpad)
                     {
-                        ElementType elemType = element as ElementType;
-                        string potenc_name_sovpad = elemType.FamilyName;
-
-                        FamName_sravn = Utilit_Helper.unific_sravn_string(FamName_sravn);
-
-                        // количество пересечений
-                        count = Utilit_Helper.LongestCommonSubstring(FamName2, FamName_sravn);
-                        if (count > simvol_sovpad)
-                        {
-                            simvol_sovpad = count;
-                            name_sovpad = potenc_name_sovpad;
-                            element_gotov = element;
-                        }
+                        simvol_sovpad = count;
+                        name_sovpad = potenc_name_sovpad;
+                        element_gotov = element;
                     }
                 }
-                else
-                {
-                    foreach (var element in symbols)
-                    {
-                        
-                        ElementType elemType = element as ElementType;
-                        string potenc_name_sovpad = elemType.FamilyName;
-                        FamName_sravn = elemType.FamilyName.ToLower();
-
-                        // количество пересечений
-                        count = Utilit_Helper.LongestCommonSubstring(FamName2, FamName_sravn);//FamName2.Zip(FamName_sravn, (c1, c2) => c1 == c2).Count(match => match);
-                        if (count > simvol_sovpad)
-                        {
-                            simvol_sovpad = count;
-                            name_sovpad = potenc_name_sovpad;
-                            element_gotov = element;
-                        }
-                    }
-                }
-
+                
+                
                 if (simvol_sovpad > 3 && simvol_sovpad > Convert.ToInt32(0.7 * FamName2.Count()))
                 {
-                    if (Type_seach == "elementTypes")
-                    {
-                        
-                        elementType = element_gotov as ElementType;
-                        contol_proxod = true;
-                        TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
-                        uidoc.PostRequestForElementTypePlacement(elementType);
-                    }
-                    else
-                    {
-                        elementType = element_gotov as ElementType;
-                        contol_proxod = true;
-                        TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
-                        uidoc.PostRequestForElementTypePlacement(elementType);
-
-
-                            
-                        
-                    }
-
-
-
+                    
+                    elementType = element_gotov as ElementType;
+                    contol_proxod = true;
+                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
+                    uidoc.PostRequestForElementTypePlacement(elementType);
                 }
                 else
                 {
                     TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Аналогов нет {FamName}");
                 }
-
             }
 
             return elementType;
