@@ -53,7 +53,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
-      <HintPath>..\..\dll\AdWindows.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\сборка\AdWindows.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="ExcelDataReader, Version=3.7.0.0, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
@@ -123,9 +123,6 @@
     <Compile Include="SPDS&amp;PS\NoteLineCommand25mm.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_Helper.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach.cs" />
-    <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach_Name_FamilySymbol.cs" />
-    <Compile Include="SPDS&amp;PS\Utilit_1_2_Creater_ElementType.cs" />
-    <Compile Include="SPDS&amp;PS\Utilit_1_2_Creater_FamilySymbol.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />

@@ -29,7 +29,7 @@ namespace Reinforcement
 
             var list_Name = new List<string>() { FamName};
 
-            string Type_seach = "Symbols";
+            string Type_seach = "ElementType";
 
             try
             {

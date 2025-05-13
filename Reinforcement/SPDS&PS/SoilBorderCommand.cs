@@ -17,50 +17,36 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class SoilBorderCommand : IExternalCommand
     {
-        public Result Execute(
+         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
             ElementSet elements)
         {
+
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+
             Document doc = uidoc.Document;
 
-            // Access current selection
+            var list_Name = new List<string>() { FamName, FamName2, FamName3 };
 
-            Selection sel = uidoc.Selection;
-
-            // Retrieve elements from database
-
-            FilteredElementCollector col = new FilteredElementCollector(doc);
-
-            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-
-            ElementType elementType = null;
+            string Type_seach = "ElementType";
 
             try
             {
-                foreach (var element in elementTypes)
-                {
-                    ElementType elemType = element as ElementType;
-                    if (elemType.Name == FamName)
-                    {
-                        elementType = elemType;
-                        break;
-                    }
-                }
-
-                uidoc.PostRequestForElementTypePlacement(elementType);
-                return Result.Succeeded;
+                Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Result.Failed;
             }
+            return Result.Succeeded;
         }
 
         public static  string FamName { get; set; } = "Граница грунта (М50)";
+
+        public static string FamName2 { get; set; } = "ЕС_ЭУ_Компонент_Граница грунта";
+        public static string FamName3 { get; set; } = "Граница грунта_М50";
 
     }
     }

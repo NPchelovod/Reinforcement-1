@@ -18,48 +18,33 @@ namespace Reinforcement
     public class WaterProofCommand : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+           ExternalCommandData commandData,
+           ref string message,
+           ElementSet elements)
         {
+
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+
             Document doc = uidoc.Document;
 
-            // Access current selection
+            var list_Name = new List<string>() { FamName, FamName2 };
 
-            Selection sel = uidoc.Selection;
-
-            // Retrieve elements from database
-
-            FilteredElementCollector col = new FilteredElementCollector(doc);
-
-            IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-            FamilySymbol symbol = null;
+            string Type_seach = "Symbol";
 
             try
             {
-                foreach (var element in symbols)
-                {
-                    ElementType elemType = element as ElementType;
-                    if (elemType.FamilyName == FamName)
-                    {
-                        symbol = element as FamilySymbol;
-                        break;
-                    }
-                }
-
-                uidoc.PostRequestForElementTypePlacement(symbol);
-                return Result.Succeeded;
+                Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Result.Failed;
             }
+            return Result.Succeeded;
         }
 
         public static  string FamName { get; set; } = "ЕС_Гидроизоляция";
+        public static string FamName2 { get; set; } = "ЕС_ЭУ_Гидроизоляция";
 
     }
     }
