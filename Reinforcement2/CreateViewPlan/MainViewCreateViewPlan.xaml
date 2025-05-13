@@ -1,0 +1,50 @@
+﻿<Window x:Class="Reinforcement.MainViewCreateViewPlan"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Reinforcement"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance local:ViewModelCreateViewPlan}"
+             Height="179" Width="350">
+    <StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="340">
+            <TextBlock Margin="5" Text="Марка и отметки: " RenderTransformOrigin="0.5,0.5" Width="104">
+                <TextBlock.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform AngleY="0.219"/>
+                        <RotateTransform/>
+                        <TranslateTransform Y="-0.191"/>
+                    </TransformGroup>
+                </TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBox Text="{Binding MarkElevation}" Margin="5" Width="210"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Width="340">
+            <TextBlock Margin="5" Text="Префикс (21, 22 ...) " RenderTransformOrigin="0.5,0.5" Width="104">
+                <TextBlock.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform AngleY="0.219"/>
+                        <RotateTransform/>
+                        <TranslateTransform Y="-0.191"/>
+                    </TransformGroup>
+                </TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBox Text="{Binding Prefix}" Margin="5" Width="210"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <TextBlock Margin="5" Text="Уровень: "/>
+            <ComboBox ItemsSource="{Binding Levels}"
+                      SelectedItem="{Binding SelectedLevel}"
+                      DisplayMemberPath="Name"
+                    Margin="5"
+                     Width="170" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Click="Click_Create" Margin="5" Padding="5" Content="Создать" Width="80" />
+            <Button Click="Click_Cancel" Margin="5" Padding="5" Content="Отмена" Width="80" />
+        </StackPanel>
+    </StackPanel>
+</Window>

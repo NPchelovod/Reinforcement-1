@@ -27,9 +27,9 @@ namespace Reinforcement
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
+            var list_Name = new List<string>() { FamName, FamName2 };
 
-
-            var ww = Utilit_1_2_Creater.GetResult(FamName, doc, uidoc);
+            var ww = Utilit_1_2_Creater_FamilySymbol.GetResult(list_Name, doc, uidoc);
             return Result.Succeeded;
 
 
@@ -37,6 +37,7 @@ namespace Reinforcement
 
 
         public static string FamName { get; set; } = "ЕС_ОбозначениеВида";
+        public static string FamName2 { get; set; } = "ЕС_Обозначение Вида";
 
     }
 }

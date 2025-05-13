@@ -18,49 +18,26 @@ namespace Reinforcement
     public class ConcreteJointCommand : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+             ExternalCommandData commandData,
+             ref string message,
+             ElementSet elements)
         {
+
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
-            // Access current selection
+            var list_Name = new List<string>() { FamName, FamName2 };
+            var ww = Utilit_1_2_Creater_FamilySymbol.GetResult(list_Name, doc, uidoc);
+            return Result.Succeeded;
 
-            Selection sel = uidoc.Selection;
 
-            // Retrieve elements from database
-
-            FilteredElementCollector col = new FilteredElementCollector(doc);
-
-            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-
-            ElementType elementType = null;
-
-            try
-            {
-                foreach (var element in elementTypes)
-                {
-                    ElementType elemType = element as ElementType;
-                    if (elemType.Name == FamName)
-                    {
-                        elementType = elemType;
-                        break;
-                    }
-                }
-
-                uidoc.PostRequestForElementTypePlacement(elementType);
-                return Result.Succeeded;
-            }
-            catch (Exception ex)
-            {
-                return Result.Failed;
-            }
         }
 
         public static string FamName { get; set; } = "ЕС_Шов бетонирования_М50";
+        public static string FamName2 { get; set; } = "Шов бетонирования_М50";
+
 
     }
 }
