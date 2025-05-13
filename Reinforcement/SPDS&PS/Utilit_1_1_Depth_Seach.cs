@@ -11,7 +11,7 @@ using Autodesk.Revit.UI;
 
 namespace Reinforcement
 {
-    internal class Utilit_1_1_Depth_Seach_Name_ElementType
+    internal class Utilit_1_1_Depth_Seach
     {
          public static ElementType GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
         {
@@ -99,6 +99,7 @@ namespace Reinforcement
                 {
                     foreach (var element in symbols)
                     {
+                        
                         ElementType elemType = element as ElementType;
                         string potenc_name_sovpad = elemType.FamilyName;
                         FamName_sravn = elemType.FamilyName.ToLower();

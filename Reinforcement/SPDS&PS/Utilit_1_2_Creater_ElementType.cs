@@ -32,7 +32,7 @@ namespace Reinforcement
             
             try
             {
-                var elementType = Utilit_1_1_Depth_Seach_Name_ElementType.GetResult(FamName, elementTypes);
+                var elementType = Utilit_1_1_Depth_Seach.GetResult(FamName, elementTypes);
 
                 if (elementType == null)
                 {
