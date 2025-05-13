@@ -13,7 +13,7 @@ namespace Reinforcement
 {
     internal class Utilit_1_1_Depth_Seach
     {
-         public static ElementType GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
+        public static Result GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
         {
 
             FilteredElementCollector col = new FilteredElementCollector(doc);
@@ -21,7 +21,7 @@ namespace Reinforcement
 
             IList<Element> sravn_iter;
 
-            if (Type_seach == "elementTypes")
+            if (Type_seach == "ElementType")
             {
                 IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
                 sravn_iter = elementTypes;
@@ -44,11 +44,18 @@ namespace Reinforcement
                 
                 foreach (var element in sravn_iter)
                 {
-                    elementType = element as ElementType;
+                    if (Type_seach == "ElementType")
+                    {
+                        elementType = element as ElementType;
+                    }
+                    else
+                    {
+                        elementType = element as FamilySymbol;
+                    }
                     if (elementType.Name == FamName)
                     {
                         contol_proxod = true;
-                        uidoc.PostRequestForElementTypePlacement(elementType);
+                        
 
                         break;
                     }
@@ -74,8 +81,16 @@ namespace Reinforcement
                 
                 foreach (var element in sravn_iter)
                 {
-                    ElementType elemType = element as ElementType;
-                    string potenc_name_sovpad = elemType.FamilyName;
+                    if (Type_seach == "ElementType")
+                    {
+                        elementType = element as ElementType;
+                    }
+                    else
+                    {
+                        elementType = element as FamilySymbol;
+                    }
+                    
+                    string potenc_name_sovpad = elementType.FamilyName;
 
                     FamName_sravn = Utilit_Helper.unific_sravn_string(FamName_sravn);
 
@@ -89,22 +104,34 @@ namespace Reinforcement
                     }
                 }
                 
-                
+
                 if (simvol_sovpad > 3 && simvol_sovpad > Convert.ToInt32(0.7 * FamName2.Count()))
                 {
+                    if (Type_seach == "ElementType")
+                    {
+                        elementType = element_gotov as ElementType;
+                    }
+                    else
+                    {
+                        elementType = element_gotov as FamilySymbol;
+                    }
                     
-                    elementType = element_gotov as ElementType;
                     contol_proxod = true;
+
                     TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
-                    uidoc.PostRequestForElementTypePlacement(elementType);
+                    
                 }
                 else
                 {
                     TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Аналогов нет {FamName}");
+                    return Result.Failed;
                 }
             }
 
-            return elementType;
+
+            uidoc.PostRequestForElementTypePlacement(elementType);
+
+            return Result.Succeeded;
 
 
         }

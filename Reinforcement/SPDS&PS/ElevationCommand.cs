@@ -25,11 +25,21 @@ namespace Reinforcement
 
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+
             Document doc = uidoc.Document;
 
             var list_Name = new List<string>() { FamName, FamName2 };
-            var ww = Utilit_1_2_Creater_FamilySymbol.GetResult(FamName, doc, uidoc);
+
+            string Type_seach = "Symbols";
+
+            try
+            {
+                Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach);
+            }
+            catch (Exception)
+            {
+                return Result.Failed;
+            }
             return Result.Succeeded;
 
 
