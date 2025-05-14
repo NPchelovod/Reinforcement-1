@@ -12,6 +12,8 @@ namespace Reinforcement
 {
     internal class Utilit_Helper
     {
+
+        // поиск максимального пересечения строки с подстрокой
          public static int LongestCommonSubstring(string s1, string s2)
         {
             int maxLength = 0;
@@ -33,7 +35,8 @@ namespace Reinforcement
 
         public static string unific_sravn_string(string FamName)
         {
-            var simvol_del = new List<string>() { ".", ",", "_", "-", "/", ";", ":", " " };
+            // удаление символов этих и к нижнему регистру перевод
+            var simvol_del = new List<string>() { ".", ",", "_", "-", "/", ";", ":","*","^", " " };
             FamName = FamName.ToLower();
             foreach (var simvol in simvol_del)
             {

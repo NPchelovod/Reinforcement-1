@@ -16,6 +16,7 @@ namespace Reinforcement
         public static Result GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
         {
 
+            // служит для поиска и установки элемента
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
 
@@ -105,19 +106,19 @@ namespace Reinforcement
                     }
                 }
                 
-
+                // условие прохода символов более 3 и совпадение более 70%
                 if (simvol_sovpad > 3 && simvol_sovpad > Convert.ToInt32(0.7 * FamName2.Count()))
                 {
                     elementType = element_gotov as ElementType;
 
                     contol_proxod = true;
 
-                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог {FamName} : {name_sovpad}");
+                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог %{FamName}% : %{name_sovpad}%");
                     
                 }
                 else
                 {
-                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Аналогов нет {FamName}");
+                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Аналогов нет %{FamName}%, но ближайшее имя было %{name_sovpad}%");
                     return Result.Failed;
                 }
             }
