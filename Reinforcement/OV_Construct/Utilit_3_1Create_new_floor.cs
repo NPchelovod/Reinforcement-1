@@ -10,6 +10,8 @@ namespace Reinforcement
     {
         public static Result Create_new_floor(Dictionary<string, List<string>> Dict_sovpad_level, ForgeTypeId units, ref string message, ElementSet elements, Document doc)
         {
+            
+               
 
             foreach (var otm in Dict_sovpad_level)
             {
@@ -18,56 +20,100 @@ namespace Reinforcement
 
                 // 2. Находим уровень с заданной отметкой
 
-                Level targetLevel = new FilteredElementCollector(doc)
+                var sourceLevels = new FilteredElementCollector(doc)
                     .OfClass(typeof(Level))
                     .Cast<Level>()
-                    .FirstOrDefault(level => Math.Abs(UnitUtils.ConvertFromInternalUnits(level.Elevation, units) - targetElevation) < 300); // Учитываем погрешность
+                    .Where(level => Math.Abs(UnitUtils.ConvertFromInternalUnits(level.Elevation, units) - targetElevation) < 300).ToList(); // Учитываем погрешность
 
-                if (targetLevel == null)
+                if (sourceLevels == null)
+                {
+                    TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
+                    continue;
+                }
+                // 2. Получаем все планы этажей для найденных уровней
+                var sourceViewPlans = new FilteredElementCollector(doc)
+                    .OfClass(typeof(ViewPlan))
+                    .Cast<ViewPlan>()
+                    .Where(vp => vp.GenLevel != null && sourceLevels.Any(l => l.Id == vp.GenLevel.Id))
+                    .ToList();
+
+                if (sourceViewPlans == null)
                 {
                     TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
                     continue;
                 }
 
-                // 3. Находим все планы этажей, связанные с этим уровнем
-                var viewPlans = new FilteredElementCollector(doc)
-                    .OfClass(typeof(ViewPlan))
-                    .Cast<ViewPlan>()
-                    .Where(vp => vp.GenLevel != null && vp.GenLevel.Id == targetLevel.Id)
-                    .ToList();
 
+
+                Level targetLevel = null; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // 4. Выводим результат
-                if (viewPlans.Count == 0)
-                {
-                    TaskDialog.Show("Результат", $"Нет планов этажей для уровня '{targetLevel.Name}'.");
-                    continue;
-                }
-                else
-                {
-                    string result = $"Планы этажей для уровня '{targetLevel.Name}':\n";
-                    result += string.Join("\n", viewPlans.Select(vp => vp.Name));
-                    TaskDialog.Show("Найдено", result);
+                // 2. Создаем копии планов для целевого уровня
 
-                    /*
-                    // из всех планов стремимся найти планы несущих конструкций раздела general
-                    // 4. Ищем планы из семейства "General" (архитектурные)
-                    var generalPlans = viewPlans
-                        .Where(vp => vp.ViewFamily == ViewFamily.FloorPlan) // Архитектурные/общие
-                        .ToList();
-                    // vs.LookupParameter(":Наименование раздела")?.Set("КР.7")
-                    var ustan_plan = viewPlans[0];
-                    foreach (var viewPlan in viewPlans)
+                using (Transaction trans = new Transaction(doc, "Копирование планов этажей"))
+                {
+                    trans.Start();
+
+                    foreach (ViewPlan sourcePlan in sourceViewPlans)
                     {
-                        if viewPlan.
-                    }
-                    */
+                        // Проверяем, не существует ли уже такой план для целевого уровня
+                        bool planExists = new FilteredElementCollector(doc)
+                            .OfClass(typeof(ViewPlan))
+                            .Cast<ViewPlan>()
+                            .Any(vp => vp.GenLevel?.Id == targetLevel.Id && vp.ViewType == sourcePlan.ViewType);
 
+                        if (planExists)
+                        {
+                            TaskDialog.Show("Предупреждение", $"План типа '{sourcePlan.ViewType}' уже существует для уровня '{targetLevel.Name}'.");
+                            continue;
+                        }
+
+                        // Создаем новый план этажа
+                        ViewPlan newPlan = ViewPlan.Create(doc, sourcePlan.GetTypeId(), targetLevel.Id);
+
+                        // Копируем параметры
+                        foreach (Parameter param in sourcePlan.Parameters)
+                        {
+                            if (param.IsReadOnly) continue;
+
+                            Parameter newParam = newPlan.LookupParameter(param.Definition.Name);
+                            if (newParam != null)
+                            {
+                                switch (param.StorageType)
+                                {
+                                    case StorageType.Integer:
+                                        newParam.Set(param.AsInteger());
+                                        break;
+                                    case StorageType.Double:
+                                        newParam.Set(param.AsDouble());
+                                        break;
+                                    case StorageType.String:
+                                        newParam.Set(param.AsString());
+                                        break;
+                                    case StorageType.ElementId:
+                                        newParam.Set(param.AsElementId());
+                                        break;
+                                }
+                            }
+                        }
+
+                        // Копируем графические настройки
+                        newPlan.Scale = sourcePlan.Scale;
+                        newPlan.CropBoxActive = sourcePlan.CropBoxActive;
+                        newPlan.CropBoxVisible = sourcePlan.CropBoxVisible;
+                    }
+
+                    trans.Commit();
                 }
+
+                TaskDialog.Show("Готово", $"Планы этажей с отметкой {targetElevation} скопированы на уровень '{targetLevel.Name}'.");
 
             }
+
             return Result.Succeeded;
 
         }
+
+            
 
     }
 
