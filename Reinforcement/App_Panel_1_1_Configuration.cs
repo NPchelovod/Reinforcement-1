@@ -1,4 +1,4 @@
-﻿/*
+﻿
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -94,4 +94,3 @@ namespace Reinforcement
 
     }
 }
-*/
