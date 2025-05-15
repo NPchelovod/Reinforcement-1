@@ -536,5 +536,40 @@ namespace Reinforcement.Properties
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+
+
+
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ES_OV_for_KR
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("ES_OV_for_KR", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+
+
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Конфигурация1
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("ЕС_Выбор", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+
+
+
+
+
+
     }
 }

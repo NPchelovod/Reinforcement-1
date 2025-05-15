@@ -286,13 +286,13 @@ namespace Reinforcement
             //        panelSAPR);
 
 
-            /*
-            // 7. panelOV временная 
+            
+            // 7. panelOV временная ничто так не временно как вечность
             CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
              "Позволяет создать",
              "Для работы плагина нужно ",
             panelOV);
-            */
+            
 
 
             //8. Updater
