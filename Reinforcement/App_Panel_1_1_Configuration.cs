@@ -41,7 +41,7 @@ namespace Reinforcement
             AddButtonToPullDownButton(item, "вр", assemblyPath, "Reinforcement.OV_Constuct_Command", "Команда 4 — подсказка");
 
             // Устанавливаем иконку для самой PulldownButton
-            ImageSource imageSource = Convert(Properties.Resources.ES_BreakLine);
+            ImageSource imageSource = Convert(Properties.Resources.KR_panel);
             item.LargeImage = imageSource;
         }
 
@@ -52,9 +52,9 @@ namespace Reinforcement
             pushButton.ToolTip = toolTip;
 
             // Загружаем изображения
-            var smallImage =  Convert(Properties.Resources.ES_BreakLine);
+            var smallImage =  Convert(Properties.Resources.KR_panel);
 
-            ImageSource imageSource = Convert(Properties.Resources.ES_BreakLine);
+            ImageSource imageSource = Convert(Properties.Resources.KR_panel);
             var largeImage = imageSource;
 
             // Устанавливаем изображения с проверкой на null
