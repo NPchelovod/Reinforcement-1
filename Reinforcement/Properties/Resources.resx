@@ -154,20 +154,8 @@
   <data name="ES_DecorViewPlanStage1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_DecorViewPlanStage1.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="ES_dobor" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ES_dobor.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="ES_dot" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_dot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ES_fon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ES_fon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ES_homut" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ES_homut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ES_line" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ES_line.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ES_Line1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ES_Line1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -213,6 +201,12 @@
   </data>
   <data name="HomutDistrib" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\HomutDistrib.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="NoteLine_2_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\NoteLine_2.5.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="NoteLine_3_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\NoteLine_3.5.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="PRebarDistrib" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\PRebarDistrib.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
