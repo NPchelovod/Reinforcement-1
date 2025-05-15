@@ -35,7 +35,7 @@ namespace Reinforcement
 
 
             ElementType elementType = null;
-            ElementType symbol = null;
+            //ElementType symbol = null;
 
 
             bool contol_proxod = false;
@@ -127,6 +127,8 @@ namespace Reinforcement
             {
                 uidoc.PostRequestForElementTypePlacement(elementType);
             }
+
+
 
             return Result.Succeeded;
 

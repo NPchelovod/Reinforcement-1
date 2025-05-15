@@ -124,6 +124,8 @@ namespace Reinforcement
             app.CreateRibbonTab(tabName);
 
             //Create panels
+
+            RibbonPanel Panel_1_1_Configuration = app.CreateRibbonPanel(tabName, "Конфигурация");
             RibbonPanel panelSpds = app.CreateRibbonPanel(tabName, "СПДС");
             RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
             RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
@@ -131,6 +133,9 @@ namespace Reinforcement
             RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
             RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
             RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
+
+
+            //App_Panel_1_1_Configuration.AddSplitButton(Panel_1_1_Configuration, "Конфигурация");
 
             //1. PanelSpds
             RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
@@ -299,8 +304,9 @@ namespace Reinforcement
             panelSAPR);
 
 
-            /*
+            
             // 7. panelOV временная 
+            /*
             CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
              "Позволяет создать",
              "Для работы плагина нужно ",

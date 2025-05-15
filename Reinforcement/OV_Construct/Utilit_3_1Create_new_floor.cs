@@ -43,9 +43,12 @@ namespace Reinforcement
                     continue;
                 }
 
+                Level targetLevel = new FilteredElementCollector(doc)
+                    .OfClass(typeof(Level))
+                    .Cast<Level>()
+                    .FirstOrDefault(l => l.Name == sourceViewPlans[0].Name);
 
-
-                Level targetLevel = null; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // 4. Выводим результат
                 // 2. Создаем копии планов для целевого уровня
 

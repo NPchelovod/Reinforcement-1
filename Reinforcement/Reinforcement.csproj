@@ -92,6 +92,7 @@
   <ItemGroup>
     <Compile Include="App.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
+    <Compile Include="App_Panel_1_2_.cs" />
     <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
@@ -224,6 +225,13 @@
   <ItemGroup>
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
+    <Content Include="Resources\ES_OV_for_KR.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\EL.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\KR.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\KR2.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\KR3.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\OB.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />
     <None Include="Resources\SoilBorder.png" />

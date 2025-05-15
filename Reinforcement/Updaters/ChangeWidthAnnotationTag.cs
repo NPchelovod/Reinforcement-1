@@ -9,15 +9,16 @@ using System.Threading.Tasks;
 using Reinforcement;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Windows;
 
 namespace Updaters
 {
     public class ChangeWidthAnnotationTag : IUpdater
     {
-        public static double GetCharacterWidth(Document doc, string text)
+        public static double GetCharacterWidth(Document doc, string text, Single H_size = 3.5f)
         {
             double width = 0;
-            Font font = new Font("ISOCPEUR", 3.5f, FontStyle.Regular);
+            Font font = new Font("ISOCPEUR", H_size, FontStyle.Regular);
             Size textSize = TextRenderer.MeasureText(text, font);
             width = textSize.Width * 0.8;
             return width;
@@ -46,7 +47,10 @@ namespace Updaters
                     TransparentNotificationWindow.ShowNotification("Не удалось найти шрифт ISOCPEUR\nАвтоудлинение выноски не сработало", RevitAPI.UiDocument, 3);
                     return;
                 }
-                double width = GetCharacterWidth(doc, text);
+
+                Single H_size = 3.5f
+                double width = GetCharacterWidth(doc, text, H_size);
+
                 width = RevitAPI.ToFoot(width);
 
                 element.LookupParameter("Ширина полки").Set(width);
