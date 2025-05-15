@@ -34,7 +34,7 @@ namespace Reinforcement
             button.LargeImage = imageSource;
             button.Image = imageSource;
             button.ToolTip = toolTip;
-            button.LongDescription = longDescription;      
+            button.LongDescription = longDescription;
         }
 
 
@@ -110,8 +110,6 @@ namespace Reinforcement
             app.CreateRibbonTab(tabName);
 
             //Create panels
-
-            RibbonPanel Panel_1_1_Configuration = app.CreateRibbonPanel(tabName, "Конфигурация");
             RibbonPanel panelSpds = app.CreateRibbonPanel(tabName, "СПДС");
             RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
             RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
@@ -119,9 +117,6 @@ namespace Reinforcement
             RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
             RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
             // RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
-
-
-            //App_Panel_1_1_Configuration.AddSplitButton(Panel_1_1_Configuration, "Конфигурация");
 
             //1. PanelSpds
             RibbonItemData breakLine = CreateButtonData("Линия обрыва", "Линия обрыва", "Reinforcement.DrBreakLineCommand", Properties.Resources.ES_BreakLine,
@@ -136,10 +131,10 @@ namespace Reinforcement
                 "Размещение позиционной выноски 2,5 мм", $"Имя семейства должно быть {NoteLineCommand25mm.FamName}", panelSpds);
             RibbonItemData noteLine35mm = CreateButtonData("Выноска35", "Выноска35", "Reinforcement.NoteLineCommand35mm", Properties.Resources.NoteLine_3_5,
                  "Размещение позиционной выноски 3,5 мм", $"Имя семейства должно быть {NoteLineCommand35mm.FamName}", panelSpds);
-            
+
             IList<RibbonItem> stackedItemsLines =
                  CreateStackedItems(panelSpds, noteLine25mm, noteLine35mm, "Выноска25", "Выноска35", tabName);
-           
+
             RibbonItemData concreteJoint = CreateButtonData("Шов бетонирования", "Шов бетонирования", "Reinforcement.ConcreteJointCommand", Properties.Resources.ConcreteJoint,
                  "Размещение шва бетонирования в масштабе М50", $"Имя семейства должно быть {ConcreteJointCommand.FamName}", panelSpds);
             RibbonItemData axisDirection = CreateButtonData("Строительная ось", "Строительная ось", "Reinforcement.AxisDirectionCommand", Properties.Resources.Axes_orient,
@@ -177,118 +172,117 @@ namespace Reinforcement
 
 
 
-    //        //2. PanelSketchReinf
-    //        CreateButton("Доборные стержни", "Доборные\nстержни", "Reinforcement.RcAddCommand",
-    //            Properties.Resources.ES_Additional_rebars,
-    //            "Размещение доборных арматурных стержней", $"Имя семейства должно быть {RcAddCommand.FamName}",
-    //            panelSketchReinf);
+            //        //2. PanelSketchReinf
+            //        CreateButton("Доборные стержни", "Доборные\nстержни", "Reinforcement.RcAddCommand",
+            //            Properties.Resources.ES_Additional_rebars,
+            //            "Размещение доборных арматурных стержней", $"Имя семейства должно быть {RcAddCommand.FamName}",
+            //            panelSketchReinf);
 
-    //        CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_Background_rebars,
-    //            "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
-    //            panelSketchReinf);
+            //        CreateButton("Фоновое армирование", "Фоновое\nармирование", "Reinforcement.RcFonCommand", Properties.Resources.ES_Background_rebars,
+            //            "Размещение фонового армирования", $"Имя семейства должно быть {RcFonCommand.FamName}",
+            //            panelSketchReinf);
 
-    //        RibbonItemData distrPRebar = CreateButtonData("Распределение П и Г-стержней", "Распределение П и Г-стержней", "Reinforcement.PRebarDistribCommand", Properties.Resources.PRebarDistrib,
-    //             "Размещение распределения П и Г-стержней", $"Имя семейства должно быть {PRebarDistribCommand.FamName}", panelSketchReinf);
-    //        RibbonItemData distrHomut = CreateButtonData("Распределение хомутов", "Распределение хомутов", "Reinforcement.HomutDistribCommand", Properties.Resources.HomutDistrib,
-    //            "Размещение распределения хомутов", $"Имя семейства должно быть {HomutDistribCommand.FamName}", panelSketchReinf);
+            //        RibbonItemData distrPRebar = CreateButtonData("Распределение П и Г-стержней", "Распределение П и Г-стержней", "Reinforcement.PRebarDistribCommand", Properties.Resources.PRebarDistrib,
+            //             "Размещение распределения П и Г-стержней", $"Имя семейства должно быть {PRebarDistribCommand.FamName}", panelSketchReinf);
+            //        RibbonItemData distrHomut = CreateButtonData("Распределение хомутов", "Распределение хомутов", "Reinforcement.HomutDistribCommand", Properties.Resources.HomutDistrib,
+            //            "Размещение распределения хомутов", $"Имя семейства должно быть {HomutDistribCommand.FamName}", panelSketchReinf);
 
-    //        IList<RibbonItem> stackedDistrRebars =
-    //            CreateStackedItems(panelSketchReinf, distrPRebar, distrHomut, "Распределение П и Г-стержней", "Распределение хомутов", tabName);
-
-
-    //        //3. PanelDetailReinf
-    //        CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_RebarInFront,
-    //            "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelDetailReinf);
-
-    //        CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_RebarFromSide,
-    //            "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
-    //            panelDetailReinf);
-
-    //        CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_RebarBracket,
-    //            "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
-    //            panelDetailReinf);
-
-    //        RibbonItemData pRebarEqual = CreateButtonData("П-стержень равнополочный", "П-стержень равнополочный", "Reinforcement.PRebarEqualCommand", Properties.Resources.PRebarEqual,
-    //             "Размещение равнополочного п-стержня", $"Имя семейства должно быть {PRebarEqualCommand.FamName}", panelDetailReinf);
-    //        RibbonItemData pRebarNotEqual = CreateButtonData("П-стержень неравнополочный", "П-стержень неравнополочный", "Reinforcement.PRebarNotEqualCommand", Properties.Resources.PRebarNotEqual,
-    //             "Размещение неравнополочного п-стержня", $"Имя семейства должно быть {PRebarNotEqualCommand.FamName}", panelDetailReinf);
-
-    //        IList<RibbonItem> stackedPRebars =
-    //             CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
-
-    //        RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.GRebar,
-    //             "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
-    //        RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Shpilka,
-    //            "Размещение шпильки", 
-    //            $"Для размещения нужно выделить два арматурных стержня в сечении по которым построится шпилька\n" +
-    //            $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
-
-    //        IList<RibbonItem> stackedGRebarShpilka =
-    //            CreateStackedItems(panelDetailReinf, gRebar, shpilka, "Г-стержень", "Шпилька", tabName);
+            //        IList<RibbonItem> stackedDistrRebars =
+            //            CreateStackedItems(panelSketchReinf, distrPRebar, distrHomut, "Распределение П и Г-стержней", "Распределение хомутов", tabName);
 
 
-    //        //4. PanelDrawing
-    //        //Create buttons for changing colors of elements on the active view
-    //        RibbonItemData reinfColors = CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
-    //            "Применение фильтров для цвета арматуры", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
-    //        RibbonItemData openColors = CreateButtonData("Цвета отверстий", "Цвета отверстий", "Reinforcement.OpeningsColors", Properties.Resources.ES_OpColors,
-    //            "Применение фильтров для цвета отверстий", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
-    //        IList<RibbonItem> stackedItems = panelDrawing.AddStackedItems(openColors, reinfColors);
+            //        //3. PanelDetailReinf
+            //        CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_RebarInFront,
+            //            "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelDetailReinf);
 
-    //        var btnReinfColors = GetButton(tabName, panelDrawing.Name, "Цвета арматуры");
-    //        var btnOpenColors = GetButton(tabName, panelDrawing.Name, "Цвета отверстий");
+            //        CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_RebarFromSide,
+            //            "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
+            //            panelDetailReinf);
 
-    //        btnReinfColors.Size = AW.RibbonItemSize.Large;
-    //        btnReinfColors.ShowText = false;
+            //        CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_RebarBracket,
+            //            "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
+            //            panelDetailReinf);
 
-    //        btnOpenColors.Size = AW.RibbonItemSize.Large;
-    //        btnOpenColors.ShowText = false;
+            //        RibbonItemData pRebarEqual = CreateButtonData("П-стержень равнополочный", "П-стержень равнополочный", "Reinforcement.PRebarEqualCommand", Properties.Resources.PRebarEqual,
+            //             "Размещение равнополочного п-стержня", $"Имя семейства должно быть {PRebarEqualCommand.FamName}", panelDetailReinf);
+            //        RibbonItemData pRebarNotEqual = CreateButtonData("П-стержень неравнополочный", "П-стержень неравнополочный", "Reinforcement.PRebarNotEqualCommand", Properties.Resources.PRebarNotEqual,
+            //             "Размещение неравнополочного п-стержня", $"Имя семейства должно быть {PRebarNotEqualCommand.FamName}", panelDetailReinf);
 
-    //        CreateButton("Оформить\nплан", "Оформить\nплан", "Reinforcement.DecorViewPlan", Properties.Resources.Auto_plan,
-    //        "Команда передвигает оси, наносит размеры между ними и образмеривает Дж",
-    //        "На плане должны быть стены Дж и плита пола.\n" +
-    //        "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
-    //        panelDrawing);
+            //        IList<RibbonItem> stackedPRebars =
+            //             CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
 
-    //        //CreateButton("Оформить\nразрез", "Оформить\nразрез", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Auto_razrez,
-    //        //"Команда образмеривает стены, подрезает вид, наносит линии обрыва", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
-    //        //panelDrawing);
+            //        RibbonItemData gRebar = CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.GRebar,
+            //             "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
+            //        RibbonItemData shpilka = CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Shpilka,
+            //            "Размещение шпильки", 
+            //            $"Для размещения нужно выделить два арматурных стержня в сечении по которым построится шпилька\n" +
+            //            $"Имя семейства должно быть {RcShpilkaCommand.FamName}", panelDetailReinf);
 
-
-    //        //5. PanelSelection
-    //        CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
-    //         "Позволяет выделить родительское семейство детали из спецификации", 
-    //         "1. Выделить нужную деталь в строчке спецификации\n" +
-    //         "2. Нажать на кнопку\n" +
-    //         "3. Нажать Да для выбора родительского семейства\n" +
-    //         "4. Перейти на любой другой вид.\nТеперь можно поменять свойства детали",
-    //        panelSelection);
-
-    ////        CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
-    ////"Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection);
+            //        IList<RibbonItem> stackedGRebarShpilka =
+            //            CreateStackedItems(panelDetailReinf, gRebar, shpilka, "Г-стержень", "Шпилька", tabName);
 
 
-    //        //6. PanelSAPR
+            //        //4. PanelDrawing
+            //        //Create buttons for changing colors of elements on the active view
+            //        RibbonItemData reinfColors = CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
+            //            "Применение фильтров для цвета арматуры", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
+            //        RibbonItemData openColors = CreateButtonData("Цвета отверстий", "Цвета отверстий", "Reinforcement.OpeningsColors", Properties.Resources.ES_OpColors,
+            //            "Применение фильтров для цвета отверстий", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
+            //        IList<RibbonItem> stackedItems = panelDrawing.AddStackedItems(openColors, reinfColors);
 
-    //        CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
-    //         "Позволяет скопировать спецификации с заменой марки конструкции", 
-    //         "Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку",
-    //        panelSAPR);
-    //        CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
-    //         "Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане. Нужно не забывать кусты свай подвинуть под центр тяжести конструкций (при необходимости)",
-    //        panelSAPR);
-    //        CreateButton("Подложки для плит", "Подложки\nдля плит", "Reinforcement.CommandCreateViewPlan", Properties.Resources.ES_ViewsForSlab,
-    //         "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе\n" +
-    //         "В Марка и отметки вписывается, например, (Пм3 на отм. +3,560) - это нужно только для формирования названий\n " +
-    //         "В префикс вписывается 21, 22 и т.д, для организации видов\n По выбранному в списке уровню создаются подложки", panelSAPR);
-    //        CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
-    //         "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n1. Подготавливается подложка в DWG;\n2. Импорт САПР, расчленить",
-    //        panelSAPR);
+            //        var btnReinfColors = GetButton(tabName, panelDrawing.Name, "Цвета арматуры");
+            //        var btnOpenColors = GetButton(tabName, panelDrawing.Name, "Цвета отверстий");
+
+            //        btnReinfColors.Size = AW.RibbonItemSize.Large;
+            //        btnReinfColors.ShowText = false;
+
+            //        btnOpenColors.Size = AW.RibbonItemSize.Large;
+            //        btnOpenColors.ShowText = false;
+
+            //        CreateButton("Оформить\nплан", "Оформить\nплан", "Reinforcement.DecorViewPlan", Properties.Resources.Auto_plan,
+            //        "Команда передвигает оси, наносит размеры между ними и образмеривает Дж",
+            //        "На плане должны быть стены Дж и плита пола.\n" +
+            //        "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
+            //        panelDrawing);
+
+            //        //CreateButton("Оформить\nразрез", "Оформить\nразрез", "Reinforcement.DecorWallReinfViewSection", Properties.Resources.Auto_razrez,
+            //        //"Команда образмеривает стены, подрезает вид, наносит линии обрыва", "В будущем планируется добавить больше функциональности для полуавтоматического получения чертежей",
+            //        //panelDrawing);
 
 
-            
-            // 7. panelOV временная 
+            //        //5. PanelSelection
+            //        CreateButton("Найти деталь", "Найти\nдеталь", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
+            //         "Позволяет выделить родительское семейство детали из спецификации", 
+            //         "1. Выделить нужную деталь в строчке спецификации\n" +
+            //         "2. Нажать на кнопку\n" +
+            //         "3. Нажать Да для выбора родительского семейства\n" +
+            //         "4. Перейти на любой другой вид.\nТеперь можно поменять свойства детали",
+            //        panelSelection);
+
+            ////        CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,
+            ////"Выбрать элементы по значению параметра - Тип элемента", "тут какая то большая подсказка должна быть я не придумал", panelSelection);
+
+
+            //        //6. PanelSAPR
+
+            //        CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
+            //         "Позволяет скопировать спецификации с заменой марки конструкции", 
+            //         "Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку",
+            //        panelSAPR);
+            //        CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
+            //         "Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане. Нужно не забывать кусты свай подвинуть под центр тяжести конструкций (при необходимости)",
+            //        panelSAPR);
+            //        CreateButton("Подложки для плит", "Подложки\nдля плит", "Reinforcement.CommandCreateViewPlan", Properties.Resources.ES_ViewsForSlab,
+            //         "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе\n" +
+            //         "В Марка и отметки вписывается, например, (Пм3 на отм. +3,560) - это нужно только для формирования названий\n " +
+            //         "В префикс вписывается 21, 22 и т.д, для организации видов\n По выбранному в списке уровню создаются подложки", panelSAPR);
+            //        CreateButton("Длина труб электроразводки", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
+            //         "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n1. Подготавливается подложка в DWG;\n2. Импорт САПР, расчленить",
+            //        panelSAPR);
+
+
             /*
+            // 7. panelOV временная 
             CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
              "Позволяет создать",
              "Для работы плагина нужно ",
@@ -299,14 +293,14 @@ namespace Reinforcement
             //8. Updater
             RegisterUpdater.addInId = app.ActiveAddInId;
             RegisterUpdater.Register();
-            
+
             return Result.Succeeded;
         }
 
-       /* private void ControlledApp_DocumentChanged(object sender, Autodesk.Revit.DB.Events.DocumentChangedEventArgs e)
-        {
+        /* private void ControlledApp_DocumentChanged(object sender, Autodesk.Revit.DB.Events.DocumentChangedEventArgs e)
+         {
 
-        }*/
+         }*/
 
         public BitmapImage Convert(Image img)
         {

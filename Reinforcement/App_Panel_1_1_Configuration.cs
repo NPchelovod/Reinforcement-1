@@ -1,4 +1,6 @@
-﻿using Autodesk.Revit.DB;
+﻿/*
+
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,9 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Resources;
+
 namespace Reinforcement
+
 {
     internal class App_Panel_1_1_Configuration
     {
@@ -90,3 +94,4 @@ namespace Reinforcement
 
     }
 }
+*/

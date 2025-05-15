@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Reinforcement;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Windows;
+//using System.Windows;
 
 namespace Updaters
 {
@@ -48,7 +48,16 @@ namespace Updaters
                     return;
                 }
 
-                Single H_size = 3.5f
+                //var elementType = element as ElementType;
+                string name = element.LookupParameter("Семейство и типоразмер").AsValueString();
+
+                Single H_size = 3.5f;
+                if (name.Contains("2.5") || name.Contains("2,5"))
+                {
+                    H_size = 2.5f;
+                }
+
+
                 double width = GetCharacterWidth(doc, text, H_size);
 
                 width = RevitAPI.ToFoot(width);
