@@ -183,49 +183,9 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ES_dobor {
-            get {
-                object obj = ResourceManager.GetObject("ES_dobor", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap ES_dot {
             get {
                 object obj = ResourceManager.GetObject("ES_dot", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_fon {
-            get {
-                object obj = ResourceManager.GetObject("ES_fon", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_homut {
-            get {
-                object obj = ResourceManager.GetObject("ES_homut", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_line {
-            get {
-                object obj = ResourceManager.GetObject("ES_line", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -249,17 +209,7 @@ namespace Reinforcement.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
-        /*
-        internal static System.Drawing.Bitmap ES_NoteLine25
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("ES_NoteLine25", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        */
-
+        
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
@@ -393,6 +343,26 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap NoteLine_2_5 {
+            get {
+                object obj = ResourceManager.GetObject("NoteLine_2_5", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap NoteLine_3_5 {
+            get {
+                object obj = ResourceManager.GetObject("NoteLine_3_5", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap PRebarDistrib {
             get {
                 object obj = ResourceManager.GetObject("PRebarDistrib", resourceCulture);
@@ -476,19 +446,6 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap ЕС_Выбор {
             get {
                 object obj = ResourceManager.GetObject("ЕС_Выбор", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-
-
-        }
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ES_OV_for_KR
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("ES_OV_for_KR", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
