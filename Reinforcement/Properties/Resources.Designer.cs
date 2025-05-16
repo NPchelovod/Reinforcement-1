@@ -63,6 +63,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap AR_config {
+            get {
+                object obj = ResourceManager.GetObject("AR_config", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Arrow_of_view {
             get {
                 object obj = ResourceManager.GetObject("Arrow_of_view", resourceCulture);
@@ -466,6 +476,16 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap SoilBorder {
             get {
                 object obj = ResourceManager.GetObject("SoilBorder", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Test_config {
+            get {
+                object obj = ResourceManager.GetObject("Test_config", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

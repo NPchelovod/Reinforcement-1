@@ -242,6 +242,7 @@
     <Content Include="Resources\NoteLine_2.5.png" />
     <Content Include="Resources\NoteLine_3.5.png" />
     <Content Include="Resources\OV_config.png" />
+    <None Include="Resources\Panel_1_1_Configuration\AR_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\EL.png" />
     <Content Include="Resources\Panel_1_1_Configuration\EL_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\KR.png" />
@@ -251,6 +252,7 @@
     <Content Include="Resources\Panel_1_1_Configuration\OB.png" />
     <Content Include="Resources\Panel_1_1_Configuration\OB_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\OV_config.png" />
+    <None Include="Resources\Panel_1_1_Configuration\Test_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
     <Content Include="Resources\VK_config.png" />

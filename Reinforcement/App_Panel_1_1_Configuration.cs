@@ -42,11 +42,15 @@ namespace Reinforcement
 
             // Добавляем кнопки с иконками
             Image KR_config = Properties.Resources.KR_config;
+            Image AR_config = Properties.Resources.AR_config;
             Image OV_config = Properties.Resources.OV_config;
             Image VK_config = Properties.Resources.VK_config;
             Image EL_config = Properties.Resources.EL_config;
+            Image Test_config = Properties.Resources.Test_config;
 
             App_Helper_Button.AddButtonToPullDownButton(item, "КР", assemblyPath, "Reinforcement.OV_Construct_Command", "Конструктив", KR_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "АР", assemblyPath, "Reinforcement.App_Panel_1_1_Configuration_KR", "Архитектура", AR_config);
+
             App_Helper_Button.AddButtonToPullDownButton(item, "ОВ", assemblyPath, "Reinforcement.App_Panel_1_1_Configuration_KR", "Отопление и Вентиляция", OV_config);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "ВК", assemblyPath, "Reinforcement.OV_Construct_Command", "Водснаб и Канализация", VK_config);
@@ -54,7 +58,7 @@ namespace Reinforcement
             item.AddSeparator();
             App_Helper_Button.AddButtonToPullDownButton(item, "ЭЛ", assemblyPath, "Reinforcement.OV_Construct_Command", "Электрика", EL_config);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "тест", assemblyPath, "Reinforcement.OV_Construct_Command", "не трогать", EL_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "тест", assemblyPath, "Reinforcement.OV_Construct_Command", "не трогать", Test_config);
 
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(KR_config);
