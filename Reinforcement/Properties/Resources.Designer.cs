@@ -552,6 +552,19 @@ namespace Reinforcement.Properties
         }
 
 
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap KR_panel
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("KR_panel", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+
 
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
