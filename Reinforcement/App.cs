@@ -16,6 +16,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Updaters;
 using System.Diagnostics;
+//using Autodesk.Windows;
+
 //using System.Windows.Controls;
 
 #endregion
@@ -45,6 +47,8 @@ namespace Reinforcement
             RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
             RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
             RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
+            // Создание панели с возможностью обновления
+            
 
             //1.1. Панель конфигураций
             App_Panel_1_1_Configuration.AddSplitButton(Panel_1_1_Configuration, "Конфигурация"); // управление всеми панелями

@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using AW = Autodesk.Windows;
 
+using AW = Autodesk.Windows;
+using RibbonPanel = Autodesk.Windows.RibbonPanel;
+using RibbonButton = Autodesk.Windows.RibbonButton;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -18,44 +20,54 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            string tabName = "ЕС BIM"; 
-            string panelToKeep = "Конфигурация"; 
-            string pluginPrefix = "Конфигурация";
+            string tabName = "ЕС BIM";
 
-            var ribbon = AW.ComponentManager.Ribbon;
-            var tab = ribbon.FindTab(tabName);
-            if (tab == null)
+            var panelToKeeps = new List<string>() // панели которые остаются
             {
-                return Result.Succeeded;
-            }
+                "Конфигурация", "СПДС"
+                
+            };
 
-            // Получаем все панели, которые нужно удалить
-            var panelsToRemove = tab.Panels
-                .Where(p => p.Source.Title != panelToKeep &&
-                           ContainsPluginButtons(p, pluginPrefix))
-                .ToList();
+            string pluginPrefix = "Reinforcement";
 
-            foreach (var panel in panelsToRemove)
-            {
-                // Удаляем все кнопки плагина на панели
-                var buttonsToRemove = panel.Source.Items
-                    .Where(item => item.Id.StartsWith(pluginPrefix))
-                    .ToList();
+            RecreatePluginPanels(tabName, panelToKeeps, pluginPrefix);
 
-                foreach (var button in buttonsToRemove)
-                {
-                    panel.Source.Items.Remove(button);
-                }
-
-                // Если панель пустая, можно удалить её полностью
-                if (panel.Source.Items.Count == 0)
-                {
-                    tab.Panels.Remove(panel);
-                }
-            }
+            TaskDialog.Show("Готово", "Панели успешно обновлены!");
             return Result.Succeeded;
-        }
 
+
+        }
+        public static void RecreatePluginPanels(string tabName, List <string> panelToKeeps, string pluginPrefix)
+        {
+            // Получаем доступ к ленте Revit через AW API
+            var ribbon = AW.ComponentManager.Ribbon;
+            if (ribbon == null) return;
+
+            // Находим вкладку по имени
+            var tab = ribbon.Tabs.FirstOrDefault(t => t.Title == tabName);
+            if (tab == null) return;
+
+            // Создаем временную коллекцию для панелей, которые нужно сохранить
+            var panelsToKeep = new List<RibbonPanel>();
+
+            // Перебираем все панели на вкладке
+
+            var perebor = tab.Panels.ToList();
+
+
+            foreach (var panel in tab.Panels.ToList())
+            {
+
+                if (panelToKeeps.Contains(panel.Source.Title)==false)
+
+                { tab.Panels.Remove(panel); }
+                continue;
+                
+            }
+
+            // Принудительное обновление ленты
+            ribbon.UpdateLayout();
+        }
         private static bool ContainsPluginButtons(AW.RibbonPanel panel, string pluginPrefix)
         {
             return panel.Source.Items.Any(item => item.Id.StartsWith(pluginPrefix));
