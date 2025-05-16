@@ -235,4 +235,19 @@
   <data name="ЕС_Выбор" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ЕС_Выбор.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="KR_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\KR_config.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ES_OV_for_KR" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ES_OV_for_KR.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="EL_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\EL_config.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="OV_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\OV_config.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="VK_config" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\VK_config.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

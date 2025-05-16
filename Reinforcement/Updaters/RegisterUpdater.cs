@@ -33,12 +33,13 @@ namespace Updaters
                 var updaterId = changedWidthUpdater.GetUpdaterId();
 
                 var filter = new ElementCategoryFilter(BuiltInCategory.OST_GenericAnnotation);
+                /*
                 var all_id_control = new List<long>()
                 {
                     590069, 590070, 10585865,10585866,
                     394975, 395004,1307668,1307697,3041016,3040699,576988,577017,591017,591046
                 };
-                /*
+                
                 foreach (var id in all_id_control)
                 { 
                     UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(id)));

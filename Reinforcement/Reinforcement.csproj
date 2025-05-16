@@ -91,8 +91,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="App_Helper_Button.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
     <Compile Include="App_Panel_1_2_.cs" />
+    <Compile Include="App_Panel_1_2_KR_SPDS.cs" />
+    <Compile Include="App_Panel_1_3_KR_SketchReinf.cs" />
+    <Compile Include="App_Panel_1_4_KR_DetailReinf.cs" />
+    <Compile Include="App_Panel_1_5_KR_Drawing.cs" />
+    <Compile Include="App_Panel_1_6_KR_Selection.cs" />
+    <Compile Include="App_Panel_1_7_KR_SAPR.cs" />
+    <Compile Include="App_Panel_1_8_KR_to_OV.cs" />
     <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
@@ -116,6 +124,11 @@
     <Compile Include="OV_Construct\Utilit_3_1Create_new_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_3Create_new_plan_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_2Create_razdel.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ReinforcementList\MainViewReinforcementList.xaml.cs">
       <DependentUpon>MainViewReinforcementList.xaml</DependentUpon>
     </Compile>
@@ -215,26 +228,31 @@
     <Compile Include="SPDS&amp;PS\RcLineCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcEndCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Trash\ViewModelCreateSchedules.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
+    <Content Include="Resources\EL_config.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
+    <Content Include="Resources\KR_config .png" />
+    <None Include="Resources\KR_config.bmp" />
+    <Content Include="Resources\KR_config.png" />
     <Content Include="Resources\NoteLine_2.5.png" />
     <Content Include="Resources\NoteLine_3.5.png" />
+    <Content Include="Resources\OV_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\EL.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\EL_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\KR.png" />
     <Content Include="Resources\Panel_1_1_Configuration\KR2.png" />
     <Content Include="Resources\Panel_1_1_Configuration\KR3.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR_panel.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\KR_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\OB.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\OB_config.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\OV_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
+    <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
+    <Content Include="Resources\VK_config.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />
     <None Include="Resources\SoilBorder.png" />
@@ -286,8 +304,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

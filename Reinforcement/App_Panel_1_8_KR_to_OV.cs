@@ -1,0 +1,28 @@
+﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace Reinforcement
+{
+    public class App_Panel_1_8_KR_to_OV
+    {
+        // 7. panelOV временная ничто так не временно как вечность
+        public static void KR_to_OV(RibbonPanel panelOV, string tabName)
+        {
+            App_Helper_Button.CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
+                 "Позволяет создать",
+                 "Для работы плагина нужно ",
+                panelOV);
+        }
+    }
+}

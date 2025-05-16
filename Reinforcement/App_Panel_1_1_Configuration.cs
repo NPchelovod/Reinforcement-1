@@ -33,28 +33,36 @@ namespace Reinforcement
             var item = ribbonPanel.AddItem(data) as PulldownButton;
 
             // Добавляем кнопки с иконками
-            AddButtonToPullDownButton(item, "КР", assemblyPath, "Reinforcement.OV_Constuct_Command", "Команда 1 — подсказка");
-            AddButtonToPullDownButton(item, "ОВ", assemblyPath, "Reinforcement.OV_Constuct_Command", "Команда 2 — подсказка");
-            AddButtonToPullDownButton(item, "ЭЛ", assemblyPath, "Reinforcement.OV_Constuct_Command", "Команда 3 — подсказка");
+            Image KR_config = Properties.Resources.KR_config;
+            Image OV_config = Properties.Resources.OV_config;
+            Image VK_config = Properties.Resources.VK_config;
+            Image EL_config = Properties.Resources.EL_config;
+
+            AddButtonToPullDownButton(item, "КР", assemblyPath, "Reinforcement.OV_Constuct_Command", "Конструктив", KR_config);
+            AddButtonToPullDownButton(item, "ОВ", assemblyPath, "Reinforcement.OV_Constuct_Command", "Отопление и Вентиляция", OV_config);
+
+            AddButtonToPullDownButton(item, "ВК", assemblyPath, "Reinforcement.OV_Constuct_Command", "Водснаб и Канализация", VK_config);
 
             item.AddSeparator();
-            AddButtonToPullDownButton(item, "вр", assemblyPath, "Reinforcement.OV_Constuct_Command", "Команда 4 — подсказка");
+            AddButtonToPullDownButton(item, "ЭЛ", assemblyPath, "Reinforcement.OV_Constuct_Command", "Электрика", EL_config);
+
+            AddButtonToPullDownButton(item, "тест", assemblyPath, "Reinforcement.OV_Constuct_Command", "не трогать", EL_config);
 
             // Устанавливаем иконку для самой PulldownButton
-            ImageSource imageSource = Convert(Properties.Resources.KR_panel);
+            ImageSource imageSource = App_Helper_Button.Convert(KR_config);
             item.LargeImage = imageSource;
         }
 
-        private static void AddButtonToPullDownButton(PulldownButton button, string name, string path, string linkToCommand, string toolTip)
+        private static void AddButtonToPullDownButton(PulldownButton button, string name, string path, string linkToCommand, string toolTip, Image img)
         {
             var data = new PushButtonData(name, name, path, linkToCommand);
             var pushButton = button.AddPushButton(data) as PushButton;
             pushButton.ToolTip = toolTip;
 
             // Загружаем изображения
-            var smallImage =  Convert(Properties.Resources.KR_panel);
+            var smallImage = App_Helper_Button.Convert(img);
 
-            ImageSource imageSource = Convert(Properties.Resources.KR_panel);
+            ImageSource imageSource = App_Helper_Button.Convert(img);
             var largeImage = imageSource;
 
             // Устанавливаем изображения с проверкой на null
@@ -62,47 +70,6 @@ namespace Reinforcement
             if (largeImage != null) pushButton.LargeImage = largeImage;
         }
 
-        public static BitmapImage Convert(Image img)
-        {
-            if (img == null)
-            {
-                {
-                    throw new ArgumentNullException(nameof(img), "Изображение не может быть null.");
-                }
-            }
-
-            try
-            {
-                using (var memory = new MemoryStream())
-                {
-
-                    img.Save(memory, ImageFormat.Png);
-                    memory.Position = 0;
-
-                    var bitmapImage = new BitmapImage();
-
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = memory;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-
-                    return bitmapImage;
-                }
-            }
-
-            catch (Exception ex)
-            {
-                // Логирование ошибки, если нужно
-                Debug.WriteLine($"Ошибка при создании BitmapImage: {ex.Message}");
-                return null; // или вернуть заглушку
-            }
-
-
-        }
-
-        public Result OnShutdown(UIControlledApplication a)
-        {
-            return Result.Succeeded;
-        }
+       
     }
 }
