@@ -51,35 +51,35 @@ namespace Reinforcement
 
             //1.2 PanelSpds
 
-            App_Panel_1_2_KR_SPDS.KR_SPDS(panelSpds, "ея BIM");
+            App_Panel_1_2_KR_SPDS.KR_SPDS(panelSpds, tabName);
 
 
 
             //2. PanelSketchReinf
 
-            App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panelSketchReinf, "ея BIM");
+            App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panelSketchReinf, tabName);
 
 
 
             //3. PanelDetailReinf
 
-            App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panelDetailReinf, "ея BIM");
+            App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panelDetailReinf, tabName);
 
             //4. PanelDrawing
 
-            App_Panel_1_5_KR_Drawing.KR_Drawing(panelDrawing, "ея BIM");
+            App_Panel_1_5_KR_Drawing.KR_Drawing(panelDrawing, tabName);
 
 
             //5. PanelSelection
 
-            App_Panel_1_6_KR_Selection.KR_Selection(panelSelection, "ея BIM");
+            App_Panel_1_6_KR_Selection.KR_Selection(panelSelection, tabName);
 
 
 
 
             //6. PanelSAPR
 
-            App_Panel_1_7_KR_SAPR.KR_SAPR(panelSAPR, "ея BIM");
+            App_Panel_1_7_KR_SAPR.KR_SAPR(panelSAPR, tabName);
 
            
 
@@ -89,7 +89,7 @@ namespace Reinforcement
 
            
 
-            App_Panel_1_8_KR_to_OV.KR_to_OV(panelOV, "ея BIM");
+            App_Panel_1_8_KR_to_OV.KR_to_OV(panelOV, tabName);
 
             //8. Updater
             RegisterUpdater.addInId = app.ActiveAddInId;

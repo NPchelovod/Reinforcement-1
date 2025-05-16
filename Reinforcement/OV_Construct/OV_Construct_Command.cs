@@ -25,7 +25,7 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
 
 
-    public class OV_Constuct_Command : IExternalCommand
+    public class OV_Construct_Command : IExternalCommand
     {
         
         static AddInId addinId = new AddInId(new Guid ("424E29F8-20DE-49CB-8CF0-8627879F97C2"));

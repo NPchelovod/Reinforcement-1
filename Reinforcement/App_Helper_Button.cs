@@ -20,6 +20,33 @@ namespace Reinforcement
 {
     public class App_Helper_Button
     {
+        // для конфигуратора
+        public static void AddButtonToPullDownButton(PulldownButton button, string name, string path, string linkToCommand, string toolTip, Image img)
+        {
+            var data = new PushButtonData(name, name, path, linkToCommand);
+            var pushButton = button.AddPushButton(data) as PushButton;
+            pushButton.ToolTip = toolTip;
+
+            // Загружаем изображения
+            var smallImage = App_Helper_Button.Convert(img);
+
+            ImageSource imageSource = App_Helper_Button.Convert(img);
+            var largeImage = imageSource;
+
+            // Устанавливаем изображения с проверкой на null
+            if (smallImage != null) pushButton.Image = smallImage;
+            if (largeImage != null) pushButton.LargeImage = largeImage;
+        }
+
+
+
+
+
+
+
+
+
+
         public static IList<RibbonItem> CreateStackedItems(RibbonPanel panel, RibbonItemData firstItem,
             RibbonItemData secondItem, string firstButtonName, string secondButtonName, string tabName)
         {
