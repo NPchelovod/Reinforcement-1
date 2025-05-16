@@ -110,17 +110,17 @@ namespace Reinforcement
             app.CreateRibbonTab(tabName);
 
             //Create panels
-            RibbonPanel Panel_1_1_Configuration = app.CreateRibbonPanel(tabName, "Конфигурация");
+            //RibbonPanel Panel_1_1_Configuration = app.CreateRibbonPanel(tabName, "Конфигурация");
             RibbonPanel panelSpds = app.CreateRibbonPanel(tabName, "СПДС");
-            RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
-            RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
-            RibbonPanel panelDrawing = app.CreateRibbonPanel(tabName, "Оформление");
-            RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
-            RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
-            RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
+            //RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
+            // RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
+            // RibbonPanel panelDrawing = app.CreateRibbonPanel(tabName, "Оформление");
+            // RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
+            // RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
+            //RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
 
-           
-            App_Panel_1_1_Configuration.AddSplitButton(Panel_1_1_Configuration, "Конфигурация");
+
+            //App_Panel_1_1_Configuration.AddSplitButton(Panel_1_1_Configuration, "Конфигурация");
 
 
             //1. PanelSpds
@@ -288,11 +288,12 @@ namespace Reinforcement
 
             
             // 7. panelOV временная ничто так не временно как вечность
+            /*
             CreateButton("Создание ОВ листов", "Создание\nОВ листов", "Reinforcement.OV_Constuct_Command", Properties.Resources.ES_OV_for_KR,
              "Позволяет создать",
              "Для работы плагина нужно ",
             panelOV);
-            
+            */
 
 
             //8. Updater

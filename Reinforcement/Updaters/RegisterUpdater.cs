@@ -33,10 +33,24 @@ namespace Updaters
                 var updaterId = changedWidthUpdater.GetUpdaterId();
 
                 var filter = new ElementCategoryFilter(BuiltInCategory.OST_GenericAnnotation);
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId((long)590069)));
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId((long)590070)));
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId((long)10585865)));
-                UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId((long)10585866)));
+                var all_id_control = new List<long>()
+                {
+                    590069, 590070, 10585865,10585866,
+                    394975, 395004,1307668,1307697,3041016,3040699,576988,577017,591017,591046
+                };
+                /*
+                foreach (var id in all_id_control)
+                { 
+                    UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeParameter(new ElementId(id)));
+                }
+                */
+
+                var categoryFilter = new ElementCategoryFilter(BuiltInCategory.OST_GenericAnnotation);
+                var classFilter = new ElementClassFilter(typeof(FamilyInstance));
+
+                var combinedFilter = new LogicalAndFilter(categoryFilter, classFilter);
+                UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeElementAddition());
+                UpdaterRegistry.AddTrigger(updaterId, categoryFilter, Element.GetChangeTypeAny());
             }
             else
             {

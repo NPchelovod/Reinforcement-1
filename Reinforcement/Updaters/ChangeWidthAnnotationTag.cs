@@ -19,8 +19,19 @@ namespace Updaters
         {
             double width = 0;
             Font font = new Font("ISOCPEUR", H_size, FontStyle.Regular);
+
+
             Size textSize = TextRenderer.MeasureText(text, font);
-            width = textSize.Width * 0.8;
+
+            double k_sg = 0.8*192/182;
+
+            if (H_size == 2.5f)
+            {
+                k_sg = 0.5524+0.0025* text.Count();
+            }
+
+
+            width = textSize.Width * k_sg;
             return width;
 
         }
@@ -34,37 +45,49 @@ namespace Updaters
         public void Execute(UpdaterData data)
         {
             Document doc = data.GetDocument();
+
             var ids = data.GetModifiedElementIds().ToList();
+
 
             foreach (var id in ids)
             {
                 var element = doc.GetElement(id);
-                string firstText = element.LookupParameter("Текст верх").AsString();
-                string secondText = element.LookupParameter("Текст низ").AsString();
-                var text = firstText.Count() > secondText.Count() ? firstText : secondText;
-                if (!IsFontInstalled("ISOCPEUR"))
+                //string Name = element.Name;
+
+                try
                 {
-                    TransparentNotificationWindow.ShowNotification("Не удалось найти шрифт ISOCPEUR\nАвтоудлинение выноски не сработало", RevitAPI.UiDocument, 3);
-                    return;
+                    string name = element.LookupParameter("Семейство и типоразмер").AsValueString();
+                    if (name.Contains("Выноска"))
+                    {
+                        string firstText = element.LookupParameter("Текст верх").AsString();
+                        string secondText = element.LookupParameter("Текст низ").AsString();
+                        var text = firstText.Count() > secondText.Count() ? firstText : secondText;
+                        if (!IsFontInstalled("ISOCPEUR"))
+                        {
+                            TransparentNotificationWindow.ShowNotification("Не удалось найти шрифт ISOCPEUR\nАвтоудлинение выноски не сработало", RevitAPI.UiDocument, 3);
+                            return;
+                        }
+
+                        //var elementType = element as ElementType;
+
+
+                        Single H_size = 3.5f;
+                        if (name.Contains("2.5") || name.Contains("2,5"))
+                        {
+                            H_size = 2.5f;
+                        }
+
+                        double width = GetCharacterWidth(doc, text, H_size);
+
+                        width = RevitAPI.ToFoot(width);
+
+                        element.LookupParameter("Ширина полки").Set(width);
+
+                        //TaskDialog.Show("Revit updater",$"Имя измененного элемента {element.Name}");
+                    }
                 }
+                catch (Exception) { continue; }
 
-                //var elementType = element as ElementType;
-                string name = element.LookupParameter("Семейство и типоразмер").AsValueString();
-
-                Single H_size = 3.5f;
-                if (name.Contains("2.5") || name.Contains("2,5"))
-                {
-                    H_size = 2.5f;
-                }
-
-
-                double width = GetCharacterWidth(doc, text, H_size);
-
-                width = RevitAPI.ToFoot(width);
-
-                element.LookupParameter("Ширина полки").Set(width);
-                
-                //TaskDialog.Show("Revit updater",$"Имя измененного элемента {element.Name}");
             }
         }
 
@@ -80,6 +103,7 @@ namespace Updaters
 
         public UpdaterId GetUpdaterId()
         {
+            //Мы должны вернуть UpdaterId, который состоит из 2 частей: AddinId, который должен совпасть с AddinId нашего приложения, и Guid апдейтера. Я решил использовать свойство ActiveAddinId класса Application, почему бы и нет:
             return new UpdaterId(RegisterUpdater.addInId,
                 new Guid("05EA6041-8ED1-4A7D-AF1B-660AB714678A"));
         }
