@@ -103,6 +103,10 @@
     <Compile Include="App_Panel_1_7_KR_SAPR.cs" />
     <Compile Include="App_Panel_1_8_KR_to_OV.cs" />
     <Compile Include="App_Panel_2_1_Configuration_AR.cs" />
+    <Compile Include="App_Panel_3_1_Configuration_OV.cs" />
+    <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
+    <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
+    <Compile Include="App_Panel_6_1_Configuration_Test.cs" />
     <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />

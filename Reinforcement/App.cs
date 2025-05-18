@@ -47,22 +47,7 @@ namespace Reinforcement
             string tabName = "ЕС BIM";
             app.CreateRibbonTab(tabName);
 
-            //Create panels
-            // Создание и сохранение панелей
-            /*
-            RibbonPanel Panel_1_1_Configuration = app.CreateRibbonPanel(tabName, "Конфигурация");
-
-            RibbonPanel panelSpds = app.CreateRibbonPanel(tabName, "СПДС");
-            PanelVisibility.panelSpds = panelSpds; // Ключевая строка!
-
-            RibbonPanel panelSketchReinf = app.CreateRibbonPanel(tabName, "Схематичное армирование");
-
-            RibbonPanel panelDetailReinf = app.CreateRibbonPanel(tabName, "Детальное армирование");
-            RibbonPanel panelDrawing = app.CreateRibbonPanel(tabName, "Оформление");
-            RibbonPanel panelSelection = app.CreateRibbonPanel(tabName, "Выбор");
-            RibbonPanel panelSAPR = app.CreateRibbonPanel(tabName, "САПР");
-            RibbonPanel panelOV = app.CreateRibbonPanel(tabName, "ОВ_сырой");
-            */
+            
 
             var panelNames = new List<string>
             {
@@ -112,7 +97,40 @@ namespace Reinforcement
                 }
 
             }
-           
+
+            // панели которые видны на начальном экране конфигурация КР
+            
+            var list_panels_view = new List<string>()
+            {
+                "Конфигурация",
+                "СПДС",
+                "Схематичное армирование",
+                "Детальное армирование",
+                "Оформление",
+                "Выбор",
+                "САПР",
+
+            };
+
+            foreach (var panel in PanelVisibility.Panels)
+            {
+                if (list_panels_view.Contains(panel.Key))
+                {
+                    if (panel.Value != null)
+                    {
+                        panel.Value.Visible = true;
+                    }
+                }
+                else
+                {
+                    if (panel.Value != null)
+                    {
+                        panel.Value.Visible = false;
+                    }
+                }
+            }
+
+
 
             //8. Updater
             RegisterUpdater.addInId = app.ActiveAddInId;

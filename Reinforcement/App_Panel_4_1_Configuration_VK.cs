@@ -1,38 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Autodesk.Revit.Attributes;
+﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-using AW = Autodesk.Windows;
-using RibbonPanel = Autodesk.Windows.RibbonPanel;
-using RibbonButton = Autodesk.Windows.RibbonButton;
+using System.Collections.Generic;
+
 using static Reinforcement.App;
+
+
+
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class App_Panel_1_1_Configuration_KR : IExternalCommand
+    public class App_Panel_4_1_Configuration_VK : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
         {
 
             // панели которые должны быть видны
             var list_panels_view = new List<string>()
             {
-                "Конфигурация",
+               "Конфигурация",
                 "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
                 "Выбор",
-                "САПР",
-                
+                "Оформление"
+
             };
 
             foreach (var panel in PanelVisibility.Panels)
@@ -52,10 +46,7 @@ namespace Reinforcement
                     }
                 }
             }
-
-
             return Result.Succeeded;
         }
     }
-    
 }
