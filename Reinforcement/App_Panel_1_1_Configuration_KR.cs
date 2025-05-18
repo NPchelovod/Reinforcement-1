@@ -10,6 +10,7 @@ using Autodesk.Revit.UI;
 using AW = Autodesk.Windows;
 using RibbonPanel = Autodesk.Windows.RibbonPanel;
 using RibbonButton = Autodesk.Windows.RibbonButton;
+using static Reinforcement.App;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -20,59 +21,15 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            string tabName = "ЕС BIM";
 
-            var panelToKeeps = new List<string>() // панели которые остаются
+            var panelSpds = PanelVisibility.Panels["СПДС"];
+
+            if (panelSpds != null)
             {
-                "Конфигурация", "СПДС"
-                
-            };
-
-            string pluginPrefix = "Reinforcement";
-
-            RecreatePluginPanels(tabName, panelToKeeps, pluginPrefix);
-
-            TaskDialog.Show("Готово", "Панели успешно обновлены!");
-            return Result.Succeeded;
-
-
-        }
-        public static void RecreatePluginPanels(string tabName, List <string> panelToKeeps, string pluginPrefix)
-        {
-            // Получаем доступ к ленте Revit через AW API
-            var ribbon = AW.ComponentManager.Ribbon;
-            if (ribbon == null) return;
-
-            // Находим вкладку по имени
-            var tab = ribbon.Tabs.FirstOrDefault(t => t.Title == tabName);
-            if (tab == null) return;
-
-            // Создаем временную коллекцию для панелей, которые нужно сохранить
-            var panelsToKeep = new List<RibbonPanel>();
-
-            // Перебираем все панели на вкладке
-
-            var perebor = tab.Panels.ToList();
-
-
-            foreach (var panel in tab.Panels.ToList())
-            {
-
-                if (panelToKeeps.Contains(panel.Source.Title)==false)
-
-                { tab.Panels.Remove(panel); }
-                continue;
-                
+                panelSpds.Visible = true;
             }
 
-            // Принудительное обновление ленты
-            ribbon.UpdateLayout();
+            return Result.Succeeded;
         }
-        private static bool ContainsPluginButtons(AW.RibbonPanel panel, string pluginPrefix)
-        {
-            return panel.Source.Items.Any(item => item.Id.StartsWith(pluginPrefix));
-        }
-
-
     }
 }

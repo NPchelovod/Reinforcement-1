@@ -14,13 +14,15 @@ using System.Windows.Media.Imaging;
 using AW = Autodesk.Windows;
 
 using System.Linq;
+using static Reinforcement.App;
 
 
 
 namespace Reinforcement
 {
-    internal class App_Panel_1_1_Configuration
+    internal class App_Panel_1_1_Configuration 
     {
+        
         public static void AddSplitButton(RibbonPanel ribbonPanel, string name)
         {
             var data = new SplitButtonData(name, name);
@@ -48,8 +50,8 @@ namespace Reinforcement
             Image EL_config = Properties.Resources.EL_config;
             Image Test_config = Properties.Resources.Test_config;
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "КР", assemblyPath, "Reinforcement.OV_Construct_Command", "Конструктив", KR_config);
-            App_Helper_Button.AddButtonToPullDownButton(item, "АР", assemblyPath, "Reinforcement.App_Panel_1_1_Configuration_KR", "Архитектура", AR_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "КР", assemblyPath, "Reinforcement.App_Panel_1_1_Configuration_KR", "Конструктив", KR_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "АР", assemblyPath, "Reinforcement.App_Panel_2_1_Configuration_AR", "Архитектура", AR_config);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "ОВ", assemblyPath, "Reinforcement.App_Panel_1_1_Configuration_KR", "Отопление и Вентиляция", OV_config);
 

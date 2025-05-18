@@ -11,11 +11,13 @@ using System.Text;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static Reinforcement.App;
 
 namespace Reinforcement
 {
-    internal class App_Panel_1_2_KR_SPDS
+    internal class App_Panel_1_2_KR_SPDS 
     {
+       
         public static void KR_SPDS(RibbonPanel panelSpds, string tabName)
         {
             //1. PanelSpds
