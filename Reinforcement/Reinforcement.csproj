@@ -115,6 +115,9 @@
     <Compile Include="LoadAllFamiliesFromDirectory.cs" />
     <Compile Include="OV_Construct\Control_Pick.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command.cs" />
+<Compile Include="OV_Construct\OV_Construct_Command_before_List_Size_OV.cs" />
+<Compile Include="OV_Construct\OV_Construct_All_Dictionary.cs" />
+
     <Compile Include="OV_Construct\Utilit_1_1Dict_Axis.cs" />
     <Compile Include="OV_Construct\Utilit_1_1Dict_Axis_del_remuve.cs" />
     <Compile Include="OV_Construct\Utilit_1_2Dict_level_ventsId.cs" />

@@ -48,7 +48,7 @@ namespace Reinforcement
             app.CreateRibbonTab(tabName);
 
             
-
+            // сюда вписываешь новую панель и вообще все панели здесь в списке, список это пор€док панелей, отображение панелей на конкретной конфигурации задача конфигуратора, в него иди и там настраивай
             var panelNames = new List<string>
             {
                 " онфигураци€",
@@ -61,6 +61,7 @@ namespace Reinforcement
                 "ќ¬_сырой"
             };
 
+            // команды которые создают кнопки на конкретных панел€х
             foreach (var panelName in panelNames)
             {
                 var panel = app.CreateRibbonPanel(tabName, panelName);

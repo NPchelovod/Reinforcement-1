@@ -36,7 +36,7 @@ namespace Reinforcement
         }
 
         private static readonly string assemblyPath = Assembly.GetExecutingAssembly().Location;
-        private static RibbonPanel targetPanel;
+        //private static RibbonPanel targetPanel;
 
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)
         {
