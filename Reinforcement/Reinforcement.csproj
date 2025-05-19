@@ -132,7 +132,7 @@
     <Compile Include="OV_Construct\Utilit_2_6ListPovtor_OV_on_Plans.cs" />
     <Compile Include="OV_Construct\Utilit_3_1Create_new_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_3Create_new_plan_floor.cs" />
-    <Compile Include="OV_Construct\Utilit_3_2Create_razdel.cs" />
+    <Compile Include="OV_Construct\Utilit_3_2Create_dimensions_on_plans.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command_2before_Povtor_flour.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
