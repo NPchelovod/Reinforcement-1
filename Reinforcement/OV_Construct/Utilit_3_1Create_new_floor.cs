@@ -25,53 +25,69 @@ namespace Reinforcement
                     .Cast<Level>()
                     .Where(level => Math.Abs(UnitUtils.ConvertFromInternalUnits(level.Elevation, units) - targetElevation) < 300).ToList(); // Учитываем погрешность
 
-                if (sourceLevels == null)
+                if (sourceLevels == null || sourceLevels.Count == 0)
                 {
                     TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
                     continue;
                 }
-                // 2. Получаем все планы этажей для найденных уровней
+                // 3. Получаем все планы этажей для найденных уровней
                 var sourceViewPlans = new FilteredElementCollector(doc)
                     .OfClass(typeof(ViewPlan))
                     .Cast<ViewPlan>()
                     .Where(vp => vp.GenLevel != null && sourceLevels.Any(l => l.Id == vp.GenLevel.Id))
                     .ToList();
 
-                if (sourceViewPlans == null)
+                if (sourceViewPlans == null || sourceViewPlans.Count == 0)
                 {
                     TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
                     continue;
                 }
 
-                Level targetLevel = new FilteredElementCollector(doc)
-                    .OfClass(typeof(Level))
-                    .Cast<Level>()
-                    .FirstOrDefault(l => l.Name == sourceViewPlans[0].Name);
+               
 
-                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // 4. Выводим результат
                 // 2. Создаем копии планов для целевого уровня
 
+                // 4. Создаем копии планов с префиксом ОВ_
                 using (Transaction trans = new Transaction(doc, "Копирование планов этажей"))
                 {
                     trans.Start();
 
                     foreach (ViewPlan sourcePlan in sourceViewPlans)
                     {
-                        // Проверяем, не существует ли уже такой план для целевого уровня
+
+
+                        // Определяем целевой уровень (тот же, что и у исходного плана)
+                        Level targetLevel = sourcePlan.GenLevel;
+
+                        // Проверяем, не существует ли уже такой план с префиксом ОВ_ для целевого уровня
+                        string newPlanName = "ОВ_" + sourcePlan.Name;
+
                         bool planExists = new FilteredElementCollector(doc)
                             .OfClass(typeof(ViewPlan))
                             .Cast<ViewPlan>()
-                            .Any(vp => vp.GenLevel?.Id == targetLevel.Id && vp.ViewType == sourcePlan.ViewType);
+                            .Any(vp => vp.Name.Equals(newPlanName) && vp.GenLevel?.Id == targetLevel.Id && vp.ViewType == sourcePlan.ViewType);
 
                         if (planExists)
                         {
-                            TaskDialog.Show("Предупреждение", $"План типа '{sourcePlan.ViewType}' уже существует для уровня '{targetLevel.Name}'.");
+                            TaskDialog.Show("Предупреждение", $"План '{newPlanName}' уже существует для уровня '{targetLevel.Name}'.");
                             continue;
                         }
 
                         // Создаем новый план этажа
                         ViewPlan newPlan = ViewPlan.Create(doc, sourcePlan.GetTypeId(), targetLevel.Id);
+
+                        // Устанавливаем имя с префиксом ОВ_
+                        try
+                        {
+                            newPlan.Name = newPlanName;
+                        }
+                        catch (Exception ex)
+                        {
+                            TaskDialog.Show("Ошибка переименования", $"Не удалось установить имя '{newPlanName}': {ex.Message}");
+                            continue;
+                        }
 
                         // Копируем параметры
                         foreach (Parameter param in sourcePlan.Parameters)
@@ -103,20 +119,21 @@ namespace Reinforcement
                         newPlan.Scale = sourcePlan.Scale;
                         newPlan.CropBoxActive = sourcePlan.CropBoxActive;
                         newPlan.CropBoxVisible = sourcePlan.CropBoxVisible;
+
+                        // один план на этаж
+                        break;
                     }
 
                     trans.Commit();
                 }
 
-                TaskDialog.Show("Готово", $"Планы этажей с отметкой {targetElevation} скопированы на уровень '{targetLevel.Name}'.");
-
+                TaskDialog.Show("Готово", $"Планы этажей с отметкой {targetElevation} созданы с префиксом ОВ_.");
             }
 
             return Result.Succeeded;
 
         }
 
-            
 
     }
 

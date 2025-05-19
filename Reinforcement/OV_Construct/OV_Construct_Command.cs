@@ -38,27 +38,14 @@ namespace Reinforcement
 
             ForgeTypeId units = UnitTypeId.Millimeters;
 
-            Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
+            //Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
                                                            // в будущем можно будет менять
 
-            OV_Construct_Command_before_List_Size_OV.ExecuteLogic(commandData, ref message, elements);
+            OV_Construct_Command_2before_Povtor_flour.ExecuteLogic(commandData, ref message, elements);
 
 
 
-            //создаёт словарь - номер группы вентшахт, лист( ближайшие оси А и 1)
-            OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_2_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
-
-            // создаёт словарь номер по порядку согласно радиальному расположению - номер группы вентшахты
-
-            OV_Construct_All_Dictionary.Dict_numerateOV = Utilit_2_4Dict_numerateOV.Create_Dict_numerateOV(OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
-
-            // Перезапись словаря по порядку в котором будут пронумерованы шахты на плане этажа
-
-            OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_5_ReDict_numOV_spisokOV.ReCreate_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_numerateOV, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
-
-            // Повторны этажей
-
-            OV_Construct_All_Dictionary.Dict_sovpad_level = Utilit_2_6ListPovtor_OV_on_Plans.Create_ListPovtor_OV_on_Plan(OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV, OV_Construct_All_Dictionary.Dict_ventId_Properts);
+           
 
 
 

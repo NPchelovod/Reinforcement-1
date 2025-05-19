@@ -12,7 +12,7 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
     // выполнение алгоритма до (включительно) типоразмеров вентшахт
-    public class OV_Construct_Command_before_List_Size_OV : IExternalCommand
+    public class OV_Construct_Command_1before_List_Size_OV : IExternalCommand
     {
 
         static AddInId addinId = new AddInId(new Guid("424E29F8-20DE-49CB-8CF0-8627879F12C5"));
@@ -24,6 +24,15 @@ namespace Reinforcement
             List<string> lines = OV_Construct_All_Dictionary.List_Size_OV.Select(
             innerList => string.Join(", ", innerList.Select(num => num.ToString("0.##"))))
             .ToList();
+
+           
+            for(int i = 0; i<lines.Count; i++)
+            {
+                int num_size = i + 1;
+                lines[num_size - 1] = num_size.ToString() + ") " + lines[num_size - 1];
+                num_size += 1;
+            }
+
 
             // Объединяем все строки через перенос
             string outputText = string.Join("\n", lines);

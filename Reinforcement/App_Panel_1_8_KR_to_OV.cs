@@ -24,10 +24,15 @@ namespace Reinforcement
                  "Для работы плагина нужно ",
                 panelOV);
 
-            App_Helper_Button.CreateButton("Список типоразмеров шахт ОВ", " типоразмеры шахт", "Reinforcement.OV_Construct_Command_before_List_Size_OV", Properties.Resources.ES_OV_for_KR,
+            App_Helper_Button.CreateButton("Список типоразмеров шахт ОВ", " типоразмеры шахт", "Reinforcement.OV_Construct_Command_1before_List_Size_OV", Properties.Resources.ES_OV_for_KR,
                 "Позволяет создать",
                 "Для работы плагина нужно ",
                panelOV);
+
+            App_Helper_Button.CreateButton("Список совпадающих этажей одинаковых ОВ", " уровни совпадения", "Reinforcement.OV_Construct_Command_2before_Povtor_flour", Properties.Resources.ES_OV_for_KR,
+               "Позволяет создать",
+               "Для работы плагина нужно ",
+              panelOV);
         }
     }
 }
