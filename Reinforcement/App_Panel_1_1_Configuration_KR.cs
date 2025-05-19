@@ -32,7 +32,8 @@ namespace Reinforcement
                 "Оформление",
                 "Выбор",
                 "САПР",
-                
+                "Копировать задание"
+
             };
 
             foreach (var panel in PanelVisibility.Panels)

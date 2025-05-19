@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 
 namespace Reinforcement
 {
-    public class App_Panel_1_8_KR_to_OV
+    public class App_Panel_1_9_KR_to_OV
     {
         // 7. panelOV временная ничто так не временно как вечность
         public static void KR_to_OV(RibbonPanel panelOV, string tabName)

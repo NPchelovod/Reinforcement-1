@@ -133,6 +133,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CopyTaskFromElectric {
+            get {
+                object obj = ResourceManager.GetObject("CopyTaskFromElectric", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap EL_config {
             get {
                 object obj = ResourceManager.GetObject("EL_config", resourceCulture);

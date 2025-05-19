@@ -58,6 +58,7 @@ namespace Reinforcement
                 "Оформление",
                 "Выбор",
                 "САПР",
+                "Копировать задание",
                 "ОВ_сырой"
             };
 
@@ -91,8 +92,11 @@ namespace Reinforcement
                     case "САПР":
                         App_Panel_1_7_KR_SAPR.KR_SAPR(panel, tabName);
                         break;
+                    case "Копировать задание":
+                        App_Panel_1_8_KR_Task.KR_Task(panel, tabName);
+                        break;
                     case "ОВ_сырой":
-                        App_Panel_1_8_KR_to_OV.KR_to_OV(panel, tabName);
+                        App_Panel_1_9_KR_to_OV.KR_to_OV(panel, tabName);
                         break;
 
                 }
@@ -109,7 +113,8 @@ namespace Reinforcement
                 "Детальное армирование",
                 "Оформление",
                 "Выбор",
-                "САПР"
+                "САПР",
+                "Копировать задание"
 
             };
 

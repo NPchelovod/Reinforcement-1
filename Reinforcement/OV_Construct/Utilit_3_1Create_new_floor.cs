@@ -1,12 +1,18 @@
-﻿using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
+
+
+//в revit api 2024 c# найти название уровней находящихся на заданной отметке, затем с одного из найденных уровней сделать копию и назвать её ОВ_+ уровень, сделать чтобы данный уровень был виден в диспетчере проекта, назначить ему раздел "РД"
+
 namespace Reinforcement
 {
-    internal class Utilit_3_1Create_new_floor 
+    [Transaction(TransactionMode.Manual)]
+    public class Utilit_3_1Create_new_floor 
     {
         public static Result Create_new_floor(Dictionary<string, List<string>> Dict_sovpad_level, ForgeTypeId units, ref string message, ElementSet elements, Document doc)
         {
@@ -30,111 +36,162 @@ namespace Reinforcement
                     TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
                     continue;
                 }
-                // 3. Получаем все планы этажей для найденных уровней
-                var sourceViewPlans = new FilteredElementCollector(doc)
-                    .OfClass(typeof(ViewPlan))
-                    .Cast<ViewPlan>()
-                    .Where(vp => vp.GenLevel != null && sourceLevels.Any(l => l.Id == vp.GenLevel.Id))
-                    .ToList();
+                // Выводим список найденных уровней в заданном диапазоне для выбора
+                var levelNames = sourceLevels.Select(l => l.Name).ToList();
 
-                if (sourceViewPlans == null || sourceViewPlans.Count == 0)
+                Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся
+
+                // Получаем все доступные типы видов
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                ViewFamilyType viewFamilyType = collector.OfClass(typeof(ViewFamilyType))
+                    .Cast<ViewFamilyType>()
+                    .FirstOrDefault(x => x.ViewFamily == ViewFamily.FloorPlan);
+
+                if (viewFamilyType == null)
                 {
-                    TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
-                    continue;
+                    TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
+                    return Result.Failed;
                 }
 
-               
-
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // 4. Выводим результат
-                // 2. Создаем копии планов для целевого уровня
-
-                // 4. Создаем копии планов с префиксом ОВ_
-                using (Transaction trans = new Transaction(doc, "Копирование планов этажей"))
+                // Создаем новый план этажа
+                using (Transaction trans = new Transaction(doc, "Создание плана этажа"))
                 {
                     trans.Start();
 
-                    foreach (ViewPlan sourcePlan in sourceViewPlans)
+                    string Plan_name = "ОВ_" + selectedLevel.Name;
+                    //удаляем план если он существует, заново затем создаём
+                    // Проверяем существование плана с таким именем и удаляем его
+                    var existingPlans = new FilteredElementCollector(doc)
+                        .OfClass(typeof(ViewPlan))
+                        .Cast<ViewPlan>()
+                        .Where(v => v.Name == Plan_name)
+                        .ToList();
+                    foreach (var plan in existingPlans)
                     {
+                        doc.Delete(plan.Id);
+                    }
+                    // Создаем вид плана этажа
+                    ViewPlan newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
+                    newViewPlan.Name = Plan_name;
 
 
-                        // Определяем целевой уровень (тот же, что и у исходного плана)
-                        Level targetLevel = sourcePlan.GenLevel;
-
-                        // Проверяем, не существует ли уже такой план с префиксом ОВ_ для целевого уровня
-                        string newPlanName = "ОВ_" + sourcePlan.Name;
-
-                        bool planExists = new FilteredElementCollector(doc)
-                            .OfClass(typeof(ViewPlan))
-                            .Cast<ViewPlan>()
-                            .Any(vp => vp.Name.Equals(newPlanName) && vp.GenLevel?.Id == targetLevel.Id && vp.ViewType == sourcePlan.ViewType);
-
-                        if (planExists)
-                        {
-                            TaskDialog.Show("Предупреждение", $"План '{newPlanName}' уже существует для уровня '{targetLevel.Name}'.");
-                            continue;
-                        }
-
-                        // Создаем новый план этажа
-                        ViewPlan newPlan = ViewPlan.Create(doc, sourcePlan.GetTypeId(), targetLevel.Id);
-
-                        // Устанавливаем имя с префиксом ОВ_
-                        try
-                        {
-                            newPlan.Name = newPlanName;
-                        }
-                        catch (Exception ex)
-                        {
-                            TaskDialog.Show("Ошибка переименования", $"Не удалось установить имя '{newPlanName}': {ex.Message}");
-                            continue;
-                        }
-
-                        // Копируем параметры
-                        foreach (Parameter param in sourcePlan.Parameters)
-                        {
-                            if (param.IsReadOnly) continue;
-
-                            Parameter newParam = newPlan.LookupParameter(param.Definition.Name);
-                            if (newParam != null)
-                            {
-                                switch (param.StorageType)
-                                {
-                                    case StorageType.Integer:
-                                        newParam.Set(param.AsInteger());
-                                        break;
-                                    case StorageType.Double:
-                                        newParam.Set(param.AsDouble());
-                                        break;
-                                    case StorageType.String:
-                                        newParam.Set(param.AsString());
-                                        break;
-                                    case StorageType.ElementId:
-                                        newParam.Set(param.AsElementId());
-                                        break;
-                                }
-                            }
-                        }
-
-                        // Копируем графические настройки
-                        newPlan.Scale = sourcePlan.Scale;
-                        newPlan.CropBoxActive = sourcePlan.CropBoxActive;
-                        newPlan.CropBoxVisible = sourcePlan.CropBoxVisible;
-
-                        // один план на этаж
-                        break;
+                    // Делаем вид видимым в диспетчере проекта
+                    Parameter isVisibleParam = newViewPlan.get_Parameter(BuiltInParameter.VIEW_DISCIPLINE);
+                    if (isVisibleParam != null && !isVisibleParam.IsReadOnly)
+                    {
+                        isVisibleParam.Set("РД"); // Устанавливаем раздел "РД"
                     }
 
+                    // 1. Скрываем ВСЕ элементы на виде
+                    HideAllElements(doc, newViewPlan);
+
+                    // 2. Показываем только оси (Grid)
+                    
+                    ShowGrids(doc, newViewPlan);
+                    ShowSize(doc, newViewPlan);
+                    ShowElem_corner(doc, newViewPlan);
+                    // 3. Показываем только нужные вентканалы
+                    ShowSpecificVents(doc, newViewPlan);
+
+
                     trans.Commit();
+
+                    TaskDialog.Show("Успех", $"Создан новый план этажа: {newViewPlan.Name}");
                 }
 
-                TaskDialog.Show("Готово", $"Планы этажей с отметкой {targetElevation} созданы с префиксом ОВ_.");
+               
             }
 
             return Result.Succeeded;
+        }
 
+        private static void HideAllElements(Document doc, View view)
+        {
+            // Получаем все категории в проекте
+            Categories categories = doc.Settings.Categories;
+
+            foreach (Category category in categories)
+            {
+                try
+                {
+                    if (!view.GetCategoryHidden(category.Id))
+                    {
+                        view.SetCategoryHidden(category.Id, true);
+                    }
+                }
+                catch
+                {
+                    // Пропускаем категории, которые нельзя скрыть
+                }
+            }
+        }
+
+        private static void ShowGrids(Document doc, View view)
+        {
+            // Показываем категорию осей
+            Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_Dimensions);
+            view.SetCategoryHidden(gridCategory.Id, false);
+        }
+
+        private static void ShowSize(Document doc, View view)
+        {
+            // Показываем категорию осей
+            Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_Grids);
+            view.SetCategoryHidden(gridCategory.Id, false);
         }
 
 
+        private static void ShowElem_corner(Document doc, View view)
+        {
+            // Показываем категорию осей
+            Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_Assemblies);
+            view.SetCategoryHidden(gridCategory.Id, false);
+        }
+
+        private static void ShowSpecificVents(Document doc, View view)
+        {
+            string name_OB = "ОтверстиеВПерекрытии";
+            BuiltInCategory name_OST = BuiltInCategory.OST_GenericModel;
+            //Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_GenericModel);
+            //view.SetCategoryHidden(gridCategory.Id, false);
+
+            // Получаем нужные вентканалы
+            List<Element> vents = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilyInstance))
+                .OfCategory(name_OST)
+                .Where(it => it.Name == name_OB)
+                .Where(it => it.LookupParameter("ADSK_Отверстие_Функция")?.AsValueString() == "Вентканал")
+                .ToList();
+
+            // Создаем временный фильтр
+            ParameterFilterElement filter = CreateFilterForElements(doc, vents, "Temp Vent Filter - " + view.Name);
+
+            // Применяем фильтр к виду
+            view.AddFilter(filter.Id);
+            view.SetFilterVisibility(filter.Id, true);
+        }
+
+        private static ParameterFilterElement CreateFilterForElements(Document doc, ICollection<Element> elements, string filterName)
+        {
+            // Удаляем старый фильтр с таким же именем, если он существует
+            ParameterFilterElement existingFilter = new FilteredElementCollector(doc)
+                .OfClass(typeof(ParameterFilterElement))
+                .FirstOrDefault(x => x.Name == filterName) as ParameterFilterElement;
+
+            if (existingFilter != null)
+            {
+                doc.Delete(existingFilter.Id);
+            }
+
+            // Создаем новый фильтр
+            ICollection<ElementId> elementIds = elements.Select(x => x.Id).ToList();
+            return ParameterFilterElement.Create(doc, filterName, elementIds);
+        }
     }
 
 }
+
+
+
+
+                

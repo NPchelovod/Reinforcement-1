@@ -101,7 +101,8 @@
     <Compile Include="App_Panel_1_5_KR_Drawing.cs" />
     <Compile Include="App_Panel_1_6_KR_Selection.cs" />
     <Compile Include="App_Panel_1_7_KR_SAPR.cs" />
-    <Compile Include="App_Panel_1_8_KR_to_OV.cs" />
+    <Compile Include="App_Panel_1_8_KR_Task.cs" />
+    <Compile Include="App_Panel_1_9_KR_to_OV.cs" />
     <Compile Include="App_Panel_2_1_Configuration_AR.cs" />
     <Compile Include="App_Panel_3_1_Configuration_OV.cs" />
     <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
@@ -242,6 +243,7 @@
   <ItemGroup>
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\CopyTaskFromElectric.png" />
     <Content Include="Resources\EL_config.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
     <Content Include="Resources\KR_config .png" />
