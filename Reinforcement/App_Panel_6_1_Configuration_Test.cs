@@ -23,7 +23,7 @@ namespace Reinforcement
             var list_panels_view = new List<string>()
             {
                 "Конфигурация",
-                "СПДС",
+                
                 "ОВ_сырой"
 
             };
