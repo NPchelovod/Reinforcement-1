@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+//using System.Windows.Controls;
 
 
 
@@ -14,12 +15,24 @@ using System.Linq.Expressions;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class Utilit_3_1Create_new_floor
+    public class Utilit_3_1Create_new_floor 
     {
-        public static Result Create_new_floor(Dictionary<string, List<string>> Dict_sovpad_level, ForgeTypeId units, ref string message, ElementSet elements, Document doc)
+        public static Result Create_new_floor( ForgeTypeId units, ref string message, ElementSet elements, Document doc)
         {
 
 
+            var Dict_sovpad_level = OV_Construct_All_Dictionary.Dict_sovpad_level;
+            // Получаем все доступные типы видов
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            ViewFamilyType viewFamilyType = collector.OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .FirstOrDefault(x => x.ViewFamily == ViewFamily.FloorPlan);
+
+            if (viewFamilyType == null)
+            {
+                TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
+                return Result.Failed;
+            }
 
             foreach (var otm in Dict_sovpad_level)
             {
@@ -41,26 +54,14 @@ namespace Reinforcement
                 // Выводим список найденных уровней в заданном диапазоне для выбора
                 var levelNames = sourceLevels.Select(l => l.Name).ToList();
 
-                Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся
-
-                // Получаем все доступные типы видов
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                ViewFamilyType viewFamilyType = collector.OfClass(typeof(ViewFamilyType))
-                    .Cast<ViewFamilyType>()
-                    .FirstOrDefault(x => x.ViewFamily == ViewFamily.FloorPlan);
-
-                if (viewFamilyType == null)
-                {
-                    TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
-                    return Result.Failed;
-                }
+                Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся,можно по умней сделать
 
                 // Создаем новый план этажа
                 using (Transaction trans = new Transaction(doc, "Создание плана этажа"))
                 {
                     trans.Start();
 
-                    string Plan_name = "ОВ_" + selectedLevel.Name;
+                    string Plan_name = "ОВ_" + otm.Key;//selectedLevel.Name;
                     //удаляем план если он существует, заново затем создаём
                     // Проверяем существование плана с таким именем и удаляем его
                     var existingPlans = new FilteredElementCollector(doc)
@@ -69,29 +70,37 @@ namespace Reinforcement
                         .Where(v => v.Name == Plan_name)
                         .ToList();
 
-                    foreach (var plan in existingPlans)
+                    bool proxod = true;
+                    if (existingPlans != null)
                     {
-                        try
+                        foreach (var plan in existingPlans)
                         {
-                            // Проверяем, можно ли удалить элемент
-                            if (plan.IsValidObject && !doc.IsReadOnly)
+                            try
                             {
-                                doc.Delete(plan.Id);
+                                // Проверяем, можно ли удалить элемент
+                                if (plan.IsValidObject && !doc.IsReadOnly)
+                                {
+                                    doc.Delete(plan.Id);
+                                }
+                                else
+                                {
+                                    TaskDialog.Show("Ошибка", $"План {plan.Name} не может быть удален.");
+                                    proxod = false;
+                                }
                             }
-                            else
+                            catch (Autodesk.Revit.Exceptions.ArgumentException ex)
                             {
-                                TaskDialog.Show("Ошибка", $"План {plan.Name} не может быть удален.");
+                                TaskDialog.Show("Ошибка удаления", $"Не удалось удалить план {plan.Name}: {ex.Message}");
+                                proxod = false;
                             }
-                        }
-                        catch (Autodesk.Revit.Exceptions.ArgumentException ex)
-                        {
-                            TaskDialog.Show("Ошибка удаления", $"Не удалось удалить план {plan.Name}: {ex.Message}");
-                        }
-                        catch (Exception ex)
-                        {
-                            TaskDialog.Show("Ошибка", $"Ошибка при удалении плана {plan.Name}: {ex.Message}");
+                            catch (Exception ex)
+                            {
+                                TaskDialog.Show("Ошибка", $"Ошибка при удалении плана {plan.Name}: {ex.Message}");
+                                proxod = false;
+                            }
                         }
                     }
+                    if (proxod == false) { continue; }
 
                     // Создаем вид плана этажа
                     ViewPlan newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
@@ -112,14 +121,13 @@ namespace Reinforcement
 
                     var list_BuiltInCategor = new List<BuiltInCategory>()
                     {
-                    BuiltInCategory.OST_Dimensions, 
+                    BuiltInCategory.OST_Dimensions,
                         BuiltInCategory.OST_Grids,
                         //BuiltInCategory.OST_Assemblies, 
                         BuiltInCategory.OST_GenericModel, // к ней относятся шахты
                         BuiltInCategory.OST_DetailComponents //видимость заливки
-                    }
-                ;
-                
+                    };
+
 
                     foreach (var categor in list_BuiltInCategor)
                     {
@@ -133,6 +141,36 @@ namespace Reinforcement
                             // Пропускаем категории, которые нельзя открыть
                         }
                     }
+
+                    // переводим оси в 2д
+                    //check grids if they are 3D set to 2D
+                    try
+                    {
+                        List<Grid> gridList = new FilteredElementCollector(doc, newViewPlan.Id)
+                            .OfClass(typeof(Grid))
+                            .ToElements()
+                            .Cast<Grid>()
+                            .ToList(); //get all grids on activeView
+                        foreach (Grid grid in gridList)
+                        {
+                            try
+                            {
+                                if (grid.GetDatumExtentTypeInView(DatumEnds.End0, newViewPlan) == DatumExtentType.Model)
+                                {
+                                    grid.SetDatumExtentType(DatumEnds.End0, newViewPlan, DatumExtentType.ViewSpecific);
+                                }
+                                if (grid.GetDatumExtentTypeInView(DatumEnds.End1, newViewPlan) == DatumExtentType.Model)
+                                {
+                                    grid.SetDatumExtentType(DatumEnds.End1, newViewPlan, DatumExtentType.ViewSpecific);
+                                }
+                            }
+                            catch (Exception ex) { }
+                        }
+                    }
+
+                    catch (Exception ex) { }
+
+                    
 
                     // Включаем видимость подкатегории "Элементы узлов"
                     //SetSubcategoryVisibility( doc,newViewPlan, "Элементы узлов", true);
@@ -165,6 +203,14 @@ namespace Reinforcement
                         // Показываем только нужные элементы
                         newViewPlan.UnhideElements(idsToShow);
                     }
+
+                    // запись в словарь плана для обращения к нему
+                    if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(otm.Key))
+                    {
+                        OV_Construct_All_Dictionary.Dict_level_plan_floor[otm.Key] = newViewPlan;
+                    }
+
+
                     trans.Commit();
 
                     TaskDialog.Show("Успех", $"Создан новый план этажа: {newViewPlan.Name}");

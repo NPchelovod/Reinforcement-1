@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
@@ -32,5 +34,15 @@ namespace Reinforcement
 
         // Повторны этажей
         public static Dictionary<string, List<string>> Dict_sovpad_level { get; set; } = new Dictionary<string, List<string>>(); // номер этажа и типовые этажи в составе него
+
+
+        // словарь уровень - {имя созданного плана этажа =, id плана этажа =}
+        public static Dictionary<string, ViewPlan> Dict_level_plan_floor { get; set; } = new Dictionary<string, ViewPlan>(); // уровень и созданный план
+
+
+        // словарь уровень, стринг ВШ1 = план конкретной вентшахты
+
+        public static Dictionary<string, Dictionary<string, ViewPlan>> Dict_level_VH_plans { get; set; } = new Dictionary<string, Dictionary<string, ViewPlan>>(); // уровень и созданный план
+
     }
 }

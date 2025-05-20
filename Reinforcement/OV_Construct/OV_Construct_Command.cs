@@ -57,8 +57,9 @@ namespace Reinforcement
             //var mc = new Utilit_3_1Create_new_plan_floor();
             //new Utilit_3_1Create_new_plan_floor();
             //new CreateNamedFloorPlansCommand();
-            var c = Utilit_3_1Create_new_floor.Create_new_floor(OV_Construct_All_Dictionary.Dict_sovpad_level, units, ref message, elements, doc);
+            var c = Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements, doc);
 
+            var c2 = Utilit_3_2Create_dimensions_on_plans.Create_dimensions_on_plans(ref  message, elements, doc);
             return Result.Succeeded;
 
         }

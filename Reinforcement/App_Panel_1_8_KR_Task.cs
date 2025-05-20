@@ -19,9 +19,9 @@ namespace Reinforcement
         // 7. panelOV временная ничто так не временно как вечность
         public static void KR_Task(RibbonPanel panelOV, string tabName)
         {
-            App_Helper_Button.CreateButton("Задание ЭЛ", "Создание\n копии на другой вид", "Reinforcement.CopyTaskFromElectric", Properties.Resources.CopyTaskFromElectric,
-                 "Позволяет создать",
-                 "Для работы плагина нужно ",
+            App_Helper_Button.CreateButton("Задание ЭЛ", "Создание 40_ЭЛ\n копии на другой вид", "Reinforcement.CopyTaskFromElectric", Properties.Resources.CopyTaskFromElectric,
+                 "Позволяет создать копию задания электриков",
+                 "Для работы плагина нужно открыть 3д вид, ЭЛ должна быть подгружена как связь, выбрать её, тогда произойдёт копирование ",
                 panelOV);
 
             
