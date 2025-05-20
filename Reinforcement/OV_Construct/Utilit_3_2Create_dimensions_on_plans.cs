@@ -3,7 +3,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using System.Linq;
 
 namespace Reinforcement
 {
@@ -12,204 +12,165 @@ namespace Reinforcement
     {
         public static Result Create_dimensions_on_plans(ref string message, ElementSet elements, Document doc)
         {
-            var options = new Options()
+            var options = new Options() { ComputeReferences = true };
+
+            foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
             {
-                ComputeReferences = true
-            };
-            using (Transaction trans = new Transaction(doc, "Create Simple Dimension"))
-            {
-                trans.Start();
-                foreach (var j in OV_Construct_All_Dictionary.Dict_level_plan_floor)
+                string currentLevel = levelPlan.Key;
+                ViewPlan viewPlan = levelPlan.Value;
+
+                using (Transaction trans = new Transaction(doc, "Create Dimensions"))
                 {
+                    trans.Start();
 
-                    string otm_tek = j.Key;
-                    ViewPlan newViewPlan = j.Value; // план, на который надо разместить размеры
-
-                    foreach (var i in OV_Construct_All_Dictionary.Dict_numOV_nearAxes)
+                    foreach (var ventData in OV_Construct_All_Dictionary.Dict_numOV_nearAxes)
                     {
-                        int num_vh = i.Key;
-                        var dat_vh = OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV[num_vh];
-                        var spisok_level_ov = dat_vh["spisok_level_ov"] as List<string>;
+                        int ventNumber = ventData.Key;
+                        var ventInfo = OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV[ventNumber];
+                        var levelList = ventInfo["spisok_level_ov"] as List<string>;
 
-                        if (!spisok_level_ov.Contains(otm_tek))
-                            continue;
+                        if (!levelList.Contains(currentLevel)) continue;
 
-                        int index = spisok_level_ov.IndexOf(otm_tek);
-                        var spisok_id_ov = dat_vh["spisok_id_ov"] as List<string>;
-                        var id_ov = Convert.ToInt64(spisok_id_ov[index]);
-                        ElementId elementId_ov = new ElementId(id_ov);
+                        int index = levelList.IndexOf(currentLevel);
+                        var idList = ventInfo["spisok_id_ov"] as List<string>;
+                        ElementId ventId = new ElementId(Convert.ToInt64(idList[index]));
+                        Element ventElement = doc.GetElement(ventId);
 
-                        Element tek_vent = doc.GetElement(elementId_ov);
-                        LocationPoint tek_locate = tek_vent.Location as LocationPoint;
-                        XYZ tek_locate_point = tek_locate.Point;
+                        if (!(ventElement.Location is LocationPoint location)) continue;
+                        XYZ ventPoint = location.Point;
 
-
-                        // Для вертикальной оси
-                        if (i.Value.ContainsKey("Vertical_Axe_ID"))
+                        // Vertical Axis
+                        if (ventData.Value.ContainsKey("Vertical_Axe_ID"))
                         {
                             try
                             {
-                                var Vertical_Axe_ID = Convert.ToInt64(i.Value["Vertical_Axe_ID"]);
-                                ElementId elementId_Vert_Axe = new ElementId(Vertical_Axe_ID);
-                                Construct_dimensions(doc, elementId_Vert_Axe, tek_vent, tek_locate_point, newViewPlan, false);
+                                ElementId axisId = new ElementId(Convert.ToInt64(ventData.Value["Vertical_Axe_ID"]));
+                                CreateDimensionBetweenElements(doc, axisId, ventElement, viewPlan, false);
                             }
                             catch (Exception ex)
                             {
-                                message += $"Ошибка с вертикальной осью: {ex.Message}\n";
+                                message += $"Vertical axis error: {ex.Message}\n";
                             }
                         }
 
-                        // Для горизонтальной оси
-                        if (i.Value.ContainsKey("Horizontal_Axe_ID"))
+                        // Horizontal Axis
+                        if (ventData.Value.ContainsKey("Horizontal_Axe_ID"))
                         {
                             try
                             {
-                                var Horizontal_Axe_ID = Convert.ToInt64(i.Value["Horizontal_Axe_ID"]);
-                                ElementId elementId_Hor_Axe = new ElementId(Horizontal_Axe_ID);
-
-                                Construct_dimensions(doc, elementId_Hor_Axe, tek_vent, tek_locate_point, newViewPlan, true);
+                                ElementId axisId = new ElementId(Convert.ToInt64(ventData.Value["Horizontal_Axe_ID"]));
+                                CreateDimensionBetweenElements(doc, axisId, ventElement, viewPlan, true);
                             }
                             catch (Exception ex)
                             {
-                                message += $"Ошибка с горизонтальной осью: {ex.Message}\n";
+                                message += $"Horizontal axis error: {ex.Message}\n";
                             }
                         }
-
                     }
+
+                    trans.Commit();
                 }
-                trans.Commit();
             }
+
             return Result.Succeeded;
         }
 
-        private static void Construct_dimensions(Document doc, ElementId elementId_Axe, Element ventElement,
-         XYZ ventPoint, ViewPlan viewPlan, bool isHorizontalAxe)
+        private static void CreateDimensionBetweenElements(Document doc, ElementId axisId, Element ventElement,
+            ViewPlan viewPlan, bool isHorizontalAxis)
         {
-            
-            Grid grid = doc.GetElement(elementId_Axe) as Grid;
-            if (grid == null) return;
-            Curve gridCurve = grid.Curve;
+            Grid axis = doc.GetElement(axisId) as Grid;
+            if (axis == null) return;
 
-            // Get start and end points of the grid line
-            XYZ startPoint = gridCurve.GetEndPoint(0);
-            XYZ endPoint = gridCurve.GetEndPoint(1);
+            LocationPoint ventLocation = ventElement.Location as LocationPoint;
+            if (ventLocation == null) return;
 
-            // Получаем кривую оси
-            Line gridLine = Line.CreateBound(startPoint, endPoint);
-            XYZ projectedPoint = gridLine.Project(ventPoint).XYZPoint;
-            //projectedPoint.Z = ventPoint.Z;
-            Line dimensionLine = Line.CreateBound(projectedPoint, ventPoint);
+            // Get axis curve
+            //Curve axisCurve = (axis.Location as LocationCurve)?.Curve;
 
-            try
+            Grid grid = doc.GetElement(axisId) as Grid;
+            Curve axisCurve = grid.Curve;
+
+            if (axisCurve == null) return;
+
+            // Project vent point to axis
+            XYZ ventPoint = ventLocation.Point;
+            XYZ projectedPoint = axisCurve.Project(ventPoint).XYZPoint;
+
+            // Create dimension line
+            Line dimensionLine;
+            if (isHorizontalAxis)
             {
-                CreateSimpleDimension(doc, viewPlan, projectedPoint, ventPoint);
-            }
-            catch (Exception ex) { }
-            //catch (Exception ex) { TaskDialog.Show("ош", ex.Message + ex.StackTrace); }
-
-            if (!isHorizontalAxe)
-            {
-                // Для вертикальной оси - горизонтальный размер
-                dimensionLine = Line.CreateBound(
-                    new XYZ(projectedPoint.X, ventPoint.Y, ventPoint.Z),
-                    ventPoint);
-            }
-            else
-            {
-                // Для горизонтальной оси - вертикальный размер
+                // Vertical dimension for horizontal axis
                 dimensionLine = Line.CreateBound(
                     new XYZ(ventPoint.X, projectedPoint.Y, ventPoint.Z),
                     ventPoint);
             }
+            else
+            {
+                // Horizontal dimension for vertical axis
+                dimensionLine = Line.CreateBound(
+                    new XYZ(projectedPoint.X, ventPoint.Y, ventPoint.Z),
+                    ventPoint);
+            }
 
+            // Create references
             ReferenceArray references = new ReferenceArray();
 
-            // Получаем Reference для оси Grid (альтернативные способы)
-            Reference gridReference = new Reference(grid);
+            // Reference to axis
+            Options geomOptions = new Options { ComputeReferences = true, View = viewPlan };
+            foreach (GeometryObject geomObj in axis.get_Geometry(geomOptions))
+            {
+                if (geomObj is Curve curve)
+                {
+                    references.Append(curve.Reference);
+                    break;
+                }
+            }
 
-            references.Append(gridReference);
+            // Reference to vent element
+            references.Append(GetVentReference(ventElement, viewPlan));
 
-            // Reference на вентшахту
-            Reference ventReference =  new Reference(ventElement);
-            references.Append(ventReference);
-            // Reference ventReference = GetVentReference(ventElement, !isHorizontalAxe) ?? new Reference(ventElement);
-            //references.Append(ventReference);
-            // Создаем размер
+            // Create dimension
             if (references.Size == 2)
             {
-                Dimension newDimension = doc.Create.NewDimension(viewPlan, dimensionLine, references);
-                if (newDimension == null)
-                {
-                    TaskDialog.Show("Ошибка", "Не удалось создать размер");
-                }
+                doc.Create.NewDimension(viewPlan, dimensionLine, references);
             }
-                
-            
         }
-        public static void CreateSimpleDimension(Document doc, ViewPlan view, XYZ point1, XYZ point2)
+
+        private static Reference GetVentReference(Element ventElement, View view)
         {
-
-
-            /// 1. Создаем временные модели линий для привязки
-            SketchPlane sketchPlane = view.SketchPlane ?? SketchPlane.Create(doc, Plane.CreateByNormalAndOrigin(view.ViewDirection, view.Origin));
-
-            // Создаем вертикальные линии в точках
-            Line line1 = Line.CreateBound(point1, point1 + XYZ.BasisZ);
-            Line line2 = Line.CreateBound(point2, point2 + XYZ.BasisZ);
-
-            ModelCurve modelCurve1 = doc.Create.NewModelCurve(line1, sketchPlane);
-            ModelCurve modelCurve2 = doc.Create.NewModelCurve(line2, sketchPlane);
-
-            // 2. Получаем Reference через геометрию
-            ReferenceArray refs = new ReferenceArray();
-
-            Options geomOptions = new Options();
-            geomOptions.ComputeReferences = true;
-
-            foreach (GeometryObject geomObj in modelCurve1.get_Geometry(geomOptions))
+            // Try to get reference from geometry
+            Options options = new Options
             {
-                if (geomObj is Curve curve)
+                ComputeReferences = true,
+                View = view
+            };
+
+            GeometryElement geometry = ventElement.get_Geometry(options);
+            if (geometry != null)
+            {
+                foreach (GeometryObject geomObj in geometry)
                 {
-                    refs.Append(curve.Reference);
-                    break;
+                    if (geomObj is Solid solid)
+                    {
+                        foreach (Face face in solid.Faces)
+                        {
+                            try
+                            {
+                                return face.Reference;
+                            }
+                            catch { continue; }
+                        }
+                    }
+                    else if (geomObj is Curve curve && curve.Reference != null)
+                    {
+                        return curve.Reference;
+                    }
                 }
             }
 
-            foreach (GeometryObject geomObj in modelCurve2.get_Geometry(geomOptions))
-            {
-                if (geomObj is Curve curve)
-                {
-                    refs.Append(curve.Reference);
-                    break;
-                }
-            }
-
-            // 3. Создаем линию для отображения размера
-            XYZ midPoint = (point1 + point2) / 2;
-            XYZ direction = (point2 - point1).Normalize();
-            XYZ perpendicular = new XYZ(-direction.Y, direction.X, 0);
-
-            Line dimensionLine = Line.CreateBound(
-                midPoint - perpendicular * 2,
-                midPoint + perpendicular * 2);
-
-            // 4. Создаем размер
-            if (refs.Size == 2)
-            {
-                try
-                {
-                    Dimension newDimension = doc.Create.NewDimension(view, dimensionLine, refs);
-
-                    // (Опционально) Удаляем временные линии после создания размера
-                    doc.Delete(modelCurve1.Id);
-                    doc.Delete(modelCurve2.Id);
-                }
-                catch (Exception ex)
-                {
-                    TaskDialog.Show("Ошибка", ex.Message);
-                }
-            }
-
+            // Fallback to element reference
+            return new Reference(ventElement);
         }
     }
 }
