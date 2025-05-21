@@ -33,8 +33,8 @@ namespace Reinforcement
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            UIDocument uidoc = commandData.Application.ActiveUIDocument;
-            Document doc = uidoc.Document;
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
 
             ForgeTypeId units = UnitTypeId.Millimeters;
 
@@ -58,9 +58,9 @@ namespace Reinforcement
             //new Utilit_3_1Create_new_plan_floor();
             //new CreateNamedFloorPlansCommand();
 
-            Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements, doc);
+            Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements);
 
-            Utilit_3_2Dict_Axis.Dict_Axis(uidoc, doc);
+            Utilit_3_2Dict_Axis.Dict_Axis();
             OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_3_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(doc, OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);

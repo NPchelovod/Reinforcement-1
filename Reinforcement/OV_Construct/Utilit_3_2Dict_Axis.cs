@@ -18,25 +18,36 @@ namespace Reinforcement
     internal class Utilit_3_2Dict_Axis
     {
 
-        public static void Dict_Axis(UIDocument uidoc, Document doc)
+        public static void Dict_Axis( )
         {
+            Document doc = RevitAPI.Document;
             var Dict_Axis = new Dictionary<string, Dictionary<string, object>>();
-            var options = new Options() { ComputeReferences = true };
+            List<Grid> gridList = null;
             foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
             {
+
 
                 string currentLevel = levelPlan.Key;
                 //ViewPlan viewPlan = levelPlan.Value;
 
-                var viewPlan = levelPlan.Value as View;
+                var viewPlan = levelPlan.Value;
+                int viewScale = viewPlan.Scale;
                 //uidoc.ActiveView = viewPlan;
+                ElementId viewId = viewPlan.Id;
+                //View view = doc.GetElement(viewId) as View;
+                var options = new Options()
+                {
+                    ComputeReferences = true,
+                    View = viewPlan,
+                    IncludeNonVisibleObjects = true
+                };
 
-
-                List<Grid> gridList = new FilteredElementCollector(doc, viewPlan.Id)
+                gridList = new FilteredElementCollector(doc, viewPlan.Id)
                 .OfClass(typeof(Grid))
                 .ToElements()
                 .Cast<Grid>()
                 .ToList(); //get all grids on activeView
+
                 foreach (Grid grid in gridList)
                 {
                     Dict_Axis = Create_Dict_Axis(Dict_Axis, gridList);
@@ -44,7 +55,7 @@ namespace Reinforcement
 
 
             }
-            if (Dict_Axis != null && Dict_Axis.Count > 2)
+            if (gridList.Count>0 && Dict_Axis != null && Dict_Axis.Count > 2)
             {
                 OV_Construct_All_Dictionary.Dict_Axis = Dict_Axis; // полная замена
             }

@@ -18,10 +18,10 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class Utilit_3_1Create_new_floor 
     {
-        public static Result Create_new_floor( ForgeTypeId units, ref string message, ElementSet elements, Document doc)
+        public static Result Create_new_floor( ForgeTypeId units, ref string message, ElementSet elements)
         {
 
-
+            Document doc = RevitAPI.Document;
             var Dict_sovpad_level = OV_Construct_All_Dictionary.Dict_sovpad_level;
             // Получаем все доступные типы видов
             FilteredElementCollector collector = new FilteredElementCollector(doc);
