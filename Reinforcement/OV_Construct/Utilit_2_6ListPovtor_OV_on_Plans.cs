@@ -7,6 +7,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 
 
@@ -16,7 +17,8 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_2_6ListPovtor_OV_on_Plans
+    [Transaction(TransactionMode.Manual)]
+    public class Utilit_2_6ListPovtor_OV_on_Plans
     {
         public static Dictionary<string, List<string>> Create_ListPovtor_OV_on_Plan( Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV, Dictionary<string, Dictionary<string, object>> Dict_ventId_Properts) //ref 
 

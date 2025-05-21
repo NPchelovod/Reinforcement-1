@@ -18,7 +18,7 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_2_4Dict_numerateOV
+    public class Utilit_2_4Dict_numerateOV
     {
         public static Dictionary<int, int> Create_Dict_numerateOV( Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV) //ref 
         {

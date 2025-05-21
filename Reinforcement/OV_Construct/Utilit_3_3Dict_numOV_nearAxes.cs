@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 using System.Windows.Documents;
 using System.Windows.Media;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 
 
@@ -17,7 +18,8 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_3_3Dict_numOV_nearAxes
+    [Transaction(TransactionMode.Manual)]
+    public class Utilit_3_3Dict_numOV_nearAxes
     {
         public static Dictionary<int, Dictionary<string, string>> Create_Dict_numOV_nearAxes(Document doc, Dictionary<string, Dictionary<string, object>> Dict_Axis, Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV) //ref 
         {
@@ -70,8 +72,8 @@ namespace Reinforcement
                     var parametrs_axe = iter.Value;
 
                     ElementId axisId = new ElementId(Convert.ToInt64(tek_id_axe));
-                    var Element_axe = doc.GetElement(tek_id_axe);
-                    Grid grid = Element_axe as Grid;
+                    Grid grid = doc.GetElement(axisId) as Grid;
+                    
                     Curve axisCurve = grid.Curve;
 
                     XYZ projectedPoint = axisCurve.Project(ventPoint).XYZPoint; // точка пересечения с осью проекции

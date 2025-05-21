@@ -18,7 +18,7 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_1_2Dict_level_ventsId
+    public class Utilit_1_2Dict_level_ventsId
     {
         public static Dictionary<string, List<string>> Create_Dict_level_ventsId(Document doc, List<ElementId> vents, ForgeTypeId units) //ref 
         {

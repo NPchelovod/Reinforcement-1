@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Reinforcement
 {
-    internal class Utilit_1_4Polyar_coordinate
+    public class Utilit_1_4Polyar_coordinate
     {
         public static Dictionary<string, Dictionary<string, object>> Polyar_coordinate(Dictionary<string, Dictionary<string, object>> Dict_ventId_Properts) //ref 
         {

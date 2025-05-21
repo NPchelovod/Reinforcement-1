@@ -16,9 +16,9 @@ using System.Linq.Expressions;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class Utilit_3_1Create_new_floor 
+    public class Utilit_3_1Create_new_floor
     {
-        public static Result Create_new_floor( ForgeTypeId units, ref string message, ElementSet elements)
+        public static Result Create_new_floor(ForgeTypeId units, ref string message, ElementSet elements)
         {
 
             Document doc = RevitAPI.Document;
@@ -29,11 +29,15 @@ namespace Reinforcement
                 .Cast<ViewFamilyType>()
                 .FirstOrDefault(x => x.ViewFamily == ViewFamily.FloorPlan);
 
+            
             if (viewFamilyType == null)
             {
                 TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
                 return Result.Failed;
             }
+
+            // удаление всех планов ОВ_ВШ
+            DeleteViewsWithNamePattern(OV_Construct_All_Dictionary.Prefix_plan_floor);
 
             foreach (var otm in Dict_sovpad_level)
             {
@@ -53,95 +57,112 @@ namespace Reinforcement
                     TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
                     continue;
                 }
-                // Выводим список найденных уровней в заданном диапазоне для выбора
-                var levelNames = sourceLevels.Select(l => l.Name).ToList();
-
+               
                 Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся,можно по умней сделать
                 ViewPlan newViewPlan;
                 // Создаем новый план этажа
-                using (TransactionGroup transactionGroup = new TransactionGroup(doc, "Создание плана этажа"))
+
+                string Plan_name = OV_Construct_All_Dictionary.Prefix_plan_floor + otm.Key+")";//
+
+                List<ElementId> existingPlanIds = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewPlan))
+                .Cast<ViewPlan>()
+                .Where(v => v.Name == Plan_name) // Точное совпадение имени
+                .Select(v => v.Id) // Выбираем только ElementId
+                .ToList();
+
+                bool proxod = true;
+                if (existingPlanIds.Count>0) 
                 {
-                    transactionGroup.Start();
-
-                    using (Transaction t = new Transaction(doc, "план этажа"))
-                    {
-                        t.Start();
-                        string Plan_name = "ОВ_" + otm.Key;//selectedLevel.Name;
-                                                           //удаляем план если он существует, заново затем создаём
-                                                           // Проверяем существование плана с таким именем и удаляем его
-                        var existingPlans = new FilteredElementCollector(doc)
-                            .OfClass(typeof(ViewPlan))
-                            .Cast<ViewPlan>()
-                            .Where(v => v.Name == Plan_name)
-                            .ToList();
-
-                        bool proxod = true;
-                        if (existingPlans != null)
-                        {
-                            //continue; // пусть не пересоздается
-                            foreach (var plan in existingPlans)
-                            {
-                                try
-                                {
-                                    // Проверяем, можно ли удалить элемент
-                                    if (plan.IsValidObject && !doc.IsReadOnly)
-                                    {
-                                        doc.Delete(plan.Id);
-                                    }
-                                    else
-                                    {
-                                        TaskDialog.Show("Ошибка", $"План {plan.Name} не может быть удален.");
-                                        proxod = false;
-                                    }
-                                }
-                                catch (Autodesk.Revit.Exceptions.ArgumentException ex)
-                                {
-                                    TaskDialog.Show("Ошибка удаления", $"Не удалось удалить план {plan.Name}: {ex.Message}");
-                                    proxod = false;
-                                }
-                                catch (Exception ex)
-                                {
-                                    TaskDialog.Show("Ошибка", $"Ошибка при удалении плана {plan.Name}: {ex.Message}");
-                                    proxod = false;
-                                }
-                            }
-                        }
-                        if (proxod == false) { continue; } // 
-
-                        // Создаем вид плана этажа
-                        newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
-                        newViewPlan.Name = Plan_name;
-
-                        t.Commit();
-                    }
-
-                    using (Transaction t2 = new Transaction(doc, "Настройка плана этажа"))
-                    {
-                        t2.Start();
-                        Nastroy_floor(doc, newViewPlan, H_otm);
-                        t2.Commit();
-                    }
-                    transactionGroup.Assimilate();
-
-                    TaskDialog.Show("Успех", $"Создан новый план этажа: {newViewPlan.Name}");
-                    // запись в словарь плана для обращения к нему
-
+                    // этот план не удалился он открыт и мы его выписываем
                     if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
                     {
-                        OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = newViewPlan;
+                        OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = existingPlanIds[0];
                     }
-                    
+                    continue;
                 }
+
+
+                using (Transaction t = new Transaction(doc, "создание этажа"))
+                {  t.Start(); 
+                    // Создаем вид плана этажа
+                    newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
+                    newViewPlan.Name = Plan_name;
+
+                    t.Commit();
+                }
+
+                using (Transaction t2 = new Transaction(doc, "Настройка плана этажа"))
+                {
+                    t2.Start();
+                    Nastroy_floor(doc, newViewPlan, H_otm);
+                    t2.Commit();
+                }
+
+
+                TaskDialog.Show("Успех", $"Создан новый план этажа: {newViewPlan.Name}");
+                // запись в словарь плана для обращения к нему
+
+                if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
+                {
+                    OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = newViewPlan.Id;
+                }
+
+
 
             }
 
             return Result.Succeeded;
         }
 
+        public static void DeleteViewsWithNamePattern(string Prefix_plan_floor)
+        {
+            Document doc = RevitAPI.Document;
 
+            // Собираем все планы этажей
+            var viewPlans = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewPlan))
+                .Cast<ViewPlan>()
+                .Where(vp =>
+                    vp.Name.Contains(Prefix_plan_floor) && // Проверка имени
+                    !vp.IsTemplate); // Исключаем шаблоны видов
+
+            // Получаем ID элементов для удаления
+            ICollection<ElementId> toDelete = viewPlans
+                .Select(vp => vp.Id)
+                .ToList();
+
+            if (toDelete.Count == 0)
+            {
+                
+                return;
+            }
+
+            // Удаляем в транзакции
+            foreach (ElementId vp in toDelete)
+            {
+                using (Transaction t = new Transaction(doc, "Удаление планов ОВ_ВШ_"))
+                {
+                    try
+                    {
+
+                        t.Start();
+                        doc.Delete(vp);
+                        t.Commit();
+                    }
+
+                    catch (Exception ex)
+                    {
+                        t.RollBack();
+                        TaskDialog.Show("Ошибка удаления плана", ex.Message);
+                    }
+                }
+            
+            }
+        }
         public static void Nastroy_floor(Document doc, ViewPlan newViewPlan, string H_otm)
         {
-            
+
             // Делаем вид видимым в диспетчере проекта
             Parameter isVisibleParam = newViewPlan.get_Parameter(BuiltInParameter.VIEW_DISCIPLINE);
             if (isVisibleParam != null && !isVisibleParam.IsReadOnly)
@@ -242,38 +263,6 @@ namespace Reinforcement
         }
 
 
-
-        public static GraphicsStyle GetGraphicsStyleByName(Document doc, string styleName)
-        {
-            // Получаем все графические стили в документе
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            collector.OfClass(typeof(GraphicsStyle));
-
-            foreach (GraphicsStyle style in collector)
-            {
-                if (style.Name.Equals(styleName, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    return style;
-                }
-            }
-            return null;
-        }
-        public static void SetSubcategoryVisibility(Document doc,View view, string subcategoryName, bool isVisible = false)
-        {
-            
-            // Находим графический стиль (подкатегорию)
-            GraphicsStyle subcategory = GetGraphicsStyleByName(doc, subcategoryName);
-
-            if (subcategory != null)
-            {
-                // Устанавливаем видимость
-                view.SetCategoryHidden(subcategory.Id, isVisible);
-            }
-            else
-            {
-                TaskDialog.Show("Ошибка", $"Подкатегория '{subcategoryName}' не найдена!");
-            }
-        }
         private static void HideAllElements(Document doc, View view)
         {
             // Получаем все категории в проекте
@@ -295,62 +284,6 @@ namespace Reinforcement
             }
         }
 
-        private static void ShowGrids(Document doc, View view)
-        {
-            // Показываем категорию осей
-            Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_Dimensions);
-            view.SetCategoryHidden(gridCategory.Id, false);
-        }
-
-        private static void ShowSpecificVents(Document doc, View view)
-        {
-            string name_OB = "ОтверстиеВПерекрытии";
-            BuiltInCategory name_OST = BuiltInCategory.OST_GenericModel;
-            //Category gridCategory = Category.GetCategory(doc, BuiltInCategory.OST_GenericModel);
-            //view.SetCategoryHidden(gridCategory.Id, false);
-
-            // Получаем нужные вентканалы
-            /*
-            List<Element> vents = new FilteredElementCollector(doc)
-                .OfClass(typeof(FamilyInstance))
-                .OfCategory(name_OST)
-                .Where(it => it.Name == name_OB)
-                .Where(it => it.LookupParameter("ADSK_Отверстие_Функция")?.AsValueString() == "Вентканал")
-                .ToList();
-            */
-
-            var vents = new List <Element>(); // так надежней все привязано к начальным ов шахтам
-            foreach (var id_el in OV_Construct_All_Dictionary.Dict_ventId_Properts)
-            {
-                int tek_id = Convert.ToInt32(id_el.Key);
-                ElementId elementId = new ElementId( tek_id);
-                vents.Add(doc.GetElement(elementId));
-            }
-            
-            // Создаем временный фильтр
-            ParameterFilterElement filter = CreateFilterForElements(doc, vents, "Temp Vent Filter - " + view.Name);
-
-            // Применяем фильтр к виду
-            view.AddFilter(filter.Id);
-            view.SetFilterVisibility(filter.Id, true);
-        }
-
-        private static ParameterFilterElement CreateFilterForElements(Document doc, ICollection<Element> elements, string filterName)
-        {
-            // Удаляем старый фильтр с таким же именем, если он существует
-            ParameterFilterElement existingFilter = new FilteredElementCollector(doc)
-                .OfClass(typeof(ParameterFilterElement))
-                .FirstOrDefault(x => x.Name == filterName) as ParameterFilterElement;
-
-            if (existingFilter != null)
-            {
-                doc.Delete(existingFilter.Id);
-            }
-
-            // Создаем новый фильтр
-            ICollection<ElementId> elementIds = elements.Select(x => x.Id).ToList();
-            return ParameterFilterElement.Create(doc, filterName, elementIds);
-        }
     }
 
 }

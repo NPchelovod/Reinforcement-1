@@ -19,7 +19,7 @@ using Autodesk.Revit.Attributes;
 
 namespace Reinforcement
 {
-    internal class Utilit_1_1Dict_Axis_del_remuve
+    public class Utilit_1_1Dict_Axis_del_remuve
     {
         public static Dictionary<string, Dictionary<string, object>> Re_Dict_Axis_del_remuve(Dictionary<string, Dictionary<string, object>> Dict_Axis, Document doc) //ref 
         {

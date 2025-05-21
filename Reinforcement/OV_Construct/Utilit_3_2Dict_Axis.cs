@@ -15,7 +15,8 @@ using System.Text;
 
 namespace Reinforcement
 {
-    internal class Utilit_3_2Dict_Axis
+    [Transaction(TransactionMode.Manual)]
+    public class Utilit_3_2Dict_Axis
     {
 
         public static void Dict_Axis( )
@@ -23,51 +24,58 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
             var Dict_Axis = new Dictionary<string, Dictionary<string, object>>();
             List<Grid> gridList = null;
-            foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
+
+            using (Transaction trans = new Transaction(doc, "Create Grids"))
             {
-
-
-                string currentLevel = levelPlan.Key;
-                //ViewPlan viewPlan = levelPlan.Value;
-
-                var viewPlan = levelPlan.Value;
-                int viewScale = viewPlan.Scale;
-                //uidoc.ActiveView = viewPlan;
-                ElementId viewId = viewPlan.Id;
-                //View view = doc.GetElement(viewId) as View;
-                var options = new Options()
+                trans.Start();
+                foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
                 {
-                    ComputeReferences = true,
-                    View = viewPlan,
-                    IncludeNonVisibleObjects = true
-                };
+                    
 
-                gridList = new FilteredElementCollector(doc, viewPlan.Id)
-                .OfClass(typeof(Grid))
-                .ToElements()
-                .Cast<Grid>()
-                .ToList(); //get all grids on activeView
+                    string currentLevel = levelPlan.Key;
+                    //ViewPlan viewPlan = levelPlan.Value;
+                    ElementId viewId = levelPlan.Value;
 
-                foreach (Grid grid in gridList)
-                {
-                    Dict_Axis = Create_Dict_Axis(Dict_Axis, gridList);
+                    var viewPlan = doc.GetElement(viewId) as View;
+                    //int viewScale = viewPlan.Scale;
+                    //uidoc.ActiveView = viewPlan;
+                    
+                    //View view = doc.GetElement(viewId) as View;
+                    var options = new Options()
+                    {
+                        ComputeReferences = true,
+                        View = viewPlan,
+                        IncludeNonVisibleObjects = true
+                    };
+
+                    gridList = new FilteredElementCollector(doc, viewPlan.Id)
+                    .OfClass(typeof(Grid))
+                    .ToElements()
+                    .Cast<Grid>()
+                    .ToList(); //get all grids on activeView
+
+                    foreach (Grid grid in gridList)
+                    {
+                        Dict_Axis = Create_Dict_Axis(Dict_Axis, gridList);
+                    }
+
+                    
                 }
 
+                if (gridList.Count > 0 && Dict_Axis != null && Dict_Axis.Count > 2)
+                {
+                    OV_Construct_All_Dictionary.Dict_Axis = Dict_Axis; // полная замена
+                }
+                else
+                {
+                    List<Grid> gridList2 = new FilteredElementCollector(doc).OfClass(typeof(Grid)).ToElements().Cast<Grid>().ToList(); //get all grids on activeView;
+                    Dict_Axis = Create_Dict_Axis(Dict_Axis, gridList2);
+                    TaskDialog.Show("Ошибка", "Осей на планах ОВ не было");
+                    OV_Construct_All_Dictionary.Dict_Axis = Dict_Axis; // полная замена
+                }
+                trans.Commit();
 
             }
-            if (gridList.Count>0 && Dict_Axis != null && Dict_Axis.Count > 2)
-            {
-                OV_Construct_All_Dictionary.Dict_Axis = Dict_Axis; // полная замена
-            }
-            else
-            {
-                List<Grid> gridList2 = new FilteredElementCollector(doc).OfClass(typeof(Grid)).ToElements().Cast<Grid>().ToList(); //get all grids on activeView;
-                Dict_Axis = Create_Dict_Axis(Dict_Axis, gridList2);
-                TaskDialog.Show("Ошибка", "Осей на планах ОВ не было");
-                OV_Construct_All_Dictionary.Dict_Axis = Dict_Axis; // полная замена
-            }
-
-
         }
 
         public static Dictionary<string, Dictionary<string, object>> Create_Dict_Axis(Dictionary<string, Dictionary<string, object>> Dict_Axis, List<Grid> axis_Grid,ForgeTypeId units = null) //ref 

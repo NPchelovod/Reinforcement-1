@@ -30,40 +30,45 @@ namespace Reinforcement
         
         static AddInId addinId = new AddInId(new Guid ("424E29F8-20DE-49CB-8CF0-8627879F97C2"));
         
-
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            if (RevitAPI.UiApplication == null)
+            {
+                RevitAPI.Initialize(commandData);
+            }
+            UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
             ForgeTypeId units = UnitTypeId.Millimeters;
 
             //Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
-                                                           // в будущем можно будет менять
+            // в будущем можно будет менять
 
+            
             OV_Construct_Command_2before_Povtor_flour.ExecuteLogic(commandData, ref message, elements);
 
 
+            OV_Construct_All_Dictionary.Dict_level_plan_floor.Clear();// чистим с предыдущего раза
+            Utilit_3_1Create_new_floor.Create_new_floor(units, ref message, elements);
 
-           
+
+            OV_Construct_All_Dictionary.Dict_Axis.Clear();// чистим с предыдущего раза
+            Utilit_3_2Dict_Axis.Dict_Axis();
+
+
+            OV_Construct_All_Dictionary.Dict_numOV_nearAxes.Clear();
+            OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_3_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(doc, OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
+            
+            Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);
+
+
             try
             {
                 output_json();
             }
             catch { }
 
-
-
-            //var mc = new Utilit_3_1Create_new_plan_floor();
-            //new Utilit_3_1Create_new_plan_floor();
-            //new CreateNamedFloorPlansCommand();
-
-            Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements);
-
-            Utilit_3_2Dict_Axis.Dict_Axis();
-            OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_3_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(doc, OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
-
-            Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);
             return Result.Succeeded;
 
         }

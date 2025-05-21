@@ -52,18 +52,23 @@ namespace Reinforcement
         public static void ExecuteLogic(ExternalCommandData commandData, ref string message, ElementSet elements)
 
         {
-            UIDocument uidoc = commandData.Application.ActiveUIDocument;
-            Document doc = uidoc.Document;
+            if (RevitAPI.UiApplication == null)
+            {
+                RevitAPI.Initialize(commandData);
+            }
+            UIApplication uiapp = RevitAPI.UiApplication;
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
 
             ForgeTypeId units = UnitTypeId.Millimeters;
 
             // !!!выполняем предшествующую команду
             OV_Construct_Command_1before_List_Size_OV.ExecuteLogic(commandData, ref message, elements);
 
-            
+
 
             // создаёт словарь номер по порядку согласно радиальному расположению - номер группы вентшахты
-
+            OV_Construct_All_Dictionary.Dict_numerateOV.Clear();
             OV_Construct_All_Dictionary.Dict_numerateOV = Utilit_2_4Dict_numerateOV.Create_Dict_numerateOV( OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Перезапись словаря по порядку в котором будут пронумерованы шахты на плане этажа
@@ -71,7 +76,7 @@ namespace Reinforcement
             OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_5ReDict_numOV_spisokOV.ReCreate_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_numerateOV, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Повторные этажей
-
+            OV_Construct_All_Dictionary.Dict_sovpad_level.Clear();
             OV_Construct_All_Dictionary.Dict_sovpad_level = Utilit_2_6ListPovtor_OV_on_Plans.Create_ListPovtor_OV_on_Plan(OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV, OV_Construct_All_Dictionary.Dict_ventId_Properts);
 
         }

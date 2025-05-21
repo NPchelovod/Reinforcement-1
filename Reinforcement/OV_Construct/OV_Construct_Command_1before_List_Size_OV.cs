@@ -48,8 +48,13 @@ namespace Reinforcement
         public static void ExecuteLogic(ExternalCommandData commandData, ref string message, ElementSet elements)
         
         {
-            UIDocument uidoc = commandData.Application.ActiveUIDocument;
-            Document doc = uidoc.Document;
+            if (RevitAPI.UiApplication == null)
+            {
+                RevitAPI.Initialize(commandData);
+            }
+            UIApplication uiapp = RevitAPI.UiApplication;
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
 
             ForgeTypeId units = UnitTypeId.Millimeters;
 
@@ -63,21 +68,23 @@ namespace Reinforcement
             // vents - id всех элементов каналов ОВ с именем name_OB
             List<ElementId> vents = new FilteredElementCollector(doc).OfClass(name_class).OfCategory(name_OST).Where(it => it.Name == name_OB).Where(it => it.LookupParameter("ADSK_Отверстие_Функция").AsValueString() == "Вентканал").Select(it => it.Id).ToList();
 
-            
+
             // создание словаря уровень - id вентшахты на уровне
             // var Dict_level_ventsId = new Dictionary<string, List<string>>();
-
+            OV_Construct_All_Dictionary.Dict_level_ventsId.Clear();
             OV_Construct_All_Dictionary.Dict_level_ventsId = Utilit_1_2Dict_level_ventsId.Create_Dict_level_ventsId(doc, vents, units);
 
             // создание словаря id вентшахты - характеристики:
             //var Dict_ventId_Properts = new Dictionary<string, Dictionary<string, object>>();
-
+            OV_Construct_All_Dictionary.Dict_ventId_Properts.Clear();
             OV_Construct_All_Dictionary.Dict_ventId_Properts = Utilit_1_3Dict_ventId_Properts.Create_Utilit_Dict_ventId_Properts(doc, vents, units);
 
             // Группировка вентшахт как они стоят друг над другом
+            OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV.Clear();
             OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_1Dict_Grup_numOV_spisokOV.Create_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_ventId_Properts, OV_Construct_All_Dictionary.Dict_level_ventsId);
 
             // создаёт лист с типоразмерами вентшахт
+            OV_Construct_All_Dictionary.List_Size_OV.Clear();
             OV_Construct_All_Dictionary.List_Size_OV = Utilit_2_2List_Size_OV.Create_List_Size_OV(OV_Construct_All_Dictionary.Dict_ventId_Properts, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
 

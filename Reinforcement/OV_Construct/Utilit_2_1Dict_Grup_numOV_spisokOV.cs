@@ -18,7 +18,7 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_2_1Dict_Grup_numOV_spisokOV
+    public class Utilit_2_1Dict_Grup_numOV_spisokOV
     {
         public static Dictionary<int, Dictionary<string, object>> Create_Dict_Grup_numOV_spisokOV(Dictionary<string, Dictionary<string, object>> Dict_ventId_Properts, Dictionary<string, List<string>> Dict_level_ventsId) //ref 
         {

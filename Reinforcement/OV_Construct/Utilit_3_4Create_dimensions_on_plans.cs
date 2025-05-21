@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Windows;
-using System.Windows.Forms;
+
 
 namespace Reinforcement
 {
@@ -21,7 +21,10 @@ namespace Reinforcement
             foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
             {
                 string currentLevel = levelPlan.Key;
-                ViewPlan viewPlan = levelPlan.Value;
+                ElementId viewId = levelPlan.Value;
+
+                var viewPlan = doc.GetElement(viewId) as View;
+
 
                 using (Transaction trans = new Transaction(doc, "Create Dimensions"))
                 {
@@ -80,7 +83,7 @@ namespace Reinforcement
         }
 
         private static void CreateDimensionBetweenElements(UIDocument uidoc,Document doc, ElementId axisId, ElementId ventId, Element ventElement,
-            ViewPlan viewPlan, bool isHorizontalAxis)
+            View viewPlan, bool isHorizontalAxis)
         {
             Grid axis = doc.GetElement(axisId) as Grid;
             if (axis == null) return;
@@ -125,6 +128,8 @@ namespace Reinforcement
 
             // Reference to axis
             Options geomOptions = new Options { ComputeReferences = true, View = viewPlan };
+            references.Append(axisCurve.Reference);
+
             foreach (GeometryObject geomObj in axis.get_Geometry(geomOptions))
             {
                 if (geomObj is Curve curve)
@@ -133,6 +138,7 @@ namespace Reinforcement
                     break;
                 }
             }
+
             //references = AddVentReferences(ventElement, viewPlan,  references, isHorizontalAxis);
 
             var instance = (FamilyInstance)doc.GetElement(ventId);
@@ -167,7 +173,7 @@ namespace Reinforcement
             if (references.Size >= 2)
             {
                 result.Add(doc.Create.NewDimension(viewPlan, dimensionLine, references).Id);
-                uidoc.Selection.SetElementIds(result);
+                //uidoc.Selection.SetElementIds(result);
             }
         }
 

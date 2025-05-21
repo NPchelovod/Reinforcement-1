@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Reinforcement
 {
-    internal class Utilit_1_5Rotate_coordinate
+    public class Utilit_1_5Rotate_coordinate
     {
         public static Dictionary<string, Dictionary<string, object>> Rotate_coordinate(Dictionary<string, Dictionary<string, object>> Dict_ventId_Properts) //ref 
         {

@@ -15,7 +15,7 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    internal class Utilit_2_2List_Size_OV
+    public class Utilit_2_2List_Size_OV
     {
         public static List<List<double>> Create_List_Size_OV(Dictionary<string, Dictionary<string, object>> Dict_ventId_Properts, Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV) //ref 
         {

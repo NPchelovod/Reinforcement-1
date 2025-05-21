@@ -10,7 +10,7 @@ namespace Reinforcement
 {
     public static class OV_Construct_All_Dictionary
     {
-        
+        public static string Prefix_plan_floor { get; set; } = "ОВ_ВШ_(";
         public static Dictionary<string, Dictionary<string, object>> Dict_Axis { get; set; } = new Dictionary<string, Dictionary<string, object>>();
         // создание словаря уровень - id вентшахты на уровне
             // var Dict_level_ventsId = new Dictionary<string, List<string>>();
@@ -37,12 +37,12 @@ namespace Reinforcement
 
 
         // словарь уровень - {имя созданного плана этажа =, id плана этажа =}
-        public static Dictionary<string, ViewPlan> Dict_level_plan_floor { get; set; } = new Dictionary<string, ViewPlan>(); // уровень и созданный план
+        public static Dictionary<string, ElementId> Dict_level_plan_floor { get; set; } = new Dictionary<string, ElementId>(); // уровень и созданный план
 
 
         // словарь уровень, стринг ВШ1 = план конкретной вентшахты
 
-        public static Dictionary<string, Dictionary<string, ViewPlan>> Dict_level_VH_plans { get; set; } = new Dictionary<string, Dictionary<string, ViewPlan>>(); // уровень и созданный план
+        public static Dictionary<string, Dictionary<string, ElementId>> Dict_level_VH_plans { get; set; } = new Dictionary<string, Dictionary<string, ElementId>>(); // уровень и созданный план
 
     }
 }
