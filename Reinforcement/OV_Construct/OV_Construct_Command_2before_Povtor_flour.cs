@@ -69,7 +69,7 @@ namespace Reinforcement
 
             // Перезапись словаря по порядку в котором будут пронумерованы шахты на плане этажа
 
-            OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_5_ReDict_numOV_spisokOV.ReCreate_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_numerateOV, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
+            OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_5ReDict_numOV_spisokOV.ReCreate_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_numerateOV, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Повторные этажей
 
