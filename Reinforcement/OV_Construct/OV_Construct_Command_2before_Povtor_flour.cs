@@ -60,12 +60,11 @@ namespace Reinforcement
             // !!!выполняем предшествующую команду
             OV_Construct_Command_1before_List_Size_OV.ExecuteLogic(commandData, ref message, elements);
 
-            //создаёт словарь - номер группы вентшахт, лист( ближайшие оси А и 1)
-            OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_2_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
+            
 
             // создаёт словарь номер по порядку согласно радиальному расположению - номер группы вентшахты
 
-            OV_Construct_All_Dictionary.Dict_numerateOV = Utilit_2_4Dict_numerateOV.Create_Dict_numerateOV(OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
+            OV_Construct_All_Dictionary.Dict_numerateOV = Utilit_2_4Dict_numerateOV.Create_Dict_numerateOV( OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Перезапись словаря по порядку в котором будут пронумерованы шахты на плане этажа
 

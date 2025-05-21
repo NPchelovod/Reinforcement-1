@@ -20,7 +20,7 @@ namespace Reinforcement
 {
     internal class Utilit_2_4Dict_numerateOV
     {
-        public static Dictionary<int, int> Create_Dict_numerateOV(Dictionary<string, Dictionary<string, object>> Dict_Axis, Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV) //ref 
+        public static Dictionary<int, int> Create_Dict_numerateOV( Dictionary<int, Dictionary<string, object>> Dict_Grup_numOV_spisokOV) //ref 
         {
             var Dict_numerateOV = new Dictionary<int,int >();
 

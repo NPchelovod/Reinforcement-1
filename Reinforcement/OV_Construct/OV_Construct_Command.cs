@@ -57,9 +57,13 @@ namespace Reinforcement
             //var mc = new Utilit_3_1Create_new_plan_floor();
             //new Utilit_3_1Create_new_plan_floor();
             //new CreateNamedFloorPlansCommand();
-            var c = Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements, doc);
 
-            var c2 = Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(ref  message, elements, doc);
+            Utilit_3_1Create_new_floor.Create_new_floor( units, ref message, elements, doc);
+
+            Utilit_3_2Dict_Axis.Dict_Axis(uidoc, doc);
+            OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_3_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(doc, OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
+
+            Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);
             return Result.Succeeded;
 
         }

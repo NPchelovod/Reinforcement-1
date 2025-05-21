@@ -42,8 +42,8 @@ namespace Reinforcement
                     {"Sosed_Horizontal_Axe_Name","" },
                     {"Sosed_Vertical_Axe_ID","" },
                     {"Sosed_Vertical_Axe_Name","" },
-                    { "Сосед ниже ?", "1"},
-                    { "Сосед правее ?", "1"},
+                    { "Сосед ниже?", "1"},
+                    { "Сосед правее?", "1"},
 
                 };
 
@@ -76,86 +76,46 @@ namespace Reinforcement
 
                     XYZ projectedPoint = axisCurve.Project(ventPoint).XYZPoint; // точка пересечения с осью проекции
 
-                    double Len_axe_ov = 
+                    double Len_axe_ov = projectedPoint.DistanceTo(ventPoint);
 
 
-                    double tek_dist_x = 0;
-                    double tek_dist_y = 0;
-                    //double polyar_dist = 0;
+                    bool vert_axe = false;
+                    // определение вертикальная ось или горизонтальная
 
+                    XYZ startPoint = axisCurve.GetEndPoint(0);
+                    XYZ endPoint = axisCurve.GetEndPoint(1);
 
+                    if (Math.Abs(startPoint.Y - endPoint.Y)-Math.Abs(startPoint.X - endPoint.X)>0)
+                    {
+                        vert_axe = true; // вертикальнее чем горизонтальнее
+                    }
 
-                    if (Convert.ToDouble(parametrs_axe["strog_vert"]) == 1)
+                    if (vert_axe)
                     {
                         // это вертикальная ось
-                        tek_dist_x = Math.Abs(Convert.ToDouble(parametrs_axe["coord_X2"]) - coord_X);
-                        if (min_dist_x == -1 || tek_dist_x < min_dist_x)
+                        
+                        if (min_dist_x == -1 || Len_axe_ov < min_dist_x)
                         {
                             id_axe_X = tek_id_axe;
                             name_axe_X = parametrs_axe["name_axe"].ToString();
 
-                            min_dist_x = tek_dist_x;
+                            min_dist_x = Len_axe_ov;
                         }
 
                     }
-                    else if (Convert.ToDouble(parametrs_axe["strog_hor"]) == 1)
+                    else
                     {
                         // это горизонтальная ось
-                        tek_dist_y = Math.Abs(Convert.ToDouble(parametrs_axe["coord_Y2"]) - coord_Y);
-                        if (min_dist_y == -1 || tek_dist_y < min_dist_y)
+                        
+                        if (min_dist_y == -1 || Len_axe_ov < min_dist_y)
                         {
                             id_axe_Y = tek_id_axe;
                             name_axe_Y = parametrs_axe["name_axe"].ToString();
 
-                            min_dist_y = tek_dist_y;
+                            min_dist_y = Len_axe_ov;
                         }
                     }
-                    else
-                    {
-                        // ось располагается под углом
-                        var tan_k = Convert.ToDouble(parametrs_axe["tan_k"]);
-                        if (tan_k == 0)
-                        {
-                            continue;
-                        }
-                        var coord_X2 = Convert.ToDouble(parametrs_axe["coord_X2"]);
-                        var coord_Y2 = Convert.ToDouble(parametrs_axe["coord_Y2"]);
-
-                        double kB = coord_Y2 + (-coord_X2) * tan_k;
-
-
-                        tek_dist_x = Math.Abs(coord_X - ((coord_Y - kB) / tan_k));
-                        tek_dist_y = Math.Abs(coord_Y - (tan_k * coord_X + kB));
-
-                        // определение к какому ближе к вертикальности или горизонтальности
-                        if (Math.Abs(tan_k) > 1)
-                        {
-                            // это вертикальная ось
-                            if (min_dist_x == -1 || tek_dist_x < min_dist_x)
-                            {
-                                id_axe_X = tek_id_axe;
-                                name_axe_X = parametrs_axe["name_axe"].ToString();
-
-                                min_dist_x = tek_dist_x;
-                            }
-                        }
-                        else
-                        {
-                            // это горизонтальная ось
-                            if (min_dist_y == -1 || tek_dist_y < min_dist_y)
-                            {
-                                id_axe_Y = tek_id_axe;
-                                name_axe_Y = parametrs_axe["name_axe"].ToString();
-
-                                min_dist_y = tek_dist_y;
-                            }
-                        }
-
-                        //polyar_dist = Math.Abs(tan_k * coord_X + coord_Y + kB) / Math.Sqrt(tan_k * tan_k + kB * kB);
-
-                    }
-
-
+                   
                 }
 
                 parametrs_zapis["Horizontal_Axe_ID"] = id_axe_Y;
@@ -199,12 +159,12 @@ namespace Reinforcement
 
                 if (naprav_down == false)
                 {
-                    parametrs_zapis["Сосед ниже ?"] = "0";
+                    parametrs_zapis["Сосед ниже?"] = "0";
 
                 }
                 if (naprav_right == false)
                 {
-                    parametrs_zapis["Сосед правее ?"] = "0";
+                    parametrs_zapis["Сосед правее?"] = "0";
                 }
 
 
