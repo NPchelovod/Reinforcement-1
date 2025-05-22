@@ -87,6 +87,7 @@ namespace Reinforcement
 
             Curve min_curve = null;
             double past_dist = -1;
+            double epsilon = 1e-9;
             foreach (var curve in curves_ov)
             {
                 XYZ startPoint_curve = curve.GetEndPoint(0);
@@ -105,34 +106,18 @@ namespace Reinforcement
                     continue; // оси не параллельны
                 }
 
-                double tek_dist = -1;
-                var list_dist = new List<double>() { };
-                if (vert_axe)
-                {
-                    // горизонтальные дистанции
-                    list_dist = new List<double>
-                    {
-                        Math.Abs(startPoint.X - startPoint_curve.X),
-                        Math.Abs(startPoint.X - endPoint_curve.X),
-                        Math.Abs(endPoint.X - startPoint_curve.X),
-                        Math.Abs(endPoint.X -endPoint_curve.X)
-                    };
-                }
-                else
-                {
-                    list_dist = new List<double>
-                    {
-                        Math.Abs(startPoint.Y - startPoint_curve.Y),
-                        Math.Abs(startPoint.Y - endPoint_curve.Y),
-                        Math.Abs(endPoint.Y - startPoint_curve.Y),
-                        Math.Abs(endPoint.Y -endPoint_curve.Y)
-                    };
-                }
+                
+                XYZ projectedPoint = axisCurve.Project(startPoint_curve).XYZPoint;
+                XYZ projectedPoint_norm = new XYZ(projectedPoint.X, projectedPoint.Y, startPoint_curve.Z);
+                
 
-                tek_dist = list_dist.Min();
+                //double tek_dist = projectedPoint_norm.DistanceTo(startPoint_curve);
+                double tek_dist = projectedPoint.DistanceTo(startPoint_curve);
                 if (past_dist <0 || tek_dist< past_dist)
                 {
                     min_curve = curve;
+                    past_dist= tek_dist;
+
                 }
 
 
