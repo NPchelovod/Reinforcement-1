@@ -5,8 +5,10 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Windows;
+using System.Windows.Documents;
 
 
 namespace Reinforcement
@@ -14,7 +16,7 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class Utilit_3_4Create_dimensions_on_plans
     {
-        public static Result Create_dimensions_on_plans(UIDocument uidoc,ref string message, ElementSet elements, Document doc)
+        public static Result Create_dimensions_on_plans(UIDocument uidoc, ref string message, ElementSet elements, Document doc)
         {
             var options = new Options() { ComputeReferences = true };
 
@@ -52,7 +54,7 @@ namespace Reinforcement
                             try
                             {
                                 ElementId axisId = new ElementId(Convert.ToInt64(ventData.Value["Vertical_Axe_ID"]));
-                                CreateDimensionBetweenElements( uidoc,doc, axisId, ventId, ventElement, viewPlan, false);
+                                CreateDimensionBetweenElements(uidoc, doc, axisId, ventId, ventElement, viewPlan, false);
                             }
                             catch (Exception ex)
                             {
@@ -66,7 +68,7 @@ namespace Reinforcement
                             try
                             {
                                 ElementId axisId = new ElementId(Convert.ToInt64(ventData.Value["Horizontal_Axe_ID"]));
-                                CreateDimensionBetweenElements(uidoc,doc, axisId, ventId, ventElement, viewPlan, true);
+                                CreateDimensionBetweenElements(uidoc, doc, axisId, ventId, ventElement, viewPlan, true);
                             }
                             catch (Exception ex)
                             {
@@ -82,7 +84,7 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
-        private static void CreateDimensionBetweenElements(UIDocument uidoc,Document doc, ElementId axisId, ElementId ventId, Element ventElement,
+        private static void CreateDimensionBetweenElements(UIDocument uidoc, Document doc, ElementId axisId, ElementId ventId, Element ventElement,
             View viewPlan, bool isHorizontalAxis)
         {
             Grid axis = doc.GetElement(axisId) as Grid;
@@ -106,29 +108,16 @@ namespace Reinforcement
 
             // Create dimension line
             XYZ nelin_point = new XYZ(projectedPoint.X, projectedPoint.Y, ventPoint.Z);// координата если ось под углом
-            Line dimensionLine = Line.CreateBound(projectedPoint,ventPoint);// линия для нелинейного размера, просто так
 
-            if (isHorizontalAxis)
-            {
-                // Vertical dimension for horizontal axis
-                dimensionLine = Line.CreateBound(
-                    new XYZ(ventPoint.X, projectedPoint.Y, ventPoint.Z),
-                    ventPoint);
-            }
-            else
-            {
-                // Horizontal dimension for vertical axis
-                dimensionLine = Line.CreateBound(
-                    new XYZ(projectedPoint.X, ventPoint.Y, ventPoint.Z),
-                    ventPoint);
-            }
+            Line dimensionLine = Line.CreateBound(nelin_point, ventPoint);// линия для нелинейного размера, просто так
 
-            
+            var curves_ov = Helper_all_curve_reference.Get_curve_reference(ventId, viewPlan);
+            var curve_ov = Helper_all_curve_reference.Get_curve_nearly_curve(axisCurve, curves_ov);
+
             ReferenceArray references = new ReferenceArray();
 
             // Reference to axis
             Options geomOptions = new Options { ComputeReferences = true, View = viewPlan };
-            references.Append(axisCurve.Reference);
 
             foreach (GeometryObject geomObj in axis.get_Geometry(geomOptions))
             {
@@ -139,33 +128,11 @@ namespace Reinforcement
                 }
             }
 
-            //references = AddVentReferences(ventElement, viewPlan,  references, isHorizontalAxis);
+            var symbolReference = curve_ov.Reference;
 
-            var instance = (FamilyInstance)doc.GetElement(ventId);
-            var geom = instance.get_Geometry(geomOptions);
-
-            var geometryElement = ventElement.get_Geometry(geomOptions);
-            var geometryInstance = geometryElement
-                            .FirstOrDefault(x => x is GeometryInstance) as
-                             GeometryInstance;
-
-            var instanceGeometry = geometryInstance?.GetInstanceGeometry();
-            var instanceCurve = instanceGeometry?.FirstOrDefault(x => x is Curve) as Curve;
-            var instanceReference = instanceCurve?.Reference;
-            var instanceRepresentation = instanceReference?.ConvertToStableRepresentation(doc);
-
-            var symbolGeometry = geometryInstance?.GetSymbolGeometry();
-            var symbolCurve = symbolGeometry?.FirstOrDefault(x => x is Curve) as Curve;
-            var symbolReference = symbolCurve?.Reference;
-            var symbolRepresentation = symbolReference?.ConvertToStableRepresentation(doc);
-
-            if (symbolRepresentation != null)
+            if (symbolReference != null)
             {
                 references.Append(symbolReference);
-             }
-            else if (instanceReference != null)
-            {
-                references.Append(instanceReference);
             }
 
             var result = new List<ElementId>();
@@ -177,87 +144,5 @@ namespace Reinforcement
             }
         }
 
-
-        private static ReferenceArray AddVentReferences(Element ventElement, ViewPlan view, ReferenceArray references, bool isHorizontalAxis)
-        {
-            Options options = new Options
-            {
-                ComputeReferences = true,
-                View = view,
-                IncludeNonVisibleObjects = true
-            };
-
-            GeometryElement symbolGeometry = ventElement.get_Geometry(options);
-            if (symbolGeometry == null) return references;
-
-            foreach (GeometryObject geomObj in symbolGeometry)
-            {
-                Reference faceRef;
-                if (TryGetFaceReference(geomObj, isHorizontalAxis, out faceRef))
-                {
-                    references.Append(faceRef);
-                    return references;
-                }
-
-                Reference curveRef;
-                if (TryGetCurveReference(geomObj, isHorizontalAxis, out curveRef))
-                {
-                    references.Append(curveRef);
-                    return references;
-                }
-            }
-
-            references.Append(new Reference(ventElement));
-            return references;
-        }
-
-
-        private static bool TryGetFaceReference(GeometryObject geomObj, bool isHorizontal, out Reference reference)
-        {
-            reference = null;
-            Solid solid = geomObj as Solid;
-            if (solid == null || solid.Faces.IsEmpty) return false;
-
-            foreach (Face face in solid.Faces)
-            {
-                PlanarFace planarFace = face as PlanarFace;
-                if (planarFace != null)
-                {
-                    XYZ normal = planarFace.FaceNormal.Normalize();
-                    bool isVerticalFace = Math.Abs(normal.Z) < 0.001;
-
-                    if (isHorizontal && isVerticalFace && Math.Abs(normal.Y) > 0.9 ||
-                        !isHorizontal && isVerticalFace && Math.Abs(normal.X) > 0.9)
-                    {
-                        reference = planarFace.Reference;
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static bool TryGetCurveReference(GeometryObject geomObj, bool isHorizontal, out Reference reference)
-        {
-            reference = null;
-            Curve curve = geomObj as Curve;
-            if (curve == null) return false;
-
-            XYZ direction = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize();
-            bool isVerticalCurve = Math.Abs(direction.Z) < 0.001;
-            bool isOrthogonal = isHorizontal
-                ? Math.Abs(direction.X) > 0.9
-                : Math.Abs(direction.Y) > 0.9;
-
-            if (isVerticalCurve && isOrthogonal)
-            {
-                reference = curve.Reference;
-                return true;
-            }
-            return false;
-
-
-
-        }
     }
 }

@@ -113,6 +113,7 @@
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
+    <Compile Include="OV_Construct\Helper_all_curve_reference.cs" />
     <Compile Include="LoadAllFamiliesFromDirectory.cs" />
     <Compile Include="OV_Construct\Control_Pick.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command.cs" />
