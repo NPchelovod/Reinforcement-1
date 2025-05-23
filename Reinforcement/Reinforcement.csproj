@@ -132,7 +132,7 @@
     <Compile Include="OV_Construct\Utilit_2_5ReDict_numOV_spisokOV.cs" />
     <Compile Include="OV_Construct\Utilit_2_6ListPovtor_OV_on_Plans.cs" />
     <Compile Include="OV_Construct\Utilit_3_1Create_new_floor.cs" />
-    <Compile Include="OV_Construct\Utilit_3_5Create_new_plan_floor.cs" />
+    <Compile Include="OV_Construct\Utilit_3_6Create_new_plan_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_4Create_dimensions_on_plans.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command_2before_Povtor_flour.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -234,6 +234,7 @@
     <Compile Include="Updaters\RegisterUpdater.cs" />
     <Compile Include="OV_Construct\Utilit_3_2Dict_Axis.cs" />
     <Compile Include="OV_Construct\Utilit_3_3Dict_numOV_nearAxes.cs" />
+    <Compile Include="OV_Construct\Utilit_3_5Vinosky_ov_type_size.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />

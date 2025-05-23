@@ -93,7 +93,14 @@ namespace Reinforcement
                 ExtractCurvesFromGeometry(geomObj, allsymbolCurve);
             }
 
-            return allsymbolCurve;
+            // записываем только те у кого ест ьреференс
+            var allsymbolCurve_itog = new List<Curve>();
+            foreach (Curve curve in allsymbolCurve)
+            {
+                if(curve.Reference!=null)
+                { allsymbolCurve_itog.Add(curve); }
+            }
+            return allsymbolCurve_itog;
 
         }
         private static void ExtractCurvesFromGeometry(GeometryObject geomObj, List<Curve> curveList)
@@ -161,9 +168,10 @@ namespace Reinforcement
         {
             return Math.Abs(Math.Abs(a) - Math.Abs(b)) < epsilon;
         }
-        public static Curve Get_curve_nearly_curve(Curve axisCurve, List<Curve> curves_ov)
+        public static Curve Get_curve_nearly_curve(Curve axisCurve, List<Curve> curves_ov, XYZ otnos_center = null)
         {
             // ближайшая из линий к другой линии (оси)
+            //  XYZ otnos_center - если линии это относительно некоторой точки, то
             XYZ startPoint = axisCurve.GetEndPoint(0);
             XYZ endPoint = axisCurve.GetEndPoint(1);
 
@@ -180,8 +188,17 @@ namespace Reinforcement
             double epsilon = 1e-9;
             foreach (var curve in curves_ov)
             {
+
+
                 XYZ startPoint_curve = curve.GetEndPoint(0);
                 XYZ endPoint_curve = curve.GetEndPoint(1);
+
+                if (otnos_center!=null)
+                {
+                    startPoint_curve = new XYZ(startPoint_curve.X+ otnos_center.X, startPoint_curve.Y+ otnos_center.Y, startPoint_curve.Z+ otnos_center.Z);
+                    endPoint_curve = new XYZ(endPoint_curve.X + otnos_center.X, endPoint_curve.Y + otnos_center.Y, endPoint_curve.Z + otnos_center.Z);
+
+                }
 
                 XYZ direction_curve = (startPoint_curve - endPoint_curve).Normalize();
                 bool vert_axe_curve = false;
