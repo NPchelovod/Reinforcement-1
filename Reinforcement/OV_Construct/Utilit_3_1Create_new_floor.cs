@@ -65,7 +65,7 @@ namespace Reinforcement
                 ViewPlan newViewPlan;
                 // Создаем новый план этажа
 
-                string Plan_name = OV_Construct_All_Dictionary.Prefix_plan_floor + otm.Key+")";//
+                string Plan_name = OV_Construct_All_Dictionary.Prefix_plan_floor+"(" + otm.Key+")";//
 
                 List<ElementId> existingPlanIds = new FilteredElementCollector(doc)
                 .OfClass(typeof(ViewPlan))

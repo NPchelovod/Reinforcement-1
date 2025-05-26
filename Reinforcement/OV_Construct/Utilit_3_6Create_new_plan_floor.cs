@@ -29,8 +29,8 @@ namespace Reinforcement
             var List_num_grup_ov = new List<int>();
 
             var Dict_Dict_num_grup_view = new Dictionary<int, Dictionary<string , ElementId>>();
-            
 
+            var list_id_axe = List_id_axe(); // лист 
             var list_num_grup = new List<int>();
             foreach (var num in OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV)
             {
@@ -75,7 +75,7 @@ namespace Reinforcement
                             continue; // нет на данном виде
                         }
 
-                        string neme_ov_plan_new = viewPlan.Name + "_ВШ_" + num_grup.ToString(); // новое имя 
+                        string neme_ov_plan_new = OV_Construct_All_Dictionary.Prefix_plan_floor + num_grup.ToString() +"_(" + otm_H + ")"  ; // новое имя 
                         using (Transaction t = new Transaction(doc, "создание копии плана"))
                         {
                             t.Start();
@@ -91,7 +91,7 @@ namespace Reinforcement
 
                         Dict_Dict_num_grup_view[tek_num_grup][otm_H] = newViewPlan.Id;
                         var axisId_vert = OV_Construct_All_Dictionary.Dict_plan_ov_axis[levelPlan][id_ov][0];
-                        var axisId_hor = OV_Construct_All_Dictionary.Dict_plan_ov_axis[levelPlan][id_ov][0];
+                        var axisId_hor = OV_Construct_All_Dictionary.Dict_plan_ov_axis[levelPlan][id_ov][1];
                         List<ElementId> excludedIds = new List<ElementId>()
                         {
                             id_ov,axisId_vert, axisId_hor
@@ -101,33 +101,58 @@ namespace Reinforcement
                             t.Start();
 
                             // Собираем все оси и обобщенные модели на виде
-                            FilteredElementCollector collector2 = new FilteredElementCollector(doc, newViewPlan.Id)
-                                .WhereElementIsNotElementType()
-                                .OfCategory(BuiltInCategory.OST_Grids) // Оси
-                                .UnionWith(new FilteredElementCollector(doc, newViewPlan.Id)
-                                .OfCategory(BuiltInCategory.OST_GenericModel)); // Обобщенные модели
 
-                            // Фильтруем элементы для скрытия (исключая указанные ID)
-                            List<ElementId> elementsToHide = collector2
-                                .Where(e => !excludedIds.Contains(e.Id))
-                                .Select(e => e.Id)
-                                .ToList();
+                            FilteredElementCollector collector_ov = new FilteredElementCollector(doc, newViewPlan.Id)
+                                .OfCategory(BuiltInCategory.OST_GenericModel); // Обобщенные модели
+                            List<ElementId> elementsToHide = collector_ov
+                               .Where(e => !excludedIds.Contains(e.Id))
+                               .Select(e => e.Id)
+                               .ToList();
+                            List<ElementId> hide_list_id_axe = list_id_axe.Where(e => !excludedIds.Contains(e)).ToList();
+
+                            FilteredElementCollector collector_axe = new FilteredElementCollector(doc, newViewPlan.Id)
+                                .WhereElementIsNotElementType()
+                                .OfCategory(BuiltInCategory.OST_Grids); // Оси
+                            elementsToHide = elementsToHide.Union(hide_list_id_axe).ToList();
 
                             // Скрываем элементы
                             newViewPlan.HideElements(elementsToHide);
 
                             t.Commit();
                         }
+                        // Получить BoundingBox элемента
+                        BoundingBoxXYZ bbox = doc.GetElement(id_ov).get_BoundingBox(newViewPlan);
 
+                        // Установить обрезку вида
+                        using (Transaction tx = new Transaction(doc))
+                        {
+                            tx.Start("Обрезка по BoundingBox");
+                            activeView.CropBox = bbox;
+                            activeView.CropBoxActive = true;
+                            tx.Commit();
+                        }
 
                     }
-
 
 
                 }
             }
 
             return Result.Succeeded;
+        }
+
+
+
+        public static List<ElementId>  List_id_axe()
+        {
+
+            var list_id_axe = new List<ElementId>();
+            foreach(var id_axe in OV_Construct_All_Dictionary.Dict_Axis)
+            {
+                list_id_axe.Add(new ElementId(Convert.ToInt64(id_axe.Key)));
+            }
+            return list_id_axe;
+           
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Reinforcement
 {
     public static class OV_Construct_All_Dictionary
     {
-        public static string Prefix_plan_floor { get; set; } = "ОВ_ВШ_(";
+        public static string Prefix_plan_floor { get; set; } = "ОВ_ВШ_";
         public static Dictionary<string, Dictionary<string, object>> Dict_Axis { get; set; } = new Dictionary<string, Dictionary<string, object>>();
         // создание словаря уровень - id вентшахты на уровне
         // var Dict_level_ventsId = new Dictionary<string, List<string>>();
