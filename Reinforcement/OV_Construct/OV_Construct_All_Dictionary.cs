@@ -13,7 +13,7 @@ namespace Reinforcement
         public static string Prefix_plan_floor { get; set; } = "ОВ_ВШ_(";
         public static Dictionary<string, Dictionary<string, object>> Dict_Axis { get; set; } = new Dictionary<string, Dictionary<string, object>>();
         // создание словаря уровень - id вентшахты на уровне
-            // var Dict_level_ventsId = new Dictionary<string, List<string>>();
+        // var Dict_level_ventsId = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> Dict_level_ventsId { get; set; } = new Dictionary<string, List<string>>();
 
         // создание словаря уровень - id вентшахты на уровне
@@ -40,9 +40,36 @@ namespace Reinforcement
         public static Dictionary<string, ElementId> Dict_level_plan_floor { get; set; } = new Dictionary<string, ElementId>(); // уровень и созданный план
 
 
+        // id шахты ов - номер 
+
+        
+
+        // id созданного уровн: id вентшахты на уровне^ id осей смежных
+        public static Dictionary<ElementId, Dictionary<ElementId, List<ElementId>>> Dict_plan_ov_axis { get; set; } = new Dictionary<ElementId, Dictionary<ElementId, List<ElementId>>>();
+
+
         // словарь уровень, стринг ВШ1 = план конкретной вентшахты
 
         public static Dictionary<string, Dictionary<string, ElementId>> Dict_level_VH_plans { get; set; } = new Dictionary<string, Dictionary<string, ElementId>>(); // уровень и созданный план
 
+
+
+        public static void ClearAll()
+        {
+            Dict_Axis.Clear();
+            Dict_level_ventsId.Clear();
+            Dict_ventId_Properts.Clear();
+            Dict_Grup_numOV_spisokOV.Clear();
+            List_Size_OV.Clear();
+            Dict_numOV_nearAxes.Clear();
+            Dict_numerateOV.Clear();
+            Dict_sovpad_level.Clear();
+            Dict_level_plan_floor.Clear();
+            Dict_level_VH_plans.Clear();
+            Dict_plan_ov_axis.Clear();
+        }
+
     }
+
+
 }

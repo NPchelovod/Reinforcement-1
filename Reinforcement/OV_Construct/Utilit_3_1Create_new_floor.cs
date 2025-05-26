@@ -1,17 +1,19 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 
 //using System.Windows.Controls;
 
 
 
 
-//тут в общем виде 
+//создаем планы этажей не с типовым расположением, тут все ов на плане и оси
 
 namespace Reinforcement
 {
@@ -35,7 +37,8 @@ namespace Reinforcement
                 TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
                 return Result.Failed;
             }
-
+            // Создаем StringBuilder для формирования сообщения
+            StringBuilder messageBuilder = new StringBuilder();
             // удаление всех планов ОВ_ВШ
             DeleteViewsWithNamePattern(OV_Construct_All_Dictionary.Prefix_plan_floor);
 
@@ -99,8 +102,8 @@ namespace Reinforcement
                     t2.Commit();
                 }
 
-
-                TaskDialog.Show("Успех", $"Создан новый план этажа: {newViewPlan.Name}");
+                messageBuilder.AppendLine($"- %{newViewPlan.Name}% из %{selectedLevel.Name}%");
+                
                 // запись в словарь плана для обращения к нему
 
                 if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
@@ -111,6 +114,7 @@ namespace Reinforcement
 
 
             }
+            TaskDialog.Show("Созданные планы", messageBuilder.ToString());
 
             return Result.Succeeded;
         }
@@ -177,11 +181,12 @@ namespace Reinforcement
 
             var list_BuiltInCategor = new List<BuiltInCategory>()
                     {
-                    BuiltInCategory.OST_Dimensions,
+                        BuiltInCategory.OST_Dimensions,
                         BuiltInCategory.OST_Grids,
                         //BuiltInCategory.OST_Assemblies, 
                         BuiltInCategory.OST_GenericModel, // к ней относятся шахты
-                        BuiltInCategory.OST_DetailComponents //видимость заливки
+                        BuiltInCategory.OST_DetailComponents,//видимость заливки
+                        BuiltInCategory.OST_GenericModelTags// марки обобщенной модели
                     };
 
 
@@ -194,6 +199,7 @@ namespace Reinforcement
                 }
                 catch
                 {
+                    bool pr = true;
                     // Пропускаем категории, которые нельзя открыть
                 }
             }
@@ -224,7 +230,10 @@ namespace Reinforcement
                 }
             }
 
-            catch (Exception ex) { }
+            catch (Exception ex) 
+            {
+                bool pr = true;
+            }
 
 
             // Включаем видимость подкатегории "Элементы узлов"

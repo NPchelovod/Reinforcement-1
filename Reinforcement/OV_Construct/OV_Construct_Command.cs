@@ -62,7 +62,9 @@ namespace Reinforcement
             
             Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);
 
+            Utilit_3_5Vinosky_ov_type_size.Create_vinosky_on_plans();
 
+            Utilit_3_6Create_new_plan_floor.Create_new_plan_floor();
             try
             {
                 output_json();

@@ -31,6 +31,9 @@ namespace Reinforcement
                 var viewPlan = doc.GetElement(viewId) as View;
 
 
+                OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId] = new Dictionary<ElementId, List<ElementId>>();
+
+
                 using (Transaction trans = new Transaction(doc, "Create Dimensions"))
                 {
                     trans.Start();
@@ -70,6 +73,10 @@ namespace Reinforcement
                         {
                             axisId_hor = new ElementId(Convert.ToInt64(ventData.Value["Horizontal_Axe_ID"]));
                         }
+
+
+
+                        
                         if (axisId_vert!=null)
                         {
                             try
@@ -94,7 +101,12 @@ namespace Reinforcement
                             }
 
                         }
-       
+                        OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId][ventId] = new List<ElementId>()
+                        {
+                            axisId_vert, axisId_hor
+                        };
+
+
                     }
 
                     trans.Commit();
