@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 
 
+
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -89,7 +90,34 @@ namespace Reinforcement
 
 
                         Dict_Dict_num_grup_view[tek_num_grup][otm_H] = newViewPlan.Id;
-                        
+                        var axisId_vert = OV_Construct_All_Dictionary.Dict_plan_ov_axis[levelPlan][id_ov][0];
+                        var axisId_hor = OV_Construct_All_Dictionary.Dict_plan_ov_axis[levelPlan][id_ov][0];
+                        List<ElementId> excludedIds = new List<ElementId>()
+                        {
+                            id_ov,axisId_vert, axisId_hor
+                        };
+                        using (Transaction t = new Transaction(doc, "настройка плана"))
+                        {
+                            t.Start();
+
+                            // Собираем все оси и обобщенные модели на виде
+                            FilteredElementCollector collector2 = new FilteredElementCollector(doc, newViewPlan.Id)
+                                .WhereElementIsNotElementType()
+                                .OfCategory(BuiltInCategory.OST_Grids) // Оси
+                                .UnionWith(new FilteredElementCollector(doc, newViewPlan.Id)
+                                .OfCategory(BuiltInCategory.OST_GenericModel)); // Обобщенные модели
+
+                            // Фильтруем элементы для скрытия (исключая указанные ID)
+                            List<ElementId> elementsToHide = collector2
+                                .Where(e => !excludedIds.Contains(e.Id))
+                                .Select(e => e.Id)
+                                .ToList();
+
+                            // Скрываем элементы
+                            newViewPlan.HideElements(elementsToHide);
+
+                            t.Commit();
+                        }
 
 
                     }
