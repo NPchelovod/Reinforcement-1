@@ -24,7 +24,7 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
             var Dict_Axis = new Dictionary<string, Dictionary<string, object>>();
             List<Grid> gridList = null;
-
+            OV_Construct_All_Dictionary.Dict_Axis.Clear();
             using (Transaction trans = new Transaction(doc, "Create Grids"))
             {
                 trans.Start();

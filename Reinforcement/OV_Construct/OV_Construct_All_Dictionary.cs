@@ -65,8 +65,9 @@ namespace Reinforcement
             Dict_numerateOV.Clear();
             Dict_sovpad_level.Clear();
             Dict_level_plan_floor.Clear();
-            Dict_level_VH_plans.Clear();
             Dict_plan_ov_axis.Clear();
+            Dict_level_VH_plans.Clear();
+            
         }
 
     }

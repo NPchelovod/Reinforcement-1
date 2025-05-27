@@ -31,7 +31,7 @@ namespace Reinforcement
                 .Cast<ViewFamilyType>()
                 .FirstOrDefault(x => x.ViewFamily == ViewFamily.FloorPlan);
 
-            
+            OV_Construct_All_Dictionary.Dict_level_plan_floor.Clear();
             if (viewFamilyType == null)
             {
                 TaskDialog.Show("Ошибка", "Не найден тип вида для плана этажа");
@@ -42,79 +42,86 @@ namespace Reinforcement
             // удаление всех планов ОВ_ВШ
             DeleteViewsWithNamePattern(OV_Construct_All_Dictionary.Prefix_plan_floor);
 
-            foreach (var otm in Dict_sovpad_level)
+            using (TransactionGroup tg = new TransactionGroup(doc, "Создание планов этажей"))
             {
-                var H_otm = otm.Key;
-                // 1. Задаём искомую высотную отметку (в единицах проекта)
-                double targetElevation = Convert.ToDouble(otm.Key); // Например, 3 метра
-
-                // 2. Находим уровень с заданной отметкой
-
-                var sourceLevels = new FilteredElementCollector(doc)
-                    .OfClass(typeof(Level))
-                    .Cast<Level>()
-                    .Where(level => Math.Abs(UnitUtils.ConvertFromInternalUnits(level.Elevation, units) - targetElevation) < 300).ToList(); // Учитываем погрешность
-
-                if (sourceLevels == null || sourceLevels.Count == 0)
+                tg.Start();
+                foreach (var otm in Dict_sovpad_level)
                 {
-                    TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
-                    continue;
-                }
-               
-                Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся,можно по умней сделать
-                ViewPlan newViewPlan;
-                // Создаем новый план этажа
+                    var H_otm = otm.Key;
+                    // 1. Задаём искомую высотную отметку (в единицах проекта)
+                    double targetElevation = Convert.ToDouble(otm.Key); // Например, 3 метра
 
-                string Plan_name = OV_Construct_All_Dictionary.Prefix_plan_floor+"(" + otm.Key+")";//
+                    // 2. Находим уровень с заданной отметкой
 
-                List<ElementId> existingPlanIds = new FilteredElementCollector(doc)
-                .OfClass(typeof(ViewPlan))
-                .Cast<ViewPlan>()
-                .Where(v => v.Name == Plan_name) // Точное совпадение имени
-                .Select(v => v.Id) // Выбираем только ElementId
-                .ToList();
+                    var sourceLevels = new FilteredElementCollector(doc)
+                        .OfClass(typeof(Level))
+                        .Cast<Level>()
+                        .Where(level => Math.Abs(UnitUtils.ConvertFromInternalUnits(level.Elevation, units) - targetElevation) < 300).ToList(); // Учитываем погрешность
 
-                bool proxod = true;
-                if (existingPlanIds.Count>0) 
-                {
-                    // этот план не удалился он открыт и мы его выписываем
+                    if (sourceLevels == null || sourceLevels.Count == 0)
+                    {
+                        TaskDialog.Show("Ошибка", $"Уровень с отметкой {targetElevation} не найден!");
+                        continue;
+                    }
+
+                    Level selectedLevel = sourceLevels[0]; // выбираем первый попавшийся,можно по умней сделать
+                    ViewPlan newViewPlan;
+                    // Создаем новый план этажа
+
+                    string Plan_name = OV_Construct_All_Dictionary.Prefix_plan_floor + "(" + otm.Key + ")";//
+
+                    List<ElementId> existingPlanIds = new FilteredElementCollector(doc)
+                    .OfClass(typeof(ViewPlan))
+                    .Cast<ViewPlan>()
+                    .Where(v => v.Name == Plan_name) // Точное совпадение имени
+                    .Select(v => v.Id) // Выбираем только ElementId
+                    .ToList();
+
+                    bool proxod = true;
+                    if (existingPlanIds.Count > 0)
+                    {
+                        // этот план не удалился он открыт и мы его выписываем
+                        if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
+                        {
+                            OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = existingPlanIds[0];
+                        }
+                        continue;
+                    }
+
+
+                    using (Transaction t = new Transaction(doc, "создание этажа"))
+                    {
+                        t.Start();
+                        // Создаем вид плана этажа
+                        newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
+                        newViewPlan.Name = Plan_name;
+
+                        t.Commit();
+                    }
+
+                    using (Transaction t2 = new Transaction(doc, "Настройка плана этажа"))
+                    {
+                        t2.Start();
+                        Nastroy_floor(doc, newViewPlan, H_otm);
+                        t2.Commit();
+                    }
+
+                    messageBuilder.AppendLine($"- %{newViewPlan.Name}% из %{selectedLevel.Name}%");
+
+                    // запись в словарь плана для обращения к нему
+
                     if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
                     {
-                        OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = existingPlanIds[0];
+                        OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = newViewPlan.Id;
                     }
-                    continue;
+
+
+
                 }
-
-
-                using (Transaction t = new Transaction(doc, "создание этажа"))
-                {  t.Start(); 
-                    // Создаем вид плана этажа
-                    newViewPlan = ViewPlan.Create(doc, viewFamilyType.Id, selectedLevel.Id);
-                    newViewPlan.Name = Plan_name;
-
-                    t.Commit();
-                }
-
-                using (Transaction t2 = new Transaction(doc, "Настройка плана этажа"))
-                {
-                    t2.Start();
-                    Nastroy_floor(doc, newViewPlan, H_otm);
-                    t2.Commit();
-                }
-
-                messageBuilder.AppendLine($"- %{newViewPlan.Name}% из %{selectedLevel.Name}%");
-                
-                // запись в словарь плана для обращения к нему
-
-                if (!OV_Construct_All_Dictionary.Dict_level_plan_floor.ContainsKey(H_otm))
-                {
-                    OV_Construct_All_Dictionary.Dict_level_plan_floor[H_otm] = newViewPlan.Id;
-                }
-
-
+                TaskDialog.Show("Созданные планы", messageBuilder.ToString());
+                tg.Assimilate();
 
             }
-            TaskDialog.Show("Созданные планы", messageBuilder.ToString());
 
             return Result.Succeeded;
         }

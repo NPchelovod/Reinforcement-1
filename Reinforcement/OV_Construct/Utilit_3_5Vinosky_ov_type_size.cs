@@ -25,84 +25,91 @@ namespace Reinforcement
         {
             var options = new Options() { ComputeReferences = true };
             Document doc = RevitAPI.Document;
-            foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_plan_ov_axis)
+            using (TransactionGroup tg = new TransactionGroup(doc, "Создание выносок"))
             {
-                
-                ElementId viewId = levelPlan.Key;
+                tg.Start();
 
-                var viewPlan = doc.GetElement(viewId) as View;
-                Options geomOptions = new Options { ComputeReferences = true, View = viewPlan };
-
-                using (Transaction trans = new Transaction(doc, "Create vinosky"))
+                foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_plan_ov_axis)
                 {
-                    trans.Start();
 
-                    foreach (var ventData in OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId])
+                    ElementId viewId = levelPlan.Key;
+
+                    var viewPlan = doc.GetElement(viewId) as View;
+                    Options geomOptions = new Options { ComputeReferences = true, View = viewPlan };
+
+                    using (Transaction trans = new Transaction(doc, "Create vinosky"))
                     {
-                        // идем по вентшахтам на этаже
-                        
-                        
-                        ElementId ventId = ventData.Key;
-                        Element ventElement = doc.GetElement(ventId);
+                        trans.Start();
 
-                        // получаем длину и ширину шахты
-
-                        var Data = OV_Construct_All_Dictionary.Dict_ventId_Properts[ventId.ToString()];
-                        double tek_width = Convert.ToDouble(Data["tek_width"]);
-                        double tek_height = Convert.ToDouble(Data["tek_height"]);
-
-                        int num_poz = 0;
-                        bool naiden = false;
-                        // ищем какой это типоразмер шахты
-                        for (int i = 0; i < OV_Construct_All_Dictionary.List_Size_OV.Count; i++)
+                        foreach (var ventData in OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId])
                         {
-                            num_poz = i + 1;
-                            var list_name = new List<double>(2)
+                            // идем по вентшахтам на этаже
+
+
+                            ElementId ventId = ventData.Key;
+                            Element ventElement = doc.GetElement(ventId);
+
+                            // получаем длину и ширину шахты
+
+                            var Data = OV_Construct_All_Dictionary.Dict_ventId_Properts[ventId.ToString()];
+                            double tek_width = Convert.ToDouble(Data["tek_width"]);
+                            double tek_height = Convert.ToDouble(Data["tek_height"]);
+
+                            int num_poz = 0;
+                            bool naiden = false;
+                            // ищем какой это типоразмер шахты
+                            for (int i = 0; i < OV_Construct_All_Dictionary.List_Size_OV.Count; i++)
                             {
-                                tek_width,tek_height
-                            };
-                            if (AreEqual(list_name[0],OV_Construct_All_Dictionary.List_Size_OV[num_poz - 1][0]) && AreEqual(list_name[1],OV_Construct_All_Dictionary.List_Size_OV[num_poz - 1][1]))
+                                num_poz = i + 1;
+                                var list_name = new List<double>(2)
+                                {
+                                    tek_width,tek_height
+                                };
+                                if (AreEqual(list_name[0], OV_Construct_All_Dictionary.List_Size_OV[num_poz - 1][0]) && AreEqual(list_name[1], OV_Construct_All_Dictionary.List_Size_OV[num_poz - 1][1]))
+                                {
+                                    naiden = true;
+                                    break; // нашли номер размера нашей шахты
+                                }
+
+                            }
+                            if (!naiden)
                             {
-                                naiden = true;
-                                break; // нашли номер размера нашей шахты
+                                // катастрофа не может такого быть
                             }
 
+                            LocationPoint ventLocation = ventElement.Location as LocationPoint;
+
+                            // Установка маркировки
+                            ventElement.LookupParameter("ADSK_Позиция").Set(num_poz.ToString());
+
+                            //запись марки в свойства шахты
+                            Parameter markParam = ventElement.get_Parameter(BuiltInParameter.ALL_MODEL_MARK);
+                            /*
+                            if (markParam != null && !markParam.IsReadOnly)
+                            {
+                                markParam.Set(num_poz.ToString());
+                            }
+                            */
+                            // создание
+                            SetElementMark(ventElement, ventElement.Id.ToString());
+                            CreateTagForElement(doc, viewPlan, ventElement);
+                            // Project vent point to axis
+                            XYZ ventPoint = ventLocation.Point;
+                            // Создание позиции метки с небольшим смещением
+                            XYZ tagPos = new XYZ(
+                                ventPoint.X + 2,
+                                ventPoint.Y + 2,
+                                ventPoint.Z
+                            );
+
+
                         }
-                        if (!naiden)
-                        {
-                            // катастрофа не может такого быть
-                        }
-
-                        LocationPoint ventLocation = ventElement.Location as LocationPoint;
-
-                        // Установка маркировки
-                        ventElement.LookupParameter("ADSK_Позиция").Set(num_poz.ToString());
-                        
-                        //запись марки в свойства шахты
-                        Parameter markParam = ventElement.get_Parameter(BuiltInParameter.ALL_MODEL_MARK);
-                        /*
-                        if (markParam != null && !markParam.IsReadOnly)
-                        {
-                            markParam.Set(num_poz.ToString());
-                        }
-                        */
-                        // создание
-                        SetElementMark(ventElement, ventElement.Id.ToString());
-                        CreateTagForElement(doc, viewPlan, ventElement);
-                        // Project vent point to axis
-                        XYZ ventPoint = ventLocation.Point;
-                        // Создание позиции метки с небольшим смещением
-                        XYZ tagPos = new XYZ(
-                            ventPoint.X + 2,
-                            ventPoint.Y + 2,
-                            ventPoint.Z
-                        );
-
-
+                        trans.Commit();
                     }
-                    trans.Commit();
                 }
+                tg.Assimilate();
             }
+
 
             return Result.Succeeded;
 

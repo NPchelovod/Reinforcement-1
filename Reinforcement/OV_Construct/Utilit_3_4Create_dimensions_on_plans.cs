@@ -23,96 +23,104 @@ namespace Reinforcement
         {
             var options = new Options() { ComputeReferences = true };
 
-            foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
+            OV_Construct_All_Dictionary.Dict_plan_ov_axis.Clear();
+
+            using (TransactionGroup tg = new TransactionGroup(doc, "Создание образмеривания"))
             {
-                string currentLevel = levelPlan.Key;
-                ElementId viewId = levelPlan.Value;
-
-                var viewPlan = doc.GetElement(viewId) as View;
-
-
-                OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId] = new Dictionary<ElementId, List<ElementId>>();
-
-
-                using (Transaction trans = new Transaction(doc, "Create Dimensions"))
+                tg.Start();
+                foreach (var levelPlan in OV_Construct_All_Dictionary.Dict_level_plan_floor)
                 {
-                    trans.Start();
+                    string currentLevel = levelPlan.Key;
+                    ElementId viewId = levelPlan.Value;
 
-                    foreach (var ventData in OV_Construct_All_Dictionary.Dict_numOV_nearAxes)
+                    var viewPlan = doc.GetElement(viewId) as View;
+
+
+                    OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId] = new Dictionary<ElementId, List<ElementId>>();
+
+
+                    using (Transaction trans = new Transaction(doc, "Create Dimensions"))
                     {
-                        int ventNumber = ventData.Key;
-                        var ventInfo = OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV[ventNumber];
-                        var levelList = ventInfo["spisok_level_ov"] as List<string>;
+                        trans.Start();
 
-                        if (!levelList.Contains(currentLevel)) continue; // текущая вентшахта на данном уровне отсутствует
-
-                        int index = levelList.IndexOf(currentLevel);
-                        var idList = ventInfo["spisok_id_ov"] as List<string>;
-                        ElementId ventId = new ElementId(Convert.ToInt64(idList[index]));
-                        Element ventElement = doc.GetElement(ventId);
-
-                        /*
-                        if (idList[index] != "11380097")
+                        foreach (var ventData in OV_Construct_All_Dictionary.Dict_numOV_nearAxes)
                         {
-                            continue;
-                        }
-                        */
+                            int ventNumber = ventData.Key;
+                            var ventInfo = OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV[ventNumber];
+                            var levelList = ventInfo["spisok_level_ov"] as List<string>;
 
+                            if (!levelList.Contains(currentLevel)) continue; // текущая вентшахта на данном уровне отсутствует
 
-                        if (!(ventElement.Location is LocationPoint location)) continue;
-                        XYZ ventPoint = location.Point;
+                            int index = levelList.IndexOf(currentLevel);
+                            var idList = ventInfo["spisok_id_ov"] as List<string>;
+                            ElementId ventId = new ElementId(Convert.ToInt64(idList[index]));
+                            Element ventElement = doc.GetElement(ventId);
 
-                        // Vertical Axis
-                        ElementId axisId_vert = null;
-                        ElementId axisId_hor = null;
-                        if (ventData.Value.ContainsKey("Vertical_Axe_ID"))
-                        {
-                            axisId_vert = new ElementId(Convert.ToInt64(ventData.Value["Vertical_Axe_ID"]));
-                        }
-                        if (ventData.Value.ContainsKey("Horizontal_Axe_ID"))
-                        {
-                            axisId_hor = new ElementId(Convert.ToInt64(ventData.Value["Horizontal_Axe_ID"]));
-                        }
-
-
-
-                        
-                        if (axisId_vert!=null)
-                        {
-                            try
+                            /*
+                            if (idList[index] != "11380097")
                             {
-                                CreateDimensionBetweenElements(uidoc, doc, axisId_vert, ventId, ventElement, viewPlan, false, axisId_hor);
+                                continue;
                             }
-                            catch (Exception ex)
-                            {
-                                message += $"Vertical axis error: {ex.Message}\n";
-                            }
-                        }
+                            */
 
-                        if (axisId_hor != null)
-                        {
-                            try
+
+                            if (!(ventElement.Location is LocationPoint location)) continue;
+                            XYZ ventPoint = location.Point;
+
+                            // Vertical Axis
+                            ElementId axisId_vert = null;
+                            ElementId axisId_hor = null;
+                            if (ventData.Value.ContainsKey("Vertical_Axe_ID"))
                             {
-                                CreateDimensionBetweenElements(uidoc, doc, axisId_hor, ventId, ventElement, viewPlan, true, axisId_vert);
+                                axisId_vert = new ElementId(Convert.ToInt64(ventData.Value["Vertical_Axe_ID"]));
                             }
-                            catch (Exception ex)
+                            if (ventData.Value.ContainsKey("Horizontal_Axe_ID"))
                             {
-                                message += $"Horizontal axis error: {ex.Message}\n";
+                                axisId_hor = new ElementId(Convert.ToInt64(ventData.Value["Horizontal_Axe_ID"]));
                             }
 
+
+
+
+                            if (axisId_vert != null)
+                            {
+                                try
+                                {
+                                    CreateDimensionBetweenElements(uidoc, doc, axisId_vert, ventId, ventElement, viewPlan, false, axisId_hor);
+                                }
+                                catch (Exception ex)
+                                {
+                                    message += $"Vertical axis error: {ex.Message}\n";
+                                }
+                            }
+
+                            if (axisId_hor != null)
+                            {
+                                try
+                                {
+                                    CreateDimensionBetweenElements(uidoc, doc, axisId_hor, ventId, ventElement, viewPlan, true, axisId_vert);
+                                }
+                                catch (Exception ex)
+                                {
+                                    message += $"Horizontal axis error: {ex.Message}\n";
+                                }
+
+                            }
+                            OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId][ventId] = new List<ElementId>()
+                            {
+                                axisId_vert, axisId_hor
+                            };
+
+
                         }
-                        OV_Construct_All_Dictionary.Dict_plan_ov_axis[viewId][ventId] = new List<ElementId>()
-                        {
-                            axisId_vert, axisId_hor
-                        };
 
-
+                        trans.Commit();
                     }
-
-                    trans.Commit();
                 }
-            }
 
+                tg.Assimilate();
+            }
+            
             return Result.Succeeded;
         }
 

@@ -45,19 +45,13 @@ namespace Reinforcement
             //Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
             // в будущем можно будет менять
 
-            
+            OV_Construct_All_Dictionary.ClearAll(); // чистим всё
             OV_Construct_Command_2before_Povtor_flour.ExecuteLogic(commandData, ref message, elements);
 
-
-            OV_Construct_All_Dictionary.Dict_level_plan_floor.Clear();// чистим с предыдущего раза
             Utilit_3_1Create_new_floor.Create_new_floor(units, ref message, elements);
 
-
-            OV_Construct_All_Dictionary.Dict_Axis.Clear();// чистим с предыдущего раза
             Utilit_3_2Dict_Axis.Dict_Axis();
 
-
-            OV_Construct_All_Dictionary.Dict_numOV_nearAxes.Clear();
             OV_Construct_All_Dictionary.Dict_numOV_nearAxes = Utilit_3_3Dict_numOV_nearAxes.Create_Dict_numOV_nearAxes(doc, OV_Construct_All_Dictionary.Dict_Axis, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
             
             Utilit_3_4Create_dimensions_on_plans.Create_dimensions_on_plans(uidoc, ref  message, elements, doc);
