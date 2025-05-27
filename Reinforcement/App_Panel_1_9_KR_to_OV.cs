@@ -24,6 +24,11 @@ namespace Reinforcement
                  "Для работы плагина нужно ",
                 panelOV);
 
+            App_Helper_Button.CreateButton("Создание ОВ планов", "Создание\nОВ планов", "Reinforcement.OV_Construct_Command_3before_Create_plans", Properties.Resources.ES_OV_for_KR,
+                 "Позволяет создать",
+                 "Для работы плагина нужно ",
+                panelOV);
+
             App_Helper_Button.CreateButton("Список типоразмеров шахт ОВ", " типоразмеры шахт", "Reinforcement.OV_Construct_Command_1before_List_Size_OV", Properties.Resources.ES_OV_for_KR,
                 "Позволяет создать",
                 "Для работы плагина нужно ",

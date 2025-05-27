@@ -135,6 +135,7 @@
     <Compile Include="OV_Construct\Utilit_3_6Create_new_plan_floor.cs" />
     <Compile Include="OV_Construct\Utilit_3_4Create_dimensions_on_plans.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command_2before_Povtor_flour.cs" />
+    <Compile Include="OV_Construct\OV_Construct_Command_3before_Create_plans.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

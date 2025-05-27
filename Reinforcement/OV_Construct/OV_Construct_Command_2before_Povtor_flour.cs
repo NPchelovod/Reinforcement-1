@@ -19,6 +19,7 @@ namespace Reinforcement
         static AddInId addinId = new AddInId(new Guid("424E29F8-20DE-49CB-8CF0-8627879F12C5"));
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            OV_Construct_All_Dictionary.ClearAll(); // чистим всё
             ExecuteLogic(commandData, ref message, elements);
 
             // Создаем StringBuilder для формирования сообщения
@@ -65,10 +66,8 @@ namespace Reinforcement
             // !!!выполняем предшествующую команду
             OV_Construct_Command_1before_List_Size_OV.ExecuteLogic(commandData, ref message, elements);
 
-
-
             // создаёт словарь номер по порядку согласно радиальному расположению - номер группы вентшахты
-            OV_Construct_All_Dictionary.Dict_numerateOV.Clear();
+            
             OV_Construct_All_Dictionary.Dict_numerateOV = Utilit_2_4Dict_numerateOV.Create_Dict_numerateOV( OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Перезапись словаря по порядку в котором будут пронумерованы шахты на плане этажа
@@ -76,7 +75,7 @@ namespace Reinforcement
             OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV = Utilit_2_5ReDict_numOV_spisokOV.ReCreate_Dict_Grup_numOV_spisokOV(OV_Construct_All_Dictionary.Dict_numerateOV, OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV);
 
             // Повторные этажей
-            OV_Construct_All_Dictionary.Dict_sovpad_level.Clear();
+            
             OV_Construct_All_Dictionary.Dict_sovpad_level = Utilit_2_6ListPovtor_OV_on_Plans.Create_ListPovtor_OV_on_Plan(OV_Construct_All_Dictionary.Dict_Grup_numOV_spisokOV, OV_Construct_All_Dictionary.Dict_ventId_Properts);
 
         }

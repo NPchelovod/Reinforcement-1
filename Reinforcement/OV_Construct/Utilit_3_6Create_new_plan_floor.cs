@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 
 
 
+
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -78,17 +79,26 @@ namespace Reinforcement
                                 continue; // нет на данном виде
                             }
 
-                            string neme_ov_plan_new = OV_Construct_All_Dictionary.Prefix_plan_floor + "_" + num_grup.ToString() + "_(" + otm_H + ")"; // новое имя 
+                            string neme_ov_plan_new = OV_Construct_All_Dictionary.Prefix_plan_floor  + num_grup.ToString() + "_(" + otm_H + ")"; // новое имя 
                             using (Transaction t = new Transaction(doc, "создание копии плана"))
                             {
                                 t.Start();
-                                ElementId newViewId = viewPlan.Duplicate(ViewDuplicateOption.WithDetailing);
+                                ElementId newViewId = viewPlan.Duplicate(ViewDuplicateOption.AsDependent);//Duplicate(ViewDuplicateOption.WithDetailing);
                                 newViewPlan = doc.GetElement(newViewId) as ViewPlan;
-
+                                
                                 // Переименование (опционально)
-                                newViewPlan.Name = neme_ov_plan_new;
+                                try
+                                {
+                                    newViewPlan.Name = neme_ov_plan_new;
+                                    t.Commit();
+                                }
+                                catch
+                                {
+                                    t.RollBack();
+                                    continue; // такое имя уже есть и оно не удалилось
+                                }
                                 chet += 1;
-                                t.Commit();
+                                
                             }
 
 
@@ -132,7 +142,15 @@ namespace Reinforcement
                                 tx.Start("Обрезка по BoundingBox");
                                 newViewPlan.CropBox = bbox;
                                 newViewPlan.CropBoxActive = true;
+                                //newViewPlan.AreAnnotationCategoriesHidden = true;
+                                // Активация обрезки аннотаций
+                                newViewPlan.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE).Set(1);
+                                // Установка смещений
+                                //newViewPlan.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_OFFSET_TOP).Set(0);
+
+                                newViewPlan.CropBoxVisible = true;
                                 tx.Commit();
+                                
                             }
 
                         }
@@ -150,7 +168,7 @@ namespace Reinforcement
 
         public static List<ElementId>  List_id_axe()
         {
-
+            // лист со всеми осями id
             var list_id_axe = new List<ElementId>();
             foreach(var id_axe in OV_Construct_All_Dictionary.Dict_Axis)
             {

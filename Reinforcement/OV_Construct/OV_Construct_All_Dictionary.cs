@@ -56,7 +56,7 @@ namespace Reinforcement
 
         public static void ClearAll()
         {
-            Dict_Axis.Clear();
+            OV_Construct_All_Dictionary.Dict_Axis.Clear();
             Dict_level_ventsId.Clear();
             Dict_ventId_Properts.Clear();
             Dict_Grup_numOV_spisokOV.Clear();
