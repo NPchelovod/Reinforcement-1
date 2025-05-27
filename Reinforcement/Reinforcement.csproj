@@ -111,7 +111,7 @@
     <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
-    <Compile Include="CopyTaskFromElectric.cs" />
+    <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
     <Compile Include="OV_Construct\Helper_all_curve_reference.cs" />
     <Compile Include="LoadAllFamiliesFromDirectory.cs" />
@@ -236,6 +236,7 @@
     <Compile Include="OV_Construct\Utilit_3_2Dict_Axis.cs" />
     <Compile Include="OV_Construct\Utilit_3_3Dict_numOV_nearAxes.cs" />
     <Compile Include="OV_Construct\Utilit_3_5Vinosky_ov_type_size.cs" />
+    <Compile Include="OV_Construct\Utilit_3_7Create_List_of_plans.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />
