@@ -20,7 +20,7 @@ using static Reinforcement.App;
 
 namespace Reinforcement
 {
-    internal class App_Panel_1_1_Configuration 
+    public class App_Panel_1_1_Configuration 
     {
         
         public static void AddSplitButton(RibbonPanel ribbonPanel, string name)

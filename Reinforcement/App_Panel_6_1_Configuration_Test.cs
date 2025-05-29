@@ -23,8 +23,8 @@ namespace Reinforcement
             var list_panels_view = new List<string>()
             {
                 "Конфигурация",
-                
-                "ОВ_сырой"
+
+                "ОВ плит"
 
             };
 

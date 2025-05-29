@@ -59,7 +59,7 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "Копировать задание",
-                "ОВ_сырой"
+                "ОВ плит"
             };
 
             // команды которые создают кнопки на конкретных панелях
@@ -95,9 +95,10 @@ namespace Reinforcement
                     case "Копировать задание":
                         App_Panel_1_8_KR_Task.KR_Task(panel, tabName);
                         break;
-                    case "ОВ_сырой":
-                        App_Panel_1_9_KR_to_OV.KR_to_OV(panel, tabName);
+                    case "ОВ плит":
+                        App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
                         break;
+                    
 
                 }
 
