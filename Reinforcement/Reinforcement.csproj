@@ -93,7 +93,7 @@
     <Compile Include="ReinforcementList\ReinforcementList.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
     <Compile Include="CreateNewProjectBySchedule.cs" />
-    <Compile Include="OpenInstructionsFolder.cs" />
+    <Compile Include="OpenFamiliesFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="Test\AddParameterToFamily.cs" />
