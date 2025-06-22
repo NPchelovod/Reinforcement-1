@@ -25,7 +25,7 @@ namespace Reinforcement
             ElementSet elements)
         {
             // Укажите путь к папке, которую вы хотите открыть
-            string folderPath = @"Y:\Revit\_ШаблоныРегламентыЕнисейстрой\BIM-стандарт, инструкции";
+            string folderPath = @"Y:\Revit\_Семейства";
             string arguments = "\"" + folderPath + "\"";
             try
             {
