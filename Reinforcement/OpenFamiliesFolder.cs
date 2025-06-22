@@ -17,7 +17,7 @@ namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
 
-    public class OpenInstructionsFolder : IExternalCommand
+    public class OpenFamiliesFolder : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,

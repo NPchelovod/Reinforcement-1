@@ -53,14 +53,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\AdWindows.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\AdWindows.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="ExcelDataReader, Version=3.7.0.0, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
       <HintPath>..\packages\ExcelDataReader.3.7.0\lib\net462\ExcelDataReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -69,7 +66,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPIUI.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAssemblyResolver">
@@ -82,75 +79,22 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIFramework, Version=24.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\UIFramework.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
-    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
-    <Compile Include="App_Helper_Button.cs" />
-    <Compile Include="App_Panel_1_1_Configuration.cs" />
-    <Compile Include="App_Panel_1_1_Configuration_KR.cs" />
-    <Compile Include="App_Panel_1_2_.cs" />
-    <Compile Include="App_Panel_1_2_KR_SPDS.cs" />
-    <Compile Include="App_Panel_1_3_KR_SketchReinf.cs" />
-    <Compile Include="App_Panel_1_4_KR_DetailReinf.cs" />
-    <Compile Include="App_Panel_1_5_KR_Drawing.cs" />
-    <Compile Include="App_Panel_1_6_KR_Selection.cs" />
-    <Compile Include="App_Panel_1_7_KR_SAPR.cs" />
-    <Compile Include="App_Panel_1_8_KR_Task.cs" />
-    <Compile Include="App_Panel_1_9_KR_to_OV.cs" />
-    <Compile Include="App_Panel_2_1_Configuration_AR.cs" />
-    <Compile Include="App_Panel_3_1_Configuration_OV.cs" />
-    <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
-    <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
-    <Compile Include="App_Panel_6_1_Configuration_Test.cs" />
-    <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
-    <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
+    <Compile Include="CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
-    <Compile Include="OV_Construct\Helper_all_curve_reference.cs" />
-    <Compile Include="LoadAllFamiliesFromDirectory.cs" />
-    <Compile Include="OV_Construct\Control_Pick.cs" />
-    <Compile Include="OV_Construct\OV_Construct_Command.cs" />
-    <Compile Include="OV_Construct\OV_Construct_Command_1before_List_Size_OV.cs" />
-    <Compile Include="OV_Construct\OV_Construct_All_Dictionary.cs" />
-    <Compile Include="OV_Construct\Utilit_1_1__Dict_Axis.cs" />
-    <Compile Include="OV_Construct\Utilit_1_1__Dict_Axis_del_remuve.cs" />
-    <Compile Include="OV_Construct\Utilit_1_2Dict_level_ventsId.cs" />
-    <Compile Include="OV_Construct\Utilit_1_3Dict_ventId_Properts.cs" />
-    <Compile Include="OV_Construct\Utilit_1_4Polyar_coordinate.cs" />
-    <Compile Include="OV_Construct\Utilit_1_5Rotate_coordinate.cs" />
-    <Compile Include="OV_Construct\Utilit_2_1Dict_Grup_numOV_spisokOV.cs" />
-    <Compile Include="OV_Construct\Utilit_2_2List_Size_OV.cs" />
-    <Compile Include="OV_Construct\Utilit_2_3__Dict_numOV_nearAxes.cs" />
-    <Compile Include="OV_Construct\Utilit_2_4Dict_numerateOV.cs" />
-    <Compile Include="OV_Construct\Utilit_2_5ReDict_numOV_spisokOV.cs" />
-    <Compile Include="OV_Construct\Utilit_2_6ListPovtor_OV_on_Plans.cs" />
-    <Compile Include="OV_Construct\Utilit_3_1Create_new_floor.cs" />
-    <Compile Include="OV_Construct\Utilit_3_6Create_new_plan_floor.cs" />
-    <Compile Include="OV_Construct\Utilit_3_4Create_dimensions_on_plans.cs" />
-    <Compile Include="OV_Construct\OV_Construct_Command_2before_Povtor_flour.cs" />
-    <Compile Include="OV_Construct\OV_Construct_Command_3before_Create_plans.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="ReinforcementList\MainViewReinforcementList.xaml.cs">
       <DependentUpon>MainViewReinforcementList.xaml</DependentUpon>
     </Compile>
     <Compile Include="ReinforcementList\ReinforcementList.cs" />
+    <Compile Include="SetDotRebarsByDWG.cs" />
     <Compile Include="CreateNewProjectBySchedule.cs" />
     <Compile Include="OpenInstructionsFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
-    <Compile Include="SPDS&amp;PS\NoteLineCommand25mm.cs" />
-    <Compile Include="SPDS&amp;PS\Utilit_Helper.cs" />
-    <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach.cs" />
     <Compile Include="Test\ChangeReinfFamily.cs" />
     <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />
@@ -184,7 +128,7 @@
     <Compile Include="SPDS&amp;PS\AxisDirectionCommand.cs" />
     <Compile Include="SPDS&amp;PS\AxisCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcShpilkaCommand.cs" />
-    <Compile Include="SPDS&amp;PS\NoteLineCommand35mm.cs" />
+    <Compile Include="SPDS&amp;PS\NoteLineCommand.cs" />
     <Compile Include="LinearCopy\MainViewLinearCopyElement.xaml.cs">
       <DependentUpon>MainViewLinearCopyElement.xaml</DependentUpon>
     </Compile>
@@ -233,10 +177,6 @@
     <Compile Include="Updaters\AutoHoleFloorPoint.cs" />
     <Compile Include="Updaters\ChangeWidthAnnotationTag.cs" />
     <Compile Include="Updaters\RegisterUpdater.cs" />
-    <Compile Include="OV_Construct\Utilit_3_2Dict_Axis.cs" />
-    <Compile Include="OV_Construct\Utilit_3_3Dict_numOV_nearAxes.cs" />
-    <Compile Include="OV_Construct\Utilit_3_5Vinosky_ov_type_size.cs" />
-    <Compile Include="OV_Construct\Utilit_3_7Create_List_of_plans.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />
@@ -244,34 +184,15 @@
     <Compile Include="SPDS&amp;PS\RcLineCommand.cs" />
     <Compile Include="SPDS&amp;PS\RcEndCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Trash\ViewModelCreateSchedules.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
-    <None Include="Resources\CopyTaskFromElectric.png" />
-    <Content Include="Resources\EL_config.png" />
-    <Content Include="Resources\ES_OV_for_KR.png" />
-    <Content Include="Resources\KR_config .png" />
-    <None Include="Resources\KR_config.bmp" />
-    <Content Include="Resources\KR_config.png" />
-    <Content Include="Resources\NoteLine_2.5.png" />
-    <Content Include="Resources\NoteLine_3.5.png" />
-    <Content Include="Resources\OV_config.png" />
-    <None Include="Resources\Panel_1_1_Configuration\AR_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\EL.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\EL_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR2.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR3.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\OB.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\OB_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\OV_config.png" />
-    <None Include="Resources\Panel_1_1_Configuration\Test_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
-    <Content Include="Resources\VK_config.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />
     <None Include="Resources\SoilBorder.png" />
@@ -323,8 +244,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

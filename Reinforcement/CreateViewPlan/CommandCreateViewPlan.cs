@@ -26,10 +26,7 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
+            RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
             try
             {
@@ -49,7 +46,5 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-
     }
-
 }
