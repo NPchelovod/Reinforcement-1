@@ -90,6 +90,9 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Models\ModelCalculateReinforcementArchitectureWalls.cs" />
+    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModels\InputViewModelCalculateReinforcementArchitectureWalls.cs" />
+    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModels\ResultViewModelCalculateReinforcementArchitectureWalls.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
@@ -109,6 +112,7 @@
     <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
     <Compile Include="App_Panel_6_1_Configuration_Test.cs" />
     <Compile Include="App_Panel_Helper.cs" />
+    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Commands\CalculateReinforcementArchitectureWallsCommand.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
@@ -364,7 +368,9 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="2_Architecture\CalculateReinforcementArchitectureWalls\Views\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"

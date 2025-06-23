@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
@@ -59,9 +60,9 @@ namespace Reinforcement
             // Список требуемых семейств
             var requiredFamilies = new List<string>()
             {
-                "Короб ЭЛ_Квадратный",
-                "Короб ЭЛ_Круглый",
-                "ЕС_Закладная ЭЛ в плите"
+                "Коробка ЭЛ_Л251",
+                "Коробка ЭЛ_КУ1301",
+            //  "ЕС_Закладная ЭЛ в плите"
             };
 
             // Проверка наличия семейств в проекте
@@ -70,7 +71,7 @@ namespace Reinforcement
                     .OfClass(typeof(Family))
                     .Cast<Family>()
                     .Any(f => f.Name.Equals(familyName)))
-                .ToList();
+                    .ToList();
 
             if (missingFamilies.Any())
             {
@@ -100,7 +101,7 @@ namespace Reinforcement
             var linkedViewIds = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
-                .Where(x => x.Name.ToLower().Contains("40_эл"))
+                .Where(x => !x.IsTemplate && x.Name.ToLower().Contains("40_эл"))
                 .Select(x => x.Id)
                 .ToList();
 
@@ -154,28 +155,28 @@ namespace Reinforcement
                         new ElementCategoryFilter(BuiltInCategory.OST_Walls),
                         new ElementCategoryFilter(BuiltInCategory.OST_Floors));
 
-                    // Копирование элементов
-                    foreach (var element in elementsToCopy)
-                    {
-                        var location = element.Location as LocationPoint;
-                        if (location == null) continue;
+                    //// Копирование элементов
+                    //foreach (var element in elementsToCopy)
+                    //{
+                    //    var location = element.Location as LocationPoint;
+                    //    if (location == null) continue;
 
-                        XYZ point = location.Point;
-                        XYZ orientation = element.HandOrientation;
+                    //    XYZ point = location.Point;
+                    //    XYZ orientation = element.HandOrientation;
 
-                        // Поиск ближайшей поверхности
-                        var intersector = new ReferenceIntersector(wallFloorFilter, FindReferenceTarget.Face, activeView as View3D);
-                        var reference = intersector.FindNearest(point, XYZ.BasisZ)?.GetReference();
+                    //    // Поиск ближайшей поверхности
+                    //    var intersector = new ReferenceIntersector(wallFloorFilter, FindReferenceTarget.Face, activeView as View3D);
+                    //    var reference = intersector.FindNearest(point, XYZ.BasisZ)?.GetReference();
 
-                        if (reference == null) continue;
+                    //    if (reference == null) continue;
 
-                        // Создание экземпляра семейства
-                        var symbolIndex = requiredFamilies.IndexOf(element.Symbol.FamilyName);
-                        if (symbolIndex >= 0)
-                        {
-                            doc.Create.NewFamilyInstance(reference, point, orientation, symbols[symbolIndex]);
-                        }
-                    }
+                    //    // Создание экземпляра семейства
+                    //    var symbolIndex = requiredFamilies.IndexOf(element.Symbol.FamilyName);
+                    //    if (symbolIndex >= 0)
+                    //    {
+                    //        doc.Create.NewFamilyInstance(reference, point, orientation, symbols[symbolIndex]);
+                    //    }
+                    //}
 
                     // Копирование видов
                     var copiedViewIds = ElementTransformUtils.CopyElements(
@@ -184,6 +185,19 @@ namespace Reinforcement
                         doc,
                         Transform.Identity,
                         copyOptions);
+
+                    foreach (var viewId in copiedViewIds)
+                    {
+                        var element = doc.GetElement(viewId);
+                        if (element == null)
+                        {
+                            TaskDialog.Show("NULL", $"ID {viewId.IntegerValue} не существует в целевом документе.");
+                        }
+                        else
+                        {
+                            TaskDialog.Show("OK", $"Скопирован элемент: {element.Name} ({element.GetType().Name})");
+                        }
+                    }
 
                     // Копирование линий в виды
                     foreach (var viewId in copiedViewIds)
@@ -243,7 +257,7 @@ namespace Reinforcement
 
                     t.Commit();
 
-                    // Вывод информации о не скопированных элементах
+                   // Вывод информации о не скопированных элементах
                     if (excludedElements.Count > 0)
                     {
                         TaskDialog.Show("Предупреждение",
