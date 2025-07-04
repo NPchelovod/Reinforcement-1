@@ -1,0 +1,117 @@
+﻿<Window x:Class="Reinforcement._2_Architecture.CalculateReinforcementArchitectureWalls.View.CalculateReinforcementArchitectureWallsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Reinforcement._2_Architecture.CalculateReinforcementArchitectureWalls.View"
+             mc:Ignorable="d" 
+             Title="Вычисление армирования в АР стенах" d:DesignHeight="770" d:DesignWidth="700"
+             WindowStyle="None"
+             AllowsTransparency="True"
+             Background="Transparent">
+    <Window.Resources>
+        <Style x:Key="HeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="White"
+            BorderBrush="Black"
+            BorderThickness="1"
+            CornerRadius="6"
+             MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Ввод информации" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" Margin="0,10,0,0" />
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+            <TextBlock Text="Кирпичные стены" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов армирования на этаж" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumbersOfRowsInBricks, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Шаг деталей (крепление к перекрытию) в метрах" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding StepOfTopJointsInBricks, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumberOfSideJointsInBricks, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <TextBlock Text="Газобетонные стены наружные" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов армирования" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumbersOfRowsInExternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Шаг деталей (крепление к перекрытию) в метрах" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding StepOfTopJointsInExternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumberOfSideJointsInExternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <TextBlock Text="Газобетонные стены внутренние" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов армирования на этаж" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumbersOfRowsInInternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Шаг деталей (крепление к перекрытию) в метрах" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding StepOfTopJointsInInternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="400"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumberOfSideJointsInInternalGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <TextBlock Text="Результаты расчета" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" />
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+            
+            <TextBlock Text="Кирпич" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Армирование (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding ReinforcementInBricks}"/>
+                <TextBlock Text="Детали крепления (шт.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding NumberOfJointsInBricks}"/>
+                <TextBlock Text="Вилатерм (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding LengthOfVilatermInBricks}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <TextBlock Text="Газобетон наружный" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Армирование (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding ReinforcementInExternalGasConcrete}"/>
+                <TextBlock Text="Детали крепления (шт.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding NumberOfJointsInExternalGasConcrete}"/>
+                <TextBlock Text="Вилатерм (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding LengthOfVilatermInExternalGasConcrete}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <TextBlock Text="Газобетон внутренний" HorizontalAlignment="Center" FontSize="16" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Армирование (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding ReinforcementInInternalGasConcrete}"/>
+                <TextBlock Text="Детали крепления (шт.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding NumberOfJointsInInternalGasConcrete}"/>
+                <TextBlock Text="Вилатерм (п.м.)" Margin="7"/>
+                <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray" Text="{Binding LengthOfVilatermInInternalGasConcrete}"/>
+            </StackPanel>
+            <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Выполнить" Width="100" HorizontalAlignment="Center" Margin="0,0,50,0" Click="OnRunClick"/>
+                <Button Content="Закрыть" Width="100" HorizontalAlignment="Center" Margin="0,0,50,0" Click="OnCancelClick"/>
+            </StackPanel>
+            
+        </StackPanel>
+    </Border>
+</Window>

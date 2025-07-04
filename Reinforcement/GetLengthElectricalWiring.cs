@@ -51,41 +51,41 @@ namespace Reinforcement
             //Create the dictionary
             var lineStyleActions = new Dictionary<string, Action<float>>
             {
-                { "_d25", length => d25Sum += length },
-                { "_d25 d25", length => d25Sum += (length * 2) },
-                { "_d25 d25 d25", length => d25Sum += (length * 3) },
-                { "_d25 d25 d25 d25", length => d25Sum += (length * 4) },
-                { "_d32", length => d32Sum += length },
-                { "_d32 d25", length =>
+                { "ЭЛ_d25", length => d25Sum += length },
+                { "ЭЛ_d25x2", length => d25Sum += (length * 2) },
+                { "ЭЛ_d25х3", length => d25Sum += (length * 3) },
+                { "ЭЛ_d25х4", length => d25Sum += (length * 4) },
+                { "ЭЛ_d32", length => d32Sum += length },
+                { "ЭЛ_d32, d25", length =>
                 {
                     d25Sum += length;
                     d32Sum += length;
                 }},
-                { "_d32 d32", length => d32Sum += (length * 2) },
-                { "_d32 d40", length =>
+                { "ЭЛ_d32x2", length => d32Sum += (length * 2) },
+                { "ЭЛ_d32, d40", length =>
                 {
                     d32Sum += length;
                     d40Sum += length;
                 }},
-                { "_d32 d32 d25", length =>
+                { "ЭЛ_d32x2, d25", length =>
                 {
                     d25Sum += length;
                     d32Sum += (length * 2);
                 }},
-                { "_d32 d32 d32", length => d32Sum += (length * 3) },
-                { "_d32 d50", length =>
+                { "ЭЛ_d32x3", length => d32Sum += (length * 3) },
+                { "ЭЛ_d32, d50", length =>
                 {
                     d32Sum += length;
                     d50Sum += length;
                 }},
-                { "_d40", length => d40Sum += length },
-                { "_d50", length => d50Sum += length },
-                { "_d32 d32 d40", length =>
+                { "ЭЛ_d40", length => d40Sum += length },
+                { "ЭЛ_d50", length => d50Sum += length },
+                { "ЭЛ_d32x2, d40", length =>
                 {
                     d40Sum += length;
                     d32Sum += (length * 2);
                 }},
-                { "_d25 d40", length =>
+                { "ЭЛ_d25, d40", length =>
                 {
                     d25Sum += length;
                     d40Sum += length;
