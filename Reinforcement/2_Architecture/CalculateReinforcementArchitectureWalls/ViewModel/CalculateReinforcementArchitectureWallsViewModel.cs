@@ -20,59 +20,47 @@ namespace Reinforcement
     public class CalculateReinforcementArchitectureWallsViewModel : INotifyPropertyChanged
     {
         #region Поля
-        private double _numbersOfRowsInBricks;
+        private double _numberOfRowsInBricks;
         private double _stepOfTopJointsInBricks;
-        private double _numbersOfRowsInInternalGasConcrete;
-        private double _stepOfTopJointsInInternalGasConcrete;
-        private double _numbersOfRowsInExternalGasConcrete;
-        private double _stepOfTopJointsInExternalGasConcrete;
+        private double _numberOfRowsInGasConcrete;
+        private double _stepOfTopJointsInGasConcrete;
 
         private double _reinforcementInBricks;
-        private double _numbersOfJointsInBricks;
+        private double _numberOfJointsInBricks;
         private double _lengthOfVilatermInBricks;
-        private double _reinforcementInInternalGasConcrete;
-        private double _numberOfJointsInInternalGasConcrete;
-        private double _lengthOfVilatermInInternalGasConcrete;
-        private double _reinforcementInExternalGasConcrete;
-        private double _numberOfJointsInExternalGasConcrete;
-        private double _lengthOfVilatermInExternalGasConcrete;
+        private double _reinforcementInGasConcrete;
+        private double _numberOfJointsInGasConcrete;
+        private double _lengthOfVilatermInGasConcrete;
 
-        private double _numbersOfSideJointsInBricks;
-        private double _numberOfSideJointsInInternalGasConcrete;
-        private double _numberOfSideJointsInExternalGasConcrete;
+        private double _numberOfSideJointsInBricks;
+        private double _numberOfSideJointsInGasConcrete;
+        private double _totalNumberOfSideJointsInBricks;
+        private double _totalNumberOfSideJointsInGasConcrete;
+
         #endregion
 
 
         #region Свойства
-        public double NumbersOfRowsInBricks
+        public double NumberOfRowsInBricks
         {
-            get => _numbersOfRowsInBricks;
-            set { _numbersOfRowsInBricks = value; OnPropertyChanged(); }
+            get => _numberOfRowsInBricks;
+            set { _numberOfRowsInBricks = value; OnPropertyChanged(); }
         }
         public double StepOfTopJointsInBricks
         {
             get => _stepOfTopJointsInBricks;
-            set { _stepOfTopJointsInBricks = value; OnPropertyChanged(); }        }
-        public double NumbersOfRowsInInternalGasConcrete
-        {
-            get => _numbersOfRowsInInternalGasConcrete;
-            set { _numbersOfRowsInInternalGasConcrete = value; OnPropertyChanged(); }
+            set { _stepOfTopJointsInBricks = value; OnPropertyChanged(); }        
         }
-        public double StepOfTopJointsInInternalGasConcrete
+        public double NumberOfRowsInGasConcrete
         {
-            get => _stepOfTopJointsInInternalGasConcrete;
-            set { _stepOfTopJointsInInternalGasConcrete = value; OnPropertyChanged(); }
+            get => _numberOfRowsInGasConcrete;
+            set { _numberOfRowsInGasConcrete = value; OnPropertyChanged(); }
         }
-        public double NumbersOfRowsInExternalGasConcrete
+        public double StepOfTopJointsInGasConcrete
         {
-            get => _numbersOfRowsInExternalGasConcrete;
-            set { _numbersOfRowsInExternalGasConcrete = value; OnPropertyChanged(); }
-        }
-        public double StepOfTopJointsInExternalGasConcrete
-        {
-            get => _stepOfTopJointsInExternalGasConcrete;
-            set { _stepOfTopJointsInExternalGasConcrete = value; OnPropertyChanged(); }
-        }
+            get => _stepOfTopJointsInGasConcrete;
+            set { _stepOfTopJointsInGasConcrete = value; OnPropertyChanged(); }
+        }    
         public double ReinforcementInBricks
         {
             get => _reinforcementInBricks;
@@ -80,58 +68,48 @@ namespace Reinforcement
         }
         public double NumberOfJointsInBricks
         {
-            get => _numbersOfJointsInBricks;
-            set { _numbersOfJointsInBricks = value; OnPropertyChanged(); }
+            get => _numberOfJointsInBricks;
+            set { _numberOfJointsInBricks = value; OnPropertyChanged(); }
         }
         public double LengthOfVilatermInBricks
         {
             get => _lengthOfVilatermInBricks;
             set { _lengthOfVilatermInBricks = value; OnPropertyChanged(); }
         }
-        public double ReinforcementInInternalGasConcrete
+        public double ReinforcementInGasConcrete
         {
-            get => _reinforcementInInternalGasConcrete;
-            set { _reinforcementInInternalGasConcrete = value; OnPropertyChanged(); }
+            get => _reinforcementInGasConcrete;
+            set { _reinforcementInGasConcrete = value; OnPropertyChanged(); }
         }
-        public double NumberOfJointsInInternalGasConcrete
+        public double NumberOfJointsInGasConcrete
         {
-            get => _numberOfJointsInInternalGasConcrete;
-            set { _numberOfJointsInInternalGasConcrete = value; OnPropertyChanged(); }
+            get => _numberOfJointsInGasConcrete;
+            set { _numberOfJointsInGasConcrete = value; OnPropertyChanged(); }
         }
-        public double LengthOfVilatermInInternalGasConcrete
+        public double LengthOfVilatermInGasConcrete
         {
-            get => _lengthOfVilatermInInternalGasConcrete;
-            set { _lengthOfVilatermInInternalGasConcrete = value; OnPropertyChanged(); }
-        }
-        public double ReinforcementInExternalGasConcrete
-        {
-            get => _reinforcementInExternalGasConcrete;
-            set { _reinforcementInExternalGasConcrete = value; OnPropertyChanged(); }
-        }
-        public double NumberOfJointsInExternalGasConcrete
-        {
-            get => _numberOfJointsInExternalGasConcrete;
-            set { _numberOfJointsInExternalGasConcrete = value; OnPropertyChanged(); }
-        }
-        public double LengthOfVilatermInExternalGasConcrete
-        {
-            get => _lengthOfVilatermInExternalGasConcrete;
-            set { _lengthOfVilatermInExternalGasConcrete = value; OnPropertyChanged(); }
+            get => _lengthOfVilatermInGasConcrete;
+            set { _lengthOfVilatermInGasConcrete = value; OnPropertyChanged(); }
         }
         public double NumberOfSideJointsInBricks
         {
-            get => _numbersOfSideJointsInBricks;
-            set { _numbersOfSideJointsInBricks = value; OnPropertyChanged(); }
+            get => _numberOfSideJointsInBricks;
+            set { _numberOfSideJointsInBricks = value; OnPropertyChanged(); }
         }
-        public double NumberOfSideJointsInInternalGasConcrete
+        public double NumberOfSideJointsInGasConcrete
         {
-            get => _numberOfSideJointsInInternalGasConcrete;
-            set { _numberOfSideJointsInInternalGasConcrete = value; OnPropertyChanged(); }
+            get => _numberOfSideJointsInGasConcrete;
+            set { _numberOfSideJointsInGasConcrete = value; OnPropertyChanged(); }
         }
-        public double NumberOfSideJointsInExternalGasConcrete
+        public double TotalNumberOfSideJointsInBricks
         {
-            get => _numberOfSideJointsInExternalGasConcrete;
-            set { _numberOfSideJointsInExternalGasConcrete = value; OnPropertyChanged(); }
+            get => _totalNumberOfSideJointsInBricks;
+            set { _totalNumberOfSideJointsInBricks = value; OnPropertyChanged(); }
+        }
+        public double TotalNumberOfSideJointsInGasConcrete
+        {
+            get => _totalNumberOfSideJointsInGasConcrete;
+            set { _totalNumberOfSideJointsInGasConcrete = value; OnPropertyChanged(); }
         }
         #endregion
 
@@ -148,9 +126,20 @@ namespace Reinforcement
 
             // Разделяем на отдельные списки по типу стен
             var bricksWallsCollector = wallsCollector.Where(wall => wall.WallType.Name.Contains("Кирпич")).ToList();
-            var gasInternalConcreteWallsCollector = wallsCollector.Where(wall => wall.WallType.Name.Contains("Газобетон внутренний")).ToList();
-            var gasExternalConcreteWallsCollector = wallsCollector.Where(wall => wall.WallType.Name.Contains("Газобетон наружный")).ToList();
+            var gasConcreteWallsCollector = wallsCollector.Where(wall => wall.WallType.Name.Contains("Газобетон")).ToList();
             var concreteWallsCollector = wallsCollector.Where(wall => wall.WallType.Name.Contains("Бетон")).ToList();
+
+            // Получаем витражные стены
+            var curtainWallsCollector = new FilteredElementCollector(doc)
+            .OfClass(typeof(Wall))
+            .WhereElementIsNotElementType()
+            .Cast<Wall>()
+            .Where(w =>
+            {
+                WallType type = doc.GetElement(w.GetTypeId()) as WallType;
+                return type != null && type.Kind == WallKind.Curtain;
+            }).ToList();
+             
 
             // 2. Получаем экземпляры дверей в различных типах стен
             var doorInBricksWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Doors).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(door =>
@@ -159,16 +148,10 @@ namespace Reinforcement
                 return host != null && host.WallType.Name.Contains("Кирпич");
             }).ToList();
 
-            var doorInInternalGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Doors).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(door =>
+            var doorInGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Doors).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(door =>
             {
                 var host = door.Host as Wall;
-                return host != null && host.WallType.Name.Contains("Газобетон внутренний");
-            }).ToList();
-
-            var doorInExternalGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Doors).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(door =>
-            {
-                var host = door.Host as Wall;
-                return host != null && host.WallType.Name.Contains("Газобетон наружный");
+                return host != null && host.WallType.Name.Contains("Газобетон");
             }).ToList();
 
             // 3. Получаем экземпляры окон в различных типах окон
@@ -178,57 +161,46 @@ namespace Reinforcement
                 return host != null && host.WallType.Name.Contains("Кирпич");
             }).ToList();
 
-            var windowsInInternalGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Windows).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(window =>
+            var windowsInGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Windows).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(window =>
             {
                 var host = window.Host as Wall;
-                return host != null && host.WallType.Name.Contains("Газобетон внутренний");
-            }).ToList();
-
-            var windowsInExternalGasConcreteWallsCollector = new FilteredElementCollector(doc, activeViewId).OfCategory(BuiltInCategory.OST_Windows).WhereElementIsNotElementType().Cast<FamilyInstance>().Where(window =>
-            {
-                var host = window.Host as Wall;
-                return host != null && host.WallType.Name.Contains("Газобетон наружный");
+                return host != null && host.WallType.Name.Contains("Газобетон");
             }).ToList();
 
             // 4. Считаем сколько раз АР стены касаются монолитных стен
             int numberOfBricksWallsTouchnig = CalculateNumbersOfWallsTouching(bricksWallsCollector, concreteWallsCollector);
-            int numberOfInternalGasConcreteWallsTouchnig = CalculateNumbersOfWallsTouching(gasInternalConcreteWallsCollector, concreteWallsCollector);
-            int numberOfExternalGasConcreteWallsTouchnig = CalculateNumbersOfWallsTouching(gasExternalConcreteWallsCollector, concreteWallsCollector);
+            int numberOfGasConcreteWallsTouchnig = CalculateNumbersOfWallsTouching(gasConcreteWallsCollector, concreteWallsCollector);
 
             // 5. Считаем суммарную длину стен
             double sumBricksWallsLength = CalculateWallsLength(bricksWallsCollector);
-            double sumInternalGasConcreteWallsLength = CalculateWallsLength(gasInternalConcreteWallsCollector);
-            double sumExternalGasConcreteWallsLength = CalculateWallsLength(gasExternalConcreteWallsCollector);
+            double sumGasConcreteWallsLength = CalculateWallsLength(gasConcreteWallsCollector);
 
             // 6. Считаем дополнительное армирование на окна и двери в газобетоне
-            double additionalLengthReinforcementForInternalGasConcrecteWindow = CalculateTotalOpeningsWidth(windowsInInternalGasConcreteWallsCollector) + (1.5 * windowsInInternalGasConcreteWallsCollector.Count);
-            double additionalLengthReinforcementForInternalGasConcrecteDoor = 0.5 * doorInInternalGasConcreteWallsCollector.Count;
-            double additionalLengthReinforcementForExternalGasConcrecteWindow = CalculateTotalOpeningsWidth(windowsInExternalGasConcreteWallsCollector) + (1.5 * windowsInExternalGasConcreteWallsCollector.Count);
-            double additionalLengthReinforcementForExternalGasConcrecteDoor = 0.5 * doorInExternalGasConcreteWallsCollector.Count;
+            double additionalLengthReinforcementForGasConcrecteWindow = CalculateTotalOpeningsWidth(windowsInGasConcreteWallsCollector) + (1.5 * windowsInGasConcreteWallsCollector.Count);
+            double additionalLengthReinforcementForGasConcrecteDoor = 0.5 * doorInGasConcreteWallsCollector.Count;
 
-
-            // 6. Считаем уменьшение армирование из-за вырезания проемами
-            double reductionReinforcementForInternalGasConcreteWindow = CalculateTotalOpeningsWidth(windowsInInternalGasConcreteWallsCollector) * 2;
-            double reductionReinforcementForInternalGasConcreteDoor = CalculateTotalOpeningsWidth(doorInInternalGasConcreteWallsCollector) * 2;
-            double reductionReinforcementForExternalGasConcreteWindow = CalculateTotalOpeningsWidth(windowsInExternalGasConcreteWallsCollector) * 2;
-            double reductionReinforcementForExternalGasConcreteDoor = CalculateTotalOpeningsWidth(doorInExternalGasConcreteWallsCollector) * 2;
+            // 7. Считаем уменьшение армирование из-за вырезания проемами
+            double reductionReinforcementForGasConcreteWindow = CalculateTotalOpeningsWidth(windowsInGasConcreteWallsCollector) * 2;
+            double reductionReinforcementForGasConcreteDoor = CalculateTotalOpeningsWidth(doorInGasConcreteWallsCollector) * 2;
             double reductionReinforcementForBricksWindow = CalculateTotalOpeningsWidth(windowsInBricksWallsCollector) * 4;
             double reductionReinforcementForBricksDoor = CalculateTotalOpeningsWidth(doorInBricksWallsCollector) * 5;
+            double reductionReinforcementForBricksCurtains = LengthOfCurtainWalls(curtainWallsCollector, bricksWallsCollector) * 4;
+            double reductionReinforcementForGasConcreteCurtains = LengthOfCurtainWalls(curtainWallsCollector, gasConcreteWallsCollector) * 4;
 
-            // 7. Расчет и вывод итоговых результатов для пользователя
-            ReinforcementInBricks = (sumBricksWallsLength * NumbersOfRowsInBricks) - reductionReinforcementForBricksDoor - reductionReinforcementForBricksWindow + (numberOfBricksWallsTouchnig * NumberOfSideJointsInBricks)*2;
-            ReinforcementInExternalGasConcrete = (sumExternalGasConcreteWallsLength * NumbersOfRowsInExternalGasConcrete) - reductionReinforcementForExternalGasConcreteDoor - reductionReinforcementForExternalGasConcreteWindow 
-                + additionalLengthReinforcementForExternalGasConcrecteWindow + additionalLengthReinforcementForExternalGasConcrecteDoor;
-            ReinforcementInInternalGasConcrete = (sumInternalGasConcreteWallsLength * NumbersOfRowsInInternalGasConcrete) - reductionReinforcementForInternalGasConcreteDoor - reductionReinforcementForInternalGasConcreteWindow 
-                + additionalLengthReinforcementForInternalGasConcrecteDoor + additionalLengthReinforcementForInternalGasConcrecteWindow;
+            // 8. Расчет и вывод итоговых результатов для пользователя
+            ReinforcementInBricks = (sumBricksWallsLength * NumberOfRowsInBricks) - reductionReinforcementForBricksDoor - reductionReinforcementForBricksWindow
+                + (numberOfBricksWallsTouchnig * NumberOfSideJointsInBricks)*2 - reductionReinforcementForBricksCurtains;
+            ReinforcementInGasConcrete = (sumGasConcreteWallsLength * NumberOfRowsInGasConcrete) - reductionReinforcementForGasConcreteDoor - reductionReinforcementForGasConcreteWindow 
+                + additionalLengthReinforcementForGasConcrecteDoor + additionalLengthReinforcementForGasConcrecteWindow - reductionReinforcementForGasConcreteCurtains;
 
-            NumberOfJointsInBricks = CalculateTopJoints(bricksWallsCollector, StepOfTopJointsInBricks) + numberOfBricksWallsTouchnig * NumberOfSideJointsInBricks;
-            NumberOfJointsInExternalGasConcrete = CalculateTopJoints(gasExternalConcreteWallsCollector, StepOfTopJointsInExternalGasConcrete) + numberOfExternalGasConcreteWallsTouchnig * NumberOfSideJointsInExternalGasConcrete;
-            NumberOfJointsInInternalGasConcrete = CalculateTopJoints(gasInternalConcreteWallsCollector, StepOfTopJointsInInternalGasConcrete) + numberOfInternalGasConcreteWallsTouchnig * NumberOfSideJointsInInternalGasConcrete;
+            NumberOfJointsInBricks = CalculateTopJoints(bricksWallsCollector, StepOfTopJointsInBricks);
+            NumberOfJointsInGasConcrete = CalculateTopJoints(gasConcreteWallsCollector, StepOfTopJointsInGasConcrete) + numberOfGasConcreteWallsTouchnig * NumberOfSideJointsInGasConcrete;
+
+            TotalNumberOfSideJointsInBricks = numberOfBricksWallsTouchnig * NumberOfSideJointsInBricks;
+            TotalNumberOfSideJointsInGasConcrete = numberOfGasConcreteWallsTouchnig * NumberOfSideJointsInGasConcrete;
 
             LengthOfVilatermInBricks = sumBricksWallsLength*2;
-            LengthOfVilatermInInternalGasConcrete = sumInternalGasConcreteWallsLength * 2;
-            LengthOfVilatermInExternalGasConcrete = sumExternalGasConcreteWallsLength * 2;
+            LengthOfVilatermInGasConcrete = sumGasConcreteWallsLength * 2;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -322,6 +294,45 @@ namespace Reinforcement
                 }
             }
             return numberOfTouching;
+        }
+        private bool IsPointInsideBoundingBox(XYZ point, BoundingBoxXYZ box)
+        {
+            return point.X >= box.Min.X && point.X <= box.Max.X &&
+                   point.Y >= box.Min.Y && point.Y <= box.Max.Y &&
+                   point.Z >= box.Min.Z && point.Z <= box.Max.Z;
+        }
+
+        public double LengthOfCurtainWalls (List<Wall> curtainWalls, List<Wall> hostWalls)
+        {
+            double length = 0.0;
+
+            foreach (Wall curtainWall in curtainWalls)
+            {
+                BoundingBoxXYZ curtainBox = curtainWall.get_BoundingBox(null);
+                if (curtainBox == null) continue;
+
+                XYZ curtainCenter = (curtainBox.Min + curtainBox.Max) * 0.5;
+
+                foreach (Wall hostWall in hostWalls)
+                {
+                    BoundingBoxXYZ hostBox = hostWall.get_BoundingBox(null);
+                    if (hostBox == null) continue;
+
+                    if (IsPointInsideBoundingBox(curtainCenter, hostBox))
+                    {
+                        // Считаем длину витражной стены
+                        LocationCurve locCurve = curtainWall.Location as LocationCurve;
+                        if (locCurve != null)
+                        {
+                            double lengthFt = locCurve.Curve.Length;
+                            double lengthInMeters = UnitUtils.ConvertFromInternalUnits(lengthFt, UnitTypeId.Meters);
+                            length += lengthInMeters;
+                        }
+                        break;
+                    }
+                }
+            }
+            return length;
         }
     }
 }
