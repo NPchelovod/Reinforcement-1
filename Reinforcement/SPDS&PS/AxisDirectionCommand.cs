@@ -31,7 +31,7 @@ namespace Reinforcement
 
             Document doc = uidoc.Document;
 
-            var list_Name = new List<string>() { FamName };
+            var list_Name = new List<string>() { FamName, FamName2 };
 
             string Type_seach = "Symbols";
 
@@ -49,7 +49,7 @@ namespace Reinforcement
         }
 
         public static  string FamName { get; set; } = "ЕС_Условная ось";
-
+        public static string FamName2 { get; set; } = "ЕС_О_Ось условно";
     }
     }
 
