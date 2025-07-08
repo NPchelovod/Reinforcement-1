@@ -96,6 +96,7 @@
     </Compile>
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
+    <Compile Include="App_Panel_1_71_KR_vstavka.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
     <Compile Include="App_Panel_1_1_Configuration_KR.cs" />
     <Compile Include="App_Panel_1_2_.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="App_Panel_1_8_KR_Task.cs" />
     <Compile Include="App_Panel_1_9_KR_to_OV.cs" />
     <Compile Include="App_Panel_2_1_Configuration_AR.cs" />
+    <Compile Include="App_Panel_2_2_AR_utilit.cs" />
     <Compile Include="App_Panel_3_1_Configuration_OV.cs" />
     <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
     <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
@@ -140,6 +142,8 @@
     <Compile Include="OV_Construct\Utilit_3_4Create_dimensions_on_plans.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command_2before_Povtor_flour.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command_3before_Create_plans.cs" />
+    <Compile Include="KR_vstavka\Perforation_walls_Command.cs" />
+    <Compile Include="KR_vstavka\Perforation_floor_Command.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -254,11 +258,13 @@
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
     <None Include="Resources\CopyTaskFromElectric.png" />
+    <None Include="Resources\AR_panel\rashet_walls2.png" />
     <Content Include="Resources\EL_config.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
     <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />
     <Content Include="Resources\KR_config.png" />
+    <None Include="Resources\KR_panel\hole_in_walls.png" />
     <Content Include="Resources\NoteLine_2.5.png" />
     <Content Include="Resources\NoteLine_3.5.png" />
     <Content Include="Resources\OV_config.png" />
@@ -275,6 +281,7 @@
     <None Include="Resources\Panel_1_1_Configuration\Test_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
+    <None Include="Resources\rashet_walls2.png" />
     <Content Include="Resources\VK_config.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />

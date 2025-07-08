@@ -57,7 +57,7 @@ namespace Updaters
                 try
                 {
                     string name = element.LookupParameter("Семейство и типоразмер").AsValueString();
-                    if (name.Contains("Выноска"))
+                    if (name.Contains("Выноска") || name.Contains("выноска"))
                     {
                         string firstText = element.LookupParameter("Текст верх").AsString();
                         string secondText = element.LookupParameter("Текст низ").AsString();

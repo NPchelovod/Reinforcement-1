@@ -25,9 +25,9 @@ namespace Reinforcement
                 "Конфигурация",
                 "СПДС",
                 "Выбор",
-                "Оформление"
+                "Оформление",
+                "АР панель"
 
-                
             };
 
             foreach (var panel in PanelVisibility.Panels)

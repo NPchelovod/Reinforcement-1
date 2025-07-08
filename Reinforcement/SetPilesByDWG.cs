@@ -67,6 +67,8 @@ namespace Reinforcement
                 .OrderBy(x => x.Elevation)
                 .FirstOrDefault();
 
+            TransparentNotificationWindow.ShowNotification("Выберите подложку dwg", uidoc, 5);
+
             Reference sel = uidoc.Selection.PickObject(ObjectType.Element);          
             var dwg = doc.GetElement(sel);
             if (!(dwg is ImportInstance))

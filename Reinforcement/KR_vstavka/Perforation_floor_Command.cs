@@ -1,4 +1,4 @@
-#region Namespaces
+﻿#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -15,7 +15,7 @@ using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class SerifCommand : IExternalCommand
+    public class Perforation_floor_Command : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -28,7 +28,7 @@ namespace Reinforcement
 
             Document doc = uidoc.Document;
 
-            var list_Name = new List<string>() { FamName };
+            var list_Name = new List<string>() { FamName, FamName2 };
 
             string Type_seach = "Symbols";
 
@@ -43,8 +43,8 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
-        public static  string FamName { get; set; } = "��_�������";
-
+        public static string FamName { get; set; } = "ЕС_Отверстие прямоугольное_В перекрытии";
+        public static string FamName2 { get; set; } = "Кубик_Перекрытие_Прямоугольный";
     }
 }
 

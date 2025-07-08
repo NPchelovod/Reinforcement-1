@@ -20,7 +20,7 @@ namespace Reinforcement
 {
     public class App_Panel_1_9_KR_to_OV
     {
-        // 7. panelOV временная ничто так не временно как вечность
+       
         public static void AddSplitButton(RibbonPanel ribbonPanel, string name)
         {
             var data = new SplitButtonData(name, name);

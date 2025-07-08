@@ -373,6 +373,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap hole_in_walls {
+            get {
+                object obj = ResourceManager.GetObject("hole_in_walls", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap HomutDistrib {
             get {
                 object obj = ResourceManager.GetObject("HomutDistrib", resourceCulture);
@@ -446,6 +456,16 @@ namespace Reinforcement.Properties {
         internal static System.Drawing.Bitmap PRebarNotEqual {
             get {
                 object obj = ResourceManager.GetObject("PRebarNotEqual", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap rashet_walls2 {
+            get {
+                object obj = ResourceManager.GetObject("rashet_walls2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

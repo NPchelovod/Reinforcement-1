@@ -58,8 +58,10 @@ namespace Reinforcement
                 "Оформление",
                 "Выбор",
                 "САПР",
+                "КР вставки",
                 "Копировать задание",
-                "ОВ плит"
+                "ОВ плит",
+                "АР панель"
             };
 
             // команды которые создают кнопки на конкретных панелях
@@ -92,13 +94,20 @@ namespace Reinforcement
                     case "САПР":
                         App_Panel_1_7_KR_SAPR.KR_SAPR(panel, tabName);
                         break;
+
+                    case "КР вставки":
+                        App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
+                        break;
+
                     case "Копировать задание":
                         App_Panel_1_8_KR_Task.KR_Task(panel, tabName);
                         break;
                     case "ОВ плит":
                         App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
                         break;
-
+                    case "АР панель":
+                        App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
+                        break;
 
                 }
 
@@ -115,6 +124,7 @@ namespace Reinforcement
                 "Оформление",
                 "Выбор",
                 "САПР",
+                "КР вставки",
                 "Копировать задание"
 
             };
