@@ -17,7 +17,7 @@ using View = Autodesk.Revit.DB.View;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class CopyTaskFromElectric : IExternalCommand
+    public class CopyTaskFromElectric2 : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -28,8 +28,7 @@ namespace Reinforcement
             }
 
             UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-
+            UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
             Selection sel = uidoc.Selection;
             View activeView = doc.ActiveView;
@@ -80,45 +79,6 @@ namespace Reinforcement
                 return Result.Failed;
             }
 
-            //удаление на активном виде всех коробок которые были до этого скопированы в наше КР
-            // Собираем все существующие коробки на активном виде
-            FilteredElementCollector collector = new FilteredElementCollector(doc, activeView.Id)
-                .OfClass(typeof(FamilyInstance));
-            var boxesToDelete = collector
-                .Cast<FamilyInstance>()
-                .Where(fi => requiredFamilies.Contains(fi.Symbol.Family.Name))
-                .ToList();
-
-            if (boxesToDelete.Any())
-            {
-                // Диалог подтверждения удаления
-                TaskDialogResult dialogResult = TaskDialog.Show(
-                    "Подтверждение",
-                    $"Найдено {boxesToDelete.Count} коробок на активном виде. Удалить их?",
-                    TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
-                );
-
-                if (dialogResult == TaskDialogResult.Yes)
-                {
-                    // Удаление в транзакции
-                    using (Transaction t = new Transaction(doc, "Удаление коробок"))
-                    {
-                        t.Start();
-
-                        foreach (Element box in boxesToDelete)
-                        {
-                            doc.Delete(box.Id);
-                        }
-
-                        t.Commit();
-                    }
-
-                    TaskDialog.Show("Успех", "Коробки успешно удалены!");
-                }
-                
-            }
-
-
             // Получение типоразмеров
             var symbols = new List<FamilySymbol>();
             foreach (var familyName in requiredFamilies)
@@ -131,7 +91,7 @@ namespace Reinforcement
                 if (symbol == null)
                 {
                     TaskDialog.Show("Ошибка", $"Не найден типоразмер для семейства {familyName}");
-                    continue;
+                    return Result.Failed;
                 }
 
                 symbols.Add(symbol);
@@ -297,7 +257,7 @@ namespace Reinforcement
 
                     t.Commit();
 
-                   // Вывод информации о не скопированных элементах
+                    // Вывод информации о не скопированных элементах
                     if (excludedElements.Count > 0)
                     {
                         TaskDialog.Show("Предупреждение",

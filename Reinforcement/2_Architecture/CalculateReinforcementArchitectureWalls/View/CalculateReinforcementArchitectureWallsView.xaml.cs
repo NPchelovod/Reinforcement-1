@@ -45,5 +45,10 @@ namespace Reinforcement._2_Architecture.CalculateReinforcementArchitectureWalls.
                 this.DragMove();
             }
         }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }
