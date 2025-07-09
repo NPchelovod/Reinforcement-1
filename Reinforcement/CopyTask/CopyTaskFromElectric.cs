@@ -1,5 +1,12 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI.Selection;
+using Autodesk.Revit.UI;
+using System.Collections.Generic;
+using System;
+
+using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
@@ -7,7 +14,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -63,7 +69,6 @@ namespace Reinforcement
             {
                 "Коробка ЭЛ_Л251",
                 "Коробка ЭЛ_КУ1301",
-            //  "ЕС_Закладная ЭЛ в плите"
             };
 
             // Проверка наличия семейств в проекте
@@ -80,8 +85,7 @@ namespace Reinforcement
                 return Result.Failed;
             }
 
-            //удаление на активном виде всех коробок которые были до этого скопированы в наше КР
-            // Собираем все существующие коробки на активном виде
+            // Удаление существующих коробок на активном виде
             FilteredElementCollector collector = new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(FamilyInstance));
             var boxesToDelete = collector
@@ -91,7 +95,6 @@ namespace Reinforcement
 
             if (boxesToDelete.Any())
             {
-                // Диалог подтверждения удаления
                 TaskDialogResult dialogResult = TaskDialog.Show(
                     "Подтверждение",
                     $"Найдено {boxesToDelete.Count} коробок на активном виде. Удалить их?",
@@ -100,42 +103,32 @@ namespace Reinforcement
 
                 if (dialogResult == TaskDialogResult.Yes)
                 {
-                    // Удаление в транзакции
                     using (Transaction t = new Transaction(doc, "Удаление коробок"))
                     {
                         t.Start();
-
                         foreach (Element box in boxesToDelete)
                         {
                             doc.Delete(box.Id);
                         }
-
                         t.Commit();
                     }
-
-                    TaskDialog.Show("Успех", "Коробки успешно удалены!");
                 }
-                
             }
 
+            // Сбор коробок из связанной модели
+            var allConduitFittings = new FilteredElementCollector(linkedDoc)
+                .WhereElementIsNotElementType()
+                .OfCategory(BuiltInCategory.OST_ConduitFitting)
+                .Cast<FamilyInstance>()
+                .ToList();
 
-            // Получение типоразмеров
-            var symbols = new List<FamilySymbol>();
-            foreach (var familyName in requiredFamilies)
-            {
-                var symbol = new FilteredElementCollector(doc)
-                    .OfClass(typeof(FamilySymbol))
-                    .Cast<FamilySymbol>()
-                    .FirstOrDefault(x => x.FamilyName.Equals(familyName));
+            var elementsToCopy = allConduitFittings
+                .Where(x => requiredFamilies.Contains(x.Symbol.Family.Name))
+                .ToList();
 
-                if (symbol == null)
-                {
-                    TaskDialog.Show("Ошибка", $"Не найден типоразмер для семейства {familyName}");
-                    continue;
-                }
-
-                symbols.Add(symbol);
-            }
+            var excludedElements = allConduitFittings
+                .Where(x => !requiredFamilies.Contains(x.Symbol.Family.Name))
+                .ToList();
 
             // Получение видов из связи
             var linkedViewIds = new FilteredElementCollector(linkedDoc)
@@ -143,21 +136,6 @@ namespace Reinforcement
                 .Cast<View>()
                 .Where(x => !x.IsTemplate && x.Name.ToLower().Contains("40_эл"))
                 .Select(x => x.Id)
-                .ToList();
-
-            // Получение элементов для копирования
-            var elementsToCopy = new FilteredElementCollector(linkedDoc)
-                .WhereElementIsNotElementType()
-                .OfCategory(BuiltInCategory.OST_ConduitFitting)
-                .Cast<FamilyInstance>()
-                .Where(x => x.Host != null && x.HostFace != null)
-                .ToList();
-
-            var excludedElements = new FilteredElementCollector(linkedDoc)
-                .WhereElementIsNotElementType()
-                .OfCategory(BuiltInCategory.OST_ConduitFitting)
-                .Cast<FamilyInstance>()
-                .Where(x => x.Host == null || x.HostFace == null)
                 .ToList();
 
             // Подготовка данных для копирования линий
@@ -169,7 +147,6 @@ namespace Reinforcement
                     .OfClass(typeof(CurveElement))
                     .ToElementIds()
                     .ToList();
-
                 detailLinesData.Add(view.Name, (viewId, lines));
             }
 
@@ -179,44 +156,21 @@ namespace Reinforcement
                 {
                     t.Start();
 
-                    // Активация типоразмеров
-                    foreach (var symbol in symbols)
-                    {
-                        if (!symbol.IsActive)
-                            symbol.Activate();
-                    }
-
                     // Настройки копирования
                     var copyOptions = new CopyPasteOptions();
                     copyOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
 
-                    // Фильтр для поиска стен и перекрытий
-                    var wallFloorFilter = new LogicalOrFilter(
-                        new ElementCategoryFilter(BuiltInCategory.OST_Walls),
-                        new ElementCategoryFilter(BuiltInCategory.OST_Floors));
-
-                    //// Копирование элементов
-                    //foreach (var element in elementsToCopy)
-                    //{
-                    //    var location = element.Location as LocationPoint;
-                    //    if (location == null) continue;
-
-                    //    XYZ point = location.Point;
-                    //    XYZ orientation = element.HandOrientation;
-
-                    //    // Поиск ближайшей поверхности
-                    //    var intersector = new ReferenceIntersector(wallFloorFilter, FindReferenceTarget.Face, activeView as View3D);
-                    //    var reference = intersector.FindNearest(point, XYZ.BasisZ)?.GetReference();
-
-                    //    if (reference == null) continue;
-
-                    //    // Создание экземпляра семейства
-                    //    var symbolIndex = requiredFamilies.IndexOf(element.Symbol.FamilyName);
-                    //    if (symbolIndex >= 0)
-                    //    {
-                    //        doc.Create.NewFamilyInstance(reference, point, orientation, symbols[symbolIndex]);
-                    //    }
-                    //}
+                    // КОПИРОВАНИЕ КОРОБОК С ПРЕОБРАЗОВАНИЕМ КООРДИНАТ
+                    if (elementsToCopy.Count > 0)
+                    {
+                        Transform transform = linkedModel.GetTotalTransform();
+                        ICollection<ElementId> copiedElementIds = ElementTransformUtils.CopyElements(
+                            linkedDoc,
+                            elementsToCopy.Select(e => e.Id).ToList(),
+                            doc,
+                            transform,
+                            copyOptions);
+                    }
 
                     // Копирование видов
                     var copiedViewIds = ElementTransformUtils.CopyElements(
@@ -226,40 +180,15 @@ namespace Reinforcement
                         Transform.Identity,
                         copyOptions);
 
-                    foreach (var viewId in copiedViewIds)
-                    {
-                        var element = doc.GetElement(viewId);
-                        if (element == null)
-                        {
-                            TaskDialog.Show("NULL", $"ID {viewId.IntegerValue} не существует в целевом документе.");
-                        }
-                        else
-                        {
-                            TaskDialog.Show("OK", $"Скопирован элемент: {element.Name} ({element.GetType().Name})");
-                        }
-                    }
-
                     // Копирование линий в виды
                     foreach (var viewId in copiedViewIds)
                     {
                         var view = doc.GetElement(viewId) as View;
-                        // Проверка на null
-                        if (view == null)
-                        {
-                            // Логируем проблему, но продолжаем работу
-                            TaskDialog.Show("Предупреждение",
-                                $"Элемент с ID {viewId} не является видом или не может быть преобразован. Пропускаем.");
-                            continue;
-                        }
+                        if (view == null) continue;
 
-                        // Проверяем, есть ли данные для этого вида
                         if (!detailLinesData.TryGetValue(view.Name, out var data))
-                        {
-                            // Вид есть в списке скопированных, но нет в исходных данных
                             continue;
-                        }
 
-                        // Если нет линий для копирования, просто устанавливаем параметр
                         if (data.Item2.Count == 0)
                         {
                             var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
@@ -267,14 +196,9 @@ namespace Reinforcement
                             continue;
                         }
 
-                        // Получаем исходный вид из связанного документа
                         var sourceView = linkedDoc.GetElement(data.Item1) as View;
-                        if (sourceView == null)
-                        {
-                            continue;
-                        }
+                        if (sourceView == null) continue;
 
-                        // Копируем линии
                         try
                         {
                             ElementTransformUtils.CopyElements(
@@ -284,24 +208,22 @@ namespace Reinforcement
                                 Transform.Identity,
                                 copyOptions);
 
-                            // Устанавливаем параметр "Директория"
                             var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
                             param?.Set("Задание ЭЛ");
                         }
                         catch (Exception ex)
                         {
-                            TaskDialog.Show("Ошибка копирования",
-                                $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
+                            TaskDialog.Show("Ошибка копирования", $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
                         }
                     }
 
                     t.Commit();
 
-                   // Вывод информации о не скопированных элементах
+                    // Вывод информации о не скопированных элементах
                     if (excludedElements.Count > 0)
                     {
                         TaskDialog.Show("Предупреждение",
-                            $"Не скопировано элементов: {excludedElements.Count}\n" +
+                            $"Не скопировано элементов (неподходящие семейства): {excludedElements.Count}\n" +
                             $"ID элементов: {string.Join(", ", excludedElements.Select(x => x.Id.ToString()))}");
                     }
                 }

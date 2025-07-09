@@ -156,8 +156,8 @@ namespace Reinforcement
                         new ElementCategoryFilter(BuiltInCategory.OST_Floors));
 
                     //// Копирование элементов
-                    //foreach (var element in elementsToCopy)
-                    //{
+                    foreach (var element in elementsToCopy)
+                    {
                     //    var location = element.Location as LocationPoint;
                     //    if (location == null) continue;
 
@@ -176,7 +176,7 @@ namespace Reinforcement
                     //    {
                     //        doc.Create.NewFamilyInstance(reference, point, orientation, symbols[symbolIndex]);
                     //    }
-                    //}
+                    }
 
                     // Копирование видов
                     var copiedViewIds = ElementTransformUtils.CopyElements(
