@@ -9,8 +9,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Windows.Documents;
-
+using form = System.Windows.Forms;
 #endregion
 
 namespace Reinforcement
@@ -25,7 +26,7 @@ namespace Reinforcement
         {
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+            
             Document doc = uidoc.Document;
 
             // 1. get the active view

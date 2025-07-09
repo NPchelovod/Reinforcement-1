@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.Attributes;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
@@ -11,9 +12,10 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows;
+using form = System.Windows.Forms;
 using System.Windows.Documents;
 using System.Windows.Markup.Localizer;
+
 
 namespace Reinforcement
 {
@@ -29,20 +31,17 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
             Selection sel = uidoc.Selection;
-            Autodesk.Revit.DB.View activeView = uidoc.ActiveView;
+            View activeView = doc.ActiveView;
+            
 
             //check if activeView is section view
             if (activeView.ViewType != ViewType.Section)
             {
-                MessageBox.Show("Не выбран активный вид стен!\n");
+                form.MessageBox.Show("Не выбран активный вид стен!\n");
                 return Result.Failed;
             }
 
@@ -54,7 +53,7 @@ namespace Reinforcement
                         .ToList(); //get all grids on activeView here because of changing cropbox
             if (gridList.Count <= 1)
             {
-                MessageBox.Show("На виде должно быть как минимум 2 оси!");
+                form.MessageBox.Show("На виде должно быть как минимум 2 оси!");
                 return Result.Failed;
             }
             //to create dimensions
@@ -77,7 +76,7 @@ namespace Reinforcement
                 .ToList();
             if (floorList.Count == 0)
             {
-                MessageBox.Show("На виде должна быть плита перекрытия выше выбранных стен Стм");
+                form.MessageBox.Show("На виде должна быть плита перекрытия выше выбранных стен Стм");
                 return Result.Failed;
             }
 
@@ -97,7 +96,7 @@ namespace Reinforcement
             */
             if (!wallList.Any(x => x.LookupParameter("• Тип элемента").AsString() == "Стм"))
             {
-                MessageBox.Show("Не найдено ни одной стены Стм!");
+                form.MessageBox.Show("Не найдено ни одной стены Стм!");
                 return Result.Failed;
             }
 
@@ -453,7 +452,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
+                form.MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;
             }
             return Result.Succeeded;

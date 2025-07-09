@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.UI.Selection;
 using Reinforcement.Stage1.DecorViewPlan;
 using System;
@@ -11,7 +12,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using form = System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using View = Autodesk.Revit.DB.View;
 
@@ -26,13 +27,11 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            
+            Document doc = uidoc.Document;
+
             View activeView = doc.ActiveView;
             int viewScale = activeView.Scale;
             Options opt = new Options()
@@ -60,7 +59,7 @@ namespace Reinforcement
 
             if (floorList.Count == 0)
             {
-                MessageBox.Show("На виде должна быть плита!");
+                form.MessageBox.Show("На виде должна быть плита!");
                 return Result.Failed;
             }
 
@@ -73,7 +72,7 @@ namespace Reinforcement
 
             if (wallList.Count == 0)
             {
-                MessageBox.Show("На виде должны быть стены!");
+                form.MessageBox.Show("На виде должны быть стены!");
                 return Result.Failed;
             }
             wallList =  wallList
@@ -102,7 +101,7 @@ namespace Reinforcement
 
             if (gridList.Count == 0)
             {
-                MessageBox.Show("На виде должны быть оси!");
+                form.MessageBox.Show("На виде должны быть оси!");
                 return Result.Failed;
             }
 
@@ -246,7 +245,7 @@ namespace Reinforcement
 
                         if (wallList.Count == 0)
                         {
-                            MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
+                            form.MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
                             t2.Commit();
                             tg.Assimilate();
                             return Result.Succeeded;
@@ -427,7 +426,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
+                form.MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;
             }
             return Result.Succeeded;
