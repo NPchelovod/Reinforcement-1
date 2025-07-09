@@ -1,23 +1,11 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.UI.Selection;
-using Autodesk.Revit.UI;
-using System.Collections.Generic;
-using System;
-
-using Autodesk.Revit.Attributes;
-using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using View = Autodesk.Revit.DB.View;
 
 namespace Reinforcement
@@ -28,10 +16,9 @@ namespace Reinforcement
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             // Инициализация Revit API
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
+            
+            RevitAPI.Initialize(commandData);
+            
 
             UIApplication uiapp = RevitAPI.UiApplication;
             UIDocument uidoc = uiapp.ActiveUIDocument;
@@ -93,23 +80,59 @@ namespace Reinforcement
                 .Where(fi => requiredFamilies.Contains(fi.Symbol.Family.Name))
                 .ToList();
 
-            if (boxesToDelete.Any())
+            // УДАЛЕНИЕ СУЩЕСТВУЮЩИХ ВИДОВ
+            var viewsToDelete = new FilteredElementCollector(doc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(v => !v.IsTemplate && v.Name.Contains("40_ЭЛ"))
+                .ToList();
+
+            // Диалог подтверждения удаления
+            if (boxesToDelete.Any() || viewsToDelete.Any())
             {
+                string messageText = "";
+                if (boxesToDelete.Any())
+                {
+                    messageText += $"Найдено {boxesToDelete.Count} коробок на активном виде.\n";
+                }
+                if (viewsToDelete.Any())
+                {
+                    messageText += $"Найдено {viewsToDelete.Count} видов с заданием ЭЛ.\n";
+                }
+                messageText += "Удалить их перед копированием новых?";
+
                 TaskDialogResult dialogResult = TaskDialog.Show(
                     "Подтверждение",
-                    $"Найдено {boxesToDelete.Count} коробок на активном виде. Удалить их?",
+                    messageText,
                     TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
                 );
 
                 if (dialogResult == TaskDialogResult.Yes)
                 {
-                    using (Transaction t = new Transaction(doc, "Удаление коробок"))
+                    using (Transaction t = new Transaction(doc, "Удаление элементов"))
                     {
                         t.Start();
+
+                        // Удаление коробок
                         foreach (Element box in boxesToDelete)
                         {
-                            doc.Delete(box.Id);
+                            try
+                            {
+                                doc.Delete(box.Id);
+                            }
+                            catch { }
                         }
+
+                        // Удаление видов
+                        foreach (View view in viewsToDelete)
+                        {
+                            try
+                            {
+                                doc.Delete(view.Id);
+                            }
+                            catch { }
+                        }
+
                         t.Commit();
                     }
                 }
@@ -134,7 +157,7 @@ namespace Reinforcement
             var linkedViewIds = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
-                .Where(x => !x.IsTemplate && x.Name.ToLower().Contains("40_эл"))
+                .Where(x => !x.IsTemplate && x.Name.Contains("40_ЭЛ"))
                 .Select(x => x.Id)
                 .ToList();
 
@@ -160,7 +183,7 @@ namespace Reinforcement
                     var copyOptions = new CopyPasteOptions();
                     copyOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
 
-                    // КОПИРОВАНИЕ КОРОБОК С ПРЕОБРАЗОВАНИЕМ КООРДИНАТ
+                    // КОПИРОВАНИЕ КОРОБОК
                     if (elementsToCopy.Count > 0)
                     {
                         Transform transform = linkedModel.GetTotalTransform();
@@ -172,48 +195,49 @@ namespace Reinforcement
                             copyOptions);
                     }
 
-                    // Копирование видов
-                    var copiedViewIds = ElementTransformUtils.CopyElements(
-                        linkedDoc,
-                        linkedViewIds,
-                        doc,
-                        Transform.Identity,
-                        copyOptions);
-
-                    // Копирование линий в виды
-                    foreach (var viewId in copiedViewIds)
+                    // КОПИРОВАНИЕ ВИДОВ
+                    if (linkedViewIds.Count > 0)
                     {
-                        var view = doc.GetElement(viewId) as View;
-                        if (view == null) continue;
+                        var copiedViewIds = ElementTransformUtils.CopyElements(
+                            linkedDoc,
+                            linkedViewIds,
+                            doc,
+                            Transform.Identity,
+                            copyOptions);
 
-                        if (!detailLinesData.TryGetValue(view.Name, out var data))
-                            continue;
-
-                        if (data.Item2.Count == 0)
+                        // Копирование линий в виды
+                        foreach (var viewId in copiedViewIds)
                         {
-                            var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
-                            param?.Set("Задание ЭЛ");
-                            continue;
-                        }
+                            var view = doc.GetElement(viewId) as View;
+                            if (view == null) continue;
 
-                        var sourceView = linkedDoc.GetElement(data.Item1) as View;
-                        if (sourceView == null) continue;
+                            if (!detailLinesData.TryGetValue(view.Name, out var data))
+                                continue;
 
-                        try
-                        {
-                            ElementTransformUtils.CopyElements(
-                                sourceView,
-                                data.Item2,
-                                view,
-                                Transform.Identity,
-                                copyOptions);
+                            if (data.Item2.Count == 0)
+                            {
+                                SetViewParameter(view, "Задание ЭЛ");
+                                continue;
+                            }
 
-                            var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
-                            param?.Set("Задание ЭЛ");
-                        }
-                        catch (Exception ex)
-                        {
-                            TaskDialog.Show("Ошибка копирования", $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
+                            var sourceView = linkedDoc.GetElement(data.Item1) as View;
+                            if (sourceView == null) continue;
+
+                            try
+                            {
+                                ElementTransformUtils.CopyElements(
+                                    sourceView,
+                                    data.Item2,
+                                    view,
+                                    Transform.Identity,
+                                    copyOptions);
+
+                                SetViewParameter(view, "Задание ЭЛ");
+                            }
+                            catch (Exception ex)
+                            {
+                                TaskDialog.Show("Ошибка копирования", $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
+                            }
                         }
                     }
 
@@ -235,6 +259,18 @@ namespace Reinforcement
             }
 
             return Result.Succeeded;
+        }
+
+        // Вспомогательный метод для установки параметра вида
+        private void SetViewParameter(View view, string value)
+        {
+            try
+            {
+                // GUID параметра "Директория"
+                var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
+                param?.Set(value);
+            }
+            catch { }
         }
 
         // Фильтр выбора (только связи)
