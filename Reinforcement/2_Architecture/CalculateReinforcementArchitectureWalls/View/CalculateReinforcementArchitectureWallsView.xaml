@@ -39,6 +39,18 @@
                 <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="300"/>
                 <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumberOfSideJointsInBricks, UpdateSourceTrigger=PropertyChanged}"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают окна" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForBricksWindow, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают двери" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForBricksDoor, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают витражи" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForBricksCurtains, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
             <Border Height="1" Background="Gray" Margin="0,10,0,10" />
             
             <TextBlock Text="Газобетонные стены" HorizontalAlignment="Center" FontSize="16" />
@@ -53,6 +65,18 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="300"/>
                 <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding NumberOfSideJointsInGasConcrete, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают окна" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForGasConcreteWindow, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают двери" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForGasConcreteDoor, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Количество рядов арм., которое перерезают витражи" Margin="7" Width="300"/>
+                <TextBox Width="200" Margin="7" HorizontalAlignment="Right" Text="{Binding RowsOfReductionReinforcementForGasConcreteCurtains, UpdateSourceTrigger=PropertyChanged}"/>
             </StackPanel>
             <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
