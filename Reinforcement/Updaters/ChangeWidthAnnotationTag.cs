@@ -15,6 +15,9 @@ namespace Updaters
 {
     public class ChangeWidthAnnotationTag : IUpdater
     {
+
+
+
         public static double GetCharacterWidth(Document doc, string text, Single H_size = 3.5f)
         {
             double width = 0;
@@ -22,12 +25,20 @@ namespace Updaters
 
 
             Size textSize = TextRenderer.MeasureText(text, font);
+            int len_text = textSize.Width;
 
-            double k_sg = 0.8*192/182;
+            double k_sg = 75;// 0.0045 * len_text + 0.6248;
 
+            if (H_size == 3.5f && len_text > 2)
+            {
+                //k_sg = 0.0045* len_text + 0.6248;// 0.7863 + 0.0029 * text.Count();//0.8*192/182*(114+8)/130;
+                if (len_text>30)
+                { len_text = 28; }
+                k_sg = - 0.00005 * len_text * len_text + 0.0062 * len_text + 0.6176;
+            }
             if (H_size == 2.5f)
             {
-                k_sg = 0.5524+0.0025* text.Count();
+                k_sg = 0.5524+0.0025* len_text;
             }
 
 
