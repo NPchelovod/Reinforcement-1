@@ -21,15 +21,11 @@ namespace Reinforcement
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            // Инициализация Revit API
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
+            
 
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
             Selection sel = uidoc.Selection;
             View activeView = doc.ActiveView;
 

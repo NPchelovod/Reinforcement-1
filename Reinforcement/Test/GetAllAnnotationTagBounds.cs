@@ -27,13 +27,9 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
             var activeView = doc.ActiveView;
             var scale = activeView.Scale;
             try //ловим ошибку

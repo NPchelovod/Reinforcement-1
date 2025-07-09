@@ -24,10 +24,9 @@ namespace Reinforcement.CopySelectedSchedules
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
 
 
             var viewModel = new ViewModelCopySelectedSchedules();

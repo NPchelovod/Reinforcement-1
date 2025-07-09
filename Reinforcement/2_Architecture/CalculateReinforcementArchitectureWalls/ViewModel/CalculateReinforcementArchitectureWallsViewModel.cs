@@ -115,8 +115,8 @@ namespace Reinforcement
 
         public void Calculate()
         {
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
+
+            
             Document doc = RevitAPI.Document;
             View activeView = doc.ActiveView;
             var activeViewId = activeView.Id;

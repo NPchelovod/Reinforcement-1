@@ -31,12 +31,9 @@ namespace Reinforcement
 
             Selection sel = uidoc.Selection;
 
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
+            
 
-            var reference = RevitAPI.Document;
+            var reference = uidoc.Document;
             var createSchedulesWall = new CreateSchedulesWall(reference);
             var view = new MainViewWall(createSchedulesWall);
             view.ShowDialog();

@@ -37,6 +37,7 @@ namespace Reinforcement
             public static RibbonPanel panelSpds { get; set; }
             */
             public static Dictionary<string, RibbonPanel> Panels { get; } = new Dictionary<string, RibbonPanel>();
+
         }
 
 
@@ -47,7 +48,7 @@ namespace Reinforcement
             string tabName = "≈— BIM";
             app.CreateRibbonTab(tabName);
 
-
+            
             // сюда вписываешь новую панель и вообще все панели здесь в списке, список это пор€док панелей, отображение панелей на конкретной конфигурации задача конфигуратора, в него иди и там настраивай
             var panelNames = new List<string>
             {

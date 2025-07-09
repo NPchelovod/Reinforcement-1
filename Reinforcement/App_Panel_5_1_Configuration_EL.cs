@@ -18,14 +18,13 @@ namespace Reinforcement
           ref string message,
           ElementSet elements)
         {
-
+            RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
             var list_panels_view = new List<string>()
             {
                "Конфигурация",
                 "СПДС",
-                "Выбор",
-                "Оформление"
+                
 
             };
 

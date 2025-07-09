@@ -25,11 +25,10 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            UIApplication uiapp = RevitAPI.UiApplication;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
+            
             
             //Получаем текущее приложение Revit
             Autodesk.Revit.ApplicationServices.Application app = uiapp.Application;

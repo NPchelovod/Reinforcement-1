@@ -36,13 +36,9 @@ namespace Reinforcement
         public static void ExecuteLogic(ExternalCommandData commandData, ref string message, ElementSet elements)
 
         {
-            if (RevitAPI.UiApplication == null)
-            {
-                RevitAPI.Initialize(commandData);
-            }
-            UIApplication uiapp = RevitAPI.UiApplication;
-            UIDocument uidoc = RevitAPI.UiDocument;
-            Document doc = RevitAPI.Document;
+            UIApplication uiapp = commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
 
             ForgeTypeId units = UnitTypeId.Millimeters;
             OV_Construct_Command_2before_Povtor_flour.ExecuteLogic(commandData, ref message, elements);
