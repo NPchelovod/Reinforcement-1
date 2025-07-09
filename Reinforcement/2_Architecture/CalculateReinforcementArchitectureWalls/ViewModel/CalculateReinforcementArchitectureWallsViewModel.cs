@@ -37,6 +37,15 @@ namespace Reinforcement
         private double _totalNumberOfSideJointsInBricks;
         private double _totalNumberOfSideJointsInGasConcrete;
 
+        private double _rowsOfReductionReinforcementForGasConcreteWindow;
+        private double _rowsOfReductionReinforcementForGasConcreteDoor;
+        private double _rowsOfReductionReinforcementForBricksWindow;
+        private double _rowsOfReductionReinforcementForBricksDoor;
+        private double _rowsOfReductionReinforcementForBricksCurtains;
+        private double _rowsOfReductionReinforcementForGasConcreteCurtains;
+
+
+
         #endregion
 
 
@@ -111,6 +120,60 @@ namespace Reinforcement
             get => _totalNumberOfSideJointsInGasConcrete;
             set { _totalNumberOfSideJointsInGasConcrete = value; OnPropertyChanged(); }
         }
+        public double RowsOfReductionReinforcementForGasConcreteWindow
+        {
+            get => _rowsOfReductionReinforcementForGasConcreteWindow;
+            set
+            {
+                _rowsOfReductionReinforcementForGasConcreteWindow = value;
+                OnPropertyChanged();
+            }
+        }
+        public double RowsOfReductionReinforcementForGasConcreteDoor
+        {
+            get => _rowsOfReductionReinforcementForGasConcreteDoor;
+            set
+            {
+                _rowsOfReductionReinforcementForGasConcreteDoor = value;
+                OnPropertyChanged();
+            }
+        }
+        public double RowsOfReductionReinforcementForBricksWindow
+        {
+            get => _rowsOfReductionReinforcementForBricksWindow;
+            set
+            {
+                _rowsOfReductionReinforcementForBricksWindow = value;
+                OnPropertyChanged();
+            }
+        }
+        public double RowsOfReductionReinforcementForBricksDoor
+        {
+            get => _rowsOfReductionReinforcementForBricksDoor;
+            set
+            {
+                _rowsOfReductionReinforcementForBricksDoor = value;
+                OnPropertyChanged();
+            }
+        }
+        public double RowsOfReductionReinforcementForBricksCurtains
+        {
+            get => _rowsOfReductionReinforcementForBricksCurtains;
+            set
+            {
+                _rowsOfReductionReinforcementForBricksCurtains = value;
+                OnPropertyChanged();
+            }
+        }
+        public double RowsOfReductionReinforcementForGasConcreteCurtains
+        {
+            get => _rowsOfReductionReinforcementForGasConcreteCurtains;
+            set
+            {
+                _rowsOfReductionReinforcementForGasConcreteCurtains = value;
+                OnPropertyChanged();
+            }
+        }
         #endregion
 
         public void Calculate()
@@ -180,12 +243,12 @@ namespace Reinforcement
             double additionalLengthReinforcementForGasConcrecteDoor = 0.5 * doorInGasConcreteWallsCollector.Count;
 
             // 7. Считаем уменьшение армирование из-за вырезания проемами
-            double reductionReinforcementForGasConcreteWindow = CalculateTotalOpeningsWidth(windowsInGasConcreteWallsCollector) * 2;
-            double reductionReinforcementForGasConcreteDoor = CalculateTotalOpeningsWidth(doorInGasConcreteWallsCollector) * 2;
-            double reductionReinforcementForBricksWindow = CalculateTotalOpeningsWidth(windowsInBricksWallsCollector) * 4;
-            double reductionReinforcementForBricksDoor = CalculateTotalOpeningsWidth(doorInBricksWallsCollector) * 5;
-            double reductionReinforcementForBricksCurtains = LengthOfCurtainWalls(curtainWallsCollector, bricksWallsCollector) * 4;
-            double reductionReinforcementForGasConcreteCurtains = LengthOfCurtainWalls(curtainWallsCollector, gasConcreteWallsCollector) * 4;
+            double reductionReinforcementForGasConcreteWindow = CalculateTotalOpeningsWidth(windowsInGasConcreteWallsCollector) * RowsOfReductionReinforcementForGasConcreteWindow;
+            double reductionReinforcementForGasConcreteDoor = CalculateTotalOpeningsWidth(doorInGasConcreteWallsCollector) * RowsOfReductionReinforcementForGasConcreteDoor;
+            double reductionReinforcementForBricksWindow = CalculateTotalOpeningsWidth(windowsInBricksWallsCollector) * RowsOfReductionReinforcementForBricksWindow;
+            double reductionReinforcementForBricksDoor = CalculateTotalOpeningsWidth(doorInBricksWallsCollector) * RowsOfReductionReinforcementForBricksDoor;
+            double reductionReinforcementForBricksCurtains = LengthOfCurtainWalls(curtainWallsCollector, bricksWallsCollector) * RowsOfReductionReinforcementForBricksCurtains;
+            double reductionReinforcementForGasConcreteCurtains = LengthOfCurtainWalls(curtainWallsCollector, gasConcreteWallsCollector) * RowsOfReductionReinforcementForGasConcreteCurtains;
 
             // 8. Расчет и вывод итоговых результатов для пользователя
             ReinforcementInBricks = (sumBricksWallsLength * NumberOfRowsInBricks) - reductionReinforcementForBricksDoor - reductionReinforcementForBricksWindow
@@ -194,7 +257,7 @@ namespace Reinforcement
                 + additionalLengthReinforcementForGasConcrecteDoor + additionalLengthReinforcementForGasConcrecteWindow - reductionReinforcementForGasConcreteCurtains;
 
             NumberOfJointsInBricks = CalculateTopJoints(bricksWallsCollector, StepOfTopJointsInBricks);
-            NumberOfJointsInGasConcrete = CalculateTopJoints(gasConcreteWallsCollector, StepOfTopJointsInGasConcrete) + numberOfGasConcreteWallsTouchnig * NumberOfSideJointsInGasConcrete;
+            NumberOfJointsInGasConcrete = CalculateTopJoints(gasConcreteWallsCollector, StepOfTopJointsInGasConcrete);
 
             TotalNumberOfSideJointsInBricks = numberOfBricksWallsTouchnig * NumberOfSideJointsInBricks;
             TotalNumberOfSideJointsInGasConcrete = numberOfGasConcreteWallsTouchnig * NumberOfSideJointsInGasConcrete;
