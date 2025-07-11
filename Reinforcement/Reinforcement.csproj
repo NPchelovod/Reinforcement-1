@@ -240,7 +240,6 @@
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
     <Compile Include="Updaters\AutoHoleFloorPoint.cs" />
-    <Compile Include="Updaters\pasttt.cs" />
     <Compile Include="Updaters\ChangeWidthAnnotationTag.cs" />
     <Compile Include="Updaters\RegisterUpdater.cs" />
     <Compile Include="OV_Construct\Utilit_3_2Dict_Axis.cs" />

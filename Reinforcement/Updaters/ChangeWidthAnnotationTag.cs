@@ -32,12 +32,14 @@ namespace Updaters
             if (H_size == 3.5f && len_text > 2)
             {
                 //k_sg = 0.0045* len_text + 0.6248;// 0.7863 + 0.0029 * text.Count();//0.8*192/182*(114+8)/130;
-                if (len_text>30)
+                if (len_text>30) // для большей длины не корректно
                 { len_text = 28; }
                 k_sg = - 0.00005 * len_text * len_text + 0.0062 * len_text + 0.6176;
             }
             if (H_size == 2.5f)
             {
+                if (len_text > 30) // для большей длины не корректно
+                { len_text = 28; }
                 k_sg = 0.5524+0.0025* len_text;
             }
 
