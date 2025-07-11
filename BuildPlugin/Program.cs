@@ -35,7 +35,7 @@ namespace BuildPlugin
 
             var project = new Project()
             {
-                OutFileName = "ENS plugin 2024 v." + version,
+                OutFileName = "ENS plugin v." + version,
                 Name = projectName,
                 UI = WUI.WixUI_ProgressOnly,
                 OutDir = "output",
