@@ -28,7 +28,13 @@ namespace BuildPlugin
         static void Main(string[] args)
         {
 
-
+            // Добавьте этот код ▼
+            if (Compiler.WixLocation == null)
+            {
+                Compiler.WixLocation = @"C:\Program Files (x86)\WiX Toolset v3.14\bin";
+                // ИЛИ для последних версий:
+                // Compiler.WixLocation = @"C:\Program Files\WiX Toolset v3.14\bin";
+            }
 
 
 
@@ -36,7 +42,7 @@ namespace BuildPlugin
             var project = new Project()
             {
                 OutFileName = "ENS plugin v." + version,
-                Name = projectName,
+                Name = projectName, //имя wix проекта
                 UI = WUI.WixUI_ProgressOnly,
                 OutDir = "output",
                 GUID = new Guid("{003886B5-89F1-480E-86A2-F93C2D8B07DB}"),

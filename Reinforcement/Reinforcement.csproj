@@ -264,6 +264,7 @@
     <Content Include="Resources\EL_config.png" />
     <None Include="Resources\EL_svetilnic.png" />
     <None Include="Resources\EL_panel\EL_svetilnic2.png" />
+    <None Include="Resources\EL_panel\EL_svetilnic.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
     <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />
