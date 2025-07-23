@@ -113,6 +113,7 @@
     <Compile Include="App_Panel_3_1_Configuration_OV.cs" />
     <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
     <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
+    <Compile Include="App_Panel_5_2_EL_utilit.cs" />
     <Compile Include="App_Panel_6_1_Configuration_Test.cs" />
     <Compile Include="App_Panel_Helper.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Command\CalculateReinforcementArchitectureWallsCommand.cs" />
@@ -261,6 +262,8 @@
     <None Include="Resources\CopyTaskFromElectric.png" />
     <None Include="Resources\AR_panel\rashet_walls2.png" />
     <Content Include="Resources\EL_config.png" />
+    <None Include="Resources\EL_svetilnic.png" />
+    <None Include="Resources\EL_panel\EL_svetilnic2.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
     <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />

@@ -24,6 +24,7 @@ namespace Reinforcement
             {
                "Конфигурация",
                 "СПДС",
+                "ЭЛ панель"
                 
 
             };

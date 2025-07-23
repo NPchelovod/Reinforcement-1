@@ -62,7 +62,8 @@ namespace Reinforcement
                 "КР вставки",
                 "Копировать задание",
                 "ОВ плит",
-                "АР панель"
+                "АР панель",
+                "ЭЛ панель"
             };
 
             // команды которые создают кнопки на конкретных панелях
@@ -108,6 +109,10 @@ namespace Reinforcement
                         break;
                     case "АР панель":
                         App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
+                        break;
+
+                    case "ЭЛ панель":
+                        App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
                         break;
 
                 }
