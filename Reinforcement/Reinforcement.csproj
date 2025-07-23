@@ -119,7 +119,7 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Command\CalculateReinforcementArchitectureWallsCommand.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
-    <Compile Include="3_Electric\CopyElectricFromTask.cs" />
+    <Compile Include="3_Electric\EL_panek_Light_without_boxes.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
     <Compile Include="OV_Construct\Helper_all_curve_reference.cs" />
