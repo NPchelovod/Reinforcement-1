@@ -22,7 +22,7 @@ namespace BuildPlugin
     {
         private static string projectName = "Revit ENS plugin 2024";
 
-        private static string formattedDate = DateTime.Today.ToString("yy.MM.dd.h");
+        private static string formattedDate = DateTime.Now.ToString("yy.MM.dd.HH");
 
         private static string version = formattedDate;//"1.2.1";
         static void Main(string[] args)
