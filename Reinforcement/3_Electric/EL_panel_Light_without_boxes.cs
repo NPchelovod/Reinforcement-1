@@ -95,7 +95,7 @@ namespace Reinforcement
             // 2.1 - находим хотя бы один элемент
             // Проверка наличия семейств и типоразмеров, хотя бы один элемент
             var missingElements = new List<string>(); // не найденные в текущей модели элементы, хотя бы один
-
+            var Dict_add = new Dictionary<(string FamilyName, string SymbolName), FamilySymbol>();
             int proxod = 0;
             foreach (var seach_symbol in one_replaceable_element)
             {
@@ -121,29 +121,17 @@ namespace Reinforcement
                     {
                         proxod += 1;
                         symbol = s;
-                        one_replaceable_element[seach_symbol.Key] = symbol;
-                        // Активируем типоразмер, если он не активен
-                        if (!symbol.IsActive)
-                        {
-                            try
-                            {
-                                using (Transaction tActivate = new Transaction(doc, "Activate Symbol"))
-                                {
-                                    tActivate.Start();
-                                    symbol.Activate();
-                                    tActivate.Commit();
-                                }
-                            }
-                            catch
-                            {
-                                TaskDialog.Show("Предупреждение",
-                                    $"Не удалось активировать типоразмер '{symbolName}' в семействе '{familyName}'");
-                            }
-                        }
+                        Dict_add[seach_symbol.Key] = symbol;
                         break;
                     }
                 }
             }
+            // заполняем так как в цикле нельзя было это сделать
+            foreach(var seach_symbol in Dict_add)
+            {
+                one_replaceable_element[seach_symbol.Key] = seach_symbol.Value;
+            }
+
 
             // Если отсутствуют необходимые элементы
             if (missingElements.Count > 0)
@@ -160,6 +148,7 @@ namespace Reinforcement
             // 2.2 в связанной находим все кубики
             // Создаем коллектор для поиска элементов
             var missingElements2 = new List<string>();
+            var Dict_add2 = new Dictionary<(string FamilyName, string SymbolName), List<FamilyInstance>>();
             var collector = new FilteredElementCollector(linkedDoc)
                 .WhereElementIsNotElementType()
                 .OfClass(typeof(FamilyInstance)); // Получаем все экземпляры семейств
@@ -186,10 +175,17 @@ namespace Reinforcement
                     continue;
                 }
                 proxod += 1;
-                all_replace_cubics[seach_symbol.Key] = elementsToReplace;
-
+                Dict_add2[seach_symbol.Key] = elementsToReplace;
+                
 
             }
+            // заполняем так как в цикле нельзя было это сделать
+            foreach (var seach_symbol in Dict_add2)
+            {
+                all_replace_cubics[seach_symbol.Key] = seach_symbol.Value;
+            }
+
+
             // Если отсутствуют необходимые элементы
             if (missingElements2.Count > 0)
             {
@@ -252,10 +248,38 @@ namespace Reinforcement
 
 
 
-            //4 Создание новых элементов
+            
             //4 Создание новых элементов
             try
             {
+
+                // Перед основной транзакцией активируем все необходимые типоразмеры
+                using (Transaction prepTrans = new Transaction(doc, "Подготовка типоразмеров"))
+                {
+                    prepTrans.Start();
+
+                    foreach (var symbolPair in one_replaceable_element)
+                    {
+                        FamilySymbol symbol = symbolPair.Value;
+                        if (symbol != null && !symbol.IsActive && symbol.IsValidObject)
+                        {
+                            try
+                            {
+                                symbol.Activate();
+                            }
+                            catch
+                            {
+                                // Игнорируем ошибки для отдельных типоразмеров
+                                TaskDialog.Show("Ошибка Revit", $"Ошибка активации: {symbol.Name}");
+                            }
+                        }
+                    }
+
+                    doc.Regenerate();
+                    prepTrans.Commit();
+                }
+
+
                 using (Transaction t = new Transaction(doc, "Копирование и замена"))
                 {
                     t.Start();
@@ -481,46 +505,89 @@ namespace Reinforcement
 
         private Reference FindHostSurface(Document doc, View3D view, XYZ point, XYZ direction)
         {
-            if (view == null) return null;
+            if (view == null)
+            {
+                TaskDialog.Show("Ошибка", "Активный вид не является 3D видом");
+                return null;
+            }
+
+            if (point == null || point.IsZeroLength())
+            {
+                TaskDialog.Show("Ошибка", "Нулевые координаты точки");
+                return null;
+            }
+
+            // Если направление не задано, используем вертикальное
+            if (direction == null || direction.IsZeroLength())
+            {
+                direction = XYZ.BasisZ;
+            }
+            else
+            {
+                direction = direction.Normalize();
+            }
 
             try
             {
-                // Создаем комбинированный фильтр для перекрытий и стен
-                ElementFilter floorFilter = new ElementCategoryFilter(BuiltInCategory.OST_Floors);
-                ElementFilter wallFilter = new ElementCategoryFilter(BuiltInCategory.OST_Walls);
-                LogicalOrFilter combinedFilter = new LogicalOrFilter(floorFilter, wallFilter);
+                // Создаем комбинированный фильтр для перекрытий, стен и потолков
+                List<ElementFilter> filters = new List<ElementFilter>
+                {
+                    new ElementCategoryFilter(BuiltInCategory.OST_Floors),
+                    new ElementCategoryFilter(BuiltInCategory.OST_Walls),
+                    new ElementCategoryFilter(BuiltInCategory.OST_Ceilings)
+                };
+
+                LogicalOrFilter combinedFilter = new LogicalOrFilter(filters);
 
                 // Настройка поиска поверхностей
                 ReferenceIntersector refIntersector = new ReferenceIntersector(
                     combinedFilter,
                     FindReferenceTarget.Face,
-                    view);
+                    view)
+                {
+                    // Увеличиваем дальность поиска
+                    FindReferencesInRevitLinks = true
+                };
 
-                // Ищем поверхности в двух направлениях
-                ReferenceWithContext refForward = refIntersector.FindNearest(point, direction);
-                ReferenceWithContext refBackward = refIntersector.FindNearest(point, direction.Negate());
+                // Ищем поверхности в 6 направлениях
+                List<ReferenceWithContext> references = new List<ReferenceWithContext>
+                {
+                    refIntersector.FindNearest(point, direction),
+                    refIntersector.FindNearest(point, -direction),
+                    refIntersector.FindNearest(point, XYZ.BasisX),
+                    refIntersector.FindNearest(point, -XYZ.BasisX),
+                    refIntersector.FindNearest(point, XYZ.BasisY),
+                    refIntersector.FindNearest(point, -XYZ.BasisY),
+                    refIntersector.FindNearest(point, XYZ.BasisZ),
+                    refIntersector.FindNearest(point, -XYZ.BasisZ)
+                };
 
                 // Выбираем ближайшую подходящую поверхность
-                ReferenceWithContext bestRef = null;
-                if (refForward != null && refBackward != null)
-                {
-                    bestRef = refForward.Proximity < refBackward.Proximity ? refForward : refBackward;
-                }
-                else
-                {
-                    bestRef = refForward ?? refBackward;
-                }
+                ReferenceWithContext bestRef = references
+                    .Where(r => r != null)
+                    .OrderBy(r => r.Proximity)
+                    .FirstOrDefault();
 
                 // Проверяем качество поверхности
-                if (bestRef != null && bestRef.Proximity < 2.0) // Максимальное расстояние 2 единицы
+                if (bestRef != null && bestRef.Proximity < 5.0) // Максимальное расстояние 5 единиц
                 {
                     return bestRef.GetReference();
                 }
 
+                // Дополнительный поиск по вертикали
+                ReferenceWithContext verticalRef = refIntersector.FindNearest(point, XYZ.BasisZ) ??
+                                                  refIntersector.FindNearest(point, -XYZ.BasisZ);
+
+                if (verticalRef != null && verticalRef.Proximity < 10.0)
+                {
+                    return verticalRef.GetReference();
+                }
+
                 return null;
             }
-            catch
+            catch (Exception ex)
             {
+                TaskDialog.Show("Ошибка поиска", $"Не удалось найти поверхность: {ex.Message}");
                 return null;
             }
         }
