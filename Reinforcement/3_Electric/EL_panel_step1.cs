@@ -23,12 +23,28 @@ namespace Reinforcement
             {
                 if (copy_svis_model_or_tek_model)
                 {
+                    // Полноценный диалог с инструкцией
+                    TaskDialog dialog = new TaskDialog("Выбор связанной модели");
+                    dialog.MainInstruction = "Выбор исходной модели";
+                    dialog.MainContent = "Пожалуйста, выберите связанную модель Revit в текущем виде, из которой будут копироваться элементы.\n\n"
+                                        + "Убедитесь что:\n"
+                                        + "• Связь видна в текущем виде\n"
+                                        + "• Связь не скрыта фильтрами\n"
+                                        + "• Вы находитесь в 3D виде или виде, где связь отображается";
+                    dialog.CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel;
+
+                    if (dialog.Show() == TaskDialogResult.Cancel)
+                    {
+                        message = "Выбор модели отменен пользователем";
+                        return null;
+                    }
+
                     // Выбор связанной модели
                     ISelectionFilter selFilter = new SelectionFilter();
                     Reference selection = sel.PickObject(
                         ObjectType.Element,
                         selFilter,
-                        "Выберите связанную модель для копирования"
+                        "Укажите связанную модель курсором"
                     );
 
                     RevitLinkInstance linkedModel = doc.GetElement(selection.ElementId) as RevitLinkInstance;
@@ -60,8 +76,16 @@ namespace Reinforcement
         // Фильтр выбора (только связи)
         public class SelectionFilter : ISelectionFilter
         {
-            public bool AllowElement(Element element) => element is RevitLinkInstance;
-            public bool AllowReference(Reference reference, XYZ point) => false;
+            public bool AllowElement(Element elem)
+            {
+                // Разрешаем только связи Revit
+                return elem is RevitLinkInstance;
+            }
+
+            public bool AllowReference(Reference reference, XYZ position)
+            {
+                return false;
+            }
         }
 
 

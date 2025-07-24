@@ -18,7 +18,7 @@ namespace Reinforcement
         public static Dictionary<string, (string FamilyName, string SymbolName, bool RequiresHost)> elementCategories { get; set; } = new Dictionary<string, (string FamilyName, string SymbolName, bool RequiresHost)>()
         {
                 { "в перекрытии патроны", ("патрон", "патрон", false) },
-                { "в перекрытии клеммы", ("Клеммник_для_распаячной_и_", "Клеммник для распаячной и универальной коробок, шаг крепления 60", true) },
+                { "в перекрытии клеммы", ("Клеммник_для_распаячной_и_универальной_коробок_шаг_крепления_60_90_EKF_PROxima", "Клеммник для распаячной и универальной коробок, шаг крепления 60", true) },
                // { "в стенах патроны", ("патрон", "патрон", true) },
                 //{ "в стенах клеммы", ("Клеммник_для_распаячной", "Клеммник для распаячной и универсальной коробок, шаг крепления 60", true) }
         };
@@ -300,7 +300,16 @@ namespace Reinforcement
                         View3D active3DView = doc.ActiveView as View3D;
                         if (active3DView == null)
                         {
-                            TaskDialog.Show("Ошибка", "Требуется активный 3D вид для размещения элементов");
+                            // Попробуем найти любой доступный 3D вид
+                            active3DView = new FilteredElementCollector(doc)
+                                .OfClass(typeof(View3D))
+                                .Cast<View3D>()
+                                .FirstOrDefault(v => !v.IsTemplate && v.Name == "3D Вид");
+
+                            if (active3DView == null)
+                            {
+                                TaskDialog.Show("Ошибка", "Не найден подходящий 3D вид");
+                            }
                             return Result.Failed;
                         }
 
@@ -324,8 +333,18 @@ namespace Reinforcement
                             LocationPoint locPoint = cubic.Location as LocationPoint;
                             if (locPoint == null) continue;
 
-                            XYZ position = locPoint.Point;
-                            XYZ facingOrientation = cubic.FacingOrientation;
+                            //XYZ position = locPoint.Point;
+                            //XYZ facingOrientation = cubic.FacingOrientation;
+                            // ТРАНСФОРМИРУЕМ координаты из связанной модели
+                            XYZ position = transform.OfPoint(locPoint.Point);
+                            XYZ facingOrientation = transform.OfVector(cubic.FacingOrientation).Normalize();
+
+                            // Проверка и установка направления по умолчанию
+                            if (facingOrientation == null || facingOrientation.IsZeroLength())
+                            {
+                                facingOrientation = XYZ.BasisZ;
+                            }
+
 
                             if (!one_replaceable_element.TryGetValue(
                                 (category.FamilyName, category.SymbolName),
@@ -353,9 +372,9 @@ namespace Reinforcement
                                         if (newInstance.Location is LocationPoint newLoc)
                                         {
                                             XYZ offset = position - newLoc.Point;
-                                            if (offset.GetLength() > 0.001)
+                                            if (offset.GetLength() > 0.001)// лучше не двигать, а то в космос улетит
                                             {
-                                                ElementTransformUtils.MoveElement(doc, newInstance.Id, offset);
+                                                //ElementTransformUtils.MoveElement(doc, newInstance.Id, offset);
                                             }
                                         }
 
@@ -365,7 +384,10 @@ namespace Reinforcement
                                     else
                                     {
                                         TaskDialog.Show("Предупреждение",
-                                            $"Не найдена поверхность для размещения клеммы в точке {position}");
+                                        $"Не найдена поверхность для размещения клеммы в точке {position}\n" +
+                                        $"Направление: {facingOrientation}\n" +
+                                        $"Связанный элемент: {cubic.Id}\n" +
+                                        $"Тип: {cubic.Symbol.Name}");
                                     }
                                 }
                                 else
@@ -534,7 +556,9 @@ namespace Reinforcement
                 {
                     new ElementCategoryFilter(BuiltInCategory.OST_Floors),
                     new ElementCategoryFilter(BuiltInCategory.OST_Walls),
-                    new ElementCategoryFilter(BuiltInCategory.OST_Ceilings)
+                    new ElementCategoryFilter(BuiltInCategory.OST_Ceilings),
+                    new ElementCategoryFilter(BuiltInCategory.OST_StructuralFraming),// можно без этих двух
+                     new ElementCategoryFilter(BuiltInCategory.OST_GenericModel)
                 };
 
                 LogicalOrFilter combinedFilter = new LogicalOrFilter(filters);
