@@ -56,7 +56,7 @@ namespace Reinforcement
             // 1) Выбор связанной модели
             bool copy_svis_model_or_tek_model = true; // копируем из связанной модели а не из текущей или наоборот, тогда просто заменяем
 
-            Document linkedDoc = EL_panel_step1.choice_relation_model(copy_svis_model_or_tek_model, ref message, sel, doc); //связанная модель
+            Document linkedDoc = EL_panel_step1_connected_model.choice_relation_model(copy_svis_model_or_tek_model, ref message, sel, doc); //связанная модель
 
             if (linkedDoc == null)
             {
@@ -91,164 +91,25 @@ namespace Reinforcement
             }
 
 
-            
+
             // 2.1 - находим хотя бы один элемент
             // Проверка наличия семейств и типоразмеров, хотя бы один элемент
-            var missingElements = new List<string>(); // не найденные в текущей модели элементы, хотя бы один
-            var Dict_add = new Dictionary<(string FamilyName, string SymbolName), FamilySymbol>();
-            int proxod = 0;
-            foreach (var seach_symbol in one_replaceable_element)
-            {
-                string familyName = seach_symbol.Key.FamilyName;
-                string symbolName = seach_symbol.Key.SymbolName;
-                // Поиск семейства по имени
-                Family family = new FilteredElementCollector(doc)
-                    .OfClass(typeof(Family))
-                    .Cast<Family>()
-                    .FirstOrDefault(f => f.Name.Contains(familyName));
-                if (family == null)
-                {
-                    if (!missingElements.Contains($"Семейство: {familyName}"))
-                        missingElements.Add($"Семейство: {familyName}");
-                    continue;
-                }
-                // Поиск типоразмера по имени в этом семействе
-                FamilySymbol symbol = null;
-                foreach (ElementId id in family.GetFamilySymbolIds())
-                {
-                    FamilySymbol s = doc.GetElement(id) as FamilySymbol;
-                    if (s != null && s.Name.Contains(symbolName))
-                    {
-                        proxod += 1;
-                        symbol = s;
-                        Dict_add[seach_symbol.Key] = symbol;
-                        break;
-                    }
-                }
-            }
-            // заполняем так как в цикле нельзя было это сделать
-            foreach(var seach_symbol in Dict_add)
-            {
-                one_replaceable_element[seach_symbol.Key] = seach_symbol.Value;
-            }
-
-
-            // Если отсутствуют необходимые элементы
-            if (missingElements.Count > 0)
-            {
-                TaskDialog.Show("Ошибка", $"Отсутствуют необходимые элементы в данной модели:\n{string.Join("\n", missingElements)}");
-            }
-            if (proxod==0)
-            {
-                // ни одного семейства нет, но вдруг нам надо просто удалить из текущего проекта кубики? так что пойдем дальше
-                //return Result.Failed;
-            }
+            
+            one_replaceable_element = EL_panel_step2_one_element_sopostav_family.one_element_sopostav_family(one_replaceable_element, doc);
+            
 
 
             // 2.2 в связанной находим все кубики
-            // Создаем коллектор для поиска элементов
-            var missingElements2 = new List<string>();
-            var Dict_add2 = new Dictionary<(string FamilyName, string SymbolName), List<FamilyInstance>>();
-            var collector = new FilteredElementCollector(linkedDoc)
-                .WhereElementIsNotElementType()
-                .OfClass(typeof(FamilyInstance)); // Получаем все экземпляры семейств
-            proxod = 0;
-            foreach (var seach_symbol in all_replace_cubics)
-            {
-                string familyName = seach_symbol.Key.FamilyName;
-                string symbolName = seach_symbol.Key.SymbolName;
-
-                // Фильтруем по имени семейства и типоразмера
-                var elementsToReplace = collector
-                    .Cast<FamilyInstance>()
-                    .Where(fi =>
-                        fi.Symbol != null && // Проверка на null для Symbol
-                        fi.Symbol.Family != null && // Проверка на null для Family
-                        fi.Symbol.Family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase) &&
-                        fi.Symbol.Name.Equals(symbolName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                if (elementsToReplace.Count == 0 )
-                {
-                    
-                    if (!missingElements2.Contains($"Семейство: {familyName}"))
-                        missingElements2.Add($"Семейство: {familyName}");
-                    continue;
-                }
-                proxod += 1;
-                Dict_add2[seach_symbol.Key] = elementsToReplace;
-                
-
-            }
-            // заполняем так как в цикле нельзя было это сделать
-            foreach (var seach_symbol in Dict_add2)
-            {
-                all_replace_cubics[seach_symbol.Key] = seach_symbol.Value;
-            }
-
-
-            // Если отсутствуют необходимые элементы
-            if (missingElements2.Count > 0)
-            {
-                TaskDialog.Show("Ошибка", $"Отсутствуют необходимые элементы в связанной модели:\n{string.Join("\n", missingElements2)}");
-            }
-            if (proxod == 0)
-            {
-                // ни одного семейства нет, но вдруг нам надо просто удалить из текущего проекта кубики? так что пойдем дальше
-                TaskDialog.Show("Информация", "Коробок для замены не найдено");
-                //return Result.Succeeded;
-            }
-
+            
+            all_replace_cubics = EL_panel_step3_all_elements_family_connect_models.all_elements_family_connect_models(all_replace_cubics, linkedDoc);
 
 
             // 3 удаление существующих элементов сначала тех которые должны быть в итоге - светильников и тд
-            collector = new FilteredElementCollector(doc)
-                .WhereElementIsNotElementType()
-                .OfClass(typeof(FamilyInstance)); // Получаем все экземпляры семейств
-
-            var list_del_elements = new List<FamilyInstance>();
-            foreach (var seach_symbol in one_replaceable_element)
-            {
-                string familyName = seach_symbol.Key.FamilyName;
-                string symbolName = seach_symbol.Key.SymbolName;
-                var elementsToReplace = collector
-                    .Cast<FamilyInstance>()
-                    .Where(fi =>
-                        fi.Symbol != null && // Проверка на null для Symbol
-                        fi.Symbol.Family != null && // Проверка на null для Family
-                        fi.Symbol.Family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase) &&
-                        fi.Symbol.Name.Equals(symbolName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                if(elementsToReplace.Count==0)
-                { continue; }
-                list_del_elements.AddRange(elementsToReplace);
-            }
-
-            if (list_del_elements.Count > 0)
-            {
-                TaskDialogResult deleteDecision = TaskDialog.Show("Удаление элементов",
-                    $"Найдено {list_del_elements.Count} существующих элементов, которые мы итак создаём. Удалить их?",
-                    TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
-                if (deleteDecision == TaskDialogResult.Yes)
-                {
-                    try
-                    {
-                        using (Transaction tDel = new Transaction(doc, "Удаление старых элементов"))
-                        {
-                            tDel.Start();
-                            doc.Delete(list_del_elements.Select(e => e.Id).ToList());
-                            tDel.Commit();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        TaskDialog.Show("Ошибка удаления", $"Не удалось удалить элементы: {ex.Message}");
-                    }
-                }
-            }
-
-
-
             
+            EL_panel_step4_delit_elements.delit_one_family(one_replaceable_element, doc);
+
+
+
             //4 Создание новых элементов
             try
             {
@@ -423,53 +284,7 @@ namespace Reinforcement
 
             //5 удаление кубиков в текущем проекте если они были 
 
-            collector = new FilteredElementCollector(doc)
-                .WhereElementIsNotElementType()
-                .OfClass(typeof(FamilyInstance)); // Получаем все экземпляры семейств
-
-            list_del_elements = new List<FamilyInstance>();
-            foreach (var seach_symbol in all_replace_cubics)
-            {
-                string familyName = seach_symbol.Key.FamilyName;
-                string symbolName = seach_symbol.Key.SymbolName;
-                var elementsToReplace = collector
-                    .Cast<FamilyInstance>()
-                    .Where(fi =>
-                        fi.Symbol != null && // Проверка на null для Symbol
-                        fi.Symbol.Family != null && // Проверка на null для Family
-                        fi.Symbol.Family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase) &&
-                        fi.Symbol.Name.Equals(symbolName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                if (elementsToReplace.Count == 0)
-                { continue; }
-                list_del_elements.AddRange(elementsToReplace);
-            }
-
-            if (list_del_elements.Count > 0)
-            {
-                TaskDialogResult deleteDecision = TaskDialog.Show("Удаление элементов",
-                    $"Найдено {list_del_elements.Count} существующих элементов кубиков, которые итак перестраивали, они наверняка не нужны в данном проекте. Удалить их?",
-                    TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
-                if (deleteDecision == TaskDialogResult.Yes)
-                {
-                    try
-                    {
-                        using (Transaction tDel = new Transaction(doc, "Удаление старых элементов"))
-                        {
-                            tDel.Start();
-                            doc.Delete(list_del_elements.Select(e => e.Id).ToList());
-                            tDel.Commit();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        TaskDialog.Show("Ошибка удаления", $"Не удалось удалить элементы: {ex.Message}");
-                    }
-                }
-            }
-
-
-
+            EL_panel_step4_delit_elements.delit_all_family(all_replace_cubics, doc);
 
 
             TaskDialog.Show("Успех", "Замена элементов выполнена успешно");

@@ -94,7 +94,6 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="3_Electric\EL_panel_step2.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
     <Compile Include="App_Panel_1_71_KR_vstavka.cs" />
@@ -123,7 +122,10 @@
     <Compile Include="3_Electric\EL_panel_Light_without_boxes.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
-    <Compile Include="3_Electric\EL_panel_step1.cs" />
+    <Compile Include="3_Electric\EL_panel_step1_connected_model.cs" />
+    <Compile Include="3_Electric\EL_panel_step2_one_element_sopostav_family.cs" />
+    <Compile Include="3_Electric\EL_panel_step3_all_elements_family_connect_models.cs" />
+    <Compile Include="3_Electric\EL_panel_step4_delit_elements.cs" />
     <Compile Include="OV_Construct\Helper_all_curve_reference.cs" />
     <Compile Include="OV_Construct\Control_Pick.cs" />
     <Compile Include="OV_Construct\OV_Construct_Command.cs" />

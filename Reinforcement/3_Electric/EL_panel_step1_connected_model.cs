@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Reinforcement
 {
-    public class EL_panel_step1
+    public class EL_panel_step1_connected_model
     {
         //выбор связанной модели или текущая выдается обратно...
         public static Document
