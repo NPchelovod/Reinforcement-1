@@ -48,7 +48,7 @@ namespace Reinforcement
 
             bool rr = CopyView(doc, linkedDoc);
 
-            if (!rr) { return Result.Failed; }
+            if (!rr && !r) { return Result.Failed; }
             return Result.Succeeded;
         }
 
@@ -104,100 +104,90 @@ namespace Reinforcement
         public static bool CopyView(Document doc, Document linkedDoc, string prefix = "40_ЭЛ")
         {
             // Получение видов из связи
-            var linkedViewIds = new FilteredElementCollector(linkedDoc)
+            var linkedViews = new FilteredElementCollector(linkedDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
                 .Where(x => !x.IsTemplate && x.Name.Contains(prefix))
-                .Select(x => x.Id)
                 .ToList();
-
-            // Подготовка данных для копирования линий
-            var detailLinesData = new Dictionary<string, (ElementId, List<ElementId>)>();
-            foreach (var viewId in linkedViewIds)
-            {
-                var view = linkedDoc.GetElement(viewId) as View;
-                var lines = new FilteredElementCollector(linkedDoc, viewId)
-                    .OfClass(typeof(CurveElement))
-                    .ToElementIds()
-                    .ToList();
-                detailLinesData.Add(view.Name, (viewId, lines));
-            }
-            if (detailLinesData.Count == 0)
-            { return false; }
+            if (linkedViews.Count == 0 ) {return false;}
 
             try
             {
                 using (Transaction t = new Transaction(doc, "Копирование задания ЭЛ"))
                 {
                     t.Start();
-
-                    // Настройки копирования
                     var copyOptions = new CopyPasteOptions();
                     copyOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
 
 
-
-                    // КОПИРОВАНИЕ ВИДОВ
-                    if (linkedViewIds.Count > 0)
+                    // Копирование видов и линий
+                    foreach (View linkedView in linkedViews)
                     {
-                        var copiedViewIds = ElementTransformUtils.CopyElements(
-                            linkedDoc,
-                            linkedViewIds,
-                            doc,
-                            Transform.Identity,
-                            copyOptions);
+                        // Создание вида в целевом документе
+                        View newView = null;
 
-                        // Копирование линий в виды
-                        foreach (var viewId in copiedViewIds)
+                        if (linkedView is ViewPlan linkedViewPlan)
                         {
-                            var view = doc.GetElement(viewId) as View;
-                            if (view == null) continue;
+                            // Получение уровня из связанного вида
+                            Level linkedLevel = linkedViewPlan.GenLevel;
+                            if (linkedLevel == null) continue;
 
-                            if (!detailLinesData.TryGetValue(view.Name, out var data))
-                                continue;
+                            // Поиск ближайшего уровня в целевом документе
+                            Level targetLevel = FindClosestLevel(doc, linkedLevel.Elevation);
+                            if (targetLevel == null) continue;
 
-                            if (data.Item2.Count == 0)
-                            {
-                                SetViewParameter(view, "Задание ЭЛ");
-                                continue;
-                            }
+                            // Создание плана
+                            newView = CreateViewPlan(doc, linkedViewPlan, targetLevel);
+                        }
+                        else if (linkedView is ViewDrafting linkedViewDrafting)
+                        {
+                            // Создание чертежного вида
+                            newView = CreateViewDrafting(doc, linkedViewDrafting);
+                        }
 
-                            var sourceView = linkedDoc.GetElement(data.Item1) as View;
-                            if (sourceView == null) continue;
+                        if (newView == null) continue;
 
+                        // Копирование линий
+                        var lines = new FilteredElementCollector(linkedDoc, linkedView.Id)
+                            .OfClass(typeof(CurveElement))
+                            .ToElementIds()
+                            .ToList();
+
+                        if (lines.Count > 0)
+                        {
                             try
                             {
                                 ElementTransformUtils.CopyElements(
-                                    sourceView,
-                                    data.Item2,
-                                    view,
+                                    linkedView,
+                                    lines,
+                                    newView,
                                     Transform.Identity,
                                     copyOptions);
-
-                                SetViewParameter(view, "Задание ЭЛ");
                             }
                             catch (Exception ex)
                             {
-                                TaskDialog.Show("Ошибка копирования", $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
+                                TaskDialog.Show("Ошибка", $"Не удалось скопировать линии: {ex.Message}");
                             }
                         }
+
+                        // Установка параметра вида
+                        SetViewParameter(newView, "Задание ЭЛ");
                     }
 
                     t.Commit();
 
-                    // Вывод информации о не скопированных элементах
 
                 }
+
+
             }
             catch (Exception ex)
             {
                 TaskDialog.Show("Ошибка", $"Произошла ошибка: {ex.Message}");
                 return false;
             }
-
-
-
             return true;
+
         }
         // Вспомогательный метод для установки параметра вида
         private static void SetViewParameter(View view, string value)
@@ -229,7 +219,62 @@ namespace Reinforcement
             return closestLevel;
 
         }
+        // Создание плана
+        
+        private static ViewPlan CreateViewPlan(Document doc, ViewPlan sourceView, Level targetLevel)
+        {
+            // Получение типа семейства вида
+            View view = sourceView as View;
+            if (view != null)
+            {
+                // Получаем ViewFamilyType исходного вида
+                ElementId sourceViewTypeId = sourceView.GetTypeId();
+                ViewFamilyType sourceViewFamilyType = doc.GetElement(sourceViewTypeId) as ViewFamilyType;
+                // Проверяем, что тип вида найден
+                if (sourceViewFamilyType == null)
+                {
+                    throw new InvalidOperationException("Не удалось получить тип вида для исходного плана.");
+                }
 
+                // Получаем семейство вида
+                ViewFamily viewFamily = sourceViewFamilyType.ViewFamily;
+
+                // Ищем нужный ViewFamilyType по семейству вида
+                ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
+                    .OfClass(typeof(ViewFamilyType))
+                    .Cast<ViewFamilyType>()
+                    .FirstOrDefault(vft => vft.ViewFamily == viewFamily);
+
+
+                if (viewFamilyType == null) return null;
+
+                // Создание плана
+                ViewPlan newView = ViewPlan.Create(doc, viewFamilyType.Id, targetLevel.Id);
+                newView.Name = sourceView.Name;
+                return newView;
+            }
+            return null;
+        }
+        
+
+        // Создание чертежного вида
+        private static  ViewDrafting CreateViewDrafting(Document doc, ViewDrafting sourceView)
+        {
+            // Получение типа семейства вида
+            ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .FirstOrDefault(vft => vft.ViewFamily == ViewFamily.Drafting);
+
+            if (viewFamilyType == null) return null;
+
+            // Создание вида
+            ViewDrafting newView = ViewDrafting.Create(doc, viewFamilyType.Id);
+            newView.Name = sourceView.Name;
+            return newView;
+        }
+
+        
 
 
 
