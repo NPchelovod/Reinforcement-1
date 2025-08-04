@@ -95,7 +95,9 @@ namespace Reinforcement
             // 3 удаление существующих элементов сначала тех которые должны быть в итоге - светильников и тд
 
             EL_panel_step4_delit_elements.delit_one_family(one_replaceable_element, doc);
+            //5 удаление кубиков в текущем проекте если они были 
 
+            EL_panel_step4_delit_elements.delit_all_family(all_replace_cubics, doc);
 
 
             //4 Создание новых элементов
@@ -157,7 +159,7 @@ namespace Reinforcement
 
                             if (active3DView == null)
                             {
-                                TaskDialog.Show("Ошибка", "Не найден подходящий 3D вид");
+                                TaskDialog.Show("Ошибка", "Не найден подходящий 3D вид в текущей модели");
                             }
                             return false;
                         }
@@ -270,9 +272,7 @@ namespace Reinforcement
                 return false;
             }
 
-            //5 удаление кубиков в текущем проекте если они были 
-
-            EL_panel_step4_delit_elements.delit_all_family(all_replace_cubics, doc);
+            
 
 
             TaskDialog.Show("Успех", "Замена элементов выполнена успешно");

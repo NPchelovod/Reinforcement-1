@@ -203,11 +203,20 @@ namespace Reinforcement
         // Поиск ближайшего уровня (допуск 500 мм)
         private static Level FindClosestLevel(Document doc, double sourceElevation)
         {
-            const double tolerance = 0.5; // 500 мм в метрах
+            const double tolerance = 0.5; // 500 мм
             Level closestLevel = null;
             double minDifference = double.MaxValue;
 
-            foreach (Level level in new FilteredElementCollector(doc).OfClass(typeof(Level)))
+            // Используем кеширование для производительности
+            if (_levelsCache == null)
+            {
+                _levelsCache = new FilteredElementCollector(doc)
+                    .OfClass(typeof(Level))
+                    .Cast<Level>()
+                    .ToList();
+            }
+
+            foreach (Level level in _levelsCache)
             {
                 double diff = Math.Abs(level.Elevation - sourceElevation);
                 if (diff < tolerance && diff < minDifference)
@@ -216,46 +225,101 @@ namespace Reinforcement
                     closestLevel = level;
                 }
             }
-            return closestLevel;
 
+            return closestLevel;
         }
+        private static List<Level> _levelsCache;
         // Создание плана
-        
+
         private static ViewPlan CreateViewPlan(Document doc, ViewPlan sourceView, Level targetLevel)
         {
-            // Получение типа семейства вида
-            View view = sourceView as View;
-            if (view != null)
+            try
             {
-                // Получаем ViewFamilyType исходного вида
+                // Получаем тип исходного вида
                 ElementId sourceViewTypeId = sourceView.GetTypeId();
-                ViewFamilyType sourceViewFamilyType = doc.GetElement(sourceViewTypeId) as ViewFamilyType;
-                // Проверяем, что тип вида найден
-                if (sourceViewFamilyType == null)
+                if (sourceViewTypeId == ElementId.InvalidElementId)
                 {
-                    throw new InvalidOperationException("Не удалось получить тип вида для исходного плана.");
+                    TaskDialog.Show("Ошибка", "Исходный вид не имеет типа вида");
+                    return null;
                 }
 
-                // Получаем семейство вида
-                ViewFamily viewFamily = sourceViewFamilyType.ViewFamily;
+                // Определяем семейство вида на основе ViewType
+                ViewFamily viewFamily;
+                switch (sourceView.ViewType)
+                {
+                    case ViewType.FloorPlan:
+                        viewFamily = ViewFamily.FloorPlan;
+                        break;
+                    case ViewType.CeilingPlan:
+                        viewFamily = ViewFamily.CeilingPlan;
+                        break;
+                    case ViewType.EngineeringPlan:
+                        viewFamily = ViewFamily.StructuralPlan;
+                        break;
+                    case ViewType.AreaPlan:
+                        viewFamily = ViewFamily.AreaPlan;
+                        break;
+                    default:
+                        viewFamily = ViewFamily.FloorPlan; // Значение по умолчанию
+                        break;
+                }
 
-                // Ищем нужный ViewFamilyType по семейству вида
-                ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
+                // Ищем подходящий тип вида в целевом документе
+                ViewFamilyType viewFamilyType = null;
+                var viewFamilyTypes = new FilteredElementCollector(doc)
                     .OfClass(typeof(ViewFamilyType))
                     .Cast<ViewFamilyType>()
-                    .FirstOrDefault(vft => vft.ViewFamily == viewFamily);
+                    .ToList();
 
+                foreach (var vft in viewFamilyTypes)
+                {
+                    if (vft.ViewFamily == viewFamily)
+                    {
+                        viewFamilyType = vft;
+                        break;
+                    }
+                }
 
-                if (viewFamilyType == null) return null;
+                // Если не нашли, используем первый доступный тип плана этажа
+                if (viewFamilyType == null)
+                {
+                    foreach (var vft in viewFamilyTypes)
+                    {
+                        if (vft.ViewFamily == ViewFamily.FloorPlan)
+                        {
+                            viewFamilyType = vft;
+                            break;
+                        }
+                    }
+                }
 
-                // Создание плана
+                if (viewFamilyType == null)
+                {
+                    TaskDialog.Show("Ошибка", "Не найден подходящий тип вида для плана");
+                    return null;
+                }
+
+                // Создаем новый план
                 ViewPlan newView = ViewPlan.Create(doc, viewFamilyType.Id, targetLevel.Id);
                 newView.Name = sourceView.Name;
+
+                // Копируем основные параметры
+                try
+                {
+                    newView.Scale = sourceView.Scale;
+                    newView.DisplayStyle = sourceView.DisplayStyle;
+                }
+                catch { /* Игнорируем несущественные ошибки */ }
+
                 return newView;
             }
-            return null;
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка создания плана", ex.Message);
+                return null;
+            }
         }
-        
+
 
         // Создание чертежного вида
         private static  ViewDrafting CreateViewDrafting(Document doc, ViewDrafting sourceView)

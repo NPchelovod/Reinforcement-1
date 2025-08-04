@@ -18,33 +18,35 @@ namespace Reinforcement
         public static void delit_one_family(Dictionary<(string FamilyName, string SymbolName), FamilySymbol> one_replaceable_element, Document doc)
         {
             // 3 удаление существующих элементов сначала тех которые должны быть в итоге - светильников и тд
-
-            var collector = new FilteredElementCollector(doc)
+            View activeView = doc.ActiveView;
+            var collector = new FilteredElementCollector(doc, activeView.Id)//new FilteredElementCollector(doc)
                 .WhereElementIsNotElementType()
                 .OfClass(typeof(FamilyInstance)); // Получаем все экземпляры семейств
-
-            var list_del_elements = new List<FamilyInstance>();
+            var set_del_elements = new HashSet<ElementId>(); // Хранит только уникальные ID
+            
             foreach (var seach_symbol in one_replaceable_element)
             {
                 string familyName = seach_symbol.Key.FamilyName;
                 string symbolName = seach_symbol.Key.SymbolName;
+
                 var elementsToReplace = collector
                     .Cast<FamilyInstance>()
                     .Where(fi =>
-                        fi.Symbol != null && // Проверка на null для Symbol
-                        fi.Symbol.Family != null && // Проверка на null для Family
-                        fi.Symbol.Family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase) &&
+                        fi.Symbol?.Family?.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase) == true &&
                         fi.Symbol.Name.Equals(symbolName, StringComparison.OrdinalIgnoreCase))
+                    .Select(fi => fi.Id) // Берем только ID
                     .ToList();
-                if (elementsToReplace.Count == 0)
-                { continue; }
-                list_del_elements.AddRange(elementsToReplace);
-            }
 
-            if (list_del_elements.Count > 0)
+                foreach (var id in elementsToReplace)
+                {
+                    set_del_elements.Add(id); // HashSet автоматически игнорирует дубликаты
+                }
+            }
+            var list_del_elements = set_del_elements.ToList();
+            if (set_del_elements.Count > 0)
             {
                 TaskDialogResult deleteDecision = TaskDialog.Show("Удаление элементов",
-                    $"Найдено {list_del_elements.Count} существующих элементов, которые мы итак создаём. Удалить их?",
+                    $"Найдено {set_del_elements.Count} существующих элементов, которые мы итак создаём. Удалить их?",
                     TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
                 if (deleteDecision == TaskDialogResult.Yes)
                 {
@@ -53,7 +55,7 @@ namespace Reinforcement
                         using (Transaction tDel = new Transaction(doc, "Удаление старых элементов"))
                         {
                             tDel.Start();
-                            doc.Delete(list_del_elements.Select(e => e.Id).ToList());
+                            doc.Delete(set_del_elements.ToList());
                             tDel.Commit();
                         }
                     }
