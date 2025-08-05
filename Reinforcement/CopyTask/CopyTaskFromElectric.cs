@@ -93,6 +93,7 @@ namespace Reinforcement
                 if (boxesToDelete.Any())
                 {
                     messageText += $"Найдено {boxesToDelete.Count} коробок на активном виде.\n";
+                    messageText += "Удалить их перед копированием новых?";
                 }
                 TaskDialogResult dialogResult = TaskDialog.Show(
                     "Подтверждение",
@@ -103,7 +104,7 @@ namespace Reinforcement
 
                 if (dialogResult == TaskDialogResult.Yes)
                 {
-                    using (Transaction t = new Transaction(doc, "Удаление элементов"))
+                    using (Transaction t = new Transaction(doc, "Удаление элементов1"))
                     {
                         t.Start();
 
@@ -137,16 +138,16 @@ namespace Reinforcement
                     messageText += $"Найдено {viewsToDelete.Count} видов с заданием ЭЛ.\n";
                 }
                 messageText += "Удалить их перед копированием новых?";
-                TaskDialogResult dialogResult = TaskDialog.Show(
+                TaskDialogResult dialogResult2 = TaskDialog.Show(
                     "Подтверждение",
                     messageText,
                     TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
                 );
 
 
-                if (dialogResult == TaskDialogResult.Yes)
+                if (dialogResult2 == TaskDialogResult.Yes)
                 {
-                    using (Transaction t = new Transaction(doc, "Удаление элементов"))
+                    using (Transaction t = new Transaction(doc, "Удаление элементов2"))
                     {
                         t.Start();
 
@@ -180,7 +181,7 @@ namespace Reinforcement
                 .Where(x => !requiredFamilies.Contains(x.Symbol.Family.Name))
                 .ToList();
 
-            
+
 
             try
             {
@@ -204,8 +205,7 @@ namespace Reinforcement
                             copyOptions);
                     }
 
-
-
+                    
                     t.Commit();
                 }
 
@@ -233,7 +233,50 @@ namespace Reinforcement
 
             return Result.Succeeded;
         }
+        // Вспомогательная функция: проверка пересечения с новыми коробками
+        private bool IsIntersectingAnyNewBox(FamilyInstance oldBox, List<FamilyInstance> newBoxes, View view)
+        {
+            BoundingBoxXYZ oldBBox = oldBox.get_BoundingBox(view);
+            if (oldBBox == null) return false;
 
+            foreach (var newBox in newBoxes)
+            {
+                BoundingBoxXYZ newBBox = newBox.get_BoundingBox(view);
+                if (newBBox == null) continue;
+
+                if (DoBoundingBoxesIntersect(oldBBox, newBBox))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Вспомогательная функция: проверка пересечения BoundingBox
+        private bool DoBoundingBoxesIntersect(BoundingBoxXYZ bb1, BoundingBoxXYZ bb2)
+        {
+            // Нормализация координат
+            var minX1 = Math.Min(bb1.Min.X, bb1.Max.X);
+            var maxX1 = Math.Max(bb1.Min.X, bb1.Max.X);
+            var minY1 = Math.Min(bb1.Min.Y, bb1.Max.Y);
+            var maxY1 = Math.Max(bb1.Min.Y, bb1.Max.Y);
+            var minZ1 = Math.Min(bb1.Min.Z, bb1.Max.Z);
+            var maxZ1 = Math.Max(bb1.Min.Z, bb1.Max.Z);
+
+            var minX2 = Math.Min(bb2.Min.X, bb2.Max.X);
+            var maxX2 = Math.Max(bb2.Min.X, bb2.Max.X);
+            var minY2 = Math.Min(bb2.Min.Y, bb2.Max.Y);
+            var maxY2 = Math.Max(bb2.Min.Y, bb2.Max.Y);
+            var minZ2 = Math.Min(bb2.Min.Z, bb2.Max.Z);
+            var maxZ2 = Math.Max(bb2.Min.Z, bb2.Max.Z);
+
+            // Проверка пересечения по осям
+            bool xOverlap = (minX1 <= maxX2) && (maxX1 >= minX2);
+            bool yOverlap = (minY1 <= maxY2) && (maxY1 >= minY2);
+            bool zOverlap = (minZ1 <= maxZ2) && (maxZ1 >= minZ2);
+
+            return xOverlap && yOverlap && zOverlap;
+        }
 
         public static bool CopyView(Document doc, Document linkedDoc, string prefix = "40_ЭЛ")
         {
