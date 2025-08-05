@@ -122,6 +122,7 @@
     <Compile Include="3_Electric\EL_panel_Light_without_boxes.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectricV2_0.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
+    <Compile Include="CopyTask\_Past_Copy.cs" />
     <Compile Include="CreateToposolidFromExcel.cs" />
     <Compile Include="3_Electric\EL_panel_step1_connected_model.cs" />
     <Compile Include="3_Electric\EL_panel_step2_one_element_sopostav_family.cs" />

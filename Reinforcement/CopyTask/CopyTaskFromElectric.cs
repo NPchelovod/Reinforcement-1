@@ -83,25 +83,23 @@ namespace Reinforcement
                 .Where(v => !v.IsTemplate && v.Name.Contains("40_ЭЛ"))
                 .ToList();
 
+
+
             // Диалог подтверждения удаления
-            if (boxesToDelete.Any() || viewsToDelete.Any())
+            if (boxesToDelete.Any())
             {
                 string messageText = "";
+                
                 if (boxesToDelete.Any())
                 {
                     messageText += $"Найдено {boxesToDelete.Count} коробок на активном виде.\n";
                 }
-                if (viewsToDelete.Any())
-                {
-                    messageText += $"Найдено {viewsToDelete.Count} видов с заданием ЭЛ.\n";
-                }
-                messageText += "Удалить их перед копированием новых?";
-
                 TaskDialogResult dialogResult = TaskDialog.Show(
                     "Подтверждение",
                     messageText,
                     TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
                 );
+                
 
                 if (dialogResult == TaskDialogResult.Yes)
                 {
@@ -118,6 +116,39 @@ namespace Reinforcement
                             }
                             catch { }
                         }
+
+                        t.Commit();
+                    }
+                }
+            }
+
+
+
+
+
+            // Диалог подтверждения удаления
+            if (viewsToDelete.Any())
+            {
+                
+                string messageText = "";
+
+                if (viewsToDelete.Any())
+                {
+                    messageText += $"Найдено {viewsToDelete.Count} видов с заданием ЭЛ.\n";
+                }
+                messageText += "Удалить их перед копированием новых?";
+                TaskDialogResult dialogResult = TaskDialog.Show(
+                    "Подтверждение",
+                    messageText,
+                    TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
+                );
+
+
+                if (dialogResult == TaskDialogResult.Yes)
+                {
+                    using (Transaction t = new Transaction(doc, "Удаление элементов"))
+                    {
+                        t.Start();
 
                         // Удаление видов
                         foreach (View view in viewsToDelete)
@@ -149,25 +180,7 @@ namespace Reinforcement
                 .Where(x => !requiredFamilies.Contains(x.Symbol.Family.Name))
                 .ToList();
 
-            // Получение видов из связи
-            var linkedViewIds = new FilteredElementCollector(linkedDoc)
-                .OfClass(typeof(View))
-                .Cast<View>()
-                .Where(x => !x.IsTemplate && x.Name.Contains("40_ЭЛ"))
-                .Select(x => x.Id)
-                .ToList();
-
-            // Подготовка данных для копирования линий
-            var detailLinesData = new Dictionary<string, (ElementId, List<ElementId>)>();
-            foreach (var viewId in linkedViewIds)
-            {
-                var view = linkedDoc.GetElement(viewId) as View;
-                var lines = new FilteredElementCollector(linkedDoc, viewId)
-                    .OfClass(typeof(CurveElement))
-                    .ToElementIds()
-                    .ToList();
-                detailLinesData.Add(view.Name, (viewId, lines));
-            }
+            
 
             try
             {
@@ -191,62 +204,19 @@ namespace Reinforcement
                             copyOptions);
                     }
 
-                    // КОПИРОВАНИЕ ВИДОВ
-                    if (linkedViewIds.Count > 0)
-                    {
-                        var copiedViewIds = ElementTransformUtils.CopyElements(
-                            linkedDoc,
-                            linkedViewIds,
-                            doc,
-                            Transform.Identity,
-                            copyOptions);
 
-                        // Копирование линий в виды
-                        foreach (var viewId in copiedViewIds)
-                        {
-                            var view = doc.GetElement(viewId) as View;
-                            if (view == null) continue;
-
-                            if (!detailLinesData.TryGetValue(view.Name, out var data))
-                                continue;
-
-                            if (data.Item2.Count == 0)
-                            {
-                                SetViewParameter(view, "Задание ЭЛ");
-                                continue;
-                            }
-
-                            var sourceView = linkedDoc.GetElement(data.Item1) as View;
-                            if (sourceView == null) continue;
-
-                            try
-                            {
-                                ElementTransformUtils.CopyElements(
-                                    sourceView,
-                                    data.Item2,
-                                    view,
-                                    Transform.Identity,
-                                    copyOptions);
-
-                                SetViewParameter(view, "Задание ЭЛ");
-                            }
-                            catch (Exception ex)
-                            {
-                                TaskDialog.Show("Ошибка копирования", $"Не удалось скопировать линии в вид {view.Name}: {ex.Message}");
-                            }
-                        }
-                    }
 
                     t.Commit();
-
-                    // Вывод информации о не скопированных элементах
-                    if (excludedElements.Count > 0)
-                    {
-                        TaskDialog.Show("Предупреждение",
-                            $"Не скопировано элементов (неподходящие семейства): {excludedElements.Count}\n" +
-                            $"ID элементов: {string.Join(", ", excludedElements.Select(x => x.Id.ToString()))}");
-                    }
                 }
+
+                // Вывод информации о не скопированных элементах
+                if (excludedElements.Count > 0)
+                {
+                    TaskDialog.Show("Предупреждение",
+                        $"Не скопировано элементов (неподходящие семейства): {excludedElements.Count}\n" +
+                        $"ID элементов: {string.Join(", ", excludedElements.Select(x => x.Id.ToString()))}");
+                }
+                
             }
             catch (Exception ex)
             {
@@ -254,21 +224,105 @@ namespace Reinforcement
                 return Result.Failed;
             }
 
+            bool rr = CopyView(doc, linkedDoc );
+            if(!rr)
+            {
+                TaskDialog.Show("Ошибка","Копирование уровней не выполнено");
+
+            }
+
             return Result.Succeeded;
         }
 
-        // Вспомогательный метод для установки параметра вида
-        private void SetViewParameter(View view, string value)
+
+        public static bool CopyView(Document doc, Document linkedDoc, string prefix = "40_ЭЛ")
         {
+            // Получение видов из связи
+            var linkedViews = new FilteredElementCollector(linkedDoc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(x => !x.IsTemplate && x.Name.Contains(prefix))
+                .ToList();
+            if (linkedViews.Count == 0) { return false; }
+
             try
             {
-                // GUID параметра "Директория"
-                var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
-                param?.Set(value);
-            }
-            catch { }
-        }
+                using (Transaction t = new Transaction(doc, "Копирование задания ЭЛ"))
+                {
+                    t.Start();
+                    var copyOptions = new CopyPasteOptions();
+                    copyOptions.SetDuplicateTypeNamesHandler(new DuplicateTypeHandler());
 
+
+                    // Копирование видов и линий
+                    foreach (View linkedView in linkedViews)
+                    {
+                        // Создание вида в целевом документе
+                        View newView = null;
+
+                        if (linkedView is ViewPlan linkedViewPlan)
+                        {
+                            // Получение уровня из связанного вида
+                            Level linkedLevel = linkedViewPlan.GenLevel;
+                            if (linkedLevel == null) continue;
+
+                            // Поиск ближайшего уровня в целевом документе
+                            Level targetLevel = FindClosestLevel(doc, linkedLevel.Elevation);
+                            if (targetLevel == null) continue;
+
+                            // Создание плана
+                            newView = CreateViewPlan(doc, linkedViewPlan, targetLevel);
+                        }
+                        else if (linkedView is ViewDrafting linkedViewDrafting)
+                        {
+                            // Создание чертежного вида
+                            newView = CreateViewDrafting(doc, linkedViewDrafting);
+                        }
+
+                        if (newView == null) continue;
+
+                        // Копирование линий
+                        var lines = new FilteredElementCollector(linkedDoc, linkedView.Id)
+                            .OfClass(typeof(CurveElement))
+                            .ToElementIds()
+                            .ToList();
+
+                        if (lines.Count > 0)
+                        {
+                            try
+                            {
+                                ElementTransformUtils.CopyElements(
+                                    linkedView,
+                                    lines,
+                                    newView,
+                                    Transform.Identity,
+                                    copyOptions);
+                            }
+                            catch (Exception ex)
+                            {
+                                TaskDialog.Show("Ошибка", $"Не удалось скопировать линии: {ex.Message}");
+                            }
+                        }
+
+                        // Установка параметра вида
+                        SetViewParameter(newView, "Задание ЭЛ");
+                    }
+
+                    t.Commit();
+
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", $"Произошла ошибка: {ex.Message}");
+                return false;
+            }
+            return true;
+
+        }
         // Фильтр выбора (только связи)
         public class SelectionFilter : ISelectionFilter
         {
@@ -283,6 +337,154 @@ namespace Reinforcement
             {
                 return DuplicateTypeAction.UseDestinationTypes;
             }
+        }
+        // Вспомогательный метод для установки параметра вида
+        private static void SetViewParameter(View view, string value)
+        {
+            try
+            {
+                // GUID параметра "Директория"
+                var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
+                param?.Set(value);
+            }
+            catch { }
+        }
+        // Поиск ближайшего уровня (допуск 500 мм)
+        private static Level FindClosestLevel(Document doc, double sourceElevation)
+        {
+            const double tolerance = 0.5; // 500 мм
+            Level closestLevel = null;
+            double minDifference = double.MaxValue;
+
+            // Используем кеширование для производительности
+            if (_levelsCache == null)
+            {
+                _levelsCache = new FilteredElementCollector(doc)
+                    .OfClass(typeof(Level))
+                    .Cast<Level>()
+                    .ToList();
+            }
+
+            foreach (Level level in _levelsCache)
+            {
+                double diff = Math.Abs(level.Elevation - sourceElevation);
+                if (diff < tolerance && diff < minDifference)
+                {
+                    minDifference = diff;
+                    closestLevel = level;
+                }
+            }
+
+            return closestLevel;
+        }
+        private static List<Level> _levelsCache;
+        // Создание плана
+
+        private static ViewPlan CreateViewPlan(Document doc, ViewPlan sourceView, Level targetLevel)
+        {
+            try
+            {
+                // Получаем тип исходного вида
+                ElementId sourceViewTypeId = sourceView.GetTypeId();
+                if (sourceViewTypeId == ElementId.InvalidElementId)
+                {
+                    TaskDialog.Show("Ошибка", "Исходный вид не имеет типа вида");
+                    return null;
+                }
+
+                // Определяем семейство вида на основе ViewType
+                ViewFamily viewFamily;
+                switch (sourceView.ViewType)
+                {
+                    case ViewType.FloorPlan:
+                        viewFamily = ViewFamily.FloorPlan;
+                        break;
+                    case ViewType.CeilingPlan:
+                        viewFamily = ViewFamily.CeilingPlan;
+                        break;
+                    case ViewType.EngineeringPlan:
+                        viewFamily = ViewFamily.StructuralPlan;
+                        break;
+                    case ViewType.AreaPlan:
+                        viewFamily = ViewFamily.AreaPlan;
+                        break;
+                    default:
+                        viewFamily = ViewFamily.FloorPlan; // Значение по умолчанию
+                        break;
+                }
+
+                // Ищем подходящий тип вида в целевом документе
+                ViewFamilyType viewFamilyType = null;
+                var viewFamilyTypes = new FilteredElementCollector(doc)
+                    .OfClass(typeof(ViewFamilyType))
+                    .Cast<ViewFamilyType>()
+                    .ToList();
+
+                foreach (var vft in viewFamilyTypes)
+                {
+                    if (vft.ViewFamily == viewFamily)
+                    {
+                        viewFamilyType = vft;
+                        break;
+                    }
+                }
+
+                // Если не нашли, используем первый доступный тип плана этажа
+                if (viewFamilyType == null)
+                {
+                    foreach (var vft in viewFamilyTypes)
+                    {
+                        if (vft.ViewFamily == ViewFamily.FloorPlan)
+                        {
+                            viewFamilyType = vft;
+                            break;
+                        }
+                    }
+                }
+
+                if (viewFamilyType == null)
+                {
+                    TaskDialog.Show("Ошибка", "Не найден подходящий тип вида для плана");
+                    return null;
+                }
+
+                // Создаем новый план
+                ViewPlan newView = ViewPlan.Create(doc, viewFamilyType.Id, targetLevel.Id);
+                newView.Name = sourceView.Name;
+
+                // Копируем основные параметры
+                try
+                {
+                    newView.Scale = sourceView.Scale;
+                    newView.DisplayStyle = sourceView.DisplayStyle;
+                }
+                catch { /* Игнорируем несущественные ошибки */ }
+
+                return newView;
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка создания плана", ex.Message);
+                return null;
+            }
+        }
+
+
+        // Создание чертежного вида
+        private static ViewDrafting CreateViewDrafting(Document doc, ViewDrafting sourceView)
+        {
+            // Получение типа семейства вида
+            ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .FirstOrDefault(vft => vft.ViewFamily == ViewFamily.Drafting);
+
+            if (viewFamilyType == null) return null;
+
+            // Создание вида
+            ViewDrafting newView = ViewDrafting.Create(doc, viewFamilyType.Id);
+            newView.Name = sourceView.Name;
+            return newView;
         }
     }
 }
