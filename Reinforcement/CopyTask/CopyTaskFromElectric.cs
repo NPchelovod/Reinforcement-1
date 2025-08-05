@@ -6,6 +6,8 @@ using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls;
+using System.Windows.Forms;
 using View = Autodesk.Revit.DB.View;
 
 namespace Reinforcement
@@ -245,6 +247,8 @@ namespace Reinforcement
                 .Where(x => !x.IsTemplate && x.Name.Contains(prefix))
                 .ToList();
             if (linkedViews.Count == 0) { return false; }
+            // Подготовка данных для копирования линий
+            
 
             if (linkedViews.Count > 0)
             {
@@ -259,15 +263,55 @@ namespace Reinforcement
                     {
                         try
                         {
-                            if (linkedView is ViewSection || linkedView is View3D)
+                            if (linkedView is ViewSection)// || linkedView is View3D)
                             {
                                 // Для разрезов и 3D видов - прямое копирование
-                                ElementTransformUtils.CopyElements(
+                                ICollection<ElementId> copiedViewIds = ElementTransformUtils.CopyElements(
                                     linkedDoc,
                                     new List<ElementId> { linkedView.Id },
                                     doc,
                                     Transform.Identity,
                                     copyOptions);
+
+                                // Проверяем результат копирования
+                                if (copiedViewIds == null || copiedViewIds.Count == 0)
+                                {
+                                    TaskDialog.Show("Ошибка", $"Не удалось скопировать вид {linkedView.Name}");
+                                    continue;
+                                }
+
+                                // Получаем скопированный вид в текущем документе
+                                View copiedView = doc.GetElement(copiedViewIds.First()) as View;
+                                if (copiedView == null) continue;
+
+                                // Копирование деталей
+                                var lines = new FilteredElementCollector(linkedDoc, linkedView.Id)
+                                    .OfClass(typeof(CurveElement))
+                                    .ToElementIds()
+                                    .ToList();
+
+                                if (lines.Count > 0)
+                                {
+                                    try
+                                    {
+                                        // Используем скопированный вид как целевой
+                                        ElementTransformUtils.CopyElements(
+                                            linkedView,
+                                            lines,
+                                            copiedView,
+                                            Transform.Identity,
+                                            copyOptions);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        TaskDialog.Show("Ошибка копирования",
+                                            $"Не удалось скопировать линии в вид {copiedView.Name}: {ex.Message}");
+                                    }
+                                }
+
+                                SetViewParameter(copiedView, "Задание ЭЛ");
+
+
                             }
                             else if (linkedView is ViewPlan linkedViewPlan)
                             {
@@ -540,20 +584,35 @@ namespace Reinforcement
         }
 
         // Установка параметра вида
-        private static void SetViewParameter(View view, string value)
+        private static void SetViewParameter( View view, string value)
         {
             try
             {
-                Parameter param = view.LookupParameter("Комментарии")
-                                  ?? view.LookupParameter("Comments")
-                                  ?? view.LookupParameter("Описание");
+                Parameter param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
 
+                // Резервный поиск по имени
+                if (param == null)
+                {
+                    param = view.LookupParameter("Директория")
+                            ?? view.LookupParameter("Directory")
+                            ?? view.LookupParameter("Project Directory");
+                }
+
+                
                 if (param != null && !param.IsReadOnly && param.StorageType == StorageType.String)
                 {
                     param.Set(value);
                 }
+                else if (param == null)
+                {
+                    //TaskDialog.Show("Предупреждение",
+                       // $"Параметр 'Директория' не найден для вида {view.Name}");
+                }
             }
-            catch { /* Игнорируем ошибки */ }
+            catch (Exception ex)
+            {
+                
+            }
         }
     }
 }

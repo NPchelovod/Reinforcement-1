@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Controls;
 
-
+/*
 namespace Reinforcement
 {
     public static class EL_panel_step0_allCommand
@@ -134,22 +134,7 @@ namespace Reinforcement
                 using (Transaction t = new Transaction(doc, "Копирование и замена"))
                 {
                     t.Start();
-                    // Получаем активный 3D вид для поиска поверхностей
-                    View3D active3DView = doc.ActiveView as View3D;
-                    if (active3DView == null)
-                    {
-                        // Попробуем найти любой доступный 3D вид
-                        active3DView = new FilteredElementCollector(doc)
-                            .OfClass(typeof(View3D))
-                            .Cast<View3D>()
-                            .FirstOrDefault(v => !v.IsTemplate && v.Name == "3D Вид");
 
-                        if (active3DView == null)
-                        {
-                            TaskDialog.Show("Ошибка", "Не найден подходящий 3D вид в текущей модели");
-                        }
-                        return false;
-                    }
                     // 1. Копируем кубики из связанной модели
                     var elementsToCopy = all_replace_cubics.Values.SelectMany(list => list).ToList();
                     if (elementsToCopy.Count > 0)
@@ -159,12 +144,25 @@ namespace Reinforcement
                             linkedDoc,
                             elementsToCopy.Select(e => e.Id).ToList(),
                             doc,
-                            transform,
+                        transform,
                             copyOptions);
 
-                        // Проверяем наличие отражения в трансформации
-                        double determinant = GetTransformDeterminant(transform);
-                        bool isMirrored = determinant < 0;
+                        // Получаем активный 3D вид для поиска поверхностей
+                        View3D active3DView = doc.ActiveView as View3D;
+                        if (active3DView == null)
+                        {
+                            // Попробуем найти любой доступный 3D вид
+                            active3DView = new FilteredElementCollector(doc)
+                                .OfClass(typeof(View3D))
+                                .Cast<View3D>()
+                                .FirstOrDefault(v => !v.IsTemplate && v.Name == "3D Вид");
+
+                            if (active3DView == null)
+                            {
+                                TaskDialog.Show("Ошибка", "Не найден подходящий 3D вид в текущей модели");
+                            }
+                            return false;
+                        }
 
                         // 2. Заменяем скопированные кубики
                         foreach (ElementId copiedId in copiedIds)
@@ -182,18 +180,22 @@ namespace Reinforcement
 
                             if (!elementCategories.TryGetValue(replacement, out var category)) continue;
 
-                            // Получаем позицию и ориентацию из скопированного элемента
+                            // Получаем позицию и ориентацию
                             LocationPoint locPoint = cubic.Location as LocationPoint;
                             if (locPoint == null) continue;
 
-                            XYZ position = locPoint.Point; // Уже в координатах текущего документа
-                            XYZ facingOrientation = cubic.FacingOrientation;
+                            //XYZ position = locPoint.Point;
+                            //XYZ facingOrientation = cubic.FacingOrientation;
+                            // ТРАНСФОРМИРУЕМ координаты из связанной модели
+                            XYZ position = transform.OfPoint(locPoint.Point);
+                            XYZ facingOrientation = transform.OfVector(cubic.FacingOrientation).Normalize();
 
-                            // Корректировка ориентации при отражении
-                            if (isMirrored)
+                            // Проверка и установка направления по умолчанию
+                            if (facingOrientation == null || facingOrientation.IsZeroLength())
                             {
-                                facingOrientation = facingOrientation.Negate();
+                                facingOrientation = XYZ.BasisZ;
                             }
+
 
                             if (!one_replaceable_element.TryGetValue(
                                 (category.FamilyName, category.SymbolName),
@@ -203,8 +205,6 @@ namespace Reinforcement
 
                             try
                             {
-                                FamilyInstance newInstance = null;
-
                                 if (category.RequiresHost)
                                 {
                                     // Поиск поверхности для размещения
@@ -212,33 +212,44 @@ namespace Reinforcement
 
                                     if (hostRef != null)
                                     {
-                                        newInstance = doc.Create.NewFamilyInstance(
+                                        // Создаем элемент на поверхности
+                                        FamilyInstance newInstance = doc.Create.NewFamilyInstance(
                                             hostRef,
                                             position,
                                             facingOrientation,
                                             symbol);
+
+                                        // Корректируем позицию
+                                        if (newInstance.Location is LocationPoint newLoc)
+                                        {
+                                            XYZ offset = position - newLoc.Point;
+                                            if (offset.GetLength() > 0.001)// лучше не двигать, а то в космос улетит
+                                            {
+                                                //ElementTransformUtils.MoveElement(doc, newInstance.Id, offset);
+                                            }
+                                        }
+
+                                        // Корректируем ориентацию
+                                        AdjustElementOrientation(doc, newInstance, facingOrientation);
                                     }
                                     else
                                     {
-                                        // Создаем без хоста, если поверхность не найдена
-                                        newInstance = doc.Create.NewFamilyInstance(
-                                            position,
-                                            symbol,
-                                            StructuralType.NonStructural);
+                                        TaskDialog.Show("Предупреждение",
+                                        $"Не найдена поверхность для размещения клеммы в точке {position}\n" +
+                                        $"Направление: {facingOrientation}\n" +
+                                        $"Связанный элемент: {cubic.Id}\n" +
+                                        $"Тип: {cubic.Symbol.Name}");
                                     }
                                 }
                                 else
                                 {
                                     // Создаем свободно стоящий элемент
-                                    newInstance = doc.Create.NewFamilyInstance(
+                                    FamilyInstance newInstance = doc.Create.NewFamilyInstance(
                                         position,
-                                        symbol,
+                                    symbol,
                                         StructuralType.NonStructural);
-                                }
 
-                                // Корректируем ориентацию
-                                if (newInstance != null)
-                                {
+                                    // Корректируем ориентацию
                                     AdjustElementOrientation(doc, newInstance, facingOrientation);
                                 }
 
@@ -261,29 +272,13 @@ namespace Reinforcement
                 return false;
             }
 
-            
+
 
 
             TaskDialog.Show("Успех", "Замена элементов выполнена успешно");
             return false;
         }
-        // Вспомогательная функция для определения отражения в трансформации
-        private static double GetTransformDeterminant(Transform transform)
-        {
-            double a = transform.BasisX.X;
-            double b = transform.BasisX.Y;
-            double c = transform.BasisX.Z;
 
-            double d = transform.BasisY.X;
-            double e = transform.BasisY.Y;
-            double f = transform.BasisY.Z;
-
-            double g = transform.BasisZ.X;
-            double h = transform.BasisZ.Y;
-            double i = transform.BasisZ.Z;
-
-            return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-        }
         // Оптимизированный поиск уровней
         private static Level FindLevelAtPoint(Document doc, XYZ point)
         {
@@ -432,7 +427,8 @@ namespace Reinforcement
         }
 
     }
-            
 
-    
+
+
 }
+*/

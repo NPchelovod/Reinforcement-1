@@ -94,6 +94,7 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
     <Compile Include="App_Panel_1_71_KR_vstavka.cs" />
