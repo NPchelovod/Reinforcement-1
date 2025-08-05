@@ -265,7 +265,7 @@ namespace Reinforcement
 
 
             TaskDialog.Show("Успех", "Замена элементов выполнена успешно");
-            return false;
+            return true;
         }
         // Вспомогательная функция для определения отражения в трансформации
         private static double GetTransformDeterminant(Transform transform)
