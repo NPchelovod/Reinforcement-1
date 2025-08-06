@@ -90,8 +90,9 @@ namespace Updaters
                             H_size = 2.5f;
                         }
 
-                        double width = GetCharacterWidth(doc, text, H_size);
-
+                        double width1 = GetCharacterWidth(doc, firstText, H_size);
+                        double width2 = GetCharacterWidth(doc, secondText, H_size);
+                        double width = Math.Max(width1, width2);
                         width = RevitAPI.ToFoot(width);
 
                         element.LookupParameter("Ширина полки").Set(width);
