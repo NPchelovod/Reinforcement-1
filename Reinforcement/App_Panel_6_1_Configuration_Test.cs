@@ -24,8 +24,9 @@ namespace Reinforcement
             {
                 "Конфигурация",
 
-                "ОВ плит"
-
+                "ОВ плит",
+ 
+                
             };
 
             foreach (var panel in PanelVisibility.Panels)

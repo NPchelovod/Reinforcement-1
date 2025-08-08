@@ -23,19 +23,9 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
-            var list_panels_view = new List<string>()
-            {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Копировать задание"
 
-            };
+            var list_panels_view = App.list_panels_viewKR; // умолчательный вид
+
 
             foreach (var panel in PanelVisibility.Panels)
             {

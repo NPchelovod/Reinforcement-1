@@ -39,7 +39,7 @@ namespace Reinforcement
             public static Dictionary<string, RibbonPanel> Panels { get; } = new Dictionary<string, RibbonPanel>();
 
         }
-
+        public static List<string> list_panels_viewKR { get; set; } 
 
         public Result OnStartup(UIControlledApplication app)
         {
@@ -63,7 +63,8 @@ namespace Reinforcement
                 "Копировать задание",
                 "ОВ плит",
                 "АР панель",
-                "ЭЛ панель"
+                "ЭЛ панель",
+                "Волшебная кнопка"
             };
 
             // команды которые создают кнопки на конкретных панелях
@@ -115,13 +116,17 @@ namespace Reinforcement
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
                         break;
 
+                    case "Волшебная кнопка":
+                        App_Panel_1_91_Toska.AddSplitButton(panel, tabName);
+                        break;
+
                 }
 
             }
 
-            // панели которые видны на начальном экране конфигурация КР
+            // !!! панели которые видны на начальном экране конфигурация КР
 
-            var list_panels_view = new List<string>()
+            list_panels_viewKR = new List<string>()
             {
                 "Конфигурация",
                 "СПДС",
@@ -131,13 +136,15 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "КР вставки",
-                "Копировать задание"
+                "Копировать задание",
+                "Волшебная кнопка"
 
             };
+             
 
             foreach (var panel in PanelVisibility.Panels)
             {
-                if (list_panels_view.Contains(panel.Key))
+                if (list_panels_viewKR.Contains(panel.Key))
                 {
                     if (panel.Value != null)
                     {

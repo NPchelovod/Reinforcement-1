@@ -97,6 +97,7 @@
     <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
+    <Compile Include="App_Panel_1_91_Toska.cs" />
     <Compile Include="App_Panel_1_71_KR_vstavka.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
     <Compile Include="App_Panel_1_1_Configuration_KR.cs" />
@@ -235,6 +236,8 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
+    <Compile Include="Toska\Toska_1.cs" />
+    <Compile Include="Toska\Toska_2.cs" />
     <Compile Include="TransparentNotificationWindow.xaml.cs">
       <DependentUpon>TransparentNotificationWindow.xaml</DependentUpon>
     </Compile>
@@ -278,6 +281,8 @@
     <None Include="Resources\KR_config.bmp" />
     <Content Include="Resources\KR_config.png" />
     <None Include="Resources\KR_panel\hole_in_walls.png" />
+    <None Include="Resources\KR_panel\toska1.png" />
+    <None Include="Resources\KR_panel\toska2.png" />
     <Content Include="Resources\NoteLine_2.5.png" />
     <Content Include="Resources\NoteLine_3.5.png" />
     <Content Include="Resources\OV_config.png" />
