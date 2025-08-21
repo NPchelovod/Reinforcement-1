@@ -94,6 +94,7 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="RoundDistanceForOpeningsInSlabs.cs" />
     <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="3_Electric\EL_panel_Light_without_boxes.cs" />
+    <Compile Include="Class1.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectricV2_0.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
     <Compile Include="CopyTask\_Past_Copy.cs" />
@@ -277,6 +279,7 @@
     <None Include="Resources\EL_panel\EL_svetilnic2.png" />
     <None Include="Resources\EL_panel\EL_svetilnic.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
+    <None Include="Resources\Hole.png" />
     <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />
     <Content Include="Resources\KR_config.png" />
