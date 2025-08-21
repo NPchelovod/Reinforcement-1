@@ -60,7 +60,7 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "КР вставки",
-                "Копировать задание",
+                "Copy / Кубики",
                 "ОВ плит",
                 "АР панель",
                 "ЭЛ панель",
@@ -102,8 +102,8 @@ namespace Reinforcement
                         App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Копировать задание":
-                        App_Panel_1_8_KR_Task.KR_Task(panel, tabName);
+                    case "Copy / Кубики":
+                        App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
                         break;
                     case "ОВ плит":
                         App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
@@ -136,7 +136,7 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "КР вставки",
-                "Копировать задание",
+                "Copy / Кубики",
                 "Волшебная кнопка"
 
             };
