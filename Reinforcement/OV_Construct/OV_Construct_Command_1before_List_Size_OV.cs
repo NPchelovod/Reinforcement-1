@@ -48,7 +48,7 @@ namespace Reinforcement
 
         
 
-        public static void ExecuteLogic(ExternalCommandData commandData, ref string message, ElementSet elements)
+        public static bool ExecuteLogic(ExternalCommandData commandData, ref string message, ElementSet elements)
         
         {
             UIApplication uiapp = commandData.Application;
@@ -59,13 +59,27 @@ namespace Reinforcement
 
             //Control_Pick.MControl_Pick(uidoc, doc, units); //ref 
                                                             // в будущем можно будет менять
-            string name_OB = "ОтверстиеВПерекрытии";
-            Type name_class = typeof(FamilyInstance);
+            string name_cubic = "Кубик_Перекрытие_Прямоугольный";
+            
             BuiltInCategory name_OST = BuiltInCategory.OST_GenericModel;
 
 
+            View activeView = doc.ActiveView;
+
+            // Проверка активного вида
+            if (!(activeView is View3D))
+            {
+                TaskDialog.Show("Ошибка", "Необходимо активировать 3D вид перед выполнением команды на котором должны быть видны все необходимые вентканалы");
+                return false;
+            }
+
+            List<ElementId> vents = new FilteredElementCollector(doc, activeView.Id)
+                .OfClass(typeof(FamilyInstance)).OfCategory(name_OST).Where(it => it.Name == name_cubic).Where(it => it.LookupParameter("Тип системы").AsValueString() == "Вентканал").Select(it => it.Id).ToList();
+
+
+
             // vents - id всех элементов каналов ОВ с именем name_OB
-            List<ElementId> vents = new FilteredElementCollector(doc).OfClass(name_class).OfCategory(name_OST).Where(it => it.Name == name_OB).Where(it => it.LookupParameter("ADSK_Отверстие_Функция").AsValueString() == "Вентканал").Select(it => it.Id).ToList();
+            //List<ElementId> vents = new FilteredElementCollector(doc).OfClass(name_class).OfCategory(name_OST).Where(it => it.Name == name_OB).Where(it => it.LookupParameter("ADSK_Отверстие_Функция").AsValueString() == "Вентканал").Select(it => it.Id).ToList();
 
 
             // создание словаря уровень - id вентшахты на уровне
@@ -88,11 +102,10 @@ namespace Reinforcement
 
 
             //return (Dict_Axis, Dict_level_ventsId, Dict_ventId_Properts, Dict_Grup_numOV_spisokOV, List_Size_OV);
-
+            return true;
         }
 
     }
-
 
 
 }

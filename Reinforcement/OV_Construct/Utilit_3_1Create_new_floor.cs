@@ -180,7 +180,27 @@ namespace Reinforcement
             {
                 isVisibleParam.Set("РД"); // Устанавливаем раздел "РД"
             }
+            // 1. Настройка секущего диапазона и глубины проецирования
 
+            try
+            {
+                PlanViewRange viewRange = newViewPlan.GetViewRange();
+
+                // Конвертируем -100 мм во внутренние единицы Revit (футы)
+                double offsetValue = UnitUtils.ConvertToInternalUnits(-100, UnitTypeId.Millimeters);
+
+                // Устанавливаем новые значения для всех плоскостей
+                viewRange.SetOffset(PlanViewPlane.CutPlane, offsetValue);
+                viewRange.SetOffset(PlanViewPlane.BottomClipPlane, offsetValue);
+                viewRange.SetOffset(PlanViewPlane.ViewDepthPlane, offsetValue);
+
+                // Применяем изменения
+                newViewPlan.SetViewRange(viewRange);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось изменить параметры вида: " + ex.Message);
+            }
             // 1. Скрываем ВСЕ элементы на виде
             HideAllElements(doc, newViewPlan);
 

@@ -41,8 +41,8 @@ namespace Reinforcement
                 double coord_Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
 
 
-                double tek_width = Convert.ToDouble(tek_vent.LookupParameter("ADSK_Отверстие_Ширина").AsValueString());
-                double tek_height = Convert.ToDouble(tek_vent.LookupParameter("ADSK_Отверстие_Высота").AsValueString());
+                double tek_width = Convert.ToDouble(tek_vent.LookupParameter("Ширина").AsValueString());
+                double tek_height = Convert.ToDouble(tek_vent.LookupParameter("Длина").AsValueString());
                 string tek_level = tek_vent.LookupParameter("Уровень").AsValueString();
 
                 // запись в словарь
