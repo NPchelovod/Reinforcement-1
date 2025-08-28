@@ -5,6 +5,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -174,7 +175,7 @@ namespace Reinforcement
                 .OfCategory(BuiltInCategory.OST_ConduitFitting)
                 .Cast<FamilyInstance>()
                 .ToList();
-
+            
             var elementsToCopy = allConduitFittings
                 .Where(x => requiredFamilies.Contains(x.Symbol.Family.Name))
                 .ToList();
@@ -187,6 +188,7 @@ namespace Reinforcement
 
             try
             {
+               
                 using (Transaction t = new Transaction(doc, "Копирование задания ЭЛ"))
                 {
                     t.Start();
@@ -205,11 +207,43 @@ namespace Reinforcement
                             doc,
                             transform,
                             copyOptions);
+
+                        // Проверить видимость скопированных элементов в активном виде
+                        // Используем более специфичный фильтр для повышения производительности
+                        var visibleElements = new FilteredElementCollector(doc, activeView.Id)
+                            .OfCategory(BuiltInCategory.OST_ConduitFitting) // Фильтр по категории
+                            .WhereElementIsNotElementType()
+                            .ToElementIds()
+                            .ToHashSet();
+
+                        var elementsToRemove = copiedElementIds.Where(id => !visibleElements.Contains(id)).ToList();
+
+
+                        // Удалить невидимые элементы на 3д виде!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                        // Удалить невидимые элементы
+                        try
+                        {
+                            if (elementsToRemove.Any())
+                            {
+                                // Логирование для отладки
+                                Debug.WriteLine($"Удаление {elementsToRemove.Count} невидимых элементов");
+                                doc.Delete(elementsToRemove);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Более конкретная обработка исключений
+                            Debug.WriteLine($"Ошибка при удалении элементов: {ex.Message}");
+                            // Можно добавить дополнительную обработку или логирование
+                        }
+
+
                     }
 
-                    
                     t.Commit();
                 }
+
 
                 // Вывод информации о не скопированных элементах
                 if (excludedElements.Count > 0)
