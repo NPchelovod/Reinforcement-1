@@ -18,6 +18,11 @@ namespace Reinforcement
 
     public class SetPilesByDWG : IExternalCommand
     {
+
+
+
+
+
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -36,22 +41,64 @@ namespace Reinforcement
             bool famExist = collection
                 .OfClass(typeof(Family))
                 .Cast<Family>()
-                .Any(family => family.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase));
-
+                .Any(family => family.Name.Equals(familyName));
+            ElementId pileId = null;
             if (!famExist)
             {
-                MessageBox.Show($"Не найдено семейство {familyName}!");
-                return Result.Failed;
+                // Нечеткий поиск, если точный не дал результатов
+                Family foundFamily = collection
+                    .OfClass(typeof(Family))
+                    .Cast<Family>()
+                    .Select(family => new { Family = family, Similarity = CalculateSimilarity(familyName, family.Name) })
+                    .Where(x => x.Similarity >= 0.7) // Пороговое значение схожести 70%
+                    .OrderByDescending(x => x.Similarity)
+                    .FirstOrDefault()?.Family;
+
+                if (foundFamily != null)
+                {
+                    // Спросить пользователя о использовании найденного семейства
+                    DialogResult result = MessageBox.Show(
+                        $"Точное семейство '{familyName}' не найдено. Использовать '{foundFamily.Name}'?",
+                        "Семейство не найдено",
+                        MessageBoxButtons.YesNo);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        // Использовать найденное семейство
+                        pileId = foundFamily.GetFamilySymbolIds().FirstOrDefault();
+                        // Дальнейшая логика
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Не найдено семейство {familyName}!");
+                        return Result.Failed;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"Не найдено семейство {familyName}!");
+                    return Result.Failed;
+                }
+            }
+            else
+            {
+                // Продолжить с точным совпадением //Типоразмер нужной сваи
+                pileId = collection.OfClass(typeof(Family))
+                    .Where(x => x.Name.Equals(familyName, StringComparison.OrdinalIgnoreCase))
+                    .Cast<Family>()
+                    .FirstOrDefault()
+                    .GetFamilySymbolIds()
+                    .FirstOrDefault();
             }
 
 
-            //Типоразмер нужной сваи
-            var pileId = collection.OfClass(typeof(Family))
-                .Where(x => x.Name == familyName)
-                .Cast<Family>()
-                .FirstOrDefault()
-                .GetFamilySymbolIds()
-                .FirstOrDefault();
+            if (pileId == null)
+            {
+                
+                MessageBox.Show($"Не найдено семейство {familyName}!");
+                return Result.Failed;
+                
+            }
 
 
             var pile = doc.GetElement(pileId) as FamilySymbol;
@@ -111,6 +158,43 @@ namespace Reinforcement
                 return Result.Failed;
             }
             return Result.Succeeded;
+        }
+        // Метод для вычисления схожести строк
+        public static double CalculateSimilarity(string s1, string s2)
+        {
+            string normalized1 = NormalizeString(s1);
+            string normalized2 = NormalizeString(s2);
+
+            int lcsLength = LongestCommonSubstring(normalized1, normalized2);
+            int maxLength = Math.Max(normalized1.Length, normalized2.Length);
+
+            return maxLength > 0 ? (double)lcsLength / maxLength : 0;
+        }
+
+        // Метод нормализации строки
+        public static string NormalizeString(string input)
+        {
+            return string.Concat(input.Where(c => !char.IsWhiteSpace(c))).ToLowerInvariant();
+        }
+
+        // Ваш метод поиска наибольшей общей подстроки
+        public static int LongestCommonSubstring(string s1, string s2)
+        {
+            int maxLength = 0;
+            int[,] dp = new int[s1.Length + 1, s2.Length + 1];
+
+            for (int i = 1; i <= s1.Length; i++)
+            {
+                for (int j = 1; j <= s2.Length; j++)
+                {
+                    if (s1[i - 1] == s2[j - 1])
+                    {
+                        dp[i, j] = dp[i - 1, j - 1] + 1;
+                        maxLength = Math.Max(maxLength, dp[i, j]);
+                    }
+                }
+            }
+            return maxLength;
         }
     }
 }
