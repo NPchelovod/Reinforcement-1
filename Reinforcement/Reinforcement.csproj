@@ -90,6 +90,9 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="0_Helper\0HelperPrivateStatic.cs" />
+    <Compile Include="0_Helper\2HelperGetData.cs" />
+    <Compile Include="0_Helper\1HelperSeach.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModel\CalculateReinforcementArchitectureWallsViewModel.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
@@ -236,7 +239,7 @@
     </Compile>
     <Compile Include="SelectParentElement.cs" />
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
-    <Compile Include="RevitAPI.cs" />
+    <Compile Include="0RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
     <Compile Include="Toska\Toska_1.cs" />
     <Compile Include="Toska\Toska_2.cs" />
