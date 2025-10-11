@@ -13,11 +13,14 @@ namespace Reinforcement
 {
     public class HelperSeach
     {
+        private const double StopSovpad = 0.95;// с такой долей слова считаются одинаковыми
 
-        public static ElementId GetExistFamily(HashSet<string> PossibleNames, ExternalCommandData commandData )
+        public static (ElementId pileId, HashSet<string> PossibleNames)  GetExistFamily(HashSet<string> PossibleNames, ExternalCommandData commandData )
         {
             //надо например расставить сваи по виду, вот находит по имени совпадению сваю эту наиболее близкую id и возвращает ее
             //PossibleNames = "ЕС_Буронабивная свая"
+            // или предлагает ввести имя семейства
+
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
 
@@ -79,7 +82,7 @@ namespace Reinforcement
                             familyNameMax = family.Name;
                             pileIdMax = family.Id;
                             //!!!!!!!! остановка чтоб не ходить много
-                            if (maxSimilarity > 0.95)
+                            if (maxSimilarity > StopSovpad)
                             { break; }
                         }
                     }
@@ -89,7 +92,7 @@ namespace Reinforcement
 
 
                 // Спросить пользователя о использовании найденного семейства
-                if (maxSimilarity < 0.95)
+                if (maxSimilarity < StopSovpad)
                 {
                     // Спросить пользователя о использовании найденного семейства
                     DialogResult result = MessageBox.Show(
@@ -101,6 +104,7 @@ namespace Reinforcement
                         famExist = true;
                         familyName = familyNameMax;
                         pileId = pileIdMax;
+                        PossibleNames.Add(familyName);
                     }
 
                     else
@@ -113,7 +117,7 @@ namespace Reinforcement
                     famExist = true;
                     familyName = familyNameMax;
                     pileId = pileIdMax;
-    
+                    PossibleNames.Add(familyName);
                 }
 
 
@@ -135,14 +139,16 @@ namespace Reinforcement
                                 maxSimilarity = Similarity;
                                 familyNameMax = family.Name;
                                 pileIdMax = family.Id;
+                                if (maxSimilarity > StopSovpad)
+                                { break; }
                             }
 
                         }
 
-                        if (maxSimilarity < 0.95)
+                        if (maxSimilarity < StopSovpad)
                         {
                             DialogResult result = MessageBox.Show(
-                            $"Точное семейство '{PossibleName}' не найдено. Использовать '{familyName}'?",
+                            $"Точное семейство '{PossibleName}' не найдено. Использовать '{familyNameMax}'?",
                             "Семейство не найдено",
                             MessageBoxButtons.YesNo);
                             if (result == DialogResult.Yes)
@@ -150,6 +156,7 @@ namespace Reinforcement
                                 famExist = true;
                                 familyName = familyNameMax;
                                 pileId = pileIdMax;
+                                PossibleNames.Add(familyName);
                                 break;
                             }
                             else
@@ -162,6 +169,7 @@ namespace Reinforcement
                             famExist = true;
                             familyName = familyNameMax;
                             pileId = pileIdMax;
+                            PossibleNames.Add(familyName);
                             break;
                         }
 
@@ -172,11 +180,12 @@ namespace Reinforcement
             }
             if (!famExist)
             {
-                return pileId;
+                pileId = null;
+                return (pileId, PossibleNames);
             }
             else
             {
-                return pileId;
+                return (pileId, PossibleNames);
             }
 
         }

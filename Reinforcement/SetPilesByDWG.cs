@@ -37,7 +37,10 @@ namespace Reinforcement
 
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
-            ElementId pileId = HelperSeach.GetExistFamily(Piles, commandData);
+            var Seacher = HelperSeach.GetExistFamily(Piles, commandData);
+            ElementId pileId = Seacher.pileId;
+            Piles = Seacher.PossibleNames;
+
 
 
             var pile = doc.GetElement(pileId) as FamilySymbol;
