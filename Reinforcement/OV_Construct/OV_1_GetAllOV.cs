@@ -39,14 +39,29 @@ namespace Reinforcement
         
 
         //заполнение данныех
-        public static List<HelperGetData> DataOV = new List<HelperGetData>();
-
-        public static void GetOVData()
+        public static List<HelperElement> DataOV = new List<HelperElement>();
+        public static Dictionary<int, List<HelperElement>> DataOVLevel= new Dictionary<int, List<HelperElement>>();
+        public static void GetOVData(ExternalCommandData commandData)
         {
+            GetAllOVElements(commandData);
             DataOV.Clear();
+            DataOVLevel.Clear();
+
+
+            HelperElement newData;
             foreach (var element in OVElements)
             {
-                DataOV.Add(new HelperGetData(element, namesLookupParameterString, namesLookupParameterDouble, namesLookupParameterInt));
+                newData = new HelperElement(element, namesLookupParameterString, namesLookupParameterDouble, namesLookupParameterInt);
+                DataOV.Add(newData);
+                if (!DataOVLevel.ContainsKey(newData.Z))
+                {
+                    DataOVLevel[newData.Z] = new List<HelperElement> { newData };
+                }
+                else
+                {
+                    DataOVLevel[newData.Z].Add(newData);
+                }
+
             }
 
         }

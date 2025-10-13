@@ -48,7 +48,7 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "11_ОВ шахт размеры", assemblyPath, "Reinforcement.GetAllSizeOV", "Все типоразмеры шахты", OV1);
 
-
+            App_Helper_Button.AddButtonToPullDownButton(item, "12_ОВ типовые этажи", assemblyPath, "Reinforcement.SovpadFloor", "Все уникальные этажи", OV1);
 
 
             App_Helper_Button.AddButtonToPullDownButton(item, "1_ОВ шахт размеры", assemblyPath, "Reinforcement.OV_Construct_Command_1before_List_Size_OV", "Все типоразмеры шахты", OV1);

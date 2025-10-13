@@ -38,11 +38,12 @@ namespace Reinforcement
         public static string swidth = "Ширина";
         public static string sheight = "Длина";
         public static List<(int width, int height)> SizeOV = new List<(int width, int height)>();
+
         public static bool ExecuteLogic(ExternalCommandData commandData)
         {
             SizeOV.Clear();
-            GetDataAllOV.GetAllOVElements(commandData);// получаем только список
-            GetDataAllOV.GetOVData();//заполненный список с данными
+            
+            GetDataAllOV.GetOVData(commandData);//заполненный список с данными
 
             if(GetDataAllOV.DataOV.Count==0) {return false;}
 

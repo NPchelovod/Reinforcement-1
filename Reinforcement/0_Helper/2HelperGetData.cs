@@ -9,14 +9,18 @@ using Autodesk.Revit.DB;
 
 namespace Reinforcement
 {
-    public class HelperGetData
+    public class HelperElement
     {
 
         private ForgeTypeId units;
 
 
-       
-        public HelperGetData(Element element, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt)
+
+        public HashSet<HelperElement> ParentElement;// допустим нижестоящая шахта вент
+        public HashSet<HelperElement> ChildElement;//вышестоящая шахта вент могут быть 2 шахты потом в одну превращаться
+
+
+        public HelperElement(Element element, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt)
         {
             units = UnitTypeId.Millimeters;// единицы измерений
 
@@ -49,9 +53,9 @@ namespace Reinforcement
             locationPoint = location as LocationPoint; // текущая локация вентканала
             locationPointXYZ = locationPoint.Point; // текущая координата расположения
 
-            X = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.X, units),0); // a ConvertToInternalUnits переводит наоборот из метров в футы
-            Y = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Y, units),0);
-            Z = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Z, units),0);
+            X = (int) Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.X, units),0); // a ConvertToInternalUnits переводит наоборот из метров в футы
+            Y = (int) Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Y, units),0);
+            Z = (int)Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Z, units),0);
 
             Rotation = locationPoint.Rotation; // угол поворота
             //геометрические и иные параметры
@@ -102,9 +106,9 @@ namespace Reinforcement
         public Location location;
         public LocationPoint locationPoint;
         public XYZ locationPointXYZ;
-        public double X; // позиции центральной точки в мм координатах
-        public double Y;
-        public double Z;
+        public int X; // позиции центральной точки в мм координатах
+        public int Y;
+        public int Z;
         public double Rotation;// угол поворота
 
 

@@ -101,6 +101,7 @@
     </Compile>
     <Compile Include="OV_Construct\OV_1_GetAllOV.cs" />
     <Compile Include="OV_Construct\OV_2_GetAllSizeOV.cs" />
+    <Compile Include="OV_Construct\OV_3_SovpadFloor.cs" />
     <Compile Include="RoundDistanceForOpeningsInSlabs.cs" />
     <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
