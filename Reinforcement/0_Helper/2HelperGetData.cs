@@ -13,16 +13,25 @@ namespace Reinforcement
     {
 
         private ForgeTypeId units;
-        public HelperGetData(ElementId elementId)
+
+
+       
+        public HelperGetData(Element element, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt)
         {
             units = UnitTypeId.Millimeters;// единицы измерений
 
-            this.elementId = elementId;
+            this.element = element;
+
+            this.namesLookupParameterString = namesLookupParameterString;
+            this.namesLookupParameterDouble = namesLookupParameterDouble;
+            this.namesLookupParameterInt = nameslookupParameterInt;
+
+            this.elementId = element.Id;
             //сбор элементов всех данных какие можно собрать с него
             Document doc = RevitAPI.Document;
 
             //name = elementId.Value;
-            element = doc.GetElement(elementId);
+            
             name = element.Name;
 
             familySymbol = doc.GetElement(elementId) as FamilySymbol;
@@ -40,24 +49,42 @@ namespace Reinforcement
             locationPoint = location as LocationPoint; // текущая локация вентканала
             locationPointXYZ = locationPoint.Point; // текущая координата расположения
 
-            X = UnitUtils.ConvertFromInternalUnits(locationPointXYZ.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
-            Y = UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Y, units);
-            Z = UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Z, units);
+            X = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.X, units),0); // a ConvertToInternalUnits переводит наоборот из метров в футы
+            Y = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Y, units),0);
+            Z = Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Z, units),0);
 
             Rotation = locationPoint.Rotation; // угол поворота
             //геометрические и иные параметры
 
             foreach (var nameParameters in namesLookupParameterString)
             {
-                lookupParameterString[nameParameters] = element.LookupParameter(nameParameters).AsValueString();
+                Parameter foundParam = element.LookupParameter(nameParameters);
+                if (foundParam != null)
+                {
+                    string valueString = foundParam.AsValueString();
+                    if (!string.IsNullOrEmpty(valueString))
+                        lookupParameterString[nameParameters] = valueString;
+                }
             }
             foreach (var nameParameters in namesLookupParameterDouble)
             {
-                lookupParameterDouble[nameParameters] = Convert.ToDouble(element.LookupParameter(nameParameters).AsValueString());
+                Parameter foundParam = element.LookupParameter(nameParameters);
+                if (foundParam != null)
+                {
+                    string valueString = foundParam.AsValueString();
+                    if (!string.IsNullOrEmpty(valueString))
+                        lookupParameterDouble[nameParameters] = Convert.ToDouble(valueString);
+                }
             }
             foreach (var nameParameters in namesLookupParameterInt)
             {
-                lookupParameterInt[nameParameters] = Convert.ToInt32(element.LookupParameter(nameParameters).AsValueString());
+                Parameter foundParam = element.LookupParameter(nameParameters);
+                if (foundParam != null)
+                {
+                    string valueString = foundParam.AsValueString();
+                    if (!string.IsNullOrEmpty(valueString))
+                        lookupParameterInt[nameParameters] = Convert.ToInt32(valueString);
+                }
             }
 
         }

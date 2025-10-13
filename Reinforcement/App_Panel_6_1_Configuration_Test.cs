@@ -22,9 +22,10 @@ namespace Reinforcement
             // панели которые должны быть видны
             var list_panels_view = new List<string>()
             {
-                "Конфигурация",
 
-                "ОВ плит",
+                "Конфигурация",
+                "СПДС",
+                "ОВ плит"
  
                 
             };

@@ -20,6 +20,8 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
+            
+
             var list_panels_view = new List<string>()
             {
                 "Конфигурация",

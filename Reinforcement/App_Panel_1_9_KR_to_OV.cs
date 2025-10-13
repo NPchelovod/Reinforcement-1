@@ -42,6 +42,15 @@ namespace Reinforcement
             Image OV3 = Properties.Resources.ES_OV_for_KR;
             Image OV4 = Properties.Resources.ES_OV_for_KR;
 
+
+
+            
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "11_ОВ шахт размеры", assemblyPath, "Reinforcement.GetAllSizeOV", "Все типоразмеры шахты", OV1);
+
+
+
+
             App_Helper_Button.AddButtonToPullDownButton(item, "1_ОВ шахт размеры", assemblyPath, "Reinforcement.OV_Construct_Command_1before_List_Size_OV", "Все типоразмеры шахты", OV1);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "2_ОВ этажи уник", assemblyPath, "Reinforcement.OV_Construct_Command_2before_Povtor_flour", "Поиск несовпадающих ОВ уровней", OV1);

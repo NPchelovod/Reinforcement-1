@@ -17,11 +17,15 @@ namespace Reinforcement
     public class HelperSeach
     {
 
-        private static Dictionary<string, ElementId> familySymbolsNames = new Dictionary<string, ElementId>();
+        private static Dictionary<Element, string> familySymbolsNames = new Dictionary<Element, string>();
 
-        public static List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> DataSovpad = new List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)>();
+        
+
         public static (Element pile, HashSet<string> PossibleNamesFamilySymbol) GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ExternalCommandData commandData)
         {
+
+            //поиск конкретного типоразмера элемента по параметру
+
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
             familySymbolsNames.Clear();
@@ -38,9 +42,15 @@ namespace Reinforcement
             collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
             foreach (var element in collection)
             {
-                familySymbolsNames[element.Name] = element.Id;
+                familySymbolsNames[element] = element.Name; // элемент и параметр сравнения
             }
+            return GetElement(PossibleNamesFamilySymbol);
+        }
 
+
+
+        public static (Element pile, HashSet<string> PossibleNamesFamilySymbol) GetElement(HashSet<string> PossibleNamesFamilySymbol)
+        { 
             int iter = -1;
             Element pileMax = null;
             string pileMaxName = null;
@@ -51,16 +61,16 @@ namespace Reinforcement
             {
                 iter++;
 
-                DataSovpad.Clear();
-
-
-
+                
                 double maxSimilarity = 0;
 
 
-                foreach (Element element in collection)
+                foreach (var elementData in familySymbolsNames)
                 {
-                    var name = element.Name;
+                    var element = elementData.Key;
+
+                    var name = elementData.Value;
+
                     foreach (string PossibleName in PossibleNamesChange)
                     {
                         if (PossibleName.Count() < 4) { continue; }

@@ -39,9 +39,34 @@ namespace Reinforcement
             public static Dictionary<string, RibbonPanel> Panels { get; } = new Dictionary<string, RibbonPanel>();
 
         }
-        public static List<string> list_panels_viewKR { get; set; } 
 
-        public Result OnStartup(UIControlledApplication app)
+        // !!! панели которые видны на начальном экране конфигурация КР
+        public static List<string> list_panels_viewKR { get; set; } = new List<string>()
+            {
+                "Конфигурация",
+                "СПДС",
+                "Схематичное армирование",
+                "Детальное армирование",
+                "Оформление",
+                "Выбор",
+                "САПР",
+                "КР вставки",
+                "Copy / Кубики",
+                "Волшебная кнопка"
+
+            };
+
+        //постоянные панели
+        //public static List<string> list_panels_const { get; set; } = new List<string>
+        //    {
+        //        "Конфигурация",
+        //        "СПДС",
+
+        //    };
+
+
+
+    public Result OnStartup(UIControlledApplication app)
         {
             Application = app; // Сохраняем app в статическое свойство
             //Create tab
@@ -66,6 +91,8 @@ namespace Reinforcement
                 "ЭЛ панель",
                 "Волшебная кнопка"
             };
+
+            
 
             // команды которые создают кнопки на конкретных панелях
             foreach (var panelName in panelNames)
@@ -124,22 +151,9 @@ namespace Reinforcement
 
             }
 
-            // !!! панели которые видны на начальном экране конфигурация КР
+            
 
-            list_panels_viewKR = new List<string>()
-            {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Copy / Кубики",
-                "Волшебная кнопка"
-
-            };
+            
              
 
             foreach (var panel in PanelVisibility.Panels)
