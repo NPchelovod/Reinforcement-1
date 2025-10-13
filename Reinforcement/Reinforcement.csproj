@@ -93,6 +93,7 @@
     <Compile Include="0_Helper\0HelperPrivateStatic.cs" />
     <Compile Include="0_Helper\2HelperGetData.cs" />
     <Compile Include="0_Helper\1HelperSeach.cs" />
+    <Compile Include="0_Helper\HelperSeach2.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModel\CalculateReinforcementArchitectureWallsViewModel.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>

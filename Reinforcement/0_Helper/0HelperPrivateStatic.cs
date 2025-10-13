@@ -59,7 +59,7 @@ namespace Reinforcement
             bool ok=false;
             using (Form form = new Form())
             {
-                form.Text = $" Можете ввести имя искомого семейства или прервать:";
+                form.Text = $" Можете ввести имя искомого типоразмера семейства или прервать:";
 
                 form.Size = new System.Drawing.Size(300, 150);
 

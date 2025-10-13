@@ -19,10 +19,12 @@ namespace Reinforcement
     public class SetPilesByDWG : IExternalCommand
     {
 
+        //имена типоразмеров семейства
 
         public HashSet<string> Piles = new HashSet<string>()
         {
-            "ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
+            //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
+            "С140.30-С", "Буронабивная d"
         };
 
 
@@ -38,12 +40,16 @@ namespace Reinforcement
             FilteredElementCollector collection = new FilteredElementCollector(doc);
 
             var Seacher = HelperSeach.GetExistFamily(Piles, commandData);
-            ElementId pileId = Seacher.pileId;
-            Piles = Seacher.PossibleNames;
+            FamilySymbol pile = Seacher.pile as FamilySymbol;
+            Piles = Seacher.PossibleNamesFamilySymbol;
 
+            if (pile == null)
+            {
+                MessageBox.Show("Семейство не загружено");
+                return Result.Failed;
+            }
 
-
-            var pile = doc.GetElement(pileId) as FamilySymbol;
+            
 
             //Самый нижний уровень
             var check = new FilteredElementCollector(doc).OfClass(typeof(Level)).ToElements();
@@ -54,52 +60,101 @@ namespace Reinforcement
                 .FirstOrDefault();
 
             TransparentNotificationWindow.ShowNotification("Выберите подложку dwg", uidoc, 5);
+            int iter = -1;
+            int iter2 = -1;
+            Reference sel=null;
+            Element dwg = null;
 
-            Reference sel = uidoc.Selection.PickObject(ObjectType.Element);          
-            var dwg = doc.GetElement(sel);
-            if (!(dwg is ImportInstance))
+            while (iter2 < 2)
             {
-                MessageBox.Show("Выбрана не подложка!\n" + "Категория должна быть ImportInstance");
-                return Result.Failed;
-            }
-
-            Options opt = new Options()
-            {
-                ComputeReferences = true,
-                View = doc.ActiveView
-            };
-
-            var geom = dwg.get_Geometry(opt).First() as GeometryInstance;
-            var geomList = geom.GetInstanceGeometry()
-                .OfType<Point>()
-                .Select(x => x.Coord)                
-                .ToList();
-
-            try //ловим ошибку
-            {
-                using (Transaction t = new Transaction(doc, "действие"))
+                iter2++;
+                while (iter < 7)
                 {
-                    t.Start();
-                    //Тут пишем основной код для изменения элементов модели
-                    if (pile != null && !pile.IsActive)
+                    try //ловим ошибку
                     {
-                        pile.Activate();
-                        doc.Regenerate();
+                        sel = uidoc.Selection.PickObject(ObjectType.Element);
+                        dwg = doc.GetElement(sel);
                     }
-                    foreach (XYZ point in geomList) 
+                    catch
                     {
-                        doc.Create.NewFamilyInstance(point, pile, level, Autodesk.Revit.DB.Structure.StructuralType.Footing);
+                        sel = null;
                     }
-                    t.Commit();
+                    iter++;
+                    if (sel == null || !(dwg is ImportInstance))
+                    {
+
+                        DialogResult result = MessageBox.Show(
+                        "Выбрана не подложка!\n" + "Выбрать подложку? Категория должна быть ImportInstance",
+                        "Подложка неверная",
+                        MessageBoxButtons.YesNo);
+                        if (result != DialogResult.Yes)
+                        {
+                            MessageBox.Show("Неверная подложка");
+                            return Result.Failed;
+
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+
                 }
+
+                Options opt = new Options()
+                {
+                    ComputeReferences = true,
+                    View = doc.ActiveView
+                };
+
+                var geom = dwg.get_Geometry(opt).First() as GeometryInstance;
+                var geomList = geom.GetInstanceGeometry()
+                    .OfType<Point>()
+                    .Select(x => x.Coord)
+                    .ToList();
+                if (geomList == null || geomList.Count == 0)
+                {
+                    DialogResult result = MessageBox.Show(
+                        "нет точек на подложке dwg. выбрать другую подложку?", "Подложка неверная",
+                        MessageBoxButtons.YesNo);
+                    if (result != DialogResult.Yes)
+                    {
+                        continue;
+
+                    }
+                    else
+                    {
+                        MessageBox.Show("Неверная подложка");
+                        return Result.Failed;
+                    }
+                }
+                try //ловим ошибку
+                {
+                    using (Transaction t = new Transaction(doc, "действие"))
+                    {
+                        t.Start();
+                        //Тут пишем основной код для изменения элементов модели
+                        if (pile != null && !pile.IsActive)
+                        {
+                            pile.Activate();
+                            doc.Regenerate();
+                        }
+                        foreach (XYZ point in geomList)
+                        {
+                            doc.Create.NewFamilyInstance(point, pile, level, Autodesk.Revit.DB.Structure.StructuralType.Footing);
+                        }
+                        t.Commit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //Код в случае ошибки
+                    MessageBox.Show("Всё не так, ребята!\n" + ex.Message);
+                    return Result.Failed;
+                }
+                return Result.Succeeded;
             }
-            catch (Exception ex)
-            {
-                //Код в случае ошибки
-                MessageBox.Show("Чет пошло не так!\n" + ex.Message);
-                return Result.Failed;
-            }
-            return Result.Succeeded;
+            return Result.Failed;
         }
         
     }

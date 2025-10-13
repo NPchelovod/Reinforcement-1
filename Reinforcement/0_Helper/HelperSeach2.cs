@@ -14,13 +14,13 @@ namespace Reinforcement
 
 
 
-    public class HelperSeach
+    public class HelperSeach2
     {
 
         private static Dictionary<string, ElementId> familySymbolsNames = new Dictionary<string, ElementId>();
 
-        public static List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> DataSovpad = new List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)>();
-        public static (Element pile, HashSet<string> PossibleNamesFamilySymbol) GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ExternalCommandData commandData)
+        public static List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> DataSovpad = new List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> ();
+        public static (Element pile,  HashSet<string> PossibleNamesFamilySymbol) GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ExternalCommandData commandData)
         {
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
@@ -47,13 +47,13 @@ namespace Reinforcement
 
             HashSet<string> PossibleNamesChange = new HashSet<string>(PossibleNamesFamilySymbol);
             bool famExist = false;
-            while (iter < 6)
+            while (iter<6)
             {
                 iter++;
 
                 DataSovpad.Clear();
 
-
+               
 
                 double maxSimilarity = 0;
 
@@ -97,7 +97,7 @@ namespace Reinforcement
                 if (result == DialogResult.Yes && maxSimilarity > 0.2)
                 {
                     famExist = true;
-
+            
                     break;
                 }
                 int iter2 = -1;
@@ -107,7 +107,7 @@ namespace Reinforcement
                     iter2++;
                     var input = HelperPrivateStatic.GetUserInputWithForm();
                     if (!input.Item2) { proxod = false; break; }
-
+                        
 
                     if (input.Item1.Count() > 5)
                     {
@@ -122,8 +122,8 @@ namespace Reinforcement
                 }
 
             }
-
-
+                
+            
             if (!famExist)
             {
                 pileMax = null;
