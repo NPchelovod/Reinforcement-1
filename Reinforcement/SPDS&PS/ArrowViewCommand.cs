@@ -22,11 +22,9 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-      
-            Document doc = uidoc.Document;
+            RevitAPI.Initialize(commandData);
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
 
             var list_Name = new List<string>() { FamName, FamName2, FamName3, FamName4 };
 

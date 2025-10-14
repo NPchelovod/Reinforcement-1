@@ -13,8 +13,8 @@ namespace Reinforcement
 {
     internal class Utilit_1_1_Depth_Seach
     {
-
-        private Dictionary<Document, Dictionary<HashSet<string>, Element>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, Element>>();
+        //обеспечивает скорость в дальнейшем
+        private static Dictionary<Document, Dictionary<HashSet<string>, ElementType>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, ElementType>>();
 
 
         public static (bool create, List<String> FamNames)  GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
@@ -23,56 +23,75 @@ namespace Reinforcement
             // служит для поиска и установки элемента
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
-
-            IList<Element> sravn_iter;
-            bool ElementType=false;
-            if (Type_seach == "ElementType")
-            {
-                IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-                sravn_iter = elementTypes;
-                ElementType = true;
-            }
-            else
-            {
-                IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-                sravn_iter = symbols;
-            }
-
-            Dictionary<Element, string> familySymbolsNames = HelperSeach.familySymbolsNames;
-            familySymbolsNames.Clear();
-
-            string name_sravn;
-
-            
             ElementType elementType = null;
-            foreach (Element element in sravn_iter)
-            {
-                elementType = element as ElementType;
-                if (ElementType)
-                { name_sravn = elementType.Name; }
-                else
-                { name_sravn = elementType.FamilyName; }
-
-                familySymbolsNames[element] = name_sravn;
-            }
-
             var FamNamesSet = FamNames.ToHashSet();
-
-            var Data = HelperSeach.GetElement(FamNamesSet);
-            Element element_gotov = Data.pile;
-
-            if (element_gotov==null)
+            bool pastExist = false;
+            if (PastElements.TryGetValue(doc,out var dats))
             {
-                return (false, FamNames);
+                if(dats.TryGetValue(FamNamesSet, out elementType))
+                {
+                    pastExist = true;
+                }
             }
 
-            elementType = element_gotov as ElementType;
-            
+            if (!pastExist)
+            {
+                IList<Element> sravn_iter;
+                bool boolElementType = false;
+                if (Type_seach == "ElementType")
+                {
+                    IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
+                    sravn_iter = elementTypes;
+                    boolElementType = true;
+                }
+                else
+                {
+                    IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
+                    sravn_iter = symbols;
+                }
+
+                Dictionary<Element, string> familySymbolsNames = HelperSeach.familySymbolsNames;
+                familySymbolsNames.Clear();
+
+                string name_sravn;
+
+
+
+                foreach (Element element in sravn_iter)
+                {
+                    elementType = element as ElementType;
+                    if (boolElementType)
+                    { name_sravn = elementType.Name; }
+                    else
+                    { name_sravn = elementType.FamilyName; }
+
+                    familySymbolsNames[element] = name_sravn;
+                }
+
+
+
+                var Data = HelperSeach.GetElement(FamNamesSet);
+                Element element_gotov = Data.pile;
+
+                if (element_gotov == null)
+                {
+                    return (false, FamNames);
+                }
+
+                elementType = element_gotov as ElementType;
+                if (!PastElements.ContainsKey(doc))
+                {
+                    PastElements[doc] = new Dictionary<HashSet<string>, ElementType>();
+                }
+                PastElements[doc][Data.PossibleNamesFamilySymbol] = elementType;
+                uidoc.PostRequestForElementTypePlacement(elementType);
+                return (true, Data.PossibleNamesFamilySymbol.ToList());
+            }
+
             uidoc.PostRequestForElementTypePlacement(elementType);
 
-
-            return (true, Data.PossibleNamesFamilySymbol.ToList());
-
+            
+            return (true, FamNames);
 
         }
 
