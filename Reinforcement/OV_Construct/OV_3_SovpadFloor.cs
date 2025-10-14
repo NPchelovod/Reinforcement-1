@@ -42,7 +42,7 @@ namespace Reinforcement
         public static int pogresCenter = 5;
 
 
-        public static List<int> UnicFloors = new List<int>();
+        public static List<(int, string id)> UnicFloors = new List<(int, string id)>();
         public static bool ExecuteLogic(ExternalCommandData commandData)
         {
             UnicFloors.Clear();
@@ -55,9 +55,9 @@ namespace Reinforcement
             var Z_floors = new List<int>(DataOVLevel.Keys);
             Z_floors.Sort();
 
-            var pastSize = new HashSet<(int width, int height)>();
+            
 
-            for(int i=0; i+1<Z_floors.Count; i++) 
+            for (int i=0; i+1<Z_floors.Count; i++) 
             { 
                 int Z1 = Z_floors[i];
                 int Z2 = Z_floors[i+1];
@@ -74,7 +74,7 @@ namespace Reinforcement
 
                     for (int k = 0; k < elements2.Count; k++)
                     {
-                        var element2 = elements1[k];
+                        var element2 = elements2[k];
                         distance = (int) Math.Sqrt((element1.X - element2.X) * (element1.X - element2.X) + (element1.Y - element2.Y) * (element1.Y - element2.Y));
                         if (distance < distanceMin || distanceMin < 0)
                         {
@@ -86,7 +86,7 @@ namespace Reinforcement
                             }
                         }
                     }
-                    if(pogresNesovpad> distanceMin)
+                    if(pogresNesovpad< distanceMin)
                     { continue; }
 
                     element1.ChildElement.Add(nearlyElement);
@@ -97,7 +97,8 @@ namespace Reinforcement
 
             // теперь собираем совпадающие этажи
 
-            UnicFloors.Add(Z_floors[0]);
+            UnicFloors.Add((Z_floors[0], ""));
+            ElementId elementId=null;
             for (int i = 1; i < Z_floors.Count; i++)
             {
                 int Z1 = Z_floors[i];
@@ -109,9 +110,10 @@ namespace Reinforcement
                 for (int j = 0; j < elements1.Count; j++)
                 {
                     var element1 = elements1[j];
+                    elementId = element1.elementId;
                     if (element1.ParentElement.Count == 0 || element1.ParentElement.Count > 1)
                     {
-                        unicFloor = true; break;
+                        unicFloor = true;  break;
                     }
 
                     var Parent = element1.ParentElement.FirstOrDefault();
@@ -161,7 +163,7 @@ namespace Reinforcement
                 }
                 if(unicFloor)
                 {
-                    UnicFloors.Add(Z1);
+                    UnicFloors.Add((Z1, $" Id первого уник: {elementId.ToString()}"));
                 }
                     
             }

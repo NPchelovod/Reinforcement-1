@@ -13,15 +13,15 @@ namespace Reinforcement
     {
         public static string parameter = "Тип системы";
         public static string valueParameter = "Вентканал";
-        private static List<string> namesLookupParameterString = new List<string>()
+        public static List<string> namesLookupParameterString = new List<string>()
         {
             "Уровень"
         };
-        private static List<string> namesLookupParameterDouble = new List<string>()
+        public static List<string> namesLookupParameterDouble = new List<string>()
         {
             "Ширина", "Длина"
         };
-        private static List<string> namesLookupParameterInt = new List<string>()
+        public static List<string> namesLookupParameterInt = new List<string>()
         {
 
         };
@@ -41,29 +41,18 @@ namespace Reinforcement
         //заполнение данныех
         public static List<HelperElement> DataOV = new List<HelperElement>();
         public static Dictionary<int, List<HelperElement>> DataOVLevel= new Dictionary<int, List<HelperElement>>();
-        public static void GetOVData(ExternalCommandData commandData)
+
+        
+        public static void GetOVData(ExternalCommandData commandData, int pogresZ=500)
         {
+            //идем по OVElements делаем DataOV и ataOVLevel
+
             GetAllOVElements(commandData);
-            DataOV.Clear();
-            DataOVLevel.Clear();
 
+            var Data = new HelperElementsCreate(OVElements, namesLookupParameterString, namesLookupParameterDouble, namesLookupParameterInt, pogresZ);
 
-            HelperElement newData;
-            foreach (var element in OVElements)
-            {
-                newData = new HelperElement(element, namesLookupParameterString, namesLookupParameterDouble, namesLookupParameterInt);
-                DataOV.Add(newData);
-                if (!DataOVLevel.ContainsKey(newData.Z))
-                {
-                    DataOVLevel[newData.Z] = new List<HelperElement> { newData };
-                }
-                else
-                {
-                    DataOVLevel[newData.Z].Add(newData);
-                }
-
-            }
-
+            DataOV = Data.DataOV;
+            DataOVLevel = Data.DataOVLevel;
         }
 
 

@@ -91,14 +91,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="0_Helper\0HelperPrivateStatic.cs" />
-    <Compile Include="0_Helper\2HelperGetData.cs" />
+    <Compile Include="0_Helper\2HelperElement.cs" />
     <Compile Include="0_Helper\1HelperSeach.cs" />
-    <Compile Include="0_Helper\2HelperSeachLoocop.cs" />
+    <Compile Include="0_Helper\3HelperElementsCreate.cs" />
+    <Compile Include="0_Helper\4HelperSeachLoocop.cs" />
     <Compile Include="0_Helper\HelperSeach2.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModel\CalculateReinforcementArchitectureWallsViewModel.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="OV_Construct\OV_0_Parameters.cs" />
     <Compile Include="OV_Construct\OV_1_GetAllOV.cs" />
     <Compile Include="OV_Construct\OV_2_GetAllSizeOV.cs" />
     <Compile Include="OV_Construct\OV_3_SovpadFloor.cs" />

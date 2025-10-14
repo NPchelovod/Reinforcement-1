@@ -24,7 +24,7 @@ namespace Reinforcement
 
             // Объединяем все строки через перенос
 
-            var lines = SizeOV.Select((size, index) => $"{index + 1}. ({size.width}, {size.height})").ToList();
+            var lines = SizeOV.Select((size, index) => $"{index + 1}. ({size.height}, {size.width}) {size.num} шт.").ToList();
 
             // Объединяем все строки через перенос
             string outputText = string.Join("\n", lines);
@@ -37,7 +37,7 @@ namespace Reinforcement
 
         public static string swidth = "Ширина";
         public static string sheight = "Длина";
-        public static List<(int width, int height)> SizeOV = new List<(int width, int height)>();
+        public static List<(int height,int width, int num)> SizeOV = new List<(int height, int width, int num)>();
 
         public static bool ExecuteLogic(ExternalCommandData commandData)
         {
@@ -50,8 +50,8 @@ namespace Reinforcement
             int width = 0;
             int height = 0; 
 
-            var pastSize = new HashSet<(int width, int height)> ();
-
+            
+            var dictNum = new Dictionary<(int height, int width), int>();
             foreach(var Data in GetDataAllOV.DataOV)
             {
                 if(Data.lookupParameterDouble.TryGetValue(swidth,out var dwidth))
@@ -62,25 +62,31 @@ namespace Reinforcement
                         height = (int)dheight;
                         //if(pastSize.Contains((width, height)))
                         //{ continue; }
-                        pastSize.Add((width, height));
+                       
 
-                        //if(Dict_Size_OV.ContainsKey(width))
-                        //{
-                        //    Dict_Size_OV[width].Add(height);
-                        //}
-                        //else
-                        //{
-                        //    Dict_Size_OV[width] = new List<double>{ height };
-                        //}
+                        if(dictNum.TryGetValue((height, width), out int num))
+                        {
+                            dictNum[(height, width)] = num + 1;
+                        }
+                        else
+                        {
+                            dictNum[(height, width)] = 1;
+                        }
 
+                        
                     }
                 }
                 
             }
-            SizeOV = pastSize
-            .OrderBy(size => size.width)
-            .ThenBy(size => size.height)
+            var sortSize = dictNum.Keys
+            .OrderBy(size => size.height )
+            .ThenBy(size => size.width)
             .ToList();
+
+            foreach(var Data in sortSize)
+            {
+                SizeOV.Add((Data.height, Data.width, dictNum[Data]));
+            }
 
             if (SizeOV.Count > 0)
             {

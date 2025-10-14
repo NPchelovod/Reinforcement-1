@@ -20,7 +20,7 @@ namespace BuildPlugin
 {
     internal class Program
     {
-        private static string projectName = "Revit ENS plugin 2024";
+        private static string projectName = "Revit ENS plugin 2025";
 
         private static string formattedDate = DateTime.Now.ToString("yy.MM.dd.HH");
 

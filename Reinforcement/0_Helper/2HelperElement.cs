@@ -6,9 +6,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 
 namespace Reinforcement
 {
+
+    
     public class HelperElement
     {
 
@@ -16,8 +19,8 @@ namespace Reinforcement
 
 
 
-        public HashSet<HelperElement> ParentElement;// допустим нижестоящая шахта вент
-        public HashSet<HelperElement> ChildElement;//вышестоящая шахта вент могут быть 2 шахты потом в одну превращаться
+        public HashSet<HelperElement> ParentElement=new HashSet<HelperElement>();// допустим нижестоящая шахта вент
+        public HashSet<HelperElement> ChildElement = new HashSet<HelperElement>();//вышестоящая шахта вент могут быть 2 шахты потом в одну превращаться
 
 
         public HelperElement(Element element, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt)
@@ -77,7 +80,14 @@ namespace Reinforcement
                 {
                     string valueString = foundParam.AsValueString();
                     if (!string.IsNullOrEmpty(valueString))
-                        lookupParameterDouble[nameParameters] = Convert.ToDouble(valueString);
+                    {
+                        double result;
+                        bool isValid = Double.TryParse(valueString, out result);
+                        if (isValid)
+                        {
+                            lookupParameterDouble[nameParameters] = result;
+                        }
+                    }
                 }
             }
             foreach (var nameParameters in namesLookupParameterInt)
@@ -87,7 +97,15 @@ namespace Reinforcement
                 {
                     string valueString = foundParam.AsValueString();
                     if (!string.IsNullOrEmpty(valueString))
-                        lookupParameterInt[nameParameters] = Convert.ToInt32(valueString);
+                    {
+                        int result;
+                        bool isValid = int.TryParse(valueString, out result);
+
+                        if (isValid)
+                        {
+                            lookupParameterInt[nameParameters] = result;
+                        }
+                    }
                 }
             }
 
