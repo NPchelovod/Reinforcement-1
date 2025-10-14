@@ -64,16 +64,15 @@ namespace Reinforcement
                 
                 double maxSimilarity = 0;
 
-
-                foreach (var elementData in familySymbolsNames)
+                foreach (string PossibleName in PossibleNamesChange)
                 {
-                    var element = elementData.Key;
+                    if (PossibleName.Count() < 4) { continue; }
 
-                    var name = elementData.Value;
-
-                    foreach (string PossibleName in PossibleNamesChange)
+                    foreach (var elementData in familySymbolsNames)
                     {
-                        if (PossibleName.Count() < 4) { continue; }
+                        var element = elementData.Key;
+
+                        var name = elementData.Value;
 
                         var Similarity = HelperPrivateStatic.CalculateSimilarity(PossibleName, name);
                         if (Similarity > 0.7 && Similarity > maxSimilarity)

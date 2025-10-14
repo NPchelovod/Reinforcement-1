@@ -17,6 +17,12 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class Perforation_floor_Command : IExternalCommand
     {
+
+        public static HashSet<string> list_Name = new HashSet<string>
+        {
+            "ЕС_Отверстие прямоугольное_В перекрытии",
+            "Кубик_Перекрытие_Прямоугольный"
+        };
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -28,13 +34,13 @@ namespace Reinforcement
 
             Document doc = uidoc.Document;
 
-            var list_Name = new List<string>() { FamName, FamName2 };
+            
 
             string Type_seach = "Symbols";
 
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach);
+                list_Name=Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach).FamNames;
             }
             catch (Exception)
             {
@@ -43,8 +49,7 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
-        public static string FamName { get; set; } = "ЕС_Отверстие прямоугольное_В перекрытии";
-        public static string FamName2 { get; set; } = "Кубик_Перекрытие_Прямоугольный";
+        
     }
 }
 

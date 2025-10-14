@@ -17,7 +17,7 @@ namespace Reinforcement
         private static Dictionary<Document, Dictionary<HashSet<string>, ElementType>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, ElementType>>();
 
 
-        public static (bool create, List<String> FamNames)  GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
+        public static (bool create, HashSet<String> FamNames)  GetResult(Document doc, UIDocument uidoc, HashSet<String> FamNames, string Type_seach )
         {
 
             // служит для поиска и установки элемента
@@ -85,7 +85,7 @@ namespace Reinforcement
                 }
                 PastElements[doc][Data.PossibleNamesFamilySymbol] = elementType;
                 uidoc.PostRequestForElementTypePlacement(elementType);
-                return (true, Data.PossibleNamesFamilySymbol.ToList());
+                return (true, Data.PossibleNamesFamilySymbol);
             }
 
             uidoc.PostRequestForElementTypePlacement(elementType);

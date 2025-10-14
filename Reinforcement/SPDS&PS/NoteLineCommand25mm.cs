@@ -30,7 +30,7 @@ namespace Reinforcement
 
             Document doc = uidoc.Document;
 
-            var list_Name = new List<string>() { FamName, FamName2, FamName3 };
+           
 
             string Type_seach = "Symbols";
 
@@ -44,11 +44,13 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-
-        public static string FamName { get; set; } = "ЕС_Аннотация_Текст_Выноска_2,5мм";
-        public static string FamName2 { get; set; } = "ЕС_Аннотация_Текст_Выноска_2.5мм";
-
-        public static string FamName3 { get; set; } = "ЕС_Аннотация_Текст_Выноска_2.5";
+        public static HashSet<string> list_Name = new HashSet<string>
+         {
+             "ЕС_Аннотация_Текст_Выноска_2,5мм",
+             "ЕС_Аннотация_Текст_Выноска_2.5мм",
+             "ЕС_Аннотация_Текст_Выноска_2.5"
+         };
+        
 
     }
 }
