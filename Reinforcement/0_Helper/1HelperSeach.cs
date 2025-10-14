@@ -17,7 +17,7 @@ namespace Reinforcement
     public class HelperSeach
     {
 
-        private static Dictionary<Element, string> familySymbolsNames = new Dictionary<Element, string>();
+        public static Dictionary<Element, string> familySymbolsNames = new Dictionary<Element, string>();
 
         
 

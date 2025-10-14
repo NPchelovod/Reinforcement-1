@@ -133,7 +133,6 @@
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="3_Electric\EL_panel_Light_without_boxes.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectricV2_0.cs" />
     <Compile Include="CopyTask\CopyTaskFromElectric.cs" />
     <Compile Include="CopyTask\_Past_Copy.cs" />

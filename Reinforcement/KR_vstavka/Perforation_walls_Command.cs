@@ -43,6 +43,8 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
+
+
         public static string FamName { get; set; } = "ЕС_Отверстие_В стене_Перфорация";
         public static string FamName2 { get; set; } = "ЕС_Отверстие_Стена_Перфорация";
         public static string FamName3 { get; set; } = "ЕС_ОтверстиеПрямоугольное_ВСтене";

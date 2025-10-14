@@ -13,7 +13,11 @@ namespace Reinforcement
 {
     internal class Utilit_1_1_Depth_Seach
     {
-        public static Result GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
+
+        private Dictionary<Document, Dictionary<HashSet<string>, Element>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, Element>>();
+
+
+        public static (bool create, List<String> FamNames)  GetResult(Document doc, UIDocument uidoc, List <String> FamNames, string Type_seach )
         {
 
             // служит для поиска и установки элемента
@@ -21,11 +25,12 @@ namespace Reinforcement
 
 
             IList<Element> sravn_iter;
-
+            bool ElementType=false;
             if (Type_seach == "ElementType")
             {
                 IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
                 sravn_iter = elementTypes;
+                ElementType = true;
             }
             else
             {
@@ -33,104 +38,40 @@ namespace Reinforcement
                 sravn_iter = symbols;
             }
 
+            Dictionary<Element, string> familySymbolsNames = HelperSeach.familySymbolsNames;
+            familySymbolsNames.Clear();
 
+            string name_sravn;
+
+            
             ElementType elementType = null;
-            //ElementType symbol = null;
-
-
-            bool contol_proxod = false;
-
-            foreach (string FamName in FamNames)
+            foreach (Element element in sravn_iter)
             {
-                if (contol_proxod)
-                {
-                    break;
-                }
-
-                foreach (var element in sravn_iter)
-                {
-                    elementType = element as ElementType;
-                    string name_sravn;
-                    if (Type_seach == "ElementType")
-                    { name_sravn = elementType.Name; }
-                    else
-                    {  name_sravn= elementType.FamilyName; }
-
-                    if (String.Equals(name_sravn, FamName))
-                    {
-                        contol_proxod = true;
-
-                        break;
-                    }
-
-                }
-                
-
-            }
-
-            if (contol_proxod == false)
-            {
-                // ищем максимальную подстроку в строке для этого удаляем все символы чипушные
-                string FamName = FamNames[0];
-
-
-                string FamName2 = Utilit_Helper.unific_sravn_string(FamName);
-
-                int simvol_sovpad = 0;
-                string name_sovpad = "";
-                string FamName_sravn = "";
-                int count = 0;
-                string potenc_name_sovpad;
-                Element element_gotov = null;
-                
-                foreach (var element in sravn_iter)
-                {
-                    elementType = element as ElementType;
-
-                   
-                    if (Type_seach == "ElementType")
-                    { potenc_name_sovpad = elementType.Name; }
-                    else
-                    { potenc_name_sovpad = elementType.FamilyName; }
-
-
-                    FamName_sravn = Utilit_Helper.unific_sravn_string(potenc_name_sovpad);
-
-                    // количество пересечений
-                    count = Utilit_Helper.LongestCommonSubstring(FamName2, FamName_sravn);
-                    if (count > simvol_sovpad)
-                    {
-                        simvol_sovpad = count;
-                        name_sovpad = potenc_name_sovpad;
-                        element_gotov = element;
-                    }
-                }
-                
-                // условие прохода символов более 3 и совпадение более 70%
-                if (simvol_sovpad > 3 && simvol_sovpad > Convert.ToInt32(0.7 * FamName2.Count()))
-                {
-                    elementType = element_gotov as ElementType;
-
-                    contol_proxod = true;
-
-                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Нашёл аналог %{FamName}% : %{name_sovpad}%");
-                    
-                }
+                elementType = element as ElementType;
+                if (ElementType)
+                { name_sravn = elementType.Name; }
                 else
-                {
-                    TaskDialog.Show("Не найдено точное совпадение имени семейства", $"Аналогов нет %{FamName}%, но ближайшее имя было %{name_sovpad}%");
-                    return Result.Failed;
-                }
+                { name_sravn = elementType.FamilyName; }
+
+                familySymbolsNames[element] = name_sravn;
             }
 
-            if (contol_proxod)
+            var FamNamesSet = FamNames.ToHashSet();
+
+            var Data = HelperSeach.GetElement(FamNamesSet);
+            Element element_gotov = Data.pile;
+
+            if (element_gotov==null)
             {
-                uidoc.PostRequestForElementTypePlacement(elementType);
+                return (false, FamNames);
             }
 
+            elementType = element_gotov as ElementType;
+            
+            uidoc.PostRequestForElementTypePlacement(elementType);
 
 
-            return Result.Succeeded;
+            return (true, Data.PossibleNamesFamilySymbol.ToList());
 
 
         }
