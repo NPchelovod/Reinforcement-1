@@ -20,7 +20,7 @@ namespace BuildPlugin
 {
     internal class Program
     {
-        private static string projectName = "Revit ENS plugin 2025";
+        private static string projectName = "Revit ENS plugin 2024";
 
         private static string formattedDate = DateTime.Now.ToString("yy.MM.dd.HH");
 
@@ -29,12 +29,12 @@ namespace BuildPlugin
         {
 
             // Добавьте этот код ▼
-            if (Compiler.WixLocation == null)
-            {
-                Compiler.WixLocation = @"C:\Program Files (x86)\WiX Toolset v3.14\bin";
-                // ИЛИ для последних версий:
-                // Compiler.WixLocation = @"C:\Program Files\WiX Toolset v3.14\bin";
-            }
+            //if (Compiler.WixLocation == null)
+            //{
+            //    Compiler.WixLocation = @"C:\Program Files (x86)\WiX Toolset v3.14\bin";
+            //    // ИЛИ для последних версий:
+            //    // Compiler.WixLocation = @"C:\Program Files\WiX Toolset v3.14\bin";
+            //}
 
 
 

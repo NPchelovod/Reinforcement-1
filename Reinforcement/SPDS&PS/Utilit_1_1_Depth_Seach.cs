@@ -26,12 +26,42 @@ namespace Reinforcement
             ElementType elementType = null;
             var FamNamesSet = FamNames.ToHashSet();
             bool pastExist = false;
-            if (PastElements.TryGetValue(doc,out var dats))
+            // Получаем или создаем словарь dats для документа с компаратором
+            
+            if (PastElements.TryGetValue(doc, out var dats))
             {
-                if(dats.TryGetValue(FamNamesSet, out elementType))
+                // Если словарь для документа существует, пробуем найти элемент по FamNamesSet
+                
+                foreach (var dat in dats.Keys)
                 {
-                    pastExist = true;
+                    if(dat.Count!= FamNamesSet.Count)
+                    { continue; }
+                    // Проверяем, что все элементы совпадают
+                    bool allMatch = true;
+
+                    foreach (var fam in FamNamesSet)
+                    {
+                        if(!dat.Contains(fam))
+                        {
+                            allMatch = false;
+                            continue;
+                        }
+                        pastExist = false; break;
+                    }
+                    if (allMatch)
+                    {
+                        elementType = dats[dat];
+                        pastExist = true;
+                        break;
+                    }
+
                 }
+                
+            }
+            else 
+            {
+                //dats = new Dictionary<HashSet<string>, ElementType>(HashSet<string>.CreateSetComparer());
+                PastElements[doc] = new Dictionary<HashSet<string>, ElementType>();
             }
 
             if (!pastExist)
@@ -79,13 +109,12 @@ namespace Reinforcement
                 }
 
                 elementType = element_gotov as ElementType;
-                if (!PastElements.ContainsKey(doc))
-                {
-                    PastElements[doc] = new Dictionary<HashSet<string>, ElementType>();
-                }
-                PastElements[doc][Data.PossibleNamesFamilySymbol] = elementType;
-                uidoc.PostRequestForElementTypePlacement(elementType);
-                return (true, Data.PossibleNamesFamilySymbol);
+
+                // Добавляем в словарь dats, который уже имеет компаратор
+                FamNames = Data.PossibleNamesFamilySymbol;
+                PastElements[doc][FamNames] = elementType;
+                
+
             }
 
             uidoc.PostRequestForElementTypePlacement(elementType);

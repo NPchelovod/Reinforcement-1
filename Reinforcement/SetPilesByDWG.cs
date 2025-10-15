@@ -37,7 +37,7 @@ namespace Reinforcement
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            FilteredElementCollector collection = new FilteredElementCollector(doc);
+            //FilteredElementCollector  FamNames = new FilteredElementCollector(doc);
 
             var Seacher = HelperSeach.GetExistFamily(Piles, commandData);
             FamilySymbol pile = Seacher.pile as FamilySymbol;

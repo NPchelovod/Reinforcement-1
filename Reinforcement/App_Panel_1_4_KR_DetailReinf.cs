@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
@@ -19,26 +20,26 @@ namespace Reinforcement
         {
             //3. PanelDetailReinf
             App_Helper_Button.CreateButton("Точка", "Точка", "Reinforcement.RcEndCommand", Properties.Resources.ES_RebarInFront,
-                "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.FamName}", panelDetailReinf);
+                "Размещение арматурного стержня с торца", $"Имя семейства должно быть {RcEndCommand.list_Name.FirstOrDefault()}", panelDetailReinf);
 
             App_Helper_Button.CreateButton("Сбоку", "Сбоку", "Reinforcement.RcLineCommand", Properties.Resources.ES_RebarFromSide,
-                "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.FamName}",
+                "Размещение арматурного стержня сбоку", $"Имя семейства должно быть {RcLineCommand.list_Name.FirstOrDefault()}",
                 panelDetailReinf);
 
             App_Helper_Button.CreateButton("Хомут", "Хомут", "Reinforcement.RcHomutCommand", Properties.Resources.ES_RebarBracket,
-               "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.FamName}",
+               "Размещение хомута", $"Имя семейства должно быть {RcHomutCommand.list_Name.FirstOrDefault()}",
                panelDetailReinf);
 
             RibbonItemData pRebarEqual = App_Helper_Button.CreateButtonData("П-стержень равнополочный", "П-стержень равнополочный", "Reinforcement.PRebarEqualCommand", Properties.Resources.PRebarEqual,
-                "Размещение равнополочного п-стержня", $"Имя семейства должно быть {PRebarEqualCommand.FamName}", panelDetailReinf);
+                "Размещение равнополочного п-стержня", $"Имя семейства должно быть {PRebarEqualCommand.list_Name.FirstOrDefault()}", panelDetailReinf);
             RibbonItemData pRebarNotEqual = App_Helper_Button.CreateButtonData("П-стержень неравнополочный", "П-стержень неравнополочный", "Reinforcement.PRebarNotEqualCommand", Properties.Resources.PRebarNotEqual,
-                  "Размещение неравнополочного п-стержня", $"Имя семейства должно быть {PRebarNotEqualCommand.FamName}", panelDetailReinf);
+                  "Размещение неравнополочного п-стержня", $"Имя семейства должно быть {PRebarNotEqualCommand.list_Name.FirstOrDefault()}", panelDetailReinf);
 
             IList<RibbonItem> stackedPRebars =
                  App_Helper_Button.CreateStackedItems(panelDetailReinf, pRebarEqual, pRebarNotEqual, "П-стержень равнополочный", "П-стержень неравнополочный", tabName);
 
             RibbonItemData gRebar = App_Helper_Button.CreateButtonData("Г-стержень", "Г-стержень", "Reinforcement.RcGRebarCommand", Properties.Resources.GRebar,
-                 "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.FamName}", panelDetailReinf);
+                 "Размещение Г-стержня", $"Имя семейства должно быть {RcGRebarCommand.list_Name.FirstOrDefault()}", panelDetailReinf);
             RibbonItemData shpilka = App_Helper_Button.CreateButtonData("Шпилька", "Шпилька", "Reinforcement.RcShpilkaCommand", Properties.Resources.Shpilka,
                 "Размещение шпильки",
                $"Для размещения нужно выделить два арматурных стержня в сечении по которым построится шпилька\n" +
