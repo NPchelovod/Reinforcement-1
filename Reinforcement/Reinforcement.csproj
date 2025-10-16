@@ -187,18 +187,18 @@
     <Compile Include="Test\GetAllAnnotationTagBounds.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
-    <Compile Include="CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
+    <Compile Include="KR_SAPR\CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
     <Compile Include="RelayCommand.cs" />
-    <Compile Include="CopySelectedSchedules\ViewCopySelectedSchedules.xaml.cs">
+    <Compile Include="KR_SAPR\CopySelectedSchedules\ViewCopySelectedSchedules.xaml.cs">
       <DependentUpon>ViewCopySelectedSchedules.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CopySelectedSchedules\ViewModelCopySelectedSchedules.cs" />
-    <Compile Include="GetLengthElectricalWiring.cs" />
-    <Compile Include="CreateViewPlan\CommandCreateViewPlan.cs" />
-    <Compile Include="CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
+    <Compile Include="KR_SAPR\CopySelectedSchedules\ViewModelCopySelectedSchedules.cs" />
+    <Compile Include="KR_SAPR\GetLengthElectricalWiring.cs" />
+    <Compile Include="KR_SAPR\CreateViewPlan\CommandCreateViewPlan.cs" />
+    <Compile Include="KR_SAPR\CreateViewPlan\MainViewCreateViewPlan.xaml.cs">
       <DependentUpon>MainViewCreateViewPlan.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CreateViewPlan\ViewModelCreateViewPlan.cs" />
+    <Compile Include="KR_SAPR\CreateViewPlan\ViewModelCreateViewPlan.cs" />
     <Compile Include="SPDS&amp;PS\ConcreteJointCommand.cs" />
     <Compile Include="SPDS&amp;PS\WaterProofCommand.cs" />
     <Compile Include="SPDS&amp;PS\SoilBorderCommand.cs" />
@@ -231,7 +231,7 @@
     <Compile Include="SelectAllElementsByFamilyName\MainViewSelectAllElementsByFamilyName.xaml.cs">
       <DependentUpon>MainViewSelectAllElementsByFamilyName.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SetPilesByDWG.cs" />
+    <Compile Include="KR_SAPR\SetPilesByDWG.cs" />
     <Compile Include="DecorViewPlan\DecorViewPlan.cs" />
     <Compile Include="DecorViewPlan\MoveTextInDimension.cs" />
     <Compile Include="Test\CheckGridsDirection.cs" />
@@ -373,11 +373,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="CopySelectedSchedules\ViewCopySelectedSchedules.xaml">
+    <Page Include="KR_SAPR\CopySelectedSchedules\ViewCopySelectedSchedules.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="CreateViewPlan\MainViewCreateViewPlan.xaml">
+    <Page Include="KR_SAPR\CreateViewPlan\MainViewCreateViewPlan.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

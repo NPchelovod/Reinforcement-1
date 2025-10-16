@@ -19,7 +19,9 @@ namespace Reinforcement
 
         public static Dictionary<Element, string> familySymbolsNames = new Dictionary<Element, string>();
 
-        
+        //обеспечивает скорость в дальнейшем
+        private static Dictionary<Document, Dictionary<HashSet<string>, Element>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, Element>>();
+
 
         public static (Element pile, HashSet<string> PossibleNamesFamilySymbol) GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ExternalCommandData commandData)
         {
@@ -28,23 +30,70 @@ namespace Reinforcement
 
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
-            familySymbolsNames.Clear();
 
-            FilteredElementCollector collection = null;
-            //if (PossibleNamesFamily.Count > 0)
-            //{
-            //    collection = new FilteredElementCollector(doc).OfClass(typeof(Family)); 
-            //}
-            //else
-            //{
-            //    collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
-            //}
-            collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
-            foreach (var element in collection)
+            Element element = null;
+            bool pastExist = false;
+            
+
+            if (PastElements.TryGetValue(doc, out var dats))
             {
-                familySymbolsNames[element] = element.Name; // элемент и параметр сравнения
+                // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
+
+                foreach (var dat in dats.Keys)
+                {
+                    if (dat.Count != PossibleNamesFamilySymbol.Count)
+                    { continue; }
+                    // Проверяем, что все элементы совпадают
+                    bool allMatch = true;
+
+                    foreach (var fam in PossibleNamesFamilySymbol)
+                    {
+                        if (!dat.Contains(fam))
+                        {
+                            allMatch = false;
+                            continue;
+                        }
+                        pastExist = false; break;
+                    }
+                    if (allMatch)
+                    {
+                        element = dats[dat];
+                        pastExist = true;
+                        break;
+                    }
+
+                }
+
             }
-            return GetElement(PossibleNamesFamilySymbol);
+            else
+            {
+                //dats = new Dictionary<HashSet<string>, ElementType>(HashSet<string>.CreateSetComparer());
+                PastElements[doc] = new Dictionary<HashSet<string>, Element>();
+            }
+
+
+
+            if (!pastExist)
+            {
+                familySymbolsNames.Clear();
+
+                FilteredElementCollector collection = null;
+                collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
+                foreach (var element1 in collection)
+                {
+                    familySymbolsNames[element1] = element1.Name; // элемент и параметр сравнения
+                }
+
+                var seachData = GetElement(PossibleNamesFamilySymbol);
+                element = seachData.pile;
+                if (element != null)
+                {
+                    PossibleNamesFamilySymbol = seachData.PossibleNamesFamilySymbol;
+                    PastElements[doc][PossibleNamesFamilySymbol] = element;
+                }
+            }
+
+            return (element, PossibleNamesFamilySymbol);
         }
 
 

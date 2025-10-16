@@ -27,6 +27,12 @@ namespace Reinforcement
             return curveLength;
         }
 
+        //префик электрики
+        public static string prefix_EL = "ЭЛ_";
+        public static List<string> all_diameters = new List<string>()
+            {
+                "d25", "d32" ,"d40" , "d50"
+            };
 
         public Result Execute(
             ExternalCommandData commandData,
@@ -44,15 +50,11 @@ namespace Reinforcement
 
             IList<Element> lines = colLines.ToElements();
 
-            //префик электрики
-            string prefix_EL = "ЭЛ_";
-
-            var all_diameters = new List<string>()
-            {
-                "d25", "d32" ,"d40" , "d50"
-            };
-
+           
             var dict_answer = new Dictionary<string, double>();
+
+            var dict_answerAnyLine = new Dictionary<string, double>();
+
 
             foreach (var diam in all_diameters)
             { dict_answer[diam] = 0; }
@@ -67,10 +69,11 @@ namespace Reinforcement
                 {
                     string lineStyleName = detailCurve.LineStyle.Name;
                     float length = GetCurveLength(detailCurve);
+                    bool edin_proxod = false;
 
                     if (lineStyleName.Contains(prefix_EL))
                     {
-                        bool edin_proxod = false;
+                        
                         l_lotkov += length;
                         // дробим по запятой
                         string[] parts = lineStyleName.Split(' ').Select(p => p.Trim()).ToArray();
@@ -124,6 +127,20 @@ namespace Reinforcement
                     }
 
 
+                    else
+                    {
+                        //обычная линия
+                        if (dict_answerAnyLine.TryGetValue(lineStyleName, out var pastlength))
+                        { 
+                            dict_answerAnyLine[lineStyleName] = pastlength+ length; 
+                        }
+                        else
+                        {
+                            dict_answerAnyLine[lineStyleName] = length;
+                        }
+                    }
+
+
 
                 }
 
@@ -147,7 +164,24 @@ namespace Reinforcement
             }
 
             messageBuilder.AppendLine($" Суммарная длина путей кабелей: {sum_all} м.");
-            messageBuilder.AppendLine($" Суммарная длина лотков под кабели: {Math.Round(l_lotkov / 1000, 2)} м.");
+            messageBuilder.AppendLine($" Суммарная длина лотков под кабели: {Math.Round(l_lotkov / 1000, 2)} м./n");
+
+
+            if (dict_answerAnyLine.Count > 0)
+            {
+                messageBuilder.AppendLine($" Другие типы линий:");
+                foreach (KeyValuePair<string, double> entry in dict_answerAnyLine)
+                {
+                    double dobavka = Math.Round(entry.Value / 1000, 2);
+                    sum_all += dobavka;
+                    messageBuilder.AppendLine($"{entry.Key}: {dobavka} м.");
+                }
+
+                messageBuilder.AppendLine($" Суммарная длина вместе с иными линиями: {sum_all} м.");
+            }
+
+
+
             // Показываем диалог
             TaskDialog.Show("Длина Электроразводки", messageBuilder.ToString());
 
