@@ -150,41 +150,68 @@ namespace Reinforcement
 
             double sum_all = 0;
             // Форматируем каждую пару ключ-значение
-            if (error > 10)
+            bool el_exist = false;
+            if (dict_answer.Count > 0)
             {
-                messageBuilder.AppendLine($" Суммарная ошибка: {Math.Round(error / 1000, 2)} м.");
-                messageBuilder.AppendLine($" Нераспознанные имена: {neraspozn_name}");
-            }
+                
 
-            foreach (KeyValuePair<string, double> entry in dict_answer)
-            {
-                double dobavka = Math.Round(entry.Value / 1000, 2);
-                sum_all += dobavka;
-                messageBuilder.AppendLine($"{entry.Key}: {dobavka} м.");
-            }
-
-            messageBuilder.AppendLine($" Суммарная длина путей кабелей: {sum_all} м.");
-            messageBuilder.AppendLine($" Суммарная длина лотков под кабели: {Math.Round(l_lotkov / 1000, 2)} м./n");
-
-
-            if (dict_answerAnyLine.Count > 0)
-            {
-                messageBuilder.AppendLine($" Другие типы линий:");
-                foreach (KeyValuePair<string, double> entry in dict_answerAnyLine)
+                foreach (KeyValuePair<string, double> entry in dict_answer)
                 {
+                    if( entry.Value < 1) { continue; }
+                    el_exist=true ;
                     double dobavka = Math.Round(entry.Value / 1000, 2);
                     sum_all += dobavka;
                     messageBuilder.AppendLine($"{entry.Key}: {dobavka} м.");
                 }
 
-                messageBuilder.AppendLine($" Суммарная длина вместе с иными линиями: {sum_all} м.");
+
+                if (el_exist)
+                {
+                    if (error > 10)
+                    {
+                        messageBuilder.AppendLine($" Суммарная ошибка: {Math.Round(error / 1000, 2)} м.");
+                        messageBuilder.AppendLine($" Нераспознанные имена: {neraspozn_name}");
+                    }
+                    messageBuilder.AppendLine($" Суммарная длина путей кабелей: {sum_all} м.");
+                    messageBuilder.AppendLine($" Суммарная длина лотков под кабели: {Math.Round(l_lotkov / 1000, 2)} м.");
+                }
+            }
+
+            if (dict_answerAnyLine.Count > 0)
+            {
+                if (el_exist)
+                {
+                    messageBuilder.AppendLine($" Другие типы линий:");
+                }
+                else
+                {
+                    messageBuilder.AppendLine($" Обычные типы линий:");
+                }
+
+                foreach (KeyValuePair<string, double> entry in dict_answerAnyLine)
+                {
+                    if (entry.Value < 1) { continue; }
+                    double dobavka = Math.Round(entry.Value / 1000, 2);
+                    sum_all += dobavka;
+                    messageBuilder.AppendLine($"{entry.Key}: {dobavka} м.");
+                }
+                if (el_exist)
+                {
+                    messageBuilder.AppendLine($" Суммарная длина вместе с иными линиями: {sum_all} м.");
+                }
+                else
+                {
+                    messageBuilder.AppendLine($" Суммарная длина: {sum_all} м.");
+                }
             }
 
 
 
             // Показываем диалог
-            TaskDialog.Show("Длина Электроразводки", messageBuilder.ToString());
-
+            if (el_exist)
+            { TaskDialog.Show("Длина Электроразводки", messageBuilder.ToString()); }
+            else
+            { TaskDialog.Show("Длина Линий", messageBuilder.ToString()); }
 
 
             return Result.Succeeded;
