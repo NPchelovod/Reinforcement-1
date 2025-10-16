@@ -95,24 +95,28 @@ namespace Reinforcement
                             }
 
                             bool proxod = false;
+                            double dobavka = kol_vo * length;
                             foreach (var tek_diametr in all_diameters)
                             {
 
                                 if (tek_name_trub.Contains(tek_diametr))
                                 {
-                                    double dobavka = kol_vo * length;
                                     dict_answer[tek_diametr] += dobavka;
                                     proxod = true;
                                     past_diam = tek_diametr;
                                     past_len = length;
                                     edin_proxod = true;
+
+                                    break;
                                 }
                             }
                             if (!proxod && kol_vo > 1 && past_diam != " ")
                             {
                                 //развиба строка неверно сейчас только число
-                                double dobavka = (kol_vo - 1) * past_len;
+                                dobavka = (kol_vo - 1) * past_len;
                                 dict_answer[past_diam] += dobavka;
+
+                                edin_proxod = true;
                             }
 
 
