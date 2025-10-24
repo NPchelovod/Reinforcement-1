@@ -247,6 +247,7 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="0RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
+    <Compile Include="Toska\PropertiesSbros.cs" />
     <Compile Include="Toska\Toska_1.cs" />
     <Compile Include="Toska\Toska_2.cs" />
     <Compile Include="TransparentNotificationWindow.xaml.cs">
@@ -312,6 +313,7 @@
     <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
     <None Include="Resources\rashet_walls2.png" />
+    <None Include="Resources\Properties.png" />
     <Content Include="Resources\VK_config.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />

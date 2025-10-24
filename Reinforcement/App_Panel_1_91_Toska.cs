@@ -39,9 +39,13 @@ namespace Reinforcement
             var item = ribbonPanel.AddItem(data) as PulldownButton;
             Image OV1 = Properties.Resources.toska1;
             Image OV2 = Properties.Resources.toska2;
+            Image OV3 = Properties.Resources.Properties;
             //предполагается тест и так далее
             App_Helper_Button.AddButtonToPullDownButton(item, "Сюрприз", assemblyPath, "Reinforcement.Toska_1", "!", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV2);
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Переопределить", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку чтобы переопределить семейство к нему относящееся", OV3);
+
 
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);

@@ -17,44 +17,55 @@ namespace Reinforcement
         private static Dictionary<Document, Dictionary<HashSet<string>, ElementType>> PastElements = new Dictionary<Document, Dictionary<HashSet<string>, ElementType>>();
 
 
+        public static bool ResetNamesParam=false; // если тру то мы переопределяем параметр
+
         public static (bool create, HashSet<String> FamNames)  GetResult(Document doc, UIDocument uidoc, HashSet<String> FamNames, string Type_seach )
         {
+            var pastFamNames = new HashSet<String>(FamNames);
+            if(ResetNamesParam)
+            {
+                ResetNamesParam = false;
+                FamNames.Clear();
+            }
+
 
             // служит для поиска и установки элемента
             FilteredElementCollector col = new FilteredElementCollector(doc);
 
             ElementType elementType = null;
-            var FamNamesSet = FamNames.ToHashSet();
+            
             bool pastExist = false;
             // Получаем или создаем словарь dats для документа с компаратором
             
             if (PastElements.TryGetValue(doc, out var dats))
             {
-                // Если словарь для документа существует, пробуем найти элемент по FamNamesSet
-                
-                foreach (var dat in dats.Keys)
+                // Если словарь для документа существует, пробуем найти элемент по FamNames
+                if (FamNames.Count > 0)
                 {
-                    if(dat.Count!= FamNamesSet.Count)
-                    { continue; }
-                    // Проверяем, что все элементы совпадают
-                    bool allMatch = true;
-
-                    foreach (var fam in FamNamesSet)
+                    foreach (var dat in dats.Keys)
                     {
-                        if(!dat.Contains(fam))
+                        if (dat.Count != FamNames.Count)
+                        { continue; }
+                        // Проверяем, что все элементы совпадают
+                        bool allMatch = true;
+
+                        foreach (var fam in FamNames)
                         {
-                            allMatch = false;
-                            continue;
+                            if (!dat.Contains(fam))
+                            {
+                                allMatch = false;
+                                continue;
+                            }
+                            pastExist = false; break;
                         }
-                        pastExist = false; break;
-                    }
-                    if (allMatch)
-                    {
-                        elementType = dats[dat];
-                        pastExist = true;
-                        break;
-                    }
+                        if (allMatch)
+                        {
+                            elementType = dats[dat];
+                            pastExist = true;
+                            break;
+                        }
 
+                    }
                 }
                 
             }
@@ -86,7 +97,7 @@ namespace Reinforcement
                 string name_sravn;
 
 
-
+                //заполнение словаря сравнения это ссылочный параметр!!!!!!!!!
                 foreach (Element element in sravn_iter)
                 {
                     elementType = element as ElementType;
@@ -100,12 +111,12 @@ namespace Reinforcement
 
 
 
-                var Data = HelperSeach.GetElement(FamNamesSet);
+                var Data = HelperSeach.GetElement(FamNames);
                 Element element_gotov = Data.pile;
 
                 if (element_gotov == null)
                 {
-                    return (false, FamNames);
+                    return (false, pastFamNames);// чтобы возврат к первоначальным настройкам
                 }
 
                 elementType = element_gotov as ElementType;

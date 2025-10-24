@@ -31,7 +31,7 @@ namespace Reinforcement
         public static string prefix_EL = "ЭЛ_";
         public static List<string> all_diameters = new List<string>()
             {
-                "d25", "d32" ,"d40" , "d50"
+                "d15","d20","d25","d30", "d32" ,"d35","d40" , "d50", "d60","d80","d100","d120", "d150"
             };
 
         public Result Execute(
@@ -62,6 +62,8 @@ namespace Reinforcement
             double error = 0;
             string neraspozn_name = "";
             double l_lotkov = 0;
+            bool el_exist = false;
+
             foreach (var line in lines)
             {
 
@@ -83,7 +85,7 @@ namespace Reinforcement
                         foreach (var tek_name_trub in parts)
                         {
                             int kol_vo = 1; //d32
-
+                            el_exist = true;
                             //вдруг x2 крат и тп, тогда длина в 2 раза больше
                             // Регулярное выражение для поиска паттерна: x + пробелы + число
                             Match match = Regex.Match(tek_name_trub, @"[xXхХ]\s*(\d+)");
@@ -150,11 +152,11 @@ namespace Reinforcement
 
             }
             // Создаем StringBuilder для форматирования содержимого
-            StringBuilder messageBuilder = new StringBuilder("Длины электроразводки:\n\n");
+            StringBuilder messageBuilder = new StringBuilder(el_exist?"Длины электроразводки:\n\n": "Длины линий детализации:\n\n");
 
             double sum_all = 0;
             // Форматируем каждую пару ключ-значение
-            bool el_exist = false;
+            
             if (dict_answer.Count > 0)
             {
                 

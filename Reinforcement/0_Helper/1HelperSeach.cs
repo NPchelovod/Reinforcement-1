@@ -77,8 +77,8 @@ namespace Reinforcement
             {
                 familySymbolsNames.Clear();
 
-                FilteredElementCollector collection = null;
-                collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
+                
+                FilteredElementCollector collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
                 foreach (var element1 in collection)
                 {
                     familySymbolsNames[element1] = element1.Name; // элемент и параметр сравнения
@@ -106,16 +106,18 @@ namespace Reinforcement
 
             HashSet<string> PossibleNamesChange = new HashSet<string>(PossibleNamesFamilySymbol);
             bool famExist = false;
+
             while (iter < 6)
             {
                 iter++;
 
+               
                 
                 double maxSimilarity = 0;
 
                 foreach (string PossibleName in PossibleNamesChange)
                 {
-                    if (PossibleName.Count() < 4) { continue; }
+                    if (PossibleName.Count() < 3) { continue; }
 
                     foreach (var elementData in familySymbolsNames)
                     {
@@ -167,7 +169,7 @@ namespace Reinforcement
                     if (!input.Item2) { proxod = false; break; }
 
 
-                    if (input.Item1.Count() > 5)
+                    if (input.Item1.Count() > 2)
                     {
                         PossibleNamesChange.Clear();
                         PossibleNamesChange.Add(input.Item1);
