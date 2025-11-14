@@ -31,9 +31,10 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Document doc = uidoc.Document;
+            RevitAPI.Initialize(commandData);
+            Document doc = RevitAPI.Document;
+            UIDocument uidoc = RevitAPI.UiDocument;
+
             Selection sel = uidoc.Selection;
             View activeView = doc.ActiveView;
             
@@ -81,12 +82,52 @@ namespace Reinforcement
             }
 
             //get all walls on activeView           
-            List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
-                 .OfClass(typeof(Wall))
-                 .ToElements()
-                 .Cast<Wall>()
-                 .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Стм" || x.LookupParameter("• Тип элемента").AsString() == "Дж")
-                 .ToList();
+            //List<Wall> wallList =  new FilteredElementCollector(doc, activeView.Id)
+            //     .OfClass(typeof(Wall))
+            //     .ToElements()
+            //     .Cast<Wall>()
+            //     .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Стм" || x.LookupParameter("• Тип элемента").AsString() == "Дж")
+            //     .ToList();
+
+            List<Wall> wallList = new FilteredElementCollector(doc, activeView.Id)
+                .OfClass(typeof(Wall))
+                .ToElements()
+                .Cast<Wall>()
+                
+                .ToList();  //get all walls on activeView
+
+
+            string DG = "Дж";
+            string Stm = "Стм";
+
+            var possibleMarks = new List<string>()
+            {
+                DG,Stm
+            };
+
+            wallList = wallList
+            .Where(x =>
+            {
+                Parameter param = x.LookupParameter("Марка");
+                if (param == null) return false;
+
+                string paramValue = param.AsString();
+                if(paramValue==null) return false;
+                foreach (var mark in possibleMarks)
+                {
+                    if(paramValue.Contains(mark))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .ToList();  //get all walls on activeView
+
+
+
+
+
             /*
             if (wallList.Count == 0)
             {
@@ -94,11 +135,18 @@ namespace Reinforcement
                 return Result.Failed;
             }
             */
-            if (!wallList.Any(x => x.LookupParameter("• Тип элемента").AsString() == "Стм"))
+            //if (!wallList.Any(x => x.LookupParameter("• Тип элемента").AsString() == "Стм"))
+            //{
+            //    form.MessageBox.Show("Не найдено ни одной стены Стм!");
+            //    return Result.Failed;
+            //}
+
+            if(wallList.Count==0)
             {
                 form.MessageBox.Show("Не найдено ни одной стены Стм!");
                 return Result.Failed;
             }
+
 
             //Get active view transform
             Transform viewTransform = activeView.CropBox.Transform;
@@ -222,10 +270,13 @@ namespace Reinforcement
                         //Get wall from left to right
                         List<Wall> wallsFromRightToLeft = wallTransform.OrderByDescending(x => x.Value.X).Select(x => x.Key).ToList();
 
-                        //Get "Стм" walls
-                        List<Wall> wallsSTMFromRightToLeft = wallsFromRightToLeft
-                            .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
-                            .ToList();
+                        //Get "Стм" walls я не пон зачем жто
+
+                        var wallsSTMFromRightToLeft = wallsFromRightToLeft;
+                        //List<Wall> wallsSTMFromRightToLeft = wallsFromRightToLeft
+                        //    .Where(w => w.LookupParameter("• Тип элемента").AsString().Contains("Стм"))
+                        //    .ToList();
+
                         //Get X cropBox line
                         Line cropBoxLine = activeView
                                 .GetCropRegionShapeManager()

@@ -27,10 +27,11 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
             
-            Document doc = uidoc.Document;
+            RevitAPI.Initialize(commandData);
+            Document doc = RevitAPI.Document;
+            UIDocument uidoc = RevitAPI.UiDocument;
+
 
             View activeView = doc.ActiveView;
             int viewScale = activeView.Scale;
@@ -75,12 +76,20 @@ namespace Reinforcement
                 form.MessageBox.Show("На виде должны быть стены!");
                 return Result.Failed;
             }
-            wallList =  wallList
-                .Where(x => x.LookupParameter("• Тип элемента").AsString() == "Дж")
-                .ToList();  //get all walls on activeView
+            wallList = wallList
+            .Where(x =>
+            {
+                Parameter param = x.LookupParameter("Марка");
+                if (param == null) return false;
 
+                string paramValue = param.AsString();
+                return paramValue != null && paramValue.Contains("Дж");
+            })
+            .ToList();  //get all walls on activeView
 
-
+            //wallList = wallList
+            //.Where(x => x.LookupParameter("Марка").AsString().Contains("Дж"))
+            //    .ToList();  //get all walls on active
             List<XYZ> minPtWall = wallList
                 .Select(w => w.get_BoundingBox(activeView).Min)
                 .ToList();
@@ -149,27 +158,40 @@ namespace Reinforcement
                             double endYPtGrid = Y.Max();
                             double endZPtGrid = Z.Max();
 
+                            //изменение направления осей
+                            //if (Math.Abs(line.Direction.Y) == 1)
+                            //{
+                            //    var endpoint1Y = minPtFloor.First().Y - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
+                            //    var endpoint2Y = maxPtFloor.First().Y + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
+
+                            //    XYZ endpoint1 = new XYZ(startXPtGrid, endpoint1Y, startZPtGrid);
+                            //    XYZ endpoint2 = new XYZ(endXPtGrid, endpoint2Y, endZPtGrid);
+                            //    Line newGridCurve = Line.CreateBound(endpoint1, endpoint2);
+                            //    gridLinesListY.Add(newGridCurve);
+                            //    // Закомментируйте эту строку чтобы не менять оси
+                            //    //grid.SetCurveInView(DatumExtentType.ViewSpecific, activeView, newGridCurve);//change grids line
+                            //}
+                            //else if (Math.Abs(line.Direction.X) == 1)
+                            //{
+                            //    var endpoint1X = minPtFloor.First().X - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
+                            //    var endpoint2X = maxPtFloor.First().X + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
+
+                            //    XYZ endpoint1 = new XYZ(endpoint1X, startYPtGrid, startZPtGrid);
+                            //    XYZ endpoint2 = new XYZ(endpoint2X, endYPtGrid, endZPtGrid);
+                            //    Line newGridCurve = Line.CreateBound(endpoint1, endpoint2);
+                            //    gridLinesListX.Add(newGridCurve);
+                            //    // Закомментируйте эту строку чтобы не менять оси
+                            //    //grid.SetCurveInView(DatumExtentType.ViewSpecific, activeView, newGridCurve);//change grids line
+                            //}
+
+                            // Вместо создания новых линий, используйте существующие
                             if (Math.Abs(line.Direction.Y) == 1)
                             {
-                                var endpoint1Y = minPtFloor.First().Y - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
-                                var endpoint2Y = maxPtFloor.First().Y + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
-
-                                XYZ endpoint1 = new XYZ(startXPtGrid, endpoint1Y, startZPtGrid);
-                                XYZ endpoint2 = new XYZ(endXPtGrid, endpoint2Y, endZPtGrid);
-                                Line newGridCurve = Line.CreateBound(endpoint1, endpoint2);
-                                gridLinesListY.Add(newGridCurve);
-                                grid.SetCurveInView(DatumExtentType.ViewSpecific, activeView, newGridCurve);//change grids line
+                                gridLinesListY.Add(line); // Используем исходную линию
                             }
                             else if (Math.Abs(line.Direction.X) == 1)
                             {
-                                var endpoint1X = minPtFloor.First().X - RevitAPI.ToFoot(30*viewScale); //calcualte offset from floor
-                                var endpoint2X = maxPtFloor.First().X + RevitAPI.ToFoot(7*viewScale); //calcualte offset from floor
-
-                                XYZ endpoint1 = new XYZ(endpoint1X, startYPtGrid, startZPtGrid);
-                                XYZ endpoint2 = new XYZ(endpoint2X, endYPtGrid, endZPtGrid);
-                                Line newGridCurve = Line.CreateBound(endpoint1, endpoint2);
-                                gridLinesListX.Add(newGridCurve);
-                                grid.SetCurveInView(DatumExtentType.ViewSpecific, activeView, newGridCurve);//change grids line
+                                gridLinesListX.Add(line); // Используем исходную линию
                             }
                         }
                         t1.Commit();
@@ -245,7 +267,7 @@ namespace Reinforcement
 
                         if (wallList.Count == 0)
                         {
-                            form.MessageBox.Show("Не найдено стен с параметром • Тип элемента = Дж!");
+                            form.MessageBox.Show("Не найдено стен с параметром Марка = Дж!");
                             t2.Commit();
                             tg.Assimilate();
                             return Result.Succeeded;
