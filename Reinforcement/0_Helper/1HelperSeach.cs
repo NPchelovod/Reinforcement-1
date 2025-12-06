@@ -39,7 +39,7 @@ namespace Reinforcement
             {
                 // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
 
-                foreach (var dat in dats.Keys)
+                foreach (var dat in dats.Keys.ToList())
                 {
                     if (dat.Count != PossibleNamesFamilySymbol.Count)
                     { continue; }

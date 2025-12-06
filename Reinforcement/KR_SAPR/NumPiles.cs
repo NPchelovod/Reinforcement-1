@@ -16,8 +16,36 @@ using System.Windows.Forms;
 
 namespace Reinforcement
 {
-    [Transaction(TransactionMode.Manual)]
+    
+    public class PileData
+    {
+        public int Xs { get; set; }
+        public int Ys { get; set; }
+        public int Zs { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
+        public string Name { get; set; }
+        public int NumPile { get; set; }
+        public PilesGroup PilesGroup { get; set; }
+        public int PilesYGO { get; set; }
 
+
+        public PileData(int xs, int ys, int zs, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, int pilesYGO)
+        {
+            Xs = xs;
+            Ys = ys;
+            Zs = zs;
+            X = x;
+            Y = y;
+            Z = z;
+            Name = name;
+            NumPile = numPile;
+            PilesGroup = pilesGroup;
+            PilesYGO = pilesYGO;
+        }
+    }
+    [Transaction(TransactionMode.Manual)]
     public class NumPiles : IExternalCommand
     {
 
@@ -28,12 +56,19 @@ namespace Reinforcement
             //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
+        private static List<string> nameMarks = new List<string> { "Марка" };
+        private static List<string> nameYGO = new List<string> { "ADSK_Типоразмер элемента узла<Элементы узлов>" };
+        private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
         private static  double sectorStep = 1400; // шаг поиска свай
+        private static double sectorStepPile = 50;// округление координаты одной сваи
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
         private static int predelGroup = 12; // предел наполнения иначе принудительно для каждого элемента
-
+        private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
+        private static bool returnCoord = false;
+
+
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -59,7 +94,9 @@ namespace Reinforcement
                     sectorStep,
                     sectorStepZ,
                     predelGroup,
+                    ustanNumPile,
                     ustanUGO
+
                 );
 
                 // Устанавливаем владельца окна
@@ -78,6 +115,7 @@ namespace Reinforcement
                 sectorStep = settingsWindow.SectorStep;
                 sectorStepZ = settingsWindow.SectorStepZ;
                 predelGroup = settingsWindow.PredelGroup;
+                ustanNumPile = settingsWindow.UstanNumPile;
                 ustanUGO = settingsWindow.UstanUGO;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
@@ -98,33 +136,35 @@ namespace Reinforcement
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();
 
-            var PropertiesPiles = new Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup, int pilesYGO)>();
+            var PropertiesPiles = new Dictionary<Element, PileData>();
+
             var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<Element>>(); // сектор и имя сваи
 
             var allNamesPile = new HashSet<string>();
-            var HashDataTypeYGO = new HashSet<(string name,int intName, int Z, int YGO)>(); //потенциальное УГО
+            var HashDataTypeYGO = new HashSet<(string name,int intName, int Z)>(); //потенциальное УГО
             // Собираем информацию о сваях
             foreach (Element pile in Seacher)
             {
                 // получаем координаты
                 LocationPoint tek_locate = pile.Location as LocationPoint; // текущая локация вентканала
+                if (tek_locate == null) continue; // Добавьте проверку
                 XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
 
                 double coord_X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
                 double coord_Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
                 double coord_Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
 
-                //определение сектора
-                int Xs = (int)Math.Floor(coord_X / sectorStep);
-                int Ys = (int)Math.Floor(coord_Y / sectorStep);
-                int Zs = (int)Math.Floor(coord_Z / sectorStepZ);
-                //int Xs = (int)Math.Round(coord_X / sectorStep);
-                //int Ys = (int)Math.Round(coord_Y / sectorStep);
-                //int Zs = (int)Math.Round(coord_Z / sectorStepZ);
+                //определение сектора дипсик то так то сяк пишет
+                //int Xs = (int)Math.Floor(coord_X / sectorStep);
+                //int Ys = (int)Math.Floor(coord_Y / sectorStep);
+                //int Zs = (int)Math.Floor(coord_Z / sectorStepZ);
+                int Xs = (int)Math.Round(coord_X / sectorStep);
+                int Ys = (int)Math.Round(coord_Y / sectorStep);
+                int Zs = (int)Math.Round(coord_Z / sectorStepZ);
                 string name = pile.Name;
                 PilesGroup pilesGroup = null;
                 allNamesPile.Add(name);
-                PropertiesPiles[pile] = (Xs, Ys, Zs, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
+                PropertiesPiles[pile] = new PileData(Xs, Ys, Zs, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
                 var sector = (Xs, Ys, name);
                 if (DictSector.ContainsKey(sector))
                 {
@@ -134,26 +174,76 @@ namespace Reinforcement
                 {
                     DictSector[sector] = new HashSet<Element> { pile };
                 }
-                HashDataTypeYGO.Add((name,-1, Zs, -1));
+                HashDataTypeYGO.Add((name,-1, Zs));
             }
 
             //сортируем все имена в порядке возрастания
 
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
-
             
+            //получение УГО потенциального
+            var listDataTypeYGO = HashDataTypeYGO.ToList();
+            for (int i = 0; i < listDataTypeYGO.Count; i++)
+            {
+                var tekYGO = listDataTypeYGO[i];
+                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Z);
+            }
+
+            listDataTypeYGO = listDataTypeYGO.OrderBy(p => p.intName).ThenBy(p => p.Z)
+                            .ToList();
+
+            //заполняем свойство уго
+            // Создаем словарь для быстрого поиска индекса YGO по имени и Z координате
+            var ygoIndexDict = new Dictionary<(string name, int Z), int>();
+            for (int i = 0; i < listDataTypeYGO.Count; i++)
+            {
+                var item = listDataTypeYGO[i];
+                ygoIndexDict[(item.name, item.Z)] = i+1;
+            }
+            // Также создайте словарь по intName для быстрого поиска
+            var ygoIndexByIntNameDict = new Dictionary<(int intName, int Z), int>();
+            for (int i = 0; i < listDataTypeYGO.Count; i++)
+            {
+                var item = listDataTypeYGO[i];
+                ygoIndexByIntNameDict[(item.intName, item.Z)] = i+1;
+            }
+
+            // Теперь обновляем PropertiesPiles
+            var keysList = new List<Element>(PropertiesPiles.Keys);
+            foreach (var key in keysList)
+            {
+                var pileData = PropertiesPiles[key];
+                int nameIndex = ListNamesPiles.IndexOf(pileData.Name);
+
+                // Ищем YGO индекс через словарь
+                int ugo = -1;
+                // Сначала ищем по полному имени
+                if (!ygoIndexDict.TryGetValue((pileData.Name, pileData.Zs), out ugo))
+                {
+                    // Если не нашли, ищем по индексу имени
+                    ygoIndexByIntNameDict.TryGetValue((nameIndex, pileData.Zs), out ugo);
+                }
+
+                PropertiesPiles[key].PilesYGO = ugo;
+            }
+
+
+
 
 
             var ListPilesGroup = new List<PilesGroup>();
             //создаем группы свай
-            foreach (var pileSector in DictSector.Keys)
+            
+            // Используйте:
+            var sectorKeys = DictSector.Keys.ToList();
+            foreach (var pileSector in sectorKeys)
             {
                 var elementPile = DictSector[pileSector].FirstOrDefault();
-                if (PropertiesPiles.TryGetValue(elementPile, out var Propertypiles))
+                if (elementPile != null && PropertiesPiles.TryGetValue(elementPile, out var Propertypiles))
                 {
-                    if (Propertypiles.pilesGroup == null)
+                    if (Propertypiles.PilesGroup == null)
                     {
-                        ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector));
+                        ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector,sectorStep));
                     }
                 }
             }
@@ -161,15 +251,18 @@ namespace Reinforcement
             //обрубаем группы свай если в их элементов оч много
             if (predelGroup > 0)
             {
-                foreach (var pileSector in DictSector.Keys)
+                foreach (var pileSector in DictSector.Keys.ToList())
                 {
                     var elementPile = DictSector[pileSector].FirstOrDefault();
                     if (PropertiesPiles.TryGetValue(elementPile, out var Propertypiles))
                     {
-                        if (Propertypiles.pilesGroup==null || Propertypiles.pilesGroup.intPiles > predelGroup)
+                        if (Propertypiles.PilesGroup==null || Propertypiles.PilesGroup.intPiles > predelGroup)
                         {
-                            ListPilesGroup.Remove(Propertypiles.pilesGroup);
-                            ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector, true));
+                            if (Propertypiles.PilesGroup != null)
+                            { 
+                                ListPilesGroup.Remove(Propertypiles.PilesGroup); 
+                            }
+                            ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector, sectorStep, true));
                         }
                     }
                 }
@@ -194,34 +287,20 @@ namespace Reinforcement
                         //сортировка внутри сектора
                         // Сортируем сваи внутри сектора
 
-
-
                         var sortedPilesInSector = piles
                             .Select(p => new
                             {
                                 Pile = p,
                                 Props = PropertiesPiles[p]
                             })
-                            .OrderByDescending(p => p.Props.y)  // По Y убывание (сверху вниз)
-                            .ThenBy(p => p.Props.x)            // По X возрастание (слева направо)
+                            .OrderByDescending(p => p.Props.Y)  // По Y убывание (сверху вниз)
+                            .ThenBy(p => p.Props.X)            // По X возрастание (слева направо)
                             .ToList();
                         foreach (var pileData in sortedPilesInSector)
                         {
 
                             numPile++;
-                            PropertiesPiles[pileData.Pile] = (
-                                pileData.Props.Xs,
-                                pileData.Props.Ys,
-                                pileData.Props.Zs,
-                                pileData.Props.x,
-                                pileData.Props.y,
-                                pileData.Props.z,
-                                pileData.Props.Name,
-                                numPile,
-                                pileData.Props.pilesGroup,
-                                pileData.Props.pilesYGO);
-
-
+                            PropertiesPiles[pileData.Pile].NumPile = numPile;
 
                         }
 
@@ -231,21 +310,19 @@ namespace Reinforcement
 
 
 
-            //получение УГО потенциального
-            var listDataTypeYGO = HashDataTypeYGO.ToList();
-            for (int i=0;  i<listDataTypeYGO.Count; i++)
-            {
-                var tekYGO = listDataTypeYGO[i];
-                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Z, -1);
-            }
+            
 
-            listDataTypeYGO = listDataTypeYGO.OrderBy(p=>p.intName).ThenBy(p => p.Z)
-                            .ToList();
+
+
+
             //
 
         //    ADSK_Типоразмер элемента узла<Элементы узлов>
         //ADSK_ЭУ_УсловноеОбозначениеСваи: УГО_
             // Начинаем транзакцию для установки марок
+
+           
+
             using (Transaction trans = new Transaction(doc, "Установка марок свай и УГО"))
             {
                 try
@@ -255,20 +332,32 @@ namespace Reinforcement
                     int successCount = 0;
                     int failCount = 0;
                     var failedElements = new List<ElementId>();
-
+                    bool resultNum = false;
+                    bool resultUGO = false;
                     foreach (var kvp in PropertiesPiles)
                     {
                         Element pile = kvp.Key;
-                        int markValue = kvp.Value.numPile;
+                        int markValue = kvp.Value.NumPile;
+                        string YGOValue = YGOPrefix + kvp.Value.PilesYGO;
+                        
+                        if (ustanNumPile)
+                        {
+                            resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
+                        }
+                        if (ustanUGO && kvp.Value.PilesYGO>0)
+                        {
+                            resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
+                        }
 
-                        bool result = SetPileMark(pile, markValue);
-
-                        if (result)
-                            successCount++;
-                        else
+                        // Проверяем оба результата в зависимости от настроек
+                        if (ustanNumPile && !resultNum)
                         {
                             failCount++;
                             failedElements.Add(pile.Id);
+                        }
+                        else if (ustanNumPile && resultNum)
+                        {
+                            successCount++;
                         }
                     }
 
@@ -356,94 +445,25 @@ namespace Reinforcement
 
         
         // Метод для установки марки сваи
-        private bool SetPileMark(Element pile, int markValue)
+        private bool SetPileMark(Element pile, string markValue, List<string> parameterNames)
         {
+            Parameter markParam = null;
+
+            foreach (var paramName in parameterNames)
+            {
+                markParam = pile.LookupParameter(paramName);
+                if (markParam != null) break;
+            }
+
+            if (markParam == null) return false;
+            if (markParam.IsReadOnly) return false;
+
             try
             {
-                // Пробуем разные варианты параметра "Марка"
-                Parameter markParam = null;
-
-                // 1. Стандартный параметр "Марка"
-                markParam = pile.LookupParameter("Марка");
-
-                // 2. Параметр "Марка элемента"
-                if (markParam == null)
-                    markParam = pile.LookupParameter("Марка элемента");
-
-                //// 3. Параметр "Mark" (английский)
-                //if (markParam == null)
-                //    markParam = pile.LookupParameter("Mark");
-
-                //// 4. Встроенный параметр ALL_MODEL_MARK
-                //if (markParam == null)
-                //    markParam = pile.get_Parameter(BuiltInParameter.ALL_MODEL_MARK);
-
-                // 5. Параметр "ADSK_Марка" (Autodesk)
-                if (markParam == null)
-                    markParam = pile.LookupParameter("ADSK_Марка");
-
-                // 6. Ищем любой параметр, содержащий "марк" в названии (без учета регистра)
-                if (markParam == null)
-                {
-                    foreach (Parameter param in pile.Parameters)
-                    {
-                        if (param.Definition.Name.IndexOf("марк", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            markParam = param;
-                            break;
-                        }
-                    }
-                }
-
-                if (markParam != null)
-                {
-                    // Проверяем, можно ли записывать в параметр
-                    if (markParam.IsReadOnly)
-                    {
-                        TaskDialog.Show("Предупреждение",
-                            $"Параметр '{markParam.Definition.Name}' только для чтения у элемента {pile.Id}");
-                        return false;
-                    }
-
-                    // Устанавливаем значение в зависимости от типа хранения
-                    if (markParam.StorageType == StorageType.Integer)
-                    {
-                        markParam.Set(markValue);
-                    }
-                    else if (markParam.StorageType == StorageType.String)
-                    {
-                        markParam.Set(markValue.ToString());
-                    }
-                    else if (markParam.StorageType == StorageType.Double)
-                    {
-                        markParam.Set((double)markValue);
-                    }
-                    else
-                    {
-                        // Пробуем как строку
-                        try
-                        {
-                            markParam.Set(markValue.ToString());
-                        }
-                        catch
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                    // Пробуем создать общий параметр, если нет подходящего
-                    //return CreateAndSetMarkParameter(pile, markValue);
-                }
+                return markParam.Set(markValue);
             }
-            catch (Exception ex)
+            catch
             {
-                TaskDialog.Show("Ошибка установки марки",
-                    $"Ошибка для элемента {pile.Id}: {ex.Message}");
                 return false;
             }
         }
@@ -465,7 +485,7 @@ namespace Reinforcement
         public string namePile = "";
 
         public int intPiles = 1;// но это кол-во секторов а не кол-во свай!!!!!
-        public (double x, double y) Center;
+        public (int x, int y) Center;
 
 
 
@@ -473,8 +493,8 @@ namespace Reinforcement
 
 
         public PilesGroup((int Xs, int Ys, string name) CurrentPiles, int numName,
-            Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup, int pilesYGO)> PropertiesPiles,
-             Dictionary<(int Xs, int Ys, string name), HashSet<Element>> DictSector, bool prinudOne = false)
+            Dictionary<Element, PileData> PropertiesPiles,
+             Dictionary<(int Xs, int Ys, string name), HashSet<Element>> DictSector, double sectorStep , bool prinudOne = false)
         {
             // когда обьявили элемент pile ищем его родственников всех
 
@@ -553,9 +573,9 @@ namespace Reinforcement
                         Piles.Add(pile);
                         if (PropertiesPiles.TryGetValue(pile, out var dataPile))
                         {
-                            PropertiesPiles[pile] = (dataPile.Xs, dataPile.Ys, dataPile.Zs, dataPile.x, dataPile.y, dataPile.z, dataPile.Name, -1, this,-1 );
-                            x+= dataPile.x;
-                            y+= dataPile.y;
+                            PropertiesPiles[pile].PilesGroup = this;
+                            x+= dataPile.X;
+                            y+= dataPile.Y;
                         }
 
                     }
@@ -564,11 +584,12 @@ namespace Reinforcement
             intPiles = Piles.Count;
             if (intPiles > 0)
             {
-                Center = (x / (double)intPiles, y / (double)intPiles);
+                //надо по сектору иначе нумератор свай плохой!!!!!
+                Center = ((int)Math.Round((x / (double)intPiles)/ sectorStep), (int)Math.Round((y / (double)intPiles) / sectorStep));
             }
             else
             {
-                Center = ( 0.0,  0.0);
+                Center = ( 0,  0);
             }
 
 

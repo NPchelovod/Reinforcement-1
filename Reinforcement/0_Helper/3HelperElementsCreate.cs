@@ -51,7 +51,7 @@ namespace Reinforcement
                     if (pogresZ > 0)
                     {
                         //сначала проверка погрешности
-                        foreach (var Z_exist in DataOVLevel.Keys)
+                        foreach (var Z_exist in DataOVLevel.Keys.ToList())
                         {
                             if (Math.Abs(Z_exist - Z) < pogresZ)
                             {
