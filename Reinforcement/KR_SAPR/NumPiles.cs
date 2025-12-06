@@ -19,9 +19,15 @@ namespace Reinforcement
     
     public class PileData
     {
+        public Element Pile { get; set; }
         public int Xs { get; set; }
         public int Ys { get; set; }
         public int Zs { get; set; }
+
+        public int Xs2 { get; set; }
+        public int Ys2 { get; set; }
+        public int Zs2 { get; set; }
+
         public double X { get; set; }
         public double Y { get; set; }
         public double Z { get; set; }
@@ -31,12 +37,19 @@ namespace Reinforcement
         public int PilesYGO { get; set; }
 
 
-        public PileData(int xs, int ys, int zs, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, int pilesYGO)
+        public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, int pilesYGO)
         {
+            Pile = pile;
             Xs = xs;
             Ys = ys;
             Zs = zs;
-            X = x;
+
+            Xs2 = xs2;
+            Ys2 = ys2;
+            Zs2 = zs2;
+
+
+              X = x;
             Y = y;
             Z = z;
             Name = name;
@@ -57,11 +70,11 @@ namespace Reinforcement
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
         private static List<string> nameMarks = new List<string> { "Марка" };
-        private static List<string> nameYGO = new List<string> { "ADSK_Типоразмер элемента узла<Элементы узлов>" };
+        private static string nameYGO = "ADSK_Типоразмер элемента узла";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
         private static  double sectorStep = 1400; // шаг поиска свай
-        private static double sectorStepPile = 50;// округление координаты одной сваи
+        private static double sectorStepPile = 250;// округление координаты одной сваи
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
         private static int predelGroup = 12; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
@@ -90,13 +103,14 @@ namespace Reinforcement
 
                 // 2. Показываем окно настроек
                 var settingsWindow = new PileSettingsWindow(
-                    Seacher.Count,
-                    sectorStep,
-                    sectorStepZ,
-                    predelGroup,
-                    ustanNumPile,
-                    ustanUGO
-
+                Seacher.Count,
+                sectorStep,
+                sectorStepPile, // Добавлен новый параметр
+                sectorStepZ,
+                predelGroup,
+                ustanNumPile,
+                ustanUGO,
+                returnCoord // Добавлен новый параметр
                 );
 
                 // Устанавливаем владельца окна
@@ -117,6 +131,8 @@ namespace Reinforcement
                 predelGroup = settingsWindow.PredelGroup;
                 ustanNumPile = settingsWindow.UstanNumPile;
                 ustanUGO = settingsWindow.UstanUGO;
+                sectorStepPile = settingsWindow.SectorStepPile;
+                returnCoord = settingsWindow.ReturnCoord;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
             }
@@ -136,12 +152,23 @@ namespace Reinforcement
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();
 
-            var PropertiesPiles = new Dictionary<Element, PileData>();
+            var PropertiesPiles = new HashSet< PileData>();
 
-            var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<Element>>(); // сектор и имя сваи
+            var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<PileData>>(); // сектор и имя сваи
 
             var allNamesPile = new HashSet<string>();
             var HashDataTypeYGO = new HashSet<(string name,int intName, int Z)>(); //потенциальное УГО
+
+
+            if(sectorStepPile<1)
+            {
+                sectorStepPile = 1;
+            }
+            if (sectorStep<1)
+            {
+                sectorStep = 1;
+            }
+
             // Собираем информацию о сваях
             foreach (Element pile in Seacher)
             {
@@ -154,6 +181,7 @@ namespace Reinforcement
                 double coord_Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
                 double coord_Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
 
+                //шаг поиска свай соседей
                 //определение сектора дипсик то так то сяк пишет
                 //int Xs = (int)Math.Floor(coord_X / sectorStep);
                 //int Ys = (int)Math.Floor(coord_Y / sectorStep);
@@ -161,18 +189,27 @@ namespace Reinforcement
                 int Xs = (int)Math.Round(coord_X / sectorStep);
                 int Ys = (int)Math.Round(coord_Y / sectorStep);
                 int Zs = (int)Math.Round(coord_Z / sectorStepZ);
+
+                //шаг округления координат свай в одном кусте
+                int Xs2 = (int)Math.Round(coord_X / sectorStepPile);
+                int Ys2 = (int)Math.Round(coord_Y / sectorStepPile);
+                int Zs2 = (int)Math.Round(coord_Z / sectorStepPile);
+
                 string name = pile.Name;
                 PilesGroup pilesGroup = null;
                 allNamesPile.Add(name);
-                PropertiesPiles[pile] = new PileData(Xs, Ys, Zs, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
+
+                var PileClass = new PileData(pile, Xs, Ys, Zs, Xs2, Ys2, Zs2, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
+
+                PropertiesPiles.Add(PileClass);
                 var sector = (Xs, Ys, name);
                 if (DictSector.ContainsKey(sector))
                 {
-                    DictSector[sector].Add(pile);
+                    DictSector[sector].Add(PileClass);
                 }
                 else
                 {
-                    DictSector[sector] = new HashSet<Element> { pile };
+                    DictSector[sector] = new HashSet<PileData> { PileClass };
                 }
                 HashDataTypeYGO.Add((name,-1, Zs));
             }
@@ -200,38 +237,27 @@ namespace Reinforcement
                 var item = listDataTypeYGO[i];
                 ygoIndexDict[(item.name, item.Z)] = i+1;
             }
-            // Также создайте словарь по intName для быстрого поиска
-            var ygoIndexByIntNameDict = new Dictionary<(int intName, int Z), int>();
-            for (int i = 0; i < listDataTypeYGO.Count; i++)
-            {
-                var item = listDataTypeYGO[i];
-                ygoIndexByIntNameDict[(item.intName, item.Z)] = i+1;
-            }
+            
 
             // Теперь обновляем PropertiesPiles
-            var keysList = new List<Element>(PropertiesPiles.Keys);
-            foreach (var key in keysList)
+            
+            foreach (var pileClass in PropertiesPiles)
             {
-                var pileData = PropertiesPiles[key];
-                int nameIndex = ListNamesPiles.IndexOf(pileData.Name);
+                int nameIndex = ListNamesPiles.IndexOf(pileClass.Name);
 
                 // Ищем YGO индекс через словарь
                 int ugo = -1;
                 // Сначала ищем по полному имени
-                if (!ygoIndexDict.TryGetValue((pileData.Name, pileData.Zs), out ugo))
+                if (!ygoIndexDict.TryGetValue((pileClass.Name, pileClass.Zs), out ugo))
                 {
-                    // Если не нашли, ищем по индексу имени
-                    ygoIndexByIntNameDict.TryGetValue((nameIndex, pileData.Zs), out ugo);
+                   //тут была альтернатива
                 }
-
-                PropertiesPiles[key].PilesYGO = ugo;
+                pileClass.PilesYGO = ugo;
             }
 
 
-
-
-
             var ListPilesGroup = new List<PilesGroup>();
+
             //создаем группы свай
             
             // Используйте:
@@ -239,86 +265,92 @@ namespace Reinforcement
             foreach (var pileSector in sectorKeys)
             {
                 var elementPile = DictSector[pileSector].FirstOrDefault();
-                if (elementPile != null && PropertiesPiles.TryGetValue(elementPile, out var Propertypiles))
+                if (elementPile != null && elementPile.PilesGroup == null)
                 {
-                    if (Propertypiles.PilesGroup == null)
-                    {
-                        ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector,sectorStep));
-                    }
+                    
+                     ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), DictSector, sectorStepPile));
+                    
                 }
             }
 
             //обрубаем группы свай если в их элементов оч много
+            // Обрубаем группы если слишком много элементов
             if (predelGroup > 0)
             {
                 foreach (var pileSector in DictSector.Keys.ToList())
                 {
                     var elementPile = DictSector[pileSector].FirstOrDefault();
-                    if (PropertiesPiles.TryGetValue(elementPile, out var Propertypiles))
+                    
+                    if (elementPile != null)
                     {
-                        if (Propertypiles.PilesGroup==null || Propertypiles.PilesGroup.intPiles > predelGroup)
+                        if (elementPile.PilesGroup==null || elementPile.PilesGroup.intPiles > predelGroup)
                         {
-                            if (Propertypiles.PilesGroup != null)
+                            if (elementPile.PilesGroup != null)
                             { 
-                                ListPilesGroup.Remove(Propertypiles.PilesGroup); 
+                                ListPilesGroup.Remove(elementPile.PilesGroup); 
                             }
-                            ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), PropertiesPiles, DictSector, sectorStep, true));
+                            ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), DictSector, sectorStepPile,  true));
                         }
                     }
                 }
             }
-
+            //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
-            ListPilesGroup = ListPilesGroup
-            .OrderBy(group => group.numName)          // по возрастанию numName
-            .ThenByDescending(group => group.Center.y) // по убыванию Y (сверху вниз)
-            .ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
-            .ToList();
+            if (ustanNumPile)
+            {
+                if (!returnCoord)
+                {
+                    ListPilesGroup = ListPilesGroup
+                    .OrderBy(group => group.numName)          // по возрастанию numName
+                    .ThenByDescending(group => group.Center.y) // по убыванию Y (сверху вниз)
+                    .ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
+                    .ToList();
+                }
+                else
+                {
+                    // по x надо слева направо
+                    ListPilesGroup = ListPilesGroup
+                    .OrderBy(group => group.numName)          // по возрастанию numName
+                    .ThenBy(group => group.Center.x) // по убыванию Y (сверху вниз)
+                    .ThenByDescending(group => group.Center.y)         // по возрастанию X (слева направо)
+                    .ToList();
+                }
+            }
 
-
-            // Нумерация свай
+             // Нумерация свай
             int numPile = 0;
             foreach (var classPile in ListPilesGroup)
             {
-                foreach (var pileSector in classPile.dataPilesSort)
+                //сваи одной группы
+                var allPilesGroup = classPile.Piles.ToList();
+                if (ustanNumPile)//накладно ведь каждый раз
                 {
-                    if (DictSector.TryGetValue(pileSector, out var piles))
+                    //сваи сортируем по секторам позволяющим в один ряд их укладывать
+                    if (!returnCoord)
                     {
-                        //сортировка внутри сектора
-                        // Сортируем сваи внутри сектора
-
-                        var sortedPilesInSector = piles
-                            .Select(p => new
-                            {
-                                Pile = p,
-                                Props = PropertiesPiles[p]
-                            })
-                            .OrderByDescending(p => p.Props.Y)  // По Y убывание (сверху вниз)
-                            .ThenBy(p => p.Props.X)            // По X возрастание (слева направо)
-                            .ToList();
-                        foreach (var pileData in sortedPilesInSector)
-                        {
-
-                            numPile++;
-                            PropertiesPiles[pileData.Pile].NumPile = numPile;
-
-                        }
-
+                        allPilesGroup = allPilesGroup
+                        .OrderByDescending(pile => pile.Ys2) // по убыванию Y (сверху вниз)
+                        .ThenBy(pile => pile.Xs2)         // по возрастанию X (слева направо)
+                        .ToList();
+                    }
+                    else
+                    {
+                        allPilesGroup = allPilesGroup
+                        .OrderBy(pile => pile.Xs2) // по убыванию Y (сверху вниз)
+                        .ThenByDescending(pile => pile.Ys2)         // по возрастанию X (слева направо)
+                        .ToList();
                     }
                 }
+
+                foreach (var pile in allPilesGroup)
+                {
+                    numPile++;
+                    pile.NumPile = numPile;
+                }
+
             }
-
-
-
             
 
-
-
-
-            //
-
-        //    ADSK_Типоразмер элемента узла<Элементы узлов>
-        //ADSK_ЭУ_УсловноеОбозначениеСваи: УГО_
             // Начинаем транзакцию для установки марок
 
            
@@ -331,22 +363,29 @@ namespace Reinforcement
 
                     int successCount = 0;
                     int failCount = 0;
+
+                    int successCount2 = 0;
+                    int failCount2 = 0;
+
                     var failedElements = new List<ElementId>();
+                    var failedElements2 = new List<ElementId>();
                     bool resultNum = false;
                     bool resultUGO = false;
                     foreach (var kvp in PropertiesPiles)
                     {
-                        Element pile = kvp.Key;
-                        int markValue = kvp.Value.NumPile;
-                        string YGOValue = YGOPrefix + kvp.Value.PilesYGO;
+                        Element pile = kvp.Pile;
+                        int markValue = kvp.NumPile;
+                        
                         
                         if (ustanNumPile)
                         {
                             resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
                         }
-                        if (ustanUGO && kvp.Value.PilesYGO>0)
+                        if (ustanUGO && kvp.PilesYGO>0)
                         {
-                            resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
+                            string YGOValue = YGOPrefix + kvp.PilesYGO;
+                            resultUGO = SetYGO(pile, kvp.PilesYGO);
+                           //resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
                         }
 
                         // Проверяем оба результата в зависимости от настроек
@@ -359,25 +398,46 @@ namespace Reinforcement
                         {
                             successCount++;
                         }
+
+                        if (ustanUGO && !resultUGO)
+                        {
+                            failCount2++;
+                            failedElements2.Add(pile.Id);
+                        }
+                        else if (ustanUGO && resultUGO)
+                        {
+                            successCount2++;
+                        }
+
+
                     }
 
                     trans.Commit();
 
                     // Показываем результат
-                    string resultMessage = $"Установлено марок: {successCount}\n" +
-                                          $"Не удалось установить: {failCount}\n" +
-                                          $"Всего свай: {PropertiesPiles.Count}";
-
-                    if (failedElements.Count > 0)
+                    // Показ результата
+                    string resultMessage = $"Всего свай: {PropertiesPiles.Count}\n";
+                    if (ustanNumPile)
                     {
-                        resultMessage += $"\n\nСписок ID неудачных элементов (первые 10):\n";
-                        resultMessage += string.Join("\n", failedElements.Take(10).Select(id => id.IntegerValue));
-
-                        if (failedElements.Count > 10)
-                        {
-                            resultMessage += $"\n... и еще {failedElements.Count - 10} элементов";
-                        }
+                        resultMessage += $"Установлено марок: {successCount}\nНе удалось: {failCount}\n";
                     }
+                    if (ustanUGO)
+                    {
+                        resultMessage += $"Установлено УГО: {successCount2}\nНе удалось: {failCount2}\n";
+                    }
+
+                    resultMessage  +=$"Всего свай: {PropertiesPiles.Count}";
+
+                    //if (failedElements.Count > 0)
+                    //{
+                    //    resultMessage += $"\n\nСписок ID неудачных элементов (первые 10):\n";
+                    //    resultMessage += string.Join("\n", failedElements.Take(10).Select(id => id.IntegerValue));
+
+                    //    if (failedElements.Count > 10)
+                    //    {
+                    //        resultMessage += $"\n... и еще {failedElements.Count - 10} элементов";
+                    //    }
+                    //}
 
                     TaskDialog.Show("Результат", resultMessage);
 
@@ -467,6 +527,42 @@ namespace Reinforcement
                 return false;
             }
         }
+        public bool SetYGO(Element pile, int ygoIndex)
+        {
+            Parameter ygoParam = pile.LookupParameter(nameYGO);
+            if (ygoParam == null) return false;
+            if (ygoParam.IsReadOnly) return false;
+
+            // Пробуем установить целым числом (индексом, начиная с 1)
+            try
+            {
+                if (ygoParam.Set(ygoIndex))
+                    return true;
+            }
+            catch { }
+
+            // Пробуем установить целым числом (индекс-1, начиная с 0)
+            try
+            {
+                if (ygoParam.Set(ygoIndex - 1))
+                    return true;
+            }
+            catch { }
+
+            // Пробуем установить строкой
+            string possibleName = YGOPrefix + ygoIndex;
+            
+
+            try
+            {
+                if (ygoParam.Set(possibleName))
+                    return true;
+            }
+            catch { }
+            
+
+            return false;
+        }
 
 
 
@@ -475,11 +571,13 @@ namespace Reinforcement
 
     public class PilesGroup
     {
-        public HashSet<Element> Piles = new HashSet<Element>();
+        public HashSet<PileData> Piles = new HashSet<PileData>();
 
         public HashSet<(int Xs, int Ys, string name)> dataPiles = new HashSet<(int Xs, int Ys, string name)>();
 
-        public List<(int Xs, int Ys, string name)> dataPilesSort = new List<(int Xs, int Ys, string name)> (); // отсортированный по координатам
+        
+
+        //public List<(int Xs, int Ys, string name)> PilesSort = new List<(int Xs, int Ys, string name)> (); // отсортированный по координатам
 
         public int  numName =0;
         public string namePile = "";
@@ -492,10 +590,15 @@ namespace Reinforcement
 
 
 
-        public PilesGroup((int Xs, int Ys, string name) CurrentPiles, int numName,
-            Dictionary<Element, PileData> PropertiesPiles,
-             Dictionary<(int Xs, int Ys, string name), HashSet<Element>> DictSector, double sectorStep , bool prinudOne = false)
+        public PilesGroup(
+            (int Xs, int Ys, string name) CurrentPiles,
+            int numName,
+             Dictionary<(int Xs, int Ys, string name), HashSet<PileData>> DictSector, double sectorStepPile, bool prinudOne = false)
         {
+
+           
+
+
             // когда обьявили элемент pile ищем его родственников всех
 
             //если prinudOne = true то только один элемент в класс
@@ -571,12 +674,9 @@ namespace Reinforcement
                     foreach (var pile in piles)
                     {
                         Piles.Add(pile);
-                        if (PropertiesPiles.TryGetValue(pile, out var dataPile))
-                        {
-                            PropertiesPiles[pile].PilesGroup = this;
-                            x+= dataPile.X;
-                            y+= dataPile.Y;
-                        }
+                        pile.PilesGroup = this;
+                        x += pile.X;
+                        y += pile.Y;
 
                     }
                 }
@@ -585,7 +685,11 @@ namespace Reinforcement
             if (intPiles > 0)
             {
                 //надо по сектору иначе нумератор свай плохой!!!!!
-                Center = ((int)Math.Round((x / (double)intPiles)/ sectorStep), (int)Math.Round((y / (double)intPiles) / sectorStep));
+                //но сектор берем свайный для точности
+                Center = ((int)Math.Round((x / (double)intPiles)/ sectorStepPile), (int)Math.Round((y / (double)intPiles) / sectorStepPile));
+
+                // Используйте реальные координаты, а не секторы:
+               // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
             }
             else
             {
@@ -594,10 +698,10 @@ namespace Reinforcement
 
 
 
-            dataPilesSort = dataPiles
-            .OrderByDescending(group => group.Ys) // по убыванию Y (сверху вниз)
-            .ThenBy(group => group.Xs)         // по возрастанию X (слева направо)
-            .ToList();
+            //dataPilesSort = dataPiles
+            //.OrderByDescending(group =>!returnCoord? group.Ys: group.Xs) // по убыванию Y (сверху вниз)
+            //.ThenBy(group => !returnCoord ? group.Xs: group.Ys)         // по возрастанию X (слева направо)
+            //.ToList();
 
         }
 
