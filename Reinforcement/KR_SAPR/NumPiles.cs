@@ -23,15 +23,17 @@ namespace Reinforcement
 
         //имена типоразмеров семейства
 
-        private HashSet<string> Piles = new HashSet<string>()
+        private static HashSet<string> Piles = new HashSet<string>()
         {
             //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
 
-        private double sectorStep = 1400; // шаг поиска свай
-        private double sectorStepZ = 100; // шаг разбивки УГО по высоте
-        private int predelGroup = 12; // предел наполнения иначе принудительно для каждого элемента
+        private static  double sectorStep = 1400; // шаг поиска свай
+        private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
+        private static int predelGroup = 12; // предел наполнения иначе принудительно для каждого элемента
+
+        private static bool ustanUGO = false;
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -56,7 +58,8 @@ namespace Reinforcement
                     Seacher.Count,
                     sectorStep,
                     sectorStepZ,
-                    predelGroup
+                    predelGroup,
+                    ustanUGO
                 );
 
                 // Устанавливаем владельца окна
@@ -75,7 +78,7 @@ namespace Reinforcement
                 sectorStep = settingsWindow.SectorStep;
                 sectorStepZ = settingsWindow.SectorStepZ;
                 predelGroup = settingsWindow.PredelGroup;
-
+                ustanUGO = settingsWindow.UstanUGO;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
             }
@@ -95,10 +98,11 @@ namespace Reinforcement
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();
 
-            var PropertiesPiles = new Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup)>();
+            var PropertiesPiles = new Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup, int pilesYGO)>();
             var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<Element>>(); // сектор и имя сваи
 
             var allNamesPile = new HashSet<string>();
+            var HashDataTypeYGO = new HashSet<(string name,int intName, int Z, int YGO)>(); //потенциальное УГО
             // Собираем информацию о сваях
             foreach (Element pile in Seacher)
             {
@@ -120,7 +124,7 @@ namespace Reinforcement
                 string name = pile.Name;
                 PilesGroup pilesGroup = null;
                 allNamesPile.Add(name);
-                PropertiesPiles[pile] = (Xs, Ys, Zs, coord_X, coord_Y, coord_Z, name, -1, pilesGroup);
+                PropertiesPiles[pile] = (Xs, Ys, Zs, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
                 var sector = (Xs, Ys, name);
                 if (DictSector.ContainsKey(sector))
                 {
@@ -130,11 +134,14 @@ namespace Reinforcement
                 {
                     DictSector[sector] = new HashSet<Element> { pile };
                 }
+                HashDataTypeYGO.Add((name,-1, Zs, -1));
             }
 
             //сортируем все имена в порядке возрастания
 
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
+
+            
 
 
             var ListPilesGroup = new List<PilesGroup>();
@@ -211,15 +218,35 @@ namespace Reinforcement
                                 pileData.Props.z,
                                 pileData.Props.Name,
                                 numPile,
-                                pileData.Props.pilesGroup);
+                                pileData.Props.pilesGroup,
+                                pileData.Props.pilesYGO);
+
+
+
                         }
 
                     }
                 }
             }
+
+
+
+            //получение УГО потенциального
+            var listDataTypeYGO = HashDataTypeYGO.ToList();
+            for (int i=0;  i<listDataTypeYGO.Count; i++)
+            {
+                var tekYGO = listDataTypeYGO[i];
+                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Z, -1);
+            }
+
+            listDataTypeYGO = listDataTypeYGO.OrderBy(p=>p.intName).ThenBy(p => p.Z)
+                            .ToList();
+            //
+
+        //    ADSK_Типоразмер элемента узла<Элементы узлов>
+        //ADSK_ЭУ_УсловноеОбозначениеСваи: УГО_
             // Начинаем транзакцию для установки марок
-            // Начинаем транзакцию для установки марок
-            using (Transaction trans = new Transaction(doc, "Установка марок свай"))
+            using (Transaction trans = new Transaction(doc, "Установка марок свай и УГО"))
             {
                 try
                 {
@@ -446,7 +473,7 @@ namespace Reinforcement
 
 
         public PilesGroup((int Xs, int Ys, string name) CurrentPiles, int numName,
-            Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup)> PropertiesPiles,
+            Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup, int pilesYGO)> PropertiesPiles,
              Dictionary<(int Xs, int Ys, string name), HashSet<Element>> DictSector, bool prinudOne = false)
         {
             // когда обьявили элемент pile ищем его родственников всех
@@ -526,8 +553,8 @@ namespace Reinforcement
                         Piles.Add(pile);
                         if (PropertiesPiles.TryGetValue(pile, out var dataPile))
                         {
-                            PropertiesPiles[pile] = (dataPile.Xs, dataPile.Ys, dataPile.Zs, dataPile.x, dataPile.y, dataPile.z, dataPile.Name, -1, this);
-                            x += dataPile.x;
+                            PropertiesPiles[pile] = (dataPile.Xs, dataPile.Ys, dataPile.Zs, dataPile.x, dataPile.y, dataPile.z, dataPile.Name, -1, this,-1 );
+                            x+= dataPile.x;
                             y+= dataPile.y;
                         }
 
@@ -560,26 +587,90 @@ namespace Reinforcement
         public static List<string> SortPileNamesByLength(HashSet<string> pileNames)
         {
             return pileNames
-                .OrderBy(name => ExtractFirstNumber(name))
-                .ThenBy(name => name) // если числа равны, сортируем по полному имени
+                .Select(name => new PileNameInfo(name))
+                .OrderBy(info => info, new PileNameInfoComparer())
+                .Select(info => info.OriginalName)
                 .ToList();
         }
+    }
 
-        private static double ExtractFirstNumber(string input)
+    public class PileNameInfo
+    {
+        public string OriginalName { get; }
+        public List<double> Numbers { get; }
+        public string TextPart { get; }
+
+        public PileNameInfo(string name)
         {
+            OriginalName = name;
+            Numbers = ExtractAllNumbers(name);
+            TextPart = ExtractTextPart(name);
+        }
+
+        private List<double> ExtractAllNumbers(string input)
+        {
+            var numbers = new List<double>();
+
             if (string.IsNullOrEmpty(input))
-                return double.MaxValue; // без числа - в конец
+                return numbers;
 
-            // Ищем первое число (целое или дробное) в строке
-            Match match = Regex.Match(input, @"\d+(\.\d+)?");
+            // Ищем все числа (целые и дробные)
+            // Разделители: точка, запятая, дефис, пробел, скобки и т.д.
+            string pattern = @"[\d]+(?:[.,]\d+)?";
 
-            if (match.Success && double.TryParse(match.Value, out double number))
+            var matches = Regex.Matches(input, pattern);
+
+            foreach (Match match in matches)
             {
-                return number;
+                // Заменяем запятую на точку для корректного парсинга
+                string numberStr = match.Value.Replace(',', '.');
+
+                if (double.TryParse(numberStr, out double number))
+                {
+                    numbers.Add(number);
+                }
             }
 
-            return double.MaxValue; // если число не найдено - в конец
+            return numbers;
+        }
+
+        private string ExtractTextPart(string input)
+        {
+            // Удаляем все числа и разделители чисел, оставляем только текст
+            string pattern = @"[\d]+(?:[.,]\d+)?";
+            string result = Regex.Replace(input, pattern, "");
+
+            // Удаляем лишние разделители
+            result = Regex.Replace(result, @"[-_\s.,]+", " ").Trim();
+
+            return result.ToLower();
         }
     }
-    
+
+    public class PileNameInfoComparer : IComparer<PileNameInfo>
+    {
+        public int Compare(PileNameInfo x, PileNameInfo y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            // Сравниваем по всем числам последовательно
+            int maxLength = Math.Max(x.Numbers.Count, y.Numbers.Count);
+
+            for (int i = 0; i < maxLength; i++)
+            {
+                double numX = i < x.Numbers.Count ? x.Numbers[i] : 0;
+                double numY = i < y.Numbers.Count ? y.Numbers[i] : 0;
+
+                int comparison = numX.CompareTo(numY);
+                if (comparison != 0)
+                    return comparison;
+            }
+
+            // Если все числа равны, сравниваем по текстовой части
+            return string.Compare(x.TextPart, y.TextPart, StringComparison.OrdinalIgnoreCase);
+        }
     }
+
+}

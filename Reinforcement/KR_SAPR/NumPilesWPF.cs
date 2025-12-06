@@ -9,16 +9,19 @@ namespace Reinforcement
         public double SectorStep { get; set; }
         public double SectorStepZ { get; set; }
         public int PredelGroup { get; set; }
+        public bool UstanUGO { get; set; }
         public int FoundPilesCount { get; set; }
         public bool ContinueExecution { get; set; }
 
-        public PileSettingsWindow(int foundPilesCount, double currentSectorStep, double currentSectorStepZ, int currentPredelGroup)
+        public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
+            double currentSectorStepZ, int currentPredelGroup, bool currentUstanUGO)
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
             SectorStep = currentSectorStep;
             SectorStepZ = currentSectorStepZ;
             PredelGroup = currentPredelGroup;
+            UstanUGO = currentUstanUGO;
             ContinueExecution = false;
 
             // Заполняем поля текущими значениями
@@ -26,12 +29,13 @@ namespace Reinforcement
             sectorStepTextBox.Text = currentSectorStep.ToString();
             sectorStepZTextBox.Text = currentSectorStepZ.ToString();
             predelGroupTextBox.Text = currentPredelGroup.ToString();
+            ustanUGOCheckBox.IsChecked = currentUstanUGO;
         }
 
         private void InitializeComponent()
         {
-            this.Width = 400;
-            this.Height = 450;
+            this.Width = 450;
+            this.Height = 500;
             this.Title = "Настройки нумерации свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;
@@ -59,74 +63,118 @@ namespace Reinforcement
                 Text = $"Найдено свай: {FoundPilesCount}",
                 FontSize = 12,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 0, 0, 20)
+                Margin = new Thickness(0, 0, 0, 20),
+                FontWeight = FontWeights.Bold
             };
             mainStackPanel.Children.Add(pilesCountText);
 
             // Поле для sectorStep
-            var sectorStepPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+            var sectorStepPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
             var sectorStepLabel = new TextBlock
             {
-                Text = "Шаг сектора (мм):",
+                Text = "Шаг группировки X,Y (мм):",
                 FontSize = 12,
-                Width = 150,
+                Width = 180,
                 VerticalAlignment = VerticalAlignment.Center
             };
             sectorStepTextBox = new TextBox
             {
-                Text = SectorStep.ToString(),
+                Text = SectorStep.ToString("F0"),
                 FontSize = 12,
-                Width = 100,
-                VerticalAlignment = VerticalAlignment.Center
+                Width = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "Расстояние для группировки свай по осям X и Y (900 или больше для поиска пар >1300)"
             };
             sectorStepPanel.Children.Add(sectorStepLabel);
             sectorStepPanel.Children.Add(sectorStepTextBox);
             mainStackPanel.Children.Add(sectorStepPanel);
 
             // Поле для sectorStepZ
-            var sectorStepZPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+            var sectorStepZPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
             var sectorStepZLabel = new TextBlock
             {
-                Text = "Шаг по высоте (мм):",
+                Text = "Шаг по высоте Z (мм):",
                 FontSize = 12,
-                Width = 150,
+                Width = 180,
                 VerticalAlignment = VerticalAlignment.Center
             };
             sectorStepZTextBox = new TextBox
             {
-                Text = SectorStepZ.ToString(),
+                Text = SectorStepZ.ToString("F0"),
                 FontSize = 12,
-                Width = 100,
-                VerticalAlignment = VerticalAlignment.Center
+                Width = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "Для группировки по оси Z (Уровень Грунтовых Вод)"
             };
             sectorStepZPanel.Children.Add(sectorStepZLabel);
             sectorStepZPanel.Children.Add(sectorStepZTextBox);
             mainStackPanel.Children.Add(sectorStepZPanel);
 
             // Поле для predelGroup
-            var predelGroupPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 20) };
+            var predelGroupPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
             var predelGroupLabel = new TextBlock
             {
                 Text = "Лимит группы:",
                 FontSize = 12,
-                Width = 150,
+                Width = 180,
                 VerticalAlignment = VerticalAlignment.Center
             };
             predelGroupTextBox = new TextBox
             {
                 Text = PredelGroup.ToString(),
                 FontSize = 12,
-                Width = 100,
-                VerticalAlignment = VerticalAlignment.Center
+                Width = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "Максимальное количество свай в одной группе (например, кусты свай по 4 сваи). 0 = без лимита"
             };
             predelGroupPanel.Children.Add(predelGroupLabel);
             predelGroupPanel.Children.Add(predelGroupTextBox);
             mainStackPanel.Children.Add(predelGroupPanel);
 
+            // Галочка для установки УГО
+            var ustanUGOPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+            var ustanUGOLabel = new TextBlock
+            {
+                Text = "Установить УГО:",
+                FontSize = 12,
+                Width = 180,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            ustanUGOCheckBox = new CheckBox
+            {
+                IsChecked = UstanUGO,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = "Установить отметки уровня грунтовых вод (УГО) для групп свай"
+            };
+            ustanUGOPanel.Children.Add(ustanUGOLabel);
+            ustanUGOPanel.Children.Add(ustanUGOCheckBox);
+            mainStackPanel.Children.Add(ustanUGOPanel);
+
             // Подсказки
             var hintsText = new TextBlock
             {
-                Text = "Подсказки:\n• Шаг сектора: расстояние для группировки свай по осям X и Y равен шагу свай 900 или больше для поиска пар >1300\n• Шаг по высоте: для группировки по оси Z УГО\n• Лимит группы: максимальное количество свай в одной группе которую нумеруем (например кусты свай по 4 сваи) (0 = без лимита - любой куст)",
+                Text = "Подсказки:\n" +
+                       "• Шаг группировки X,Y: расстояние между соседними сваями для группировки (рекомендуется 900-1500 мм)\n" +
+                       "• Шаг по высоте Z: для группировки свай по уровню грунтовых вод (УГО)\n" +
+                       "• Лимит группы: максимальное количество свай в группе (например, 4 для кустов свай)\n" +
+                       "• Установить УГО: добавит отметки уровня грунтовых вод к группам свай",
                 FontSize = 10,
                 FontStyle = FontStyles.Italic,
                 TextWrapping = TextWrapping.Wrap,
@@ -138,7 +186,8 @@ namespace Reinforcement
             var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 10, 0, 0)
             };
 
             var okButton = new Button
@@ -146,7 +195,8 @@ namespace Reinforcement
                 Content = "Продолжить",
                 Width = 120,
                 Height = 30,
-                Margin = new Thickness(5)
+                Margin = new Thickness(5),
+                FontWeight = FontWeights.Bold
             };
             okButton.Click += OkButton_Click;
 
@@ -163,6 +213,10 @@ namespace Reinforcement
             buttonPanel.Children.Add(cancelButton);
             mainStackPanel.Children.Add(buttonPanel);
 
+            // Устанавливаем фокус на первое поле ввода
+            sectorStepTextBox.Focus();
+            sectorStepTextBox.SelectAll();
+
             this.Content = mainStackPanel;
         }
 
@@ -170,14 +224,17 @@ namespace Reinforcement
         private TextBox sectorStepTextBox;
         private TextBox sectorStepZTextBox;
         private TextBox predelGroupTextBox;
+        private CheckBox ustanUGOCheckBox;
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             // Валидация введенных данных
             if (!double.TryParse(sectorStepTextBox.Text, out double sectorStep) || sectorStep <= 0)
             {
-                MessageBox.Show("Шаг сектора должен быть положительным числом!", "Ошибка",
+                MessageBox.Show("Шаг группировки должен быть положительным числом!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+                sectorStepTextBox.Focus();
+                sectorStepTextBox.SelectAll();
                 return;
             }
 
@@ -185,6 +242,8 @@ namespace Reinforcement
             {
                 MessageBox.Show("Шаг по высоте должен быть положительным числом!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+                sectorStepZTextBox.Focus();
+                sectorStepZTextBox.SelectAll();
                 return;
             }
 
@@ -192,12 +251,15 @@ namespace Reinforcement
             {
                 MessageBox.Show("Лимит группы должен быть неотрицательным целым числом!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+                predelGroupTextBox.Focus();
+                predelGroupTextBox.SelectAll();
                 return;
             }
 
             SectorStep = sectorStep;
             SectorStepZ = sectorStepZ;
             PredelGroup = predelGroup;
+            UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
             ContinueExecution = true;
 
             this.DialogResult = true;
