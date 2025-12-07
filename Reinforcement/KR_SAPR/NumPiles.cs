@@ -34,7 +34,8 @@ namespace Reinforcement
         public string Name { get; set; }
         public int NumPile { get; set; }
 
-        
+        public string Commit { get; set; } = "";
+
 
         public PilesGroup PilesGroup { get; set; }
 
@@ -46,16 +47,16 @@ namespace Reinforcement
             {
                 if(pilesYgo<1)
                 {
-                    pilesYgo = YgoIndexDict[(Name, Zs)];
+                    pilesYgo = YgoIndexDict[(Name, Zs)].nomer;
                 }
                 return pilesYgo;
             }
                 
         }
 
-        private Dictionary<(string name, int Z), int> YgoIndexDict;
+        private Dictionary<(string name, int Z), (int nomer, int numPile)> YgoIndexDict;
 
-        public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, Dictionary<(string name, int Z), int> ygoIndexDict)
+        public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup,  Dictionary<(string name, int Zs), (int nomer, int numPile)> ygoIndexDict)
         {
             Pile = pile;
             Xs = xs;
@@ -182,7 +183,7 @@ namespace Reinforcement
             var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<PileData>>(); // сектор и имя сваи
 
             var allNamesPile = new HashSet<string>();
-            var HashDataTypeYGO = new HashSet<(string name,int intName, int Zs)>(); //потенциальное УГО
+           // var HashDataTypeYGO = new HashSet<(string name,int intName, int Zs)>(); //потенциальное УГО
 
 
             if(sectorStepPile<1)
@@ -193,9 +194,17 @@ namespace Reinforcement
             {
                 sectorStep = 1;
             }
-            QuickUGOAudit(doc);
+            //QuickUGOAudit(doc);
+
+            if(ustanUGO)
+            {
+                // Инициализируем кэш типов УГО один раз для этого документа
+                InitializeUgoCache(doc);
+            }
+
+
             // Собираем информацию о сваях
-            var ygoIndexDict = new Dictionary<(string name, int Zs), int>();
+            var ygoIndexDict = new Dictionary<(string name, int Zs), (int nomer, int numPile)>();
             foreach (Element pile in Seacher)
             {
                 // получаем координаты
@@ -239,33 +248,47 @@ namespace Reinforcement
                     DictSector[sector] = new HashSet<PileData> { PileClass };
                 }
 
-                HashDataTypeYGO.Add((name, -1, Zs));
+                //записываем количество уникальных УГО
+                if (ygoIndexDict.TryGetValue((name, Zs), out var past))
+                {
+                    ygoIndexDict[(name, Zs)] = (past.nomer, past.numPile + 1);
+                }
+                else
+                {
+                    ygoIndexDict[(name, Zs)] = (-1, 1);
+                }
+
+
+                    //HashDataTypeYGO.Add((name, -1, Zs));
 
             }
-
+            
             //сортируем все имена в порядке возрастания
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
-            
+            //создаем список для словаря
+            var listForYgoSort = new List<(string name,int numName, int Zs, int numPile)>();
+            foreach(var ygoData in ygoIndexDict)
+            {
+                listForYgoSort.Add((ygoData.Key.name, ListNamesPiles.IndexOf(ygoData.Key.name), ygoData.Key.Zs, ygoData.Value.numPile  ));
+            }
+            //по номеру имени сваи по кол-ву свай одного имени и затем по высотной отметке
+            var listDataTypeYGO = listForYgoSort.OrderBy(p => p.numName).ThenByDescending(p => p.numPile).ThenBy(p => p.Zs).ToList();
+
+
             //получение УГО потенциального
-            var listDataTypeYGO = HashDataTypeYGO.ToList();
+           // var listDataTypeYGO = HashDataTypeYGO.ToList();
+           //теперь заполняем словарь свойства
             for (int i = 0; i < listDataTypeYGO.Count; i++)
             {
                 var tekYGO = listDataTypeYGO[i];
-                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Zs);
+                if(ygoIndexDict.TryGetValue((tekYGO.name, tekYGO.Zs), out var past))
+                {
+                    ygoIndexDict[(tekYGO.name, tekYGO.Zs)] = (i + 1, past.numPile);
+                }
+                
             }
 
-            listDataTypeYGO = listDataTypeYGO.OrderBy(p => p.intName).ThenBy(p => p.Zs)
-                            .ToList();
 
-            //заполняем свойство уго
-            // Создаем словарь для быстрого поиска индекса YGO по имени и Z координате
-            
-            for (int i = 0; i < listDataTypeYGO.Count; i++)
-            {
-                var item = listDataTypeYGO[i];
-                ygoIndexDict[(item.name, item.Zs)] = i+1;
-            }
-            
 
             var ListPilesGroup = new List<PilesGroup>();
 
@@ -348,11 +371,13 @@ namespace Reinforcement
 
              // Нумерация свай
             int numPile = 0;
+            int kust = 0;
             foreach (var classPile in ListPilesGroup)
             {
+                kust++;
                 //сваи одной группы
                 var allPilesGroup = classPile.Piles.ToList();
-                if (ustanNumPile)//накладно ведь каждый раз
+                if (ustanNumPile && allPilesGroup.Count>0)//накладно ведь каждый раз
                 {
                     //сваи сортируем по секторам позволяющим в один ряд их укладывать
                     if (!returnCoord)
@@ -374,6 +399,8 @@ namespace Reinforcement
                 foreach (var pile in allPilesGroup)
                 {
                     numPile++;
+                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust;
+                    pile.Commit = primeh;
                     pile.NumPile = numPile;
                 }
 
@@ -405,12 +432,13 @@ namespace Reinforcement
                     {
                         Element pile = kvp.Pile;
                         int markValue = kvp.NumPile;
-                        int sector = kvp.PilesGroup.numCreate; // номер сектора которому принадлежит (номер куста)
+                        
 
-
-                        string primeh = "УГО_" + kvp.PilesYGO+", КУСТ"+ sector;
-
-                        SetPileMark(pile, primeh, namePrimech);
+                        string primeh = kvp.Commit;
+                        if (primeh != "")
+                        {
+                            SetPileMark(pile, primeh, namePrimech);
+                        }
 
                         if (ustanNumPile)
                         {
@@ -574,9 +602,86 @@ namespace Reinforcement
         }
 
 
+        // 1. ОБЪЯВЛЯЕМ СТАТИЧЕСКИЙ СЛОВАРЬ ДЛЯ КЭШИРОВАНИЯ
+        // Ключ: Имя типа (например, "УГО_1"), Значение: ElementId этого типа
+        private static Dictionary<string, ElementId> _ugoTypeCache = null;
+
+        // 2. МЕТОД ДЛЯ ИНИЦИАЛИЗАЦИИ (ЗАПОЛНЕНИЯ) СЛОВАРЯ
+        private static void InitializeUgoCache(Document doc, string prefix="УГО_")
+        {
+            if (_ugoTypeCache != null) return; // Уже инициализирован
+
+            _ugoTypeCache = new Dictionary<string, ElementId>();
+
+            FilteredElementCollector collector = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol));
+
+            //foreach (FamilySymbol symbol in collector)
+            //{
+            //    string symbolName = symbol.Name;
+            //    // Сохраняем ВСЕ типы, которые могут быть УГО (или начинаются на "УГО_")
+            //    // Это позволит быстро находить их позже.
+            //    _ugoTypeCache[symbolName] = symbol.Id;
+
+            //    // Опционально: можно добавить логирование для отладки
+            //    // TaskDialog.Show("Кэш", $"Добавлено в кэш: {symbolName} -> {symbol.Id.IntegerValue}");
+            //}
+
+            // Если вы точно знаете, что нужны только типы, начинающиеся с "УГО_",
+            // можно фильтровать сразу здесь, уменьшив размер словаря:
+            // var ugoSymbols = collector.Cast<FamilySymbol>().Where(s => s.Name.StartsWith("УГО_"));
+            // foreach (var symbol in ugoSymbols) { _ugoTypeCache[symbol.Name] = symbol.Id; }
+            var ugoSymbols = collector.Cast<FamilySymbol>().Where(s => s.Name.StartsWith(prefix));
+            foreach (var symbol in ugoSymbols) { _ugoTypeCache[symbol.Name] = symbol.Id; }
 
 
+        }
+
+        // 3. ОПТИМИЗИРОВАННЫЙ МЕТОД SetUGOValue
         private bool SetUGOValue(Document doc, Element pileElement, int ygoIndex)
+        {
+            // Убедимся, что кэш инициализирован (делаем это один раз за запуск)
+            if (_ugoTypeCache == null)
+            {
+                InitializeUgoCache(doc);
+            }
+
+            // 1. Формируем имя типа
+            string targetUgoName = "УГО_" + ygoIndex;
+
+            // 2. Пытаемся получить ID типа ИЗ КЭША (мгновенно!)
+            if (!_ugoTypeCache.TryGetValue(targetUgoName, out ElementId targetTypeId))
+            {
+                // Если не нашли в кэше, значит, такого типа действительно нет в проекте
+                //TaskDialog.Show("Ошибка",
+                //    $"Тип '{targetUgoName}' не найден в проекте.\n" +
+                //    $"Возможно, в проекте нет типов УГО, или их имена отличаются.\n" +
+                //    $"Доступные имена в кэше: {string.Join(", ", _ugoTypeCache.Keys.OrderBy(k => k))}");
+                return false;
+            }
+
+            // 3. Нашли ID! Теперь находим и устанавливаем параметр на свае.
+            Parameter ugoParam = pileElement.LookupParameter("ADSK_Типоразмер элемента узла");
+
+            if (ugoParam == null || ugoParam.IsReadOnly)
+            {
+                // Можно не показывать диалог для каждой ошибки, а просто вернуть false
+                // и вести статистику в основном методе
+                return false;
+            }
+
+            // 4. Устанавливаем значение
+            try
+            {
+                return ugoParam.Set(targetTypeId);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool ppSetUGOValue(Document doc, Element pileElement, int ygoIndex)
         {
             // 1. Формируем имя типа, который ищем
             string targetUgoName = "УГО_" + ygoIndex; // Например, "УГО_2"
@@ -651,6 +756,7 @@ namespace Reinforcement
 
         public void QuickUGOAudit(Document doc)
         {
+            //для проверки был создан
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("=== БЫСТРЫЙ АУДИТ СВАЙ И УГО ===");
 
