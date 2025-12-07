@@ -33,11 +33,29 @@ namespace Reinforcement
         public double Z { get; set; }
         public string Name { get; set; }
         public int NumPile { get; set; }
+
+        
+
         public PilesGroup PilesGroup { get; set; }
-        public int PilesYGO { get; set; }
 
 
-        public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, int pilesYGO)
+        private int pilesYgo = -1;
+        public int PilesYGO 
+        {
+            get
+            {
+                if(pilesYgo<1)
+                {
+                    pilesYgo = YgoIndexDict[(Name, Zs)];
+                }
+                return pilesYgo;
+            }
+                
+        }
+
+        private Dictionary<(string name, int Z), int> YgoIndexDict;
+
+        public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup, Dictionary<(string name, int Z), int> ygoIndexDict)
         {
             Pile = pile;
             Xs = xs;
@@ -55,8 +73,12 @@ namespace Reinforcement
             Name = name;
             NumPile = numPile;
             PilesGroup = pilesGroup;
-            PilesYGO = pilesYGO;
+            YgoIndexDict = ygoIndexDict;
+            //YgoIndexDict[(Name, Zs)] = -1;
         }
+
+
+
     }
     [Transaction(TransactionMode.Manual)]
     public class NumPiles : IExternalCommand
@@ -70,13 +92,16 @@ namespace Reinforcement
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
         private static List<string> nameMarks = new List<string> { "Марка" };
+        private static List<string> namePrimech = new List<string> { "ADSK_Примечание" };
+
+
         private static string nameYGO = "ADSK_Типоразмер элемента узла";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
-        private static  double sectorStep = 1400; // шаг поиска свай
-        private static double sectorStepPile = 250;// округление координаты одной сваи
+        private static  double sectorStep = 1150; // шаг поиска свай
+        private static double sectorStepPile = 1000;// округление координаты одной сваи
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
-        private static int predelGroup = 12; // предел наполнения иначе принудительно для каждого элемента
+        private static int predelGroup = 20; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
         private static bool returnCoord = false;
@@ -157,7 +182,7 @@ namespace Reinforcement
             var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<PileData>>(); // сектор и имя сваи
 
             var allNamesPile = new HashSet<string>();
-            var HashDataTypeYGO = new HashSet<(string name,int intName, int Z)>(); //потенциальное УГО
+            var HashDataTypeYGO = new HashSet<(string name,int intName, int Zs)>(); //потенциальное УГО
 
 
             if(sectorStepPile<1)
@@ -168,8 +193,9 @@ namespace Reinforcement
             {
                 sectorStep = 1;
             }
-
+            QuickUGOAudit(doc);
             // Собираем информацию о сваях
+            var ygoIndexDict = new Dictionary<(string name, int Zs), int>();
             foreach (Element pile in Seacher)
             {
                 // получаем координаты
@@ -197,9 +223,10 @@ namespace Reinforcement
 
                 string name = pile.Name;
                 PilesGroup pilesGroup = null;
+
                 allNamesPile.Add(name);
 
-                var PileClass = new PileData(pile, Xs, Ys, Zs, Xs2, Ys2, Zs2, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, -1);
+                var PileClass = new PileData(pile, Xs, Ys, Zs, Xs2, Ys2, Zs2, coord_X, coord_Y, coord_Z, name, -1, pilesGroup, ygoIndexDict);
 
                 PropertiesPiles.Add(PileClass);
                 var sector = (Xs, Ys, name);
@@ -211,11 +238,12 @@ namespace Reinforcement
                 {
                     DictSector[sector] = new HashSet<PileData> { PileClass };
                 }
-                HashDataTypeYGO.Add((name,-1, Zs));
+
+                HashDataTypeYGO.Add((name, -1, Zs));
+
             }
 
             //сортируем все имена в порядке возрастания
-
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
             
             //получение УГО потенциального
@@ -223,38 +251,21 @@ namespace Reinforcement
             for (int i = 0; i < listDataTypeYGO.Count; i++)
             {
                 var tekYGO = listDataTypeYGO[i];
-                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Z);
+                listDataTypeYGO[i] = (tekYGO.name, ListNamesPiles.IndexOf(tekYGO.name), tekYGO.Zs);
             }
 
-            listDataTypeYGO = listDataTypeYGO.OrderBy(p => p.intName).ThenBy(p => p.Z)
+            listDataTypeYGO = listDataTypeYGO.OrderBy(p => p.intName).ThenBy(p => p.Zs)
                             .ToList();
 
             //заполняем свойство уго
             // Создаем словарь для быстрого поиска индекса YGO по имени и Z координате
-            var ygoIndexDict = new Dictionary<(string name, int Z), int>();
+            
             for (int i = 0; i < listDataTypeYGO.Count; i++)
             {
                 var item = listDataTypeYGO[i];
-                ygoIndexDict[(item.name, item.Z)] = i+1;
+                ygoIndexDict[(item.name, item.Zs)] = i+1;
             }
             
-
-            // Теперь обновляем PropertiesPiles
-            
-            foreach (var pileClass in PropertiesPiles)
-            {
-                int nameIndex = ListNamesPiles.IndexOf(pileClass.Name);
-
-                // Ищем YGO индекс через словарь
-                int ugo = -1;
-                // Сначала ищем по полному имени
-                if (!ygoIndexDict.TryGetValue((pileClass.Name, pileClass.Zs), out ugo))
-                {
-                   //тут была альтернатива
-                }
-                pileClass.PilesYGO = ugo;
-            }
-
 
             var ListPilesGroup = new List<PilesGroup>();
 
@@ -267,8 +278,10 @@ namespace Reinforcement
                 var elementPile = DictSector[pileSector].FirstOrDefault();
                 if (elementPile != null && elementPile.PilesGroup == null)
                 {
-                    
-                     ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), DictSector, sectorStepPile));
+                    if (DictSector.TryGetValue(pileSector, out var piles) && piles.Count>0)
+                    {
+                        ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), ListNamesPiles.IndexOf(pileSector.name), DictSector));
+                    }
                     
                 }
             }
@@ -289,7 +302,13 @@ namespace Reinforcement
                             { 
                                 ListPilesGroup.Remove(elementPile.PilesGroup); 
                             }
-                            ListPilesGroup.Add(new PilesGroup(pileSector, ListNamesPiles.IndexOf(pileSector.name), DictSector, sectorStepPile,  true));
+                            if (DictSector.TryGetValue(pileSector, out var piles))
+                            {
+                                foreach (var pile in piles)
+                                {
+                                    ListPilesGroup.Add(new PilesGroup(pile, ListNamesPiles.IndexOf(pileSector.name), DictSector,  true));
+                                }
+                            }
                         }
                     }
                 }
@@ -300,20 +319,30 @@ namespace Reinforcement
             {
                 if (!returnCoord)
                 {
+                    //ListPilesGroup = ListPilesGroup
+                    //.OrderBy(group => group.numName)          // по возрастанию numName
+                    //.ThenByDescending(group => group.Center.y) // по убыванию Y (сверху вниз)
+                    //.ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
+                    //.ToList();
                     ListPilesGroup = ListPilesGroup
-                    .OrderBy(group => group.numName)          // по возрастанию numName
-                    .ThenByDescending(group => group.Center.y) // по убыванию Y (сверху вниз)
-                    .ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
-                    .ToList();
+                   .OrderBy(group => group.numName)          // по возрастанию numName
+                   .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
+                   .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
+                   .ToList();
                 }
                 else
                 {
                     // по x надо слева направо
+                    //ListPilesGroup = ListPilesGroup
+                    //.OrderBy(group => group.numName)          // по возрастанию numName
+                    //.ThenBy(group => group.Center.x) // по убыванию Y (сверху вниз)
+                    //.ThenByDescending(group => group.Center.y)         // по возрастанию X (слева направо)
+                    //.ToList();
                     ListPilesGroup = ListPilesGroup
-                    .OrderBy(group => group.numName)          // по возрастанию numName
-                    .ThenBy(group => group.Center.x) // по убыванию Y (сверху вниз)
-                    .ThenByDescending(group => group.Center.y)         // по возрастанию X (слева направо)
-                    .ToList();
+                   .OrderBy(group => group.numName)          // по возрастанию numName
+                   .ThenBy(group => group.Xleft) // по убыванию Y (сверху вниз)
+                   .ThenByDescending(group => group.Ytop)         // по возрастанию X (слева направо)
+                   .ToList();
                 }
             }
 
@@ -371,21 +400,37 @@ namespace Reinforcement
                     var failedElements2 = new List<ElementId>();
                     bool resultNum = false;
                     bool resultUGO = false;
+
                     foreach (var kvp in PropertiesPiles)
                     {
                         Element pile = kvp.Pile;
                         int markValue = kvp.NumPile;
-                        
-                        
+                        int sector = kvp.PilesGroup.numCreate; // номер сектора которому принадлежит (номер куста)
+
+
+                        string primeh = "УГО_" + kvp.PilesYGO+", КУСТ"+ sector;
+
+                        SetPileMark(pile, primeh, namePrimech);
+
                         if (ustanNumPile)
                         {
                             resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
+
+
                         }
                         if (ustanUGO && kvp.PilesYGO>0)
                         {
                             string YGOValue = YGOPrefix + kvp.PilesYGO;
-                            resultUGO = SetYGO(pile, kvp.PilesYGO);
-                           //resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
+                            //resultUGO = SetUGOValue(pile, kvp.PilesYGO);
+                            //FamilyInstance pileInstance = pile as FamilyInstance;
+                            //if (pileInstance != null)
+                            //{
+                            //    resultUGO = SetUGOValue(doc, pile as FamilyInstance, kvp.PilesYGO);
+                            //}
+                            resultUGO = SetUGOValue(doc, pile, kvp.PilesYGO);
+                            //SetUGOValue(Document doc, FamilyInstance pileInstance, int ygoIndex)
+                            //resultUGO = SetYGO(pile, kvp.PilesYGO);
+                            //resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
                         }
 
                         // Проверяем оба результата в зависимости от настроек
@@ -527,6 +572,139 @@ namespace Reinforcement
                 return false;
             }
         }
+
+
+
+
+        private bool SetUGOValue(Document doc, Element pileElement, int ygoIndex)
+        {
+            // 1. Формируем имя типа, который ищем
+            string targetUgoName = "УГО_" + ygoIndex; // Например, "УГО_2"
+
+            // 2. Ищем в проекте ВСЕ типы семейств (FamilySymbol)
+            FilteredElementCollector collector = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol));
+
+            FamilySymbol targetSymbol = null;
+
+            // 3. Перебираем и ищем по ТОЧНОМУ совпадению имени типа (Symbol.Name)
+            foreach (FamilySymbol symbol in collector)
+            {
+                // СРАВНИВАЕМ ИМЯ ТИПА. Это самое важное!
+                if (symbol.Name == targetUgoName)
+                {
+                    targetSymbol = symbol;
+                    break; // Нашли, выходим из цикла
+                }
+            }
+
+            // 4. Если тип не найден, выводим ошибку и список похожих имен для отладки
+            if (targetSymbol == null)
+            {
+                // Собираем все имена типов для отладки
+                List<string> allSymbolNames = new List<string>();
+                foreach (FamilySymbol s in new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol)))
+                {
+                    allSymbolNames.Add(s.Name);
+                }
+                string allNames = string.Join("\n", allSymbolNames.OrderBy(n => n));
+
+                TaskDialog.Show("Ошибка поиска типа УГО",
+                    $"Тип семейства с именем '{targetUgoName}' не найден в проекте.\n\n" +
+                    $"Доступные имена типов в проекте:\n{allNames}");
+                return false;
+            }
+
+            // 5. Нашли тип! Теперь находим и устанавливаем параметр на свае.
+            // Параметр называется именно так, как вы указали:
+            Parameter ugoParam = pileElement.LookupParameter("ADSK_Типоразмер элемента узла");
+
+            if (ugoParam == null)
+            {
+                TaskDialog.Show("Ошибка", "На свае не найден параметр 'ADSK_Типоразмер элемента узла'");
+                return false;
+            }
+
+            if (ugoParam.IsReadOnly)
+            {
+                TaskDialog.Show("Ошибка", "Параметр 'ADSK_Типоразмер элемента узла' доступен только для чтения");
+                return false;
+            }
+
+            // 6. УСТАНАВЛИВАЕМ ЗНАЧЕНИЕ. Это ключевая строка!
+            // Мы передаем в параметр ID найденного типа семейства (FamilySymbol)
+            try
+            {
+                // Метод Set() для параметра типа ElementId ожидает именно ElementId
+                bool success = ugoParam.Set(targetSymbol.Id);
+                return success;
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка установки значения",
+                    $"Не удалось установить значение параметра.\nОшибка: {ex.Message}");
+                return false;
+            }
+        }
+
+
+
+        public void QuickUGOAudit(Document doc)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("=== БЫСТРЫЙ АУДИТ СВАЙ И УГО ===");
+
+            // 1. Какие типы УГО есть в проекте?
+            sb.AppendLine("\n1. ВСЕ типы УГО в проекте (FamilySymbol):");
+            var allUGOSymbols = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>()
+                .Where(s => s.Name.Contains("УГО")); // Ищем все, что содержит "УГО"
+
+            foreach (var symbol in allUGOSymbols)
+            {
+                sb.AppendLine($"   - Имя: '{symbol.Name}', ID: {symbol.Id.IntegerValue}, Семейство: '{symbol.Family?.Name}'");
+            }
+
+            // 2. Проверяем параметр на первой попавшейся свае
+            sb.AppendLine("\n2. Проверка параметра на случайной свае:");
+            var testPile = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_StructuralFoundation)
+                .WhereElementIsNotElementType()
+                .FirstElement();
+
+            if (testPile != null)
+            {
+                sb.AppendLine($"   Свая: ID{testPile.Id.IntegerValue}, Имя: {testPile.Name}");
+                Parameter testParam = testPile.LookupParameter("ADSK_Типоразмер элемента узла");
+
+                if (testParam != null)
+                {
+                    sb.AppendLine($"   Параметр найден. StorageType: {testParam.StorageType}");
+                    if (testParam.HasValue)
+                    {
+                        if (testParam.StorageType == StorageType.ElementId)
+                        {
+                            ElementId id = testParam.AsElementId();
+                            sb.AppendLine($"   Текущее значение ID: {id?.IntegerValue}");
+                            if (id != null)
+                            {
+                                Element elem = doc.GetElement(id);
+                                sb.AppendLine($"   Соответствующий элемент: {elem?.Name} (Тип: {elem?.GetType()?.Name})");
+                            }
+                        }
+                        sb.AppendLine($"   AsValueString: '{testParam.AsValueString()}'");
+                    }
+                }
+                else
+                {
+                    sb.AppendLine("   Параметр НЕ НАЙДЕН!");
+                }
+            }
+
+            TaskDialog.Show("Аудит УГО", sb.ToString());
+        }
+
         public bool SetYGO(Element pile, int ygoIndex)
         {
             Parameter ygoParam = pile.LookupParameter(nameYGO);
@@ -564,6 +742,205 @@ namespace Reinforcement
             return false;
         }
 
+        // Исправленный метод для установки параметра УГО
+        // Исправленный метод для установки параметра УГО
+        private bool pSetUGOValue(Document doc, Element pileElement, int ygoIndex)
+        {
+            // 1. Находим целевой элемент УГО в проекте
+            string targetUgoName = "УГО_" + ygoIndex;
+
+            // Ищем экземпляры семейства с нужным именем типа
+            FilteredElementCollector collector = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilyInstance))
+                .WhereElementIsNotElementType();
+
+            FamilyInstance targetUgoInstance = null;
+
+            foreach (FamilyInstance instance in collector)
+            {
+                // Проверяем имя типа семейства (не имя экземпляра!)
+                if (instance.Symbol != null && instance.Symbol.Name == targetUgoName)
+                {
+                    // Дополнительная проверка на нужное семейство
+                    if (instance.Symbol.Family != null &&
+                        instance.Symbol.Family.Name.Contains("УсловноеОбозначениеСваи"))
+                    {
+                        targetUgoInstance = instance;
+                        break;
+                    }
+                }
+            }
+
+            // 2. Если не нашли экземпляр, ищем тип (FamilySymbol)
+            if (targetUgoInstance == null)
+            {
+                // Ищем FamilySymbol по имени
+                FilteredElementCollector symbolCollector = new FilteredElementCollector(doc)
+                    .OfClass(typeof(FamilySymbol));
+
+                FamilySymbol targetSymbol = null;
+                foreach (FamilySymbol symbol in symbolCollector)
+                {
+                    if (symbol.Name == targetUgoName)
+                    {
+                        // Проверяем, что это нужное семейство
+                        if (symbol.Family != null &&
+                            symbol.Family.Name.Contains("УсловноеОбозначениеСваи"))
+                        {
+                            targetSymbol = symbol;
+                            break;
+                        }
+                    }
+                }
+
+                if (targetSymbol != null)
+                {
+                    // Используем тип (FamilySymbol)
+                    return SetUGOParameter(pileElement, targetSymbol.Id);
+                }
+                else
+                {
+                    TaskDialog.Show("Ошибка поиска", $"Не найден элемент или тип: {targetUgoName}");
+                    return false;
+                }
+            }
+
+            // 3. Если нашли экземпляр, используем его ID
+            return SetUGOParameter(pileElement, targetUgoInstance.Id);
+        }
+        // Вспомогательный метод для установки параметра
+        private bool SetUGOParameter(Element pileElement, ElementId ugoElementId)
+        {
+            // Пробуем разные возможные имена параметра
+            string[] possibleParamNames = new string[]
+            {
+        "ADSK_Типоразмер элемента узла",
+        "ADSK_Типоразмер элемента узла<Элементы узлов>",
+        "Условное обозначение",
+        "УГО"
+            };
+
+            foreach (string paramName in possibleParamNames)
+            {
+                Parameter ugoParam = pileElement.LookupParameter(paramName);
+                if (ugoParam != null && !ugoParam.IsReadOnly)
+                {
+                    try
+                    {
+                        // Устанавливаем ссылку на элемент УГО
+                        bool success = ugoParam.Set(ugoElementId);
+                        return success;
+                    }
+                    catch
+                    {
+                        // Пробуем следующий вариант имени параметра
+                        continue;
+                    }
+                }
+            }
+
+            // Если ни один параметр не найден или не удалось установить
+            return false;
+        }
+        private bool SetUGOValue(Document doc, FamilyInstance pileInstance, int ygoIndex)
+        {
+            // 1. Формируем имя типа, который ищем (например, "УГО_2")
+            string targetTypeName = "УГО_" + ygoIndex;
+
+            // 2. Ищем в проекте все типы семейств (FamilySymbol)
+            FilteredElementCollector collector = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilySymbol))
+                .WhereElementIsElementType();
+
+            FamilySymbol targetSymbol = null;
+            foreach (FamilySymbol symbol in collector)
+            {
+                // Ищем точное совпадение по имени
+                if (symbol.Name == targetTypeName)
+                {
+                    targetSymbol = symbol;
+                    break;
+                }
+            }
+
+            // 3. Если тип не найден, возвращаем false
+            if (targetSymbol == null)
+            {
+                // Для отладки можно добавить сообщение
+                // TaskDialog.Show("Ошибка", $"Не найден тип семейства: {targetTypeName}");
+                return false;
+            }
+
+            // 4. Назначаем свае новый тип
+            try
+            {
+                // Основной способ: прямое назначение Symbol
+                // Убедитесь, что код выполняется внутри транзакции!
+                pileInstance.Symbol = targetSymbol;
+                return true;
+            }
+            catch
+            {
+                // Альтернативный способ: через параметр типа
+                try
+                {
+                    Parameter typeParam = pileInstance.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM);
+                    if (typeParam != null && !typeParam.IsReadOnly)
+                    {
+                        return typeParam.Set(targetSymbol.Id);
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+                return false;
+            }
+        }
+
+
+        private bool SetUGOValue(Element pile, int ygoIndex)
+        {
+            ygoIndex++;// можеьт нулевой того...
+            try
+            {
+                Parameter ygoParam = pile.LookupParameter("ADSK_Типоразмер элемента узла");
+                if (ygoParam == null || ygoParam.IsReadOnly) return false;
+
+                // Для списочных параметров УСТАНАВЛИВАЕМ ЧИСЛОВОЕ ЗНАЧЕНИЕ!
+                // ygoIndex - это индекс в списке (обычно начинается с 0 или 1)
+
+                // Важно: в вашем случае YGO начинается с 1
+                // Поэтому нужно установить значение от 1 до N
+
+                if (ygoIndex >= 1) // Убедитесь, что индекс не отрицательный
+                {
+                    try
+                    {
+                        // Пробуем установить как целое число
+                        return ygoParam.Set(ygoIndex);
+                    }
+                    catch (Exception ex1)
+                    {
+                        // Если не получается, пробуем установить как строку
+                        try
+                        {
+                            return ygoParam.Set(ygoIndex.ToString());
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
 
     }
@@ -586,38 +963,52 @@ namespace Reinforcement
         public (int x, int y) Center;
 
 
+        //для красоты не по центру масс нумеровать а по крайним точкам
+        public int Xleft = 0;
+        public int Ydown = 0;
+        public int Xright = 0;
+        public int Ytop = 0;
 
+        private static int _numCreate = 0;
+        public int numCreate = 0;
 
 
 
         public PilesGroup(
-            (int Xs, int Ys, string name) CurrentPiles,
+            PileData CurrentPile,
             int numName,
-             Dictionary<(int Xs, int Ys, string name), HashSet<PileData>> DictSector, double sectorStepPile, bool prinudOne = false)
+             Dictionary<(int Xs, int Ys, string name), HashSet<PileData>> DictSector, bool prinudOne = false)
         {
 
-           
 
+            _numCreate++;
+            numCreate = _numCreate;
 
             // когда обьявили элемент pile ищем его родственников всех
 
             //если prinudOne = true то только один элемент в класс
 
-            namePile = CurrentPiles.name;
+            namePile = CurrentPile.Name;
+            (int Xs, int Ys, string name) SectorParent = (CurrentPile.Xs, CurrentPile.Ys, CurrentPile.Name);
+
+
 
             //номер имени
             this.numName = numName;
             //теперь ищем родственные сваи аналог графа
             var listInt = new List<int> { -1,0, 1 };
 
-            var HashSeachPile = new HashSet<(int Xs, int Ys, string name)> { CurrentPiles }; // найденные новые элементы
-            dataPiles.Add(CurrentPiles);
+            var HashSeachPile = new HashSet<(int Xs, int Ys, string name)> { SectorParent }; // найденные новые элементы
+
+            //dataPiles.Add(CurrentPiles);
 
             //Center = ((double)CurrentPiles.Xs, (double)CurrentPiles.Ys);
 
-            
+            Piles.Add(CurrentPile);
             if (!prinudOne)
             { //находим все типы
+                dataPiles.Add(SectorParent);
+                Piles.UnionWith(DictSector[SectorParent]);
                 while (HashSeachPile.Count > 0)
                 {
                     //и начинаем циркуляцию
@@ -639,13 +1030,15 @@ namespace Reinforcement
 
                                 // Если уже в группе - пропускаем
                                 if (dataPiles.Contains(sector2))
-                                    continue;
+                                { 
+                                    continue; 
+                                }
 
                                 if (DictSector.TryGetValue(sector2, out var piles))
                                 {
                                     HashSeachPile2.Add(sector2);
                                     dataPiles.Add(sector2);
-
+                                    Piles.UnionWith(piles);
                                     //int addIntPiles = piles.Count;
                                     //// Пересчитываем центр масс группы с учетом нового сектора
                                     ////Center = (
@@ -665,28 +1058,41 @@ namespace Reinforcement
                 }
             }
             //а теперь наполняем
-            double x = 0;
-            double y = 0;
-            foreach (var sector in dataPiles)
+            int x = 0;
+            int y = 0;
+            int iter = 0;
+            foreach (var pile in Piles)
             {
-                if (DictSector.TryGetValue(sector, out var piles))
-                {
-                    foreach (var pile in piles)
-                    {
-                        Piles.Add(pile);
-                        pile.PilesGroup = this;
-                        x += pile.X;
-                        y += pile.Y;
+                
+                pile.PilesGroup = this;
+                
+                x += pile.Xs2;
+                y += pile.Ys2;
 
-                    }
+                if (iter == 0)
+                {
+                     Xleft = pile.Xs2;
+                     Ydown = pile.Ys2;
+                     Xright = pile.Xs2;
+                     Ytop = pile.Ys2;
                 }
+                else
+                {
+                    Xleft = Math.Min(Xleft, pile.Xs2);
+                    Ydown  = Math.Min(Ydown, pile.Ys2);
+                    Xright = Math.Max(pile.Xs2, Xright);
+                    Ytop = Math.Max(pile.Ys2, Ytop);
+                }
+
+                iter++;
             }
+
             intPiles = Piles.Count;
             if (intPiles > 0)
             {
                 //надо по сектору иначе нумератор свай плохой!!!!!
                 //но сектор берем свайный для точности
-                Center = ((int)Math.Round((x / (double)intPiles)/ sectorStepPile), (int)Math.Round((y / (double)intPiles) / sectorStepPile));
+                Center = ((int)Math.Round(((double)x / (double)intPiles)), (int)Math.Round(((double)y / (double)intPiles) ));
 
                 // Используйте реальные координаты, а не секторы:
                // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
