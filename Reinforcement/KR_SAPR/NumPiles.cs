@@ -188,15 +188,25 @@ namespace Reinforcement
 
             if(sectorStepPile<1)
             {
-                sectorStepPile = 1;
+                sectorStepPile = 10;
             }
             if (sectorStep<1)
             {
-                sectorStep = 1;
+                sectorStep = 10;
             }
+            if (sectorStepZ < 1)
+            {
+                sectorStepZ = 50;
+            }
+            if (predelGroup < 0)
+            {
+                predelGroup = 1;
+            }
+
+
             //QuickUGOAudit(doc);
 
-            if(ustanUGO)
+            if (ustanUGO)
             {
                 // Инициализируем кэш типов УГО один раз для этого документа
                 InitializeUgoCache(doc);
@@ -293,19 +303,22 @@ namespace Reinforcement
             var ListPilesGroup = new List<PilesGroup>();
 
             //создаем группы свай
-            
+
             // Используйте:
-            var sectorKeys = DictSector.Keys.ToList();
-            foreach (var pileSector in sectorKeys)
+            if (predelGroup != 1)
             {
-                var elementPile = DictSector[pileSector].FirstOrDefault();
-                if (elementPile != null && elementPile.PilesGroup == null)
+                var sectorKeys = DictSector.Keys.ToList();
+                foreach (var pileSector in sectorKeys)
                 {
-                    if (DictSector.TryGetValue(pileSector, out var piles) && piles.Count>0)
+                    var elementPile = DictSector[pileSector].FirstOrDefault();
+                    if (elementPile != null && elementPile.PilesGroup == null)
                     {
-                        ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), ListNamesPiles.IndexOf(pileSector.name), DictSector));
+                        if (DictSector.TryGetValue(pileSector, out var piles) && piles.Count > 0)
+                        {
+                            ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), ListNamesPiles.IndexOf(pileSector.name), DictSector));
+                        }
+
                     }
-                    
                 }
             }
 
@@ -313,28 +326,18 @@ namespace Reinforcement
             // Обрубаем группы если слишком много элементов
             if (predelGroup > 0)
             {
-                foreach (var pileSector in DictSector.Keys.ToList())
+                foreach (var pile in PropertiesPiles)
                 {
-                    var elementPile = DictSector[pileSector].FirstOrDefault();
-                    
-                    if (elementPile != null)
+                    if(pile.PilesGroup == null || pile.PilesGroup.intPiles > predelGroup)
                     {
-                        if (elementPile.PilesGroup==null || elementPile.PilesGroup.intPiles > predelGroup)
+                        if (pile.PilesGroup != null)
                         {
-                            if (elementPile.PilesGroup != null)
-                            { 
-                                ListPilesGroup.Remove(elementPile.PilesGroup); 
-                            }
-                            if (DictSector.TryGetValue(pileSector, out var piles))
-                            {
-                                foreach (var pile in piles)
-                                {
-                                    ListPilesGroup.Add(new PilesGroup(pile, ListNamesPiles.IndexOf(pileSector.name), DictSector,  true));
-                                }
-                            }
+                            ListPilesGroup.Remove(pile.PilesGroup);
                         }
+                        ListPilesGroup.Add(new PilesGroup(pile, ListNamesPiles.IndexOf(pile.Name), DictSector, true));
                     }
                 }
+                
             }
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
