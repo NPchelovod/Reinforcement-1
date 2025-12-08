@@ -212,9 +212,15 @@ namespace Reinforcement
                 InitializeUgoCache(doc);
             }
 
+            if(! ustanUGO&& !ustanNumPile)
+            {
+                return Result.Succeeded;
+            }
 
             // Собираем информацию о сваях
             var ygoIndexDict = new Dictionary<(string name, int Zs), (int nomer, int numPile)>();
+
+            var namePileAndNum = new Dictionary<string, int >();
             foreach (Element pile in Seacher)
             {
                 // получаем координаты
@@ -268,6 +274,14 @@ namespace Reinforcement
                     ygoIndexDict[(name, Zs)] = (-1, 1);
                 }
 
+                if(namePileAndNum.TryGetValue(name, out var pastInt))
+                {
+                    namePileAndNum[name] = pastInt + 1;
+                }
+                else
+                {
+                    namePileAndNum[name] = 1;
+                }
 
                     //HashDataTypeYGO.Add((name, -1, Zs));
 
@@ -305,7 +319,7 @@ namespace Reinforcement
             //создаем группы свай
 
             // Используйте:
-            if (predelGroup != 1)
+            if (predelGroup != 1 && ustanNumPile)
             {
                 var sectorKeys = DictSector.Keys.ToList();
                 foreach (var pileSector in sectorKeys)
@@ -315,7 +329,7 @@ namespace Reinforcement
                     {
                         if (DictSector.TryGetValue(pileSector, out var piles) && piles.Count > 0)
                         {
-                            ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), ListNamesPiles.IndexOf(pileSector.name), DictSector));
+                            ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), namePileAndNum[pileSector.name], ListNamesPiles.IndexOf(pileSector.name), DictSector));
                         }
 
                     }
@@ -324,7 +338,7 @@ namespace Reinforcement
 
             //обрубаем группы свай если в их элементов оч много
             // Обрубаем группы если слишком много элементов
-            if (predelGroup > 0)
+            if (predelGroup > 0 ||!ustanNumPile)
             {
                 foreach (var pile in PropertiesPiles)
                 {
@@ -334,10 +348,9 @@ namespace Reinforcement
                         {
                             ListPilesGroup.Remove(pile.PilesGroup);
                         }
-                        ListPilesGroup.Add(new PilesGroup(pile, ListNamesPiles.IndexOf(pile.Name), DictSector, true));
+                        ListPilesGroup.Add(new PilesGroup(pile, namePileAndNum[pile.Name], ListNamesPiles.IndexOf(pile.Name), DictSector, true));
                     }
                 }
-                
             }
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
@@ -351,9 +364,11 @@ namespace Reinforcement
                     //.ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
                     //.ToList();
                     ListPilesGroup = ListPilesGroup
-                   .OrderBy(group => group.numName)          // по возрастанию numName
+                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName group.numName
+                   .OrderBy(group => group.numName)
                    .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
                    .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
+                   
                    .ToList();
                 }
                 else
@@ -365,14 +380,15 @@ namespace Reinforcement
                     //.ThenByDescending(group => group.Center.y)         // по возрастанию X (слева направо)
                     //.ToList();
                     ListPilesGroup = ListPilesGroup
-                   .OrderBy(group => group.numName)          // по возрастанию numName
+                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName
+                   .OrderBy(group => group.numName)
                    .ThenBy(group => group.Xleft) // по убыванию Y (сверху вниз)
                    .ThenByDescending(group => group.Ytop)         // по возрастанию X (слева направо)
                    .ToList();
                 }
             }
 
-             // Нумерация свай
+            // Нумерация свай
             int numPile = 0;
             int kust = 0;
             foreach (var classPile in ListPilesGroup)
@@ -402,7 +418,7 @@ namespace Reinforcement
                 foreach (var pile in allPilesGroup)
                 {
                     numPile++;
-                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust;
+                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", Сектор Xs2="+ pile.Xs2+", Ys2="+ pile.Ys2;
                     pile.Commit = primeh;
                     pile.NumPile = numPile;
                 }
@@ -1066,6 +1082,10 @@ namespace Reinforcement
         //public List<(int Xs, int Ys, string name)> PilesSort = new List<(int Xs, int Ys, string name)> (); // отсортированный по координатам
 
         public int  numName =0;
+
+
+
+
         public string namePile = "";
 
         public int intPiles = 1;// но это кол-во секторов а не кол-во свай!!!!!
@@ -1081,15 +1101,15 @@ namespace Reinforcement
         private static int _numCreate = 0;
         public int numCreate = 0;
 
-
+        public int kolVoPileName = 1;
 
         public PilesGroup(
-            PileData CurrentPile,
+            PileData CurrentPile, int kolVoPileName,
             int numName,
              Dictionary<(int Xs, int Ys, string name), HashSet<PileData>> DictSector, bool prinudOne = false)
         {
 
-
+            this.kolVoPileName = kolVoPileName;
             _numCreate++;
             numCreate = _numCreate;
 
