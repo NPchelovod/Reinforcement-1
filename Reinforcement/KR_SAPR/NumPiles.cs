@@ -105,7 +105,8 @@ namespace Reinforcement
         private static int predelGroup = 20; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
-        private static bool returnCoord = false;
+
+        private static string sortCode = "2"; // тип 2
 
 
         public Result Execute(
@@ -136,7 +137,7 @@ namespace Reinforcement
                 predelGroup,
                 ustanNumPile,
                 ustanUGO,
-                returnCoord // Добавлен новый параметр
+                sortCode // Добавлен новый параметр
                 );
 
                 // Устанавливаем владельца окна
@@ -158,7 +159,7 @@ namespace Reinforcement
                 ustanNumPile = settingsWindow.UstanNumPile;
                 ustanUGO = settingsWindow.UstanUGO;
                 sectorStepPile = settingsWindow.SectorStepPile;
-                returnCoord = settingsWindow.ReturnCoord;
+                sortCode = settingsWindow.SortCode;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
             }
@@ -354,8 +355,117 @@ namespace Reinforcement
             }
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
-            if (ustanNumPile)
+            if (ustanNumPile && !string.IsNullOrEmpty(sortCode))
             {
+                IOrderedEnumerable<PilesGroup> sortedList = null;
+                bool isFirst = true;
+                foreach (char codeChar in sortCode)
+                {
+
+                    switch (codeChar)
+                    {
+                        case '1': // сортировка сначала по Y потом по X
+                            
+                            if (sortCode.Contains("6"))
+                            {
+                                if (isFirst)
+                                {
+                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Center.y);
+                                    isFirst= false;
+                                }
+                                else
+                                {
+                                    sortedList = sortedList.ThenByDescending(g => g.Center.y);
+                                }
+                                sortedList = sortedList.ThenBy(g => g.Center.x);
+                            }
+                            else
+                            {
+                                if (isFirst)
+                                {
+                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
+                                    isFirst = false;
+                                }
+                                else
+                                {
+                                    sortedList = sortedList.ThenByDescending(g => g.Ytop);
+                                }
+                                sortedList = sortedList.ThenBy(g => g.Xleft);
+                            }
+
+                            break;
+
+                        case '2': // сортировка сначала по X потом по Y
+
+                            if (sortCode.Contains("6"))
+                            {
+                                if (isFirst)
+                                {
+                                    sortedList = ListPilesGroup.OrderBy(g => g.Center.x);
+                                    isFirst = false;
+                                }
+                                else
+                                {
+                                    sortedList = sortedList.ThenBy(g => g.Center.x);
+                                }
+                                sortedList = sortedList.ThenByDescending(g => g.Center.y);
+                            }
+                            else
+                            {
+                                if (isFirst)
+                                {
+                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
+                                    isFirst = false;
+                                }
+                                else
+                                {
+                                    sortedList = sortedList.ThenByDescending(g => g.Ytop);
+                                }
+                                sortedList = sortedList.ThenBy(g => g.Xleft);
+                            }
+
+                            break;
+
+                        case '3': // Ytop (по убыванию)
+                            if (isFirst)
+                            {
+                                sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                sortedList = sortedList.ThenByDescending(g => g.Ytop);
+                            }
+                            break;
+
+                        case '4': // Xleft
+                            if (isFirst)
+                            {
+                                sortedList = ListPilesGroup.OrderBy(g => g.Xleft);
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                sortedList = sortedList.ThenBy(g => g.Xleft);
+                            }
+                            break;
+                    }
+                }
+
+                return sortedList?.ToList() ?? ListPilesGroup.ToList();
+
+
+            }
+
+
+                sortCode
+                    ListPilesGroup = ListPilesGroup
+                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName group.numName
+                   .ThenBy(group => group.numName)
+                   .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
+                   .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
+
+                   .ToList();
                 if (!returnCoord)
                 {
                     //ListPilesGroup = ListPilesGroup
@@ -365,11 +475,12 @@ namespace Reinforcement
                     //.ToList();
                     ListPilesGroup = ListPilesGroup
                    .OrderBy(group => group.kolVoPileName)          // по возрастанию numName group.numName
-                   .OrderBy(group => group.numName)
+                   .ThenBy(group => group.numName)
                    .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
                    .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
                    
                    .ToList();
+                    
                 }
                 else
                 {
@@ -381,7 +492,7 @@ namespace Reinforcement
                     //.ToList();
                     ListPilesGroup = ListPilesGroup
                    .OrderBy(group => group.kolVoPileName)          // по возрастанию numName
-                   .OrderBy(group => group.numName)
+                   .ThenBy(group => group.numName)
                    .ThenBy(group => group.Xleft) // по убыванию Y (сверху вниз)
                    .ThenByDescending(group => group.Ytop)         // по возрастанию X (слева направо)
                    .ToList();

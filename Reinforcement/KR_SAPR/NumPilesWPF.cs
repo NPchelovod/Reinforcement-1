@@ -12,13 +12,13 @@ namespace Reinforcement
         public int PredelGroup { get; set; }
         public bool UstanNumPile { get; set; }
         public bool UstanUGO { get; set; }
-        public bool ReturnCoord { get; set; }
+        public string SortCode { get; set; }
         public int FoundPilesCount { get; set; }
         public bool ContinueExecution { get; set; }
 
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
-            bool currentUstanNumPile, bool currentUstanUGO, bool currentReturnCoord)
+            bool currentUstanNumPile, bool currentUstanUGO, string currentSortCode = "")
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
@@ -28,7 +28,7 @@ namespace Reinforcement
             PredelGroup = currentPredelGroup;
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
-            ReturnCoord = currentReturnCoord;
+            SortCode = currentSortCode;
             ContinueExecution = false;
 
             // Заполняем поля текущими значениями
@@ -37,16 +37,16 @@ namespace Reinforcement
             sectorStepPileTextBox.Text = currentSectorStepPile.ToString();
             sectorStepZTextBox.Text = currentSectorStepZ.ToString();
             predelGroupTextBox.Text = currentPredelGroup.ToString();
+            sortCodeTextBox.Text = currentSortCode;
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
-            returnCoordCheckBox.IsChecked = currentReturnCoord;
         }
 
         private void InitializeComponent()
         {
             this.Width = 450;
-            this.Height = 620; // Увеличили высоту из-за новых полей
+            this.Height = 640; // Уменьшили высоту так как убрали один элемент
             this.Title = "Настройки нумерации свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;
@@ -131,31 +131,6 @@ namespace Reinforcement
             ustanUGOPanel.Children.Add(ustanUGOCheckBox);
             mainStackPanel.Children.Add(ustanUGOPanel);
 
-            // Галочка для обратной сортировки
-            var returnCoordPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-            var returnCoordLabel = new TextBlock
-            {
-                Text = "Обратная сортировка:",
-                FontSize = 12,
-                Width = 180,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            returnCoordCheckBox = new CheckBox
-            {
-                IsChecked = ReturnCoord,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Сначала по X, потом по Y (обычно: сначала по Y, потом по X)"
-            };
-            returnCoordPanel.Children.Add(returnCoordLabel);
-            returnCoordPanel.Children.Add(returnCoordCheckBox);
-            mainStackPanel.Children.Add(returnCoordPanel);
-
             // Разделитель
             var separator = new Separator
             {
@@ -201,6 +176,15 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(predelGroupPanel);
 
+            // Поле для кода сортировки
+            var sortCodePanel = CreateTextInputPanel(
+                "Код сортировки:",
+                SortCode,
+                out sortCodeTextBox,
+                "Введите код для пользовательской сортировки (например, 12345)"
+            );
+            mainStackPanel.Children.Add(sortCodePanel);
+
             // Подсказки
             var hintsText = new TextBlock
             {
@@ -209,9 +193,9 @@ namespace Reinforcement
                        "• Шаг рядов свай: точность расположения свай в 1 ряд\n" +
                        "• Шаг по высоте Z: для группировки свай по УГО\n" +
                        "• Лимит группы: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)\n" +
+                       "• Код сортировки: пользовательский код для специальной сортировки свай\n" +
                        "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
-                       "• Установить УГО: установит графическое обозначение сваям\n" +
-                       "• Обратная сортировка: меняет порядок осей сортировки свай",
+                       "• Установить УГО: установит графическое обозначение сваям",
                 FontSize = 10,
                 FontStyle = FontStyles.Italic,
                 TextWrapping = TextWrapping.Wrap,
@@ -233,6 +217,38 @@ namespace Reinforcement
 
         // Вспомогательный метод для создания панели с числовым вводом
         private StackPanel CreateNumberInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            var labelControl = new TextBlock
+            {
+                Text = label,
+                FontSize = 12,
+                Width = 180,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            textBox = new TextBox
+            {
+                Text = defaultValue,
+                FontSize = 12,
+                Width = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = tooltip
+            };
+
+            panel.Children.Add(labelControl);
+            panel.Children.Add(textBox);
+
+            return panel;
+        }
+
+        // Новый метод для создания панели с текстовым вводом (для кода сортировки)
+        private StackPanel CreateTextInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip)
         {
             var panel = new StackPanel
             {
@@ -305,10 +321,10 @@ namespace Reinforcement
         private TextBox sectorStepPileTextBox;
         private TextBox sectorStepZTextBox;
         private TextBox predelGroupTextBox;
+        private TextBox sortCodeTextBox;
 
         private CheckBox ustanNumPileCheckBox;
         private CheckBox ustanUGOCheckBox;
-        private CheckBox returnCoordCheckBox;
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
@@ -329,9 +345,9 @@ namespace Reinforcement
             SectorStepPile = sectorStepPile;
             SectorStepZ = sectorStepZ;
             PredelGroup = predelGroup;
+            SortCode = sortCodeTextBox.Text;
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
-            ReturnCoord = returnCoordCheckBox.IsChecked ?? false;
 
             // Проверка: хотя бы одна опция должна быть включена
             if (!UstanNumPile && !UstanUGO)
