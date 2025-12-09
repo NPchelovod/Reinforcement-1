@@ -36,6 +36,8 @@ namespace Reinforcement
 
         public string Commit { get; set; } = "";
 
+        public int intersect3D { get; set; } = 0; // нарушает ли 3д свая правило
+
 
         public PilesGroup PilesGroup { get; set; }
 
@@ -68,7 +70,7 @@ namespace Reinforcement
             Zs2 = zs2;
 
 
-              X = x;
+            X = x;
             Y = y;
             Z = z;
             Name = name;
@@ -76,6 +78,9 @@ namespace Reinforcement
             PilesGroup = pilesGroup;
             YgoIndexDict = ygoIndexDict;
             //YgoIndexDict[(Name, Zs)] = -1;
+
+
+
         }
 
 
@@ -84,7 +89,7 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class NumPiles : IExternalCommand
     {
-
+        private static int SizePile3D=900;// меньше которого нельзя
         //имена типоразмеров семейства
 
         private static HashSet<string> Piles = new HashSet<string>()
@@ -106,8 +111,8 @@ namespace Reinforcement
         private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
 
-        private static string sortCode = "2"; // тип 2
-
+        private static string sortCode = "134"; // тип 2
+        private static string sortCodeUGO = "123"; // тип 2
 
         public Result Execute(
             ExternalCommandData commandData,
@@ -137,7 +142,8 @@ namespace Reinforcement
                 predelGroup,
                 ustanNumPile,
                 ustanUGO,
-                sortCode // Добавлен новый параметр
+                sortCode, // Добавлен новый параметр
+                sortCodeUGO
                 );
 
                 // Устанавливаем владельца окна
@@ -160,6 +166,7 @@ namespace Reinforcement
                 ustanUGO = settingsWindow.UstanUGO;
                 sectorStepPile = settingsWindow.SectorStepPile;
                 sortCode = settingsWindow.SortCode;
+                sortCodeUGO = settingsWindow.SortCodeUGO;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
             }
@@ -297,12 +304,12 @@ namespace Reinforcement
                 listForYgoSort.Add((ygoData.Key.name, ListNamesPiles.IndexOf(ygoData.Key.name), ygoData.Key.Zs, ygoData.Value.numPile  ));
             }
             //по номеру имени сваи по кол-ву свай одного имени и затем по высотной отметке
-            var listDataTypeYGO = listForYgoSort.OrderBy(p => p.numName).ThenByDescending(p => p.numPile).ThenBy(p => p.Zs).ToList();
+            //var listDataTypeYGO = listForYgoSort.OrderBy(p => p.numName).ThenByDescending(p => p.numPile).ThenBy(p => p.Zs).ToList();
 
-
+            var listDataTypeYGO = sortedUGO(listForYgoSort, sortCodeUGO, ustanUGO);
             //получение УГО потенциального
-           // var listDataTypeYGO = HashDataTypeYGO.ToList();
-           //теперь заполняем словарь свойства
+            // var listDataTypeYGO = HashDataTypeYGO.ToList();
+            //теперь заполняем словарь свойства
             for (int i = 0; i < listDataTypeYGO.Count; i++)
             {
                 var tekYGO = listDataTypeYGO[i];
@@ -355,150 +362,15 @@ namespace Reinforcement
             }
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
-            if (ustanNumPile && !string.IsNullOrEmpty(sortCode))
+
+            ListPilesGroup=sortedCodNumPile(ustanNumPile, sortCode , ListPilesGroup);
+            bool yxSort = true;
+            if(sortCode!=null && sortCode.Contains("2") && !sortCode.Contains("1"))
             {
-                IOrderedEnumerable<PilesGroup> sortedList = null;
-                bool isFirst = true;
-                foreach (char codeChar in sortCode)
-                {
-
-                    switch (codeChar)
-                    {
-                        case '1': // сортировка сначала по Y потом по X
-                            
-                            if (sortCode.Contains("6"))
-                            {
-                                if (isFirst)
-                                {
-                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Center.y);
-                                    isFirst= false;
-                                }
-                                else
-                                {
-                                    sortedList = sortedList.ThenByDescending(g => g.Center.y);
-                                }
-                                sortedList = sortedList.ThenBy(g => g.Center.x);
-                            }
-                            else
-                            {
-                                if (isFirst)
-                                {
-                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
-                                    isFirst = false;
-                                }
-                                else
-                                {
-                                    sortedList = sortedList.ThenByDescending(g => g.Ytop);
-                                }
-                                sortedList = sortedList.ThenBy(g => g.Xleft);
-                            }
-
-                            break;
-
-                        case '2': // сортировка сначала по X потом по Y
-
-                            if (sortCode.Contains("6"))
-                            {
-                                if (isFirst)
-                                {
-                                    sortedList = ListPilesGroup.OrderBy(g => g.Center.x);
-                                    isFirst = false;
-                                }
-                                else
-                                {
-                                    sortedList = sortedList.ThenBy(g => g.Center.x);
-                                }
-                                sortedList = sortedList.ThenByDescending(g => g.Center.y);
-                            }
-                            else
-                            {
-                                if (isFirst)
-                                {
-                                    sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
-                                    isFirst = false;
-                                }
-                                else
-                                {
-                                    sortedList = sortedList.ThenByDescending(g => g.Ytop);
-                                }
-                                sortedList = sortedList.ThenBy(g => g.Xleft);
-                            }
-
-                            break;
-
-                        case '3': // Ytop (по убыванию)
-                            if (isFirst)
-                            {
-                                sortedList = ListPilesGroup.OrderByDescending(g => g.Ytop);
-                                isFirst = false;
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenByDescending(g => g.Ytop);
-                            }
-                            break;
-
-                        case '4': // Xleft
-                            if (isFirst)
-                            {
-                                sortedList = ListPilesGroup.OrderBy(g => g.Xleft);
-                                isFirst = false;
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenBy(g => g.Xleft);
-                            }
-                            break;
-                    }
-                }
-
-                return sortedList?.ToList() ?? ListPilesGroup.ToList();
-
-
+                yxSort = false;
             }
-
-
-                sortCode
-                    ListPilesGroup = ListPilesGroup
-                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName group.numName
-                   .ThenBy(group => group.numName)
-                   .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
-                   .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
-
-                   .ToList();
-                if (!returnCoord)
-                {
-                    //ListPilesGroup = ListPilesGroup
-                    //.OrderBy(group => group.numName)          // по возрастанию numName
-                    //.ThenByDescending(group => group.Center.y) // по убыванию Y (сверху вниз)
-                    //.ThenBy(group => group.Center.x)         // по возрастанию X (слева направо)
-                    //.ToList();
-                    ListPilesGroup = ListPilesGroup
-                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName group.numName
-                   .ThenBy(group => group.numName)
-                   .ThenByDescending(group => group.Ytop) // по убыванию Y (сверху вниз)
-                   .ThenBy(group => group.Xleft)         // по возрастанию X (слева направо)
-                   
-                   .ToList();
-                    
-                }
-                else
-                {
-                    // по x надо слева направо
-                    //ListPilesGroup = ListPilesGroup
-                    //.OrderBy(group => group.numName)          // по возрастанию numName
-                    //.ThenBy(group => group.Center.x) // по убыванию Y (сверху вниз)
-                    //.ThenByDescending(group => group.Center.y)         // по возрастанию X (слева направо)
-                    //.ToList();
-                    ListPilesGroup = ListPilesGroup
-                   .OrderBy(group => group.kolVoPileName)          // по возрастанию numName
-                   .ThenBy(group => group.numName)
-                   .ThenBy(group => group.Xleft) // по убыванию Y (сверху вниз)
-                   .ThenByDescending(group => group.Ytop)         // по возрастанию X (слева направо)
-                   .ToList();
-                }
-            }
-
+            //контроль свай
+            control3D(PropertiesPiles, SizePile3D);
             // Нумерация свай
             int numPile = 0;
             int kust = 0;
@@ -510,7 +382,7 @@ namespace Reinforcement
                 if (ustanNumPile && allPilesGroup.Count>0)//накладно ведь каждый раз
                 {
                     //сваи сортируем по секторам позволяющим в один ряд их укладывать
-                    if (!returnCoord)
+                    if (yxSort)
                     {
                         allPilesGroup = allPilesGroup
                         .OrderByDescending(pile => pile.Ys2) // по убыванию Y (сверху вниз)
@@ -529,7 +401,19 @@ namespace Reinforcement
                 foreach (var pile in allPilesGroup)
                 {
                     numPile++;
-                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", Сектор Xs2="+ pile.Xs2+", Ys2="+ pile.Ys2;
+                    int x =(int) Math.Round(pile.X);
+                    int y = (int)Math.Round(pile.Y);
+
+                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", Сектор Xs2="+ x+", Ys2="+ y;
+                    if((x+y)%50>0)
+                    {
+                        primeh += " неКратКоорд.";
+                    }
+                    if(pile.intersect3D>0)
+                    {
+                        primeh += " Пересеч. " + pile.intersect3D +"мм";
+                    }
+
                     pile.Commit = primeh;
                     pile.NumPile = numPile;
                 }
@@ -657,6 +541,190 @@ namespace Reinforcement
                 }
             }
         }
+
+
+        private void control3D(HashSet<PileData> PropertiesPiles, double size3D=900)
+        {
+            var PropertiesPilesList = PropertiesPiles.ToList();
+            for (int i = 0; i < PropertiesPilesList.Count; i++)
+            {
+                var pile1 = PropertiesPilesList[i];
+                for (int j = i+1; j< PropertiesPilesList.Count; j++)
+                {
+                    var pile2 = PropertiesPilesList[j];
+                    var raznX = Math.Abs(pile2.X - pile1.X);
+                    if(raznX > size3D) {continue;}
+                    var raznY = Math.Abs(pile2.Y - pile1.Y);
+                    if (raznY > size3D) { continue; }
+
+                    var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - size3D);
+                    if (dist>0) { continue; }
+                    pile1.intersect3D = Math.Max(pile1.intersect3D, dist);
+                    pile2.intersect3D = Math.Max(pile2.intersect3D, dist);
+                }
+            }
+        }
+
+
+        private List<(string name, int numName, int Zs, int numPile)> sortedUGO(List<(string name, int numName, int Zs, int numPile)> listForYgoSort, string sortCodeUGO, bool ustanUGO)
+        {
+            if (!ustanUGO || string.IsNullOrEmpty(sortCodeUGO))
+            {
+                return listForYgoSort;
+            }
+            IOrderedEnumerable<(string name, int numName, int Zs, int numPile)> sortedList = null;
+            bool isFirst = true;
+
+            foreach (char codeChar in sortCodeUGO)
+            {
+
+                switch (codeChar)
+                {
+                    case '1':
+                        if (isFirst)
+                        {
+                            sortedList = listForYgoSort.OrderBy(g => g.numName);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenBy(g => g.numName);
+                        }
+                        break;
+
+                    case '2':
+                        if (isFirst)
+                        {
+                            sortedList = listForYgoSort.OrderByDescending(g => g.numPile);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenByDescending(g => g.numPile);
+                        }
+                        break;
+                    case '3':
+                        if (isFirst)
+                        {
+                            sortedList = listForYgoSort.OrderByDescending(g => g.Zs);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenByDescending(g => g.Zs );
+                        }
+                        break;
+                    case '4':
+                        if (isFirst)
+                        {
+                            sortedList = listForYgoSort.OrderBy(g => g.Zs);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenBy(g => g.Zs);
+                        }
+                        break;
+
+
+                }
+            }
+            return sortedList?.ToList() ?? listForYgoSort.ToList();
+        }
+       
+        private List<PilesGroup> sortedCodNumPile( bool ustanNumPile, string sortCode, List<PilesGroup> ListPilesGroup)
+        {
+            if (!ustanNumPile || string.IsNullOrEmpty(sortCode))
+            {
+                return ListPilesGroup;
+            }
+
+
+            IOrderedEnumerable<PilesGroup> sortedList = null;
+            bool isFirst = true;
+
+            foreach (char codeChar in sortCode)
+            {
+
+                switch (codeChar)
+                {
+                    case '1': // сортировка сначала по Y потом по X
+                        {
+                            bool a = true;
+                            if (sortCode.Contains("6"))
+                            { a = false; }
+
+                            if (isFirst)
+                            {
+                                sortedList = ListPilesGroup.OrderByDescending(g => a ? g.Ytop : g.Center.y);
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                sortedList = sortedList.ThenByDescending(g => a ? g.Ytop : g.Center.y);
+                            }
+                            sortedList = sortedList.ThenBy(g => a ? g.Xleft : g.Center.x);
+                        }
+                        break;
+
+                    case '2': // сортировка сначала по X потом по Y
+                        {
+                            bool a = true;
+                            if (sortCode.Contains("6"))
+                            { a = false; }
+
+                            if (isFirst)
+                            {
+                                sortedList = ListPilesGroup.OrderBy(g => a ? g.Xleft : g.Center.x);
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                sortedList = sortedList.ThenBy(g => a ? g.Xleft : g.Center.x);
+                            }
+                            sortedList = sortedList.ThenByDescending(g => a ? g.Ytop : g.Center.y);
+                        }
+                        break;
+
+                    case '3': // Ytop (по убыванию)
+                        if (isFirst)
+                        {
+                            sortedList = ListPilesGroup.OrderByDescending(g => g.kolVoPileName);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
+                        }
+                        break;
+
+                    case '4': // Xleft
+                        if (isFirst)
+                        {
+                            sortedList = ListPilesGroup.OrderBy(g => g.numName);
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sortedList = sortedList.ThenBy(g => g.numName);
+                        }
+                        break;
+                }
+            }
+
+            return sortedList?.ToList() ?? ListPilesGroup.ToList();
+
+
+            }
+
+
+        
+
+
+
+
+
+
 
 
             // Метод для создания отчета о нумерации

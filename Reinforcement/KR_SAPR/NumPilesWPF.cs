@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -13,12 +14,15 @@ namespace Reinforcement
         public bool UstanNumPile { get; set; }
         public bool UstanUGO { get; set; }
         public string SortCode { get; set; }
+
+        public string SortCodeUGO { get; set; }
+
         public int FoundPilesCount { get; set; }
         public bool ContinueExecution { get; set; }
 
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
-            bool currentUstanNumPile, bool currentUstanUGO, string currentSortCode = "")
+            bool currentUstanNumPile, bool currentUstanUGO, string currentSortCode, string currentSortCodeUGO)
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
@@ -29,6 +33,8 @@ namespace Reinforcement
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
             SortCode = currentSortCode;
+            SortCodeUGO = currentSortCodeUGO;
+
             ContinueExecution = false;
 
             // Заполняем поля текущими значениями
@@ -38,6 +44,7 @@ namespace Reinforcement
             sectorStepZTextBox.Text = currentSectorStepZ.ToString();
             predelGroupTextBox.Text = currentPredelGroup.ToString();
             sortCodeTextBox.Text = currentSortCode;
+            sortCodeUGOTextBox.Text = currentSortCodeUGO;
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
@@ -45,8 +52,8 @@ namespace Reinforcement
 
         private void InitializeComponent()
         {
-            this.Width = 450;
-            this.Height = 640; // Уменьшили высоту так как убрали один элемент
+            this.Width = 520;
+            this.Height = 700; // Уменьшили высоту так как убрали один элемент
             this.Title = "Настройки нумерации свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;
@@ -178,24 +185,36 @@ namespace Reinforcement
 
             // Поле для кода сортировки
             var sortCodePanel = CreateTextInputPanel(
-                "Код сортировки:",
+                "Код сортировки свай:",
                 SortCode,
                 out sortCodeTextBox,
-                "Введите код для пользовательской сортировки (например, 12345)"
+                "Введите код для пользовательской сортировки (например, 134)"
             );
             mainStackPanel.Children.Add(sortCodePanel);
 
+            // Поле для кода сортировки уго
+            var sortCodeUGOPanel = CreateTextInputPanel(
+                "Код сортировки УГО:",
+                SortCodeUGO,
+                out sortCodeUGOTextBox,
+                "Введите код для пользовательской сортировки (например, 123)"
+            );
+            mainStackPanel.Children.Add(sortCodeUGOPanel);
             // Подсказки
             var hintsText = new TextBlock
             {
                 Text = "Подсказки:\n" +
+                        "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
+                       "• Установить УГО: установит графическое обозначение сваям\n" +
                        "• Шаг группировки X,Y: расстояние между соседними сваями для группировки в КУСТ и поиска соседей (чуть больше шага свай или 100 для игнора)\n" +
                        "• Шаг рядов свай: точность расположения свай в 1 ряд\n" +
                        "• Шаг по высоте Z: для группировки свай по УГО\n" +
                        "• Лимит группы: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)\n" +
-                       "• Код сортировки: пользовательский код для специальной сортировки свай\n" +
-                       "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
-                       "• Установить УГО: установит графическое обозначение сваям",
+                       "• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)\n" +
+                       "  1 - сортировка по Y затем по X, 2 - наоборот, 3 - по типу сваи, 4 - кол-ву свай в типе\n" +
+                       "  6 - вместо сортировки куста к левому верхнему углу использовать центр куста\n" +
+                       "• Код сортировки УГО: 1 - сортировка по типу, 2 - по кол-ву свай в типе, 3 - по убыванию Z, 4 - по возрастанию Z" 
+                       ,
                 FontSize = 10,
                 FontStyle = FontStyles.Italic,
                 TextWrapping = TextWrapping.Wrap,
@@ -322,6 +341,7 @@ namespace Reinforcement
         private TextBox sectorStepZTextBox;
         private TextBox predelGroupTextBox;
         private TextBox sortCodeTextBox;
+        private TextBox sortCodeUGOTextBox;
 
         private CheckBox ustanNumPileCheckBox;
         private CheckBox ustanUGOCheckBox;
@@ -340,12 +360,19 @@ namespace Reinforcement
 
             if (!ValidateInteger(predelGroupTextBox.Text, "Лимит группы", out int predelGroup, 0))
                 return;
+            // Проверка кода сортировки свай (только цифры 1-6 без повторений)
+            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6' }))
+                return;
 
+            // Проверка кода сортировки УГО (только цифры 1-4 без повторений)
+            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4' }))
+                return;
             SectorStep = sectorStep;
             SectorStepPile = sectorStepPile;
             SectorStepZ = sectorStepZ;
             PredelGroup = predelGroup;
             SortCode = sortCodeTextBox.Text;
+            SortCodeUGO = sortCodeUGOTextBox.Text; // <-- Важно сохранить оба значения!
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
 
@@ -408,6 +435,33 @@ namespace Reinforcement
             ContinueExecution = false;
             this.DialogResult = false;
             this.Close();
+        }
+        // Вспомогательный метод
+        private bool IsValidSortCode(string code, string codeType, char[] allowedDigits)
+        {
+            if (string.IsNullOrEmpty(code))
+                return true; // Пустой код допустим
+
+            // Проверяем, что все символы - цифры и находятся в allowedDigits
+            foreach (char c in code)
+            {
+                if (!allowedDigits.Contains(c))
+                {
+                    MessageBox.Show($"Код сортировки {codeType} содержит недопустимый символ '{c}'.\nДопустимы только цифры: {string.Join(", ", allowedDigits)}",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
+            }
+
+            // Проверяем на повторяющиеся цифры
+            if (code.Distinct().Count() != code.Length)
+            {
+                MessageBox.Show($"Код сортировки {codeType} содержит повторяющиеся цифры.\nКаждая цифра должна быть уникальной.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
+            return true;
         }
     }
 }
