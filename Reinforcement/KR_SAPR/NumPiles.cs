@@ -476,7 +476,7 @@ namespace Reinforcement
                     }
                     if(pile.intersect3D>0)
                     {
-                        primeh += " Пересеч. " + pile.intersect3D +"мм";
+                        primeh += " Пересеч. " + pile.intersect3D +" мм";
                     }
                     pile.Commit = primeh;
                     if (!doNotRenumberNumberedPiles || !pile.pastNum)
@@ -524,6 +524,7 @@ namespace Reinforcement
                         string primeh = kvp.Commit;
                         if (primeh != "")
                         {
+                            //установка примечание
                             SetPileMark(pile, primeh, namePrimech);
                         }
 
@@ -625,6 +626,7 @@ namespace Reinforcement
 
         private void control3D(HashSet<PileData> PropertiesPiles, double size3D=900)
         {
+            //взаименое пересечение свай
             var PropertiesPilesList = PropertiesPiles.ToList();
             for (int i = 0; i < PropertiesPilesList.Count; i++)
             {
@@ -639,8 +641,8 @@ namespace Reinforcement
 
                     var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - size3D);
                     if (dist>0) { continue; }
-                    pile1.intersect3D = Math.Max(pile1.intersect3D, dist);
-                    pile2.intersect3D = Math.Max(pile2.intersect3D, dist);
+                    pile1.intersect3D = Math.Max(pile1.intersect3D, Math.Abs(dist));
+                    pile2.intersect3D = Math.Max(pile2.intersect3D, Math.Abs(dist));
                 }
             }
         }
