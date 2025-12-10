@@ -13,16 +13,17 @@ namespace Reinforcement
         public int PredelGroup { get; set; }
         public bool UstanNumPile { get; set; }
         public bool UstanUGO { get; set; }
+        public bool DoNotRenumberNumberedPiles { get; set; }
+        public bool DoNotChangeUGOIfExists { get; set; } // Новая булевая переменная
         public string SortCode { get; set; }
-
         public string SortCodeUGO { get; set; }
-
         public int FoundPilesCount { get; set; }
         public bool ContinueExecution { get; set; }
 
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
-            bool currentUstanNumPile, bool currentUstanUGO, string currentSortCode, string currentSortCodeUGO)
+            bool currentUstanNumPile, bool currentUstanUGO, bool currentDoNotRenumberNumberedPiles,
+            bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO)
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
@@ -32,6 +33,8 @@ namespace Reinforcement
             PredelGroup = currentPredelGroup;
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
+            DoNotRenumberNumberedPiles = currentDoNotRenumberNumberedPiles;
+            DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists; // Новая переменная
             SortCode = currentSortCode;
             SortCodeUGO = currentSortCodeUGO;
 
@@ -48,12 +51,14 @@ namespace Reinforcement
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
+            doNotRenumberCheckBox.IsChecked = currentDoNotRenumberNumberedPiles;
+            doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists; // Новая галочка
         }
 
         private void InitializeComponent()
         {
             this.Width = 520;
-            this.Height = 700; // Уменьшили высоту так как убрали один элемент
+            this.Height = 760; // Увеличили высоту для нового элемента
             this.Title = "Настройки нумерации свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;
@@ -138,6 +143,56 @@ namespace Reinforcement
             ustanUGOPanel.Children.Add(ustanUGOCheckBox);
             mainStackPanel.Children.Add(ustanUGOPanel);
 
+            // Галочка - Не перенумеровывать нумерованные сваи
+            var doNotRenumberPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            var doNotRenumberLabel = new TextBlock
+            {
+                Text = "Не перенумеровывать нумерованные сваи:",
+                FontSize = 12,
+                Width = 180,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            };
+            doNotRenumberCheckBox = new CheckBox
+            {
+                IsChecked = DoNotRenumberNumberedPiles,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = "Если свая уже имеет маркировку (номер), не изменять его"
+            };
+            doNotRenumberPanel.Children.Add(doNotRenumberLabel);
+            doNotRenumberPanel.Children.Add(doNotRenumberCheckBox);
+            mainStackPanel.Children.Add(doNotRenumberPanel);
+
+            // Новая галочка - Не менять УГО если он есть
+            var doNotChangeUGOIfExistsPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            var doNotChangeUGOIfExistsLabel = new TextBlock
+            {
+                Text = "Не менять УГО если он есть:",
+                FontSize = 12,
+                Width = 180,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            };
+            doNotChangeUGOIfExistsCheckBox = new CheckBox
+            {
+                IsChecked = DoNotChangeUGOIfExists,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = "Если у сваи уже установлено УГО, не изменять его"
+            };
+            doNotChangeUGOIfExistsPanel.Children.Add(doNotChangeUGOIfExistsLabel);
+            doNotChangeUGOIfExistsPanel.Children.Add(doNotChangeUGOIfExistsCheckBox);
+            mainStackPanel.Children.Add(doNotChangeUGOIfExistsPanel);
+
             // Разделитель
             var separator = new Separator
             {
@@ -183,7 +238,7 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(predelGroupPanel);
 
-            // Поле для кода сортировки
+            // Поле для кода сортировки свай
             var sortCodePanel = CreateTextInputPanel(
                 "Код сортировки свай:",
                 SortCode,
@@ -200,12 +255,15 @@ namespace Reinforcement
                 "Введите код для пользовательской сортировки (например, 123)"
             );
             mainStackPanel.Children.Add(sortCodeUGOPanel);
-            // Подсказки
+
+            // Подсказки (обновленные с новой опцией)
             var hintsText = new TextBlock
             {
                 Text = "Подсказки:\n" +
-                        "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
+                       "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
                        "• Установить УГО: установит графическое обозначение сваям\n" +
+                       "• Не перенумеровывать нумерованные сваи: если свая уже имеет маркировку, не изменять ее\n" +
+                       "• Не менять УГО если он есть: если у сваи уже установлено УГО, не изменять его\n" +
                        "• Шаг группировки X,Y: расстояние между соседними сваями для группировки в КУСТ и поиска соседей (чуть больше шага свай или 100 для игнора)\n" +
                        "• Шаг рядов свай: точность расположения свай в 1 ряд\n" +
                        "• Шаг по высоте Z: для группировки свай по УГО\n" +
@@ -213,8 +271,7 @@ namespace Reinforcement
                        "• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)\n" +
                        "  1 - сортировка по Y затем по X, 2 - наоборот, 3 - по типу сваи, 4 - кол-ву свай в типе\n" +
                        "  6 - вместо сортировки куста к левому верхнему углу использовать центр куста\n" +
-                       "• Код сортировки УГО: 1 - сортировка по типу, 2 - по кол-ву свай в типе, 3 - по убыванию Z, 4 - по возрастанию Z" 
-                       ,
+                       "• Код сортировки УГО: 1 - сортировка по типу, 2 - по кол-ву свай в типе, 3 - по убыванию Z, 4 - по возрастанию Z",
                 FontSize = 10,
                 FontStyle = FontStyles.Italic,
                 TextWrapping = TextWrapping.Wrap,
@@ -345,6 +402,8 @@ namespace Reinforcement
 
         private CheckBox ustanNumPileCheckBox;
         private CheckBox ustanUGOCheckBox;
+        private CheckBox doNotRenumberCheckBox;
+        private CheckBox doNotChangeUGOIfExistsCheckBox; // Новая галочка
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
@@ -360,6 +419,7 @@ namespace Reinforcement
 
             if (!ValidateInteger(predelGroupTextBox.Text, "Лимит группы", out int predelGroup, 0))
                 return;
+
             // Проверка кода сортировки свай (только цифры 1-6 без повторений)
             if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6' }))
                 return;
@@ -367,14 +427,17 @@ namespace Reinforcement
             // Проверка кода сортировки УГО (только цифры 1-4 без повторений)
             if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4' }))
                 return;
+
             SectorStep = sectorStep;
             SectorStepPile = sectorStepPile;
             SectorStepZ = sectorStepZ;
             PredelGroup = predelGroup;
             SortCode = sortCodeTextBox.Text;
-            SortCodeUGO = sortCodeUGOTextBox.Text; // <-- Важно сохранить оба значения!
+            SortCodeUGO = sortCodeUGOTextBox.Text;
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
+            DoNotRenumberNumberedPiles = doNotRenumberCheckBox.IsChecked ?? false;
+            DoNotChangeUGOIfExists = doNotChangeUGOIfExistsCheckBox.IsChecked ?? false; // Сохраняем значение новой галочки
 
             // Проверка: хотя бы одна опция должна быть включена
             if (!UstanNumPile && !UstanUGO)
@@ -436,6 +499,7 @@ namespace Reinforcement
             this.DialogResult = false;
             this.Close();
         }
+
         // Вспомогательный метод
         private bool IsValidSortCode(string code, string codeType, char[] allowedDigits)
         {

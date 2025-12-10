@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media.Media3D;
+using static Autodesk.Revit.DB.SpecTypeId;
 
 namespace Reinforcement
 {
@@ -38,6 +40,10 @@ namespace Reinforcement
 
         public int intersect3D { get; set; } = 0; // нарушает ли 3д свая правило
 
+
+
+        public bool pastUGONum = false;
+        public bool pastNum = false;
 
         public PilesGroup PilesGroup { get; set; }
 
@@ -97,6 +103,8 @@ namespace Reinforcement
             //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
+
+        private string Marka = "Марка";
         private static List<string> nameMarks = new List<string> { "Марка" };
         private static List<string> namePrimech = new List<string> { "ADSK_Примечание" };
 
@@ -110,6 +118,10 @@ namespace Reinforcement
         private static int predelGroup = 20; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
+        private static bool doNotRenumberNumberedPiles = false;
+        private static bool doNotChangeUGOIfExist = false;
+
+
 
         private static string sortCode = "134"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
@@ -142,6 +154,8 @@ namespace Reinforcement
                 predelGroup,
                 ustanNumPile,
                 ustanUGO,
+                doNotRenumberNumberedPiles,
+                doNotChangeUGOIfExist,
                 sortCode, // Добавлен новый параметр
                 sortCodeUGO
                 );
@@ -164,6 +178,8 @@ namespace Reinforcement
                 predelGroup = settingsWindow.PredelGroup;
                 ustanNumPile = settingsWindow.UstanNumPile;
                 ustanUGO = settingsWindow.UstanUGO;
+                doNotRenumberNumberedPiles = settingsWindow.DoNotRenumberNumberedPiles;
+                doNotChangeUGOIfExist = settingsWindow.DoNotChangeUGOIfExists;
                 sectorStepPile = settingsWindow.SectorStepPile;
                 sortCode = settingsWindow.SortCode;
                 sortCodeUGO = settingsWindow.SortCodeUGO;
@@ -229,6 +245,15 @@ namespace Reinforcement
             var ygoIndexDict = new Dictionary<(string name, int Zs), (int nomer, int numPile)>();
 
             var namePileAndNum = new Dictionary<string, int >();
+
+
+            int numPile = 0;
+            int numUGO = 0;
+
+            var hashPastMark = new HashSet<int>();
+            var hashZapretUGO = new HashSet<int>();
+            var PastUGOIndexDict = new Dictionary<(string name, int Zs), (string nameUGO, int numUGO)> ();
+
             foreach (Element pile in Seacher)
             {
                 // получаем координаты
@@ -290,8 +315,53 @@ namespace Reinforcement
                 {
                     namePileAndNum[name] = 1;
                 }
+                
+                if(doNotRenumberNumberedPiles)
+                {
+                    var markParam = pile.LookupParameter(Marka);
+                    if (markParam != null && markParam.HasValue)
+                    {
+                        var oldMarkValue = markParam.AsString();
+                        if (Int32.TryParse(oldMarkValue, out int numValue))
+                        {
+                            hashPastMark.Add(numValue);
+                            numPile = Math.Max(numPile, numValue);
+                            PileClass.pastNum = true;
+                        }
+                        // можно дубли еще посмотреть
+                    }
+                }
+                if (doNotChangeUGOIfExist)
+                {
+                    Parameter UGOParam = pile.LookupParameter(nameYGO);
+                    if (UGOParam != null && UGOParam.HasValue)
+                    {
+                        //с уго сложно 
+                        string ugoValue = UGOParam.AsValueString();
+                        if (!string.IsNullOrEmpty(ugoValue))
+                        {
+                            Match match = Regex.Match(ugoValue, @"\d+");
+                            int number = -1;
+                            if (match.Success)
+                            {
+                                number = int.Parse(match.Value);
+                                numUGO = Math.Max(numUGO, number);
+                                hashZapretUGO.Add(number);
+                                ygoIndexDict[(name, Zs)] = (number, ygoIndexDict[(name, Zs)].numPile);
 
-                    //HashDataTypeYGO.Add((name, -1, Zs));
+                                PileClass.pastUGONum = true;
+
+                            }
+                            if (number > -1)
+                            {
+                                PastUGOIndexDict[(name, Zs)] = (ugoValue, number);
+                            }
+                        }
+                        
+                        
+
+                    }
+                }
 
             }
             
@@ -310,56 +380,38 @@ namespace Reinforcement
             //получение УГО потенциального
             // var listDataTypeYGO = HashDataTypeYGO.ToList();
             //теперь заполняем словарь свойства
+
+            
+          
+
+            numUGO = 1;
             for (int i = 0; i < listDataTypeYGO.Count; i++)
             {
+                while(hashZapretUGO.Contains(numUGO))
+                {
+                    numUGO++;
+                }
                 var tekYGO = listDataTypeYGO[i];
                 if(ygoIndexDict.TryGetValue((tekYGO.name, tekYGO.Zs), out var past))
                 {
-                    ygoIndexDict[(tekYGO.name, tekYGO.Zs)] = (i + 1, past.numPile);
+                    if (past.nomer < 1)
+                    {
+                        ygoIndexDict[(tekYGO.name, tekYGO.Zs)] = (numUGO, past.numPile);
+                        hashZapretUGO.Add(numUGO);
+                    }
                 }
-                
+ 
             }
 
 
 
-            var ListPilesGroup = new List<PilesGroup>();
+            
 
             //создаем группы свай
 
-            // Используйте:
-            if (predelGroup != 1 && ustanNumPile)
-            {
-                var sectorKeys = DictSector.Keys.ToList();
-                foreach (var pileSector in sectorKeys)
-                {
-                    var elementPile = DictSector[pileSector].FirstOrDefault();
-                    if (elementPile != null && elementPile.PilesGroup == null)
-                    {
-                        if (DictSector.TryGetValue(pileSector, out var piles) && piles.Count > 0)
-                        {
-                            ListPilesGroup.Add(new PilesGroup(piles.FirstOrDefault(), namePileAndNum[pileSector.name], ListNamesPiles.IndexOf(pileSector.name), DictSector));
-                        }
+            var ListPilesGroup = IntersectSectors(PropertiesPiles, sectorStep, namePileAndNum, ListNamesPiles, predelGroup).ToList();
 
-                    }
-                }
-            }
 
-            //обрубаем группы свай если в их элементов оч много
-            // Обрубаем группы если слишком много элементов
-            if (predelGroup > 0 ||!ustanNumPile)
-            {
-                foreach (var pile in PropertiesPiles)
-                {
-                    if(pile.PilesGroup == null || pile.PilesGroup.intPiles > predelGroup)
-                    {
-                        if (pile.PilesGroup != null)
-                        {
-                            ListPilesGroup.Remove(pile.PilesGroup);
-                        }
-                        ListPilesGroup.Add(new PilesGroup(pile, namePileAndNum[pile.Name], ListNamesPiles.IndexOf(pile.Name), DictSector, true));
-                    }
-                }
-            }
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
 
@@ -372,7 +424,15 @@ namespace Reinforcement
             //контроль свай
             control3D(PropertiesPiles, SizePile3D);
             // Нумерация свай
-            int numPile = 0;
+            
+
+            
+
+
+
+
+
+
             int kust = 0;
             foreach (var classPile in ListPilesGroup)
             {
@@ -398,9 +458,10 @@ namespace Reinforcement
                     }
                 }
 
+                numPile++;
                 foreach (var pile in allPilesGroup)
                 {
-                    numPile++;
+                    
                     int x =(int) Math.Round(pile.X);
                     int y = (int)Math.Round(pile.Y);
 
@@ -408,14 +469,26 @@ namespace Reinforcement
                     if((x+y)%50>0)
                     {
                         primeh += " неКратКоорд.";
+                        if ((x + y) % 5 > 0)
+                        {
+                            primeh += "!";
+                        }
                     }
                     if(pile.intersect3D>0)
                     {
                         primeh += " Пересеч. " + pile.intersect3D +"мм";
                     }
-
                     pile.Commit = primeh;
-                    pile.NumPile = numPile;
+                    if (!doNotRenumberNumberedPiles || !pile.pastNum)
+                    {
+                        pile.NumPile = numPile;
+                        numPile++;
+                    }
+                    else
+                    {
+                        //numPile--;
+                    }
+                    
                 }
 
             }
@@ -456,20 +529,27 @@ namespace Reinforcement
 
                         if (ustanNumPile)
                         {
-                            resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
-
+                            if (!doNotRenumberNumberedPiles || !kvp.pastNum)
+                            {
+                                resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
+                            }
 
                         }
                         if (ustanUGO && kvp.PilesYGO>0)
                         {
-                            string YGOValue = YGOPrefix + kvp.PilesYGO;
+                            if (!doNotChangeUGOIfExist || !kvp.pastUGONum)
+                            {
+                                string YGOValue = YGOPrefix + kvp.PilesYGO;
+                                resultUGO = SetUGOValue(doc, pile, kvp.PilesYGO);
+                            }
+                                //string YGOValue = YGOPrefix + kvp.PilesYGO;
                             //resultUGO = SetUGOValue(pile, kvp.PilesYGO);
                             //FamilyInstance pileInstance = pile as FamilyInstance;
                             //if (pileInstance != null)
                             //{
                             //    resultUGO = SetUGOValue(doc, pile as FamilyInstance, kvp.PilesYGO);
                             //}
-                            resultUGO = SetUGOValue(doc, pile, kvp.PilesYGO);
+                            //resultUGO = SetUGOValue(doc, pile, kvp.PilesYGO);
                             //SetUGOValue(Document doc, FamilyInstance pileInstance, int ygoIndex)
                             //resultUGO = SetYGO(pile, kvp.PilesYGO);
                             //resultUGO = SetPileMark(pile, YGOValue, nameYGO); 
@@ -564,6 +644,133 @@ namespace Reinforcement
                 }
             }
         }
+
+        private HashSet<PilesGroup> IntersectSectors(HashSet<PileData> PropertiesPiles, double distSector, Dictionary<string, int> namePileAndNum, List<string> ListNamesPiles, int predelGroup)
+        {
+            var PropertiesPilesList = PropertiesPiles.ToList();
+            
+            var HashPilesGroup = new HashSet<PilesGroup> ();
+            for (int i = 0; i < PropertiesPilesList.Count; i++)
+            {
+                var pile1 = PropertiesPilesList[i];
+                var pilesGroup = pile1.PilesGroup;
+
+                if (predelGroup != 1)
+                {
+                    for (int j = i + 1; j < PropertiesPilesList.Count; j++)
+                    {
+                        var pile2 = PropertiesPilesList[j];
+
+                        if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
+
+
+                        var raznX = Math.Abs(pile2.X - pile1.X);
+                        if (raznX > distSector) { continue; }
+                        var raznY = Math.Abs(pile2.Y - pile1.Y);
+                        if (raznY > distSector) { continue; }
+
+                        var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - distSector);
+                        if (dist > 0) { continue; }
+
+                        //обнаружено пересечение
+                        var pilesGroup2 = pile2.PilesGroup;
+                        PilesGroup pileReplace = null; // группа замены в группу pilesGroup
+                        if (pilesGroup2 == null && pilesGroup == null)
+                        {
+                            pilesGroup = new PilesGroup();
+                        }
+                        else if (pilesGroup2 != null && pilesGroup == null)
+                        {
+                            pilesGroup = pilesGroup2;
+
+                        }
+                        else if (pilesGroup2 == null && pilesGroup != null)
+                        {
+                            //итак норм
+
+                        }
+                        else if (pilesGroup2 != null && pilesGroup != null)
+                        {
+                            pileReplace = pilesGroup2;// ну так принимаем группу замены
+
+                        }
+
+                        if (pileReplace != null)
+                        {
+                            HashPilesGroup.Remove(pileReplace);
+                            foreach (var pile in pileReplace.Piles)
+                            {
+                                pilesGroup.Piles.Add(pile);
+                                pile.PilesGroup = pilesGroup;
+                            }
+                        }
+                        pilesGroup.Piles.Add(pile1);
+                        pilesGroup.Piles.Add(pile2);
+                        pile1.PilesGroup = pilesGroup;
+                        pile2.PilesGroup = pilesGroup;
+                    }
+                }
+
+                //ни одного пересечения и группы не создано
+                if(pilesGroup==null)
+                {
+                    pilesGroup = new PilesGroup();
+                    pile1.PilesGroup = pilesGroup;
+                    pilesGroup.Piles.Add(pile1);
+                }
+                HashPilesGroup.Add(pilesGroup);
+            }
+
+
+
+            var removeHashPilesGroup = new HashSet<PilesGroup>();
+            var addPilesGroup = new HashSet<PilesGroup>();
+            //находим центра масс
+            foreach (var pilesGroup in HashPilesGroup)
+            {
+                var pile = pilesGroup.Piles.FirstOrDefault();
+                if(pile == null) 
+                {
+                    removeHashPilesGroup.Add(pilesGroup);// пустую группу не её...
+                    continue; 
+                }
+                if(predelGroup == 0 || predelGroup >= pilesGroup.Piles.Count)
+                {
+                    pilesGroup.Initializator(namePileAndNum[pile.Name], ListNamesPiles.IndexOf(pile.Name));
+                }
+                else
+                {
+                    //расформировываем эту группу
+                    removeHashPilesGroup.Add(pilesGroup);
+                    //и создаем из ее элементов отдельные
+                    foreach(var piles in pilesGroup.Piles)
+                    {
+                        piles.PilesGroup = new PilesGroup();
+                        piles.PilesGroup.Piles.Add(piles);
+                        piles.PilesGroup.Initializator(namePileAndNum[piles.Name], ListNamesPiles.IndexOf(piles.Name));
+                        addPilesGroup.Add(piles.PilesGroup);
+                    }
+
+                }
+
+                
+            }
+
+            foreach (var del in removeHashPilesGroup)
+            {
+                HashPilesGroup.Remove(del);
+            }
+            foreach (var add in addPilesGroup)
+            {
+                HashPilesGroup.Add(add);
+            }
+
+            return HashPilesGroup;
+
+        }
+
+
+
 
 
         private List<(string name, int numName, int Zs, int numPile)> sortedUGO(List<(string name, int numName, int Zs, int numPile)> listForYgoSort, string sortCodeUGO, bool ustanUGO)
@@ -1252,6 +1459,12 @@ namespace Reinforcement
 
     public class PilesGroup
     {
+
+        private static int _numPilesGroup = 0;
+
+        public int numPiles = 0;
+
+
         public HashSet<PileData> Piles = new HashSet<PileData>();
 
         public HashSet<(int Xs, int Ys, string name)> dataPiles = new HashSet<(int Xs, int Ys, string name)>();
@@ -1282,89 +1495,37 @@ namespace Reinforcement
 
         public int kolVoPileName = 1;
 
-        public PilesGroup(
-            PileData CurrentPile, int kolVoPileName,
-            int numName,
-             Dictionary<(int Xs, int Ys, string name), HashSet<PileData>> DictSector, bool prinudOne = false)
+
+        public PilesGroup()
+        {
+            _numPilesGroup++;
+            numPiles = _numPilesGroup;
+        }
+
+        public void Initializator( int kolVoPileName,int numName)
         {
 
             this.kolVoPileName = kolVoPileName;
             _numCreate++;
             numCreate = _numCreate;
 
+            if(Piles.Count==0)
+            {
+                return;
+            }
+
+            var anyPile = Piles.FirstOrDefault();
+
+
             // когда обьявили элемент pile ищем его родственников всех
 
             //если prinudOne = true то только один элемент в класс
 
-            namePile = CurrentPile.Name;
-            (int Xs, int Ys, string name) SectorParent = (CurrentPile.Xs, CurrentPile.Ys, CurrentPile.Name);
-
-
-
-            //номер имени
+            namePile = anyPile.Name;
             this.numName = numName;
-            //теперь ищем родственные сваи аналог графа
-            var listInt = new List<int> { -1,0, 1 };
 
-            var HashSeachPile = new HashSet<(int Xs, int Ys, string name)> { SectorParent }; // найденные новые элементы
 
-            //dataPiles.Add(CurrentPiles);
 
-            //Center = ((double)CurrentPiles.Xs, (double)CurrentPiles.Ys);
-
-            Piles.Add(CurrentPile);
-            if (!prinudOne)
-            { //находим все типы
-                dataPiles.Add(SectorParent);
-                Piles.UnionWith(DictSector[SectorParent]);
-                while (HashSeachPile.Count > 0)
-                {
-                    //и начинаем циркуляцию
-                    var HashSeachPile2 = new HashSet<(int Xs, int Ys, string name)>();// будет переприсвоено в конце
-                    foreach (var CurrentPiles2 in HashSeachPile)
-                    {
-                        int Xs = CurrentPiles2.Xs;
-                        int Ys = CurrentPiles2.Ys;
-
-                        // Проверяем всех соседей
-                        foreach (int i in listInt)
-                        {
-                            foreach (int j in listInt)
-                            {
-                                // Пропускаем саму текущую точку
-                                if (i == 0 && j == 0) continue;
-
-                                (int Xs, int Ys, string) sector2 = (Xs + i, Ys + j, namePile);
-
-                                // Если уже в группе - пропускаем
-                                if (dataPiles.Contains(sector2))
-                                { 
-                                    continue; 
-                                }
-
-                                if (DictSector.TryGetValue(sector2, out var piles))
-                                {
-                                    HashSeachPile2.Add(sector2);
-                                    dataPiles.Add(sector2);
-                                    Piles.UnionWith(piles);
-                                    //int addIntPiles = piles.Count;
-                                    //// Пересчитываем центр масс группы с учетом нового сектора
-                                    ////Center = (
-                                    ////    (Center.Xs * (double)intPiles + (double)(sector2.Xs * addIntPiles)) / ((double)(intPiles + addIntPiles)),
-                                    ////    (Center.Ys * (double)intPiles + (double)(sector2.Ys * addIntPiles)) / ((double)(intPiles + addIntPiles))
-                                    ////);
-
-                                    //intPiles += addIntPiles;
-                                }
-                            }
-                        }
-                    
-                }
-
-                  HashSeachPile = HashSeachPile2;
-
-                }
-            }
             //а теперь наполняем
             int x = 0;
             int y = 0;
@@ -1410,17 +1571,10 @@ namespace Reinforcement
                 Center = ( 0,  0);
             }
 
-
-
-            //dataPilesSort = dataPiles
-            //.OrderByDescending(group =>!returnCoord? group.Ys: group.Xs) // по убыванию Y (сверху вниз)
-            //.ThenBy(group => !returnCoord ? group.Xs: group.Ys)         // по возрастанию X (слева направо)
-            //.ToList();
-
         }
-
-
     }
+
+
     public class PileNameSorter
     {
         public static List<string> SortPileNamesByLength(HashSet<string> pileNames)
