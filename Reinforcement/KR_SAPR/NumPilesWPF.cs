@@ -58,7 +58,7 @@ namespace Reinforcement
         private void InitializeComponent()
         {
             this.Width = 520;
-            this.Height = 760; // Увеличили высоту для нового элемента
+            this.Height = 780; // Увеличили высоту для нового элемента
             this.Title = "Настройки нумерации свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;

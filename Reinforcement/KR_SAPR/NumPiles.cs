@@ -43,7 +43,7 @@ namespace Reinforcement
 
 
         public bool pastUGONum = false;
-        public bool pastNum = false;
+        public int pastNum = -1;
 
         public PilesGroup PilesGroup { get; set; }
 
@@ -326,7 +326,7 @@ namespace Reinforcement
                         {
                             hashPastMark.Add(numValue);
                             numPile = Math.Max(numPile, numValue);
-                            PileClass.pastNum = true;
+                            PileClass.pastNum = numValue;
                         }
                         // можно дубли еще посмотреть
                     }
@@ -465,7 +465,18 @@ namespace Reinforcement
                     int x =(int) Math.Round(pile.X);
                     int y = (int)Math.Round(pile.Y);
 
-                    string primeh = "УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", Сектор Xs2="+ x+", Ys2="+ y;
+                    if (!doNotRenumberNumberedPiles || pile.pastNum<0)
+                    {
+                        pile.NumPile = numPile;
+                        numPile++;
+                    }
+                    else if (pile.pastNum>0)
+                    {
+                        pile.NumPile = pile.pastNum;
+                        //numPile--;
+                    }
+
+                    string primeh = pile.NumPile+", УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", X="+ x+", Y="+ y;
                     if((x+y)%50>0)
                     {
                         primeh += " неКратКоорд.";
@@ -479,15 +490,8 @@ namespace Reinforcement
                         primeh += " Пересеч. " + pile.intersect3D +" мм";
                     }
                     pile.Commit = primeh;
-                    if (!doNotRenumberNumberedPiles || !pile.pastNum)
-                    {
-                        pile.NumPile = numPile;
-                        numPile++;
-                    }
-                    else
-                    {
-                        //numPile--;
-                    }
+
+                    
                     
                 }
 
@@ -530,7 +534,7 @@ namespace Reinforcement
 
                         if (ustanNumPile)
                         {
-                            if (!doNotRenumberNumberedPiles || !kvp.pastNum)
+                            if (!doNotRenumberNumberedPiles || kvp.pastNum < 0)
                             {
                                 resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
                             }
