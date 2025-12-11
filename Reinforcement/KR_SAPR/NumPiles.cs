@@ -64,6 +64,16 @@ namespace Reinforcement
 
         private Dictionary<(string name, int Z), (int nomer, int numPile)> YgoIndexDict;
 
+
+
+        public bool reCoord=false; // если меняли координаты то нельзя её двигать надо двигать остальные
+        public PileData(int x, int z)
+        {
+            // для расстановки свай по двг
+
+
+        }
+
         public PileData(Element pile,int xs, int ys, int zs, int xs2, int ys2, int zs2, double x, double y, double z, string name, int numPile, PilesGroup pilesGroup,  Dictionary<(string name, int Zs), (int nomer, int numPile)> ygoIndexDict)
         {
             Pile = pile;
@@ -726,7 +736,6 @@ namespace Reinforcement
                 }
                 HashPilesGroup.Add(pilesGroup);
             }
-
 
 
             var removeHashPilesGroup = new HashSet<PilesGroup>();
