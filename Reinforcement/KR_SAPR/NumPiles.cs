@@ -147,7 +147,7 @@ namespace Reinforcement
 
 
 
-        private static string sortCode = "134"; // тип 2
+        private static string sortCode = "1346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
 
         public Result Execute(
@@ -448,9 +448,13 @@ namespace Reinforcement
             //контроль свай
             control3D(PropertiesPiles, SizePile3D);
             // Нумерация свай
-            
+            bool inversSort =false;
+            if (sortCode != null &&  sortCode.Contains("7"))
+            {
+                //нумерация свай сверху вниз
+                inversSort = true;
+            }
 
-            
 
 
 
@@ -469,21 +473,45 @@ namespace Reinforcement
                     //сваи сортируем по секторам позволяющим в один ряд их укладывать
                     if (yxSort)
                     {
-                        allPilesGroup = allPilesGroup
-                        .OrderByDescending(pile => pile.Ys2) // по убыванию Y (сверху вниз)
-                        .ThenBy(pile => pile.Xs2)
-                        .ThenByDescending(pile => pile.Ys3)
-                        .ThenBy(pile => pile.Xs3)
-                        .ToList();// по возрастанию X (слева направо)
+                        if (!inversSort)
+                        {
+                            allPilesGroup = allPilesGroup
+                            .OrderBy(pile => pile.Ys2) // по убыванию Y (сверху вниз)
+                            .ThenBy(pile => pile.Xs2)
+                            .ThenBy(pile => pile.Ys3)
+                            .ThenBy(pile => pile.Xs3)
+                            .ToList();// по возрастанию X (слева направо)
+                        }
+                        else
+                        {
+                            allPilesGroup = allPilesGroup
+                            .OrderByDescending(pile => pile.Ys2) // по убыванию Y (сверху вниз)
+                            .ThenBy(pile => pile.Xs2)
+                            .ThenByDescending(pile => pile.Ys3)
+                            .ThenBy(pile => pile.Xs3)
+                            .ToList();// по возрастанию X (слева направо)
+                        }
                     }
                     else
                     {
-                        allPilesGroup = allPilesGroup
-                        .OrderBy(pile => pile.Xs2) // по убыванию Y (сверху вниз)
-                        .ThenByDescending(pile => pile.Ys2)         // по возрастанию X (слева направо)
-                        .ThenBy(pile => pile.Xs3)
-                        .ThenByDescending(pile => pile.Ys3)
-                        .ToList();
+                        if (!inversSort)
+                        {
+                            allPilesGroup = allPilesGroup
+                            .OrderBy(pile => pile.Xs2) // по убыванию Y (сверху вниз)
+                            .ThenBy(pile => pile.Ys2)         // по возрастанию X (слева направо)
+                            .ThenBy(pile => pile.Xs3)
+                            .ThenBy(pile => pile.Ys3)
+                            .ToList();
+                        }
+                        else
+                        {
+                            allPilesGroup = allPilesGroup
+                            .OrderBy(pile => pile.Xs2) // по убыванию Y (сверху вниз)
+                            .ThenByDescending(pile => pile.Ys2)         // по возрастанию X (слева направо)
+                            .ThenBy(pile => pile.Xs3)
+                            .ThenByDescending(pile => pile.Ys3)
+                            .ToList();
+                        }
                     }
                 }
 
@@ -816,6 +844,10 @@ namespace Reinforcement
             IOrderedEnumerable<(string name, int numName, int Zs, int numPile)> sortedList = null;
             bool isFirst = true;
 
+
+           
+
+
             foreach (char codeChar in sortCodeUGO)
             {
 
@@ -890,9 +922,16 @@ namespace Reinforcement
             bool XY = false; // разрешение на сортировку двойную
             bool pastSort = false;
             bool a = true;
+
             if (sortCode.Contains("6"))
             { a = false; }
 
+            bool inversSort = false;
+            if (sortCode.Contains("7"))
+            {
+                //нумерация свай сверху вниз
+                inversSort = true;
+            }
             foreach (char codeChar in sortCode)
             {
 
@@ -913,15 +952,31 @@ namespace Reinforcement
 
                             if (isFirst)
                             {
-                                sortedList = ListPilesGroup.OrderByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                                if (!inversSort)
+                                { 
+                                    sortedList = ListPilesGroup.OrderBy(g => a ? g.YtopS2 : g.CenterS2.yS2); 
+                                }
+                                else
+                                {
+                                    sortedList = ListPilesGroup.OrderByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                                }
                                 isFirst = false;
                             }
                             else
                             {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                                if (!inversSort)
+                                {
+                                    sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                                }
+                                else
+                                {
+                                    sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                                }
                             }
-                            sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-                         
+                            //sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
+                            // а по x мы можем сортировать по секетору 3
+                            sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+
                         }
                         break;
 
@@ -948,7 +1003,20 @@ namespace Reinforcement
                             {
                                 sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                             }
-                            sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                            //sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+                            //а по y мы можем сортировать по сектору 3
+                            if (!inversSort)
+                            {
+                                sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                            }
+                            else
+                            {
+                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                            }
+
+
+
+
                         }
                         break;
 
@@ -985,14 +1053,21 @@ namespace Reinforcement
             if (firstY)
             {
                 pastSort = true;
-                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+                if (!inversSort)
+                {
+                    sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                }
+                else
+                {
+                    sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                }
+                //sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
             }
             else if (firstX)
             {
                 pastSort = true;
                 sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
-                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                //sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
             }
 
             

@@ -271,6 +271,7 @@ namespace Reinforcement
                        "• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)\n" +
                        "  1 - сортировка по Y затем по X, 2 - наоборот, 3 - по типу сваи, 4 - кол-ву свай в типе\n" +
                        "  6 - вместо сортировки куста к левому верхнему углу использовать центр куста\n" +
+                       "  7 - сортировка сверху вниз\n" +
                        "• Код сортировки УГО: 1 - сортировка по типу, 2 - по кол-ву свай в типе, 3 - по убыванию Z, 4 - по возрастанию Z",
                 FontSize = 10,
                 FontStyle = FontStyles.Italic,
@@ -421,11 +422,11 @@ namespace Reinforcement
                 return;
 
             // Проверка кода сортировки свай (только цифры 1-6 без повторений)
-            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6' }))
+            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6','7','8' }))
                 return;
 
             // Проверка кода сортировки УГО (только цифры 1-4 без повторений)
-            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4' }))
+            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4','5','6' }))
                 return;
 
             SectorStep = sectorStep;
