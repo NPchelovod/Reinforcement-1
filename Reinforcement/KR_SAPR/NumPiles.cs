@@ -22,6 +22,8 @@ namespace Reinforcement
     public class PileData
     {
         public Element Pile { get; set; }
+
+        private double stepMM = 25;
         public int Xs { get; set; }
         public int Ys { get; set; }
         public int Zs { get; set; }
@@ -33,6 +35,13 @@ namespace Reinforcement
         public double X { get; set; }
         public double Y { get; set; }
         public double Z { get; set; }
+
+
+        public int Xs3  => (int)(Math.Round(X / stepMM)); // округляем мм сектор для внутренней сортировки
+        public int Ys3 => (int)(Math.Round(Y / stepMM)); // округляем мм сектор для внутренней сортировки
+
+
+
         public string Name { get; set; }
         public int NumPile { get; set; }
 
@@ -81,6 +90,11 @@ namespace Reinforcement
             Ys = ys;
             Zs = zs;
 
+            double stepMM = 25;
+            
+            //Xs3 = (int) (Math.Round(X / stepMM)); // округляем мм сектор для внутренней сортировки
+            //Ys3 = (int)(Math.Round(X / stepMM)); // округляем мм
+
             Xs2 = xs2;
             Ys2 = ys2;
             Zs2 = zs2;
@@ -122,10 +136,10 @@ namespace Reinforcement
         private static string nameYGO = "ADSK_Типоразмер элемента узла";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
-        private static  double sectorStep = 1150; // шаг поиска свай
-        private static double sectorStepPile = 1000;// округление координаты одной сваи
+        private static  double sectorStep = 1010; // шаг поиска соседей свай
+        private static double sectorStepPile = 510;// округление координаты одной сваи
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
-        private static int predelGroup = 20; // предел наполнения иначе принудительно для каждого элемента
+        private static int predelGroup = 51; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         private static bool ustanUGO = false;
         private static bool doNotRenumberNumberedPiles = false;
@@ -246,10 +260,10 @@ namespace Reinforcement
                 InitializeUgoCache(doc);
             }
 
-            if(! ustanUGO&& !ustanNumPile)
-            {
-                return Result.Succeeded;
-            }
+            //if(! ustanUGO&& !ustanNumPile)
+            //{
+            //    return Result.Succeeded;
+            //}
 
             // Собираем информацию о сваях
             var ygoIndexDict = new Dictionary<(string name, int Zs), (int nomer, int numPile)>();
@@ -444,6 +458,7 @@ namespace Reinforcement
 
 
             int kust = 0;
+            numPile++;
             foreach (var classPile in ListPilesGroup)
             {
                 kust++;
@@ -456,19 +471,23 @@ namespace Reinforcement
                     {
                         allPilesGroup = allPilesGroup
                         .OrderByDescending(pile => pile.Ys2) // по убыванию Y (сверху вниз)
-                        .ThenBy(pile => pile.Xs2)         // по возрастанию X (слева направо)
-                        .ToList();
+                        .ThenBy(pile => pile.Xs2)
+                        .ThenByDescending(pile => pile.Ys3)
+                        .ThenBy(pile => pile.Xs3)
+                        .ToList();// по возрастанию X (слева направо)
                     }
                     else
                     {
                         allPilesGroup = allPilesGroup
                         .OrderBy(pile => pile.Xs2) // по убыванию Y (сверху вниз)
                         .ThenByDescending(pile => pile.Ys2)         // по возрастанию X (слева направо)
+                        .ThenBy(pile => pile.Xs3)
+                        .ThenByDescending(pile => pile.Ys3)
                         .ToList();
                     }
                 }
 
-                numPile++;
+                
                 foreach (var pile in allPilesGroup)
                 {
                     
@@ -490,7 +509,7 @@ namespace Reinforcement
                     if((x+y)%50>0)
                     {
                         primeh += " неКратКоорд.";
-                        if ((x + y) % 5 > 0)
+                        if (x % 5 > 0 || y%5>0)
                         {
                             primeh += "!";
                         }
@@ -865,6 +884,15 @@ namespace Reinforcement
             IOrderedEnumerable<PilesGroup> sortedList = null;
             bool isFirst = true;
 
+
+            bool firstY = false;
+            bool firstX = false;
+            bool XY = false; // разрешение на сортировку двойную
+            bool pastSort = false;
+            bool a = true;
+            if (sortCode.Contains("6"))
+            { a = false; }
+
             foreach (char codeChar in sortCode)
             {
 
@@ -872,39 +900,55 @@ namespace Reinforcement
                 {
                     case '1': // сортировка сначала по Y потом по X
                         {
-                            bool a = true;
-                            if (sortCode.Contains("6"))
-                            { a = false; }
+                           
+                            if(!firstY&&!firstX)
+                            {
+                                firstY=true;
+                            }
+                            else if(firstX)
+                            {
+                                XY = true;
+                                break;
+                            }
 
                             if (isFirst)
                             {
-                                sortedList = ListPilesGroup.OrderByDescending(g => a ? g.Ytop : g.Center.y);
+                                sortedList = ListPilesGroup.OrderByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
                                 isFirst = false;
                             }
                             else
                             {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.Ytop : g.Center.y);
+                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
                             }
-                            sortedList = sortedList.ThenBy(g => a ? g.Xleft : g.Center.x);
+                            sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
+                         
                         }
                         break;
 
                     case '2': // сортировка сначала по X потом по Y
                         {
-                            bool a = true;
-                            if (sortCode.Contains("6"))
-                            { a = false; }
+                            
+
+                            if (!firstY && !firstX)
+                            {
+                                firstX = true;
+                            }
+                            else if (firstY)
+                            {
+                                XY = true;
+                                break;
+                            }
 
                             if (isFirst)
                             {
-                                sortedList = ListPilesGroup.OrderBy(g => a ? g.Xleft : g.Center.x);
+                                sortedList = ListPilesGroup.OrderBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                                 isFirst = false;
                             }
                             else
                             {
-                                sortedList = sortedList.ThenBy(g => a ? g.Xleft : g.Center.x);
+                                sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                             }
-                            sortedList = sortedList.ThenByDescending(g => a ? g.Ytop : g.Center.y);
+                            sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
                         }
                         break;
 
@@ -932,12 +976,32 @@ namespace Reinforcement
                         }
                         break;
                 }
+
+
             }
+            //сортировка глуюбже для глубокой расстановке
+
+
+            if (firstY)
+            {
+                pastSort = true;
+                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+                sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+            }
+            else if (firstX)
+            {
+                pastSort = true;
+                sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+            }
+
+            
+
 
             return sortedList?.ToList() ?? ListPilesGroup.ToList();
 
 
-            }
+        }
 
 
         
@@ -972,7 +1036,7 @@ namespace Reinforcement
                 foreach (var group in groups.OrderBy(g => g.numName).ThenBy(g => g.namePile))
                 {
                     report.AppendLine($"Группа: {group.namePile}");
-                    report.AppendLine($"• Центр: X={group.Center.x}, Y={group.Center.y}");
+                    report.AppendLine($"• Центр: X={group.CenterS2.xS2}, Y={group.CenterS2.xS2}");
                     report.AppendLine($"• Секторов: {group.intPiles}");
                     report.AppendLine($"• Свай: {group.Piles.Count}");
                     report.AppendLine();
@@ -1496,14 +1560,22 @@ namespace Reinforcement
         public string namePile = "";
 
         public int intPiles = 1;// но это кол-во секторов а не кол-во свай!!!!!
-        public (int x, int y) Center;
-
+        public (int xS2, int yS2) CenterS2 =(0,0);
+        public (int xS3, int yS3) CenterS3 = (0, 0);
 
         //для красоты не по центру масс нумеровать а по крайним точкам
-        public int Xleft = 0;
-        public int Ydown = 0;
-        public int Xright = 0;
-        public int Ytop = 0;
+        public int XleftS2 = 0;
+        public int YdownS2 = 0;
+        public int XrightS2 = 0;
+        public int YtopS2 = 0;
+
+
+
+        public int XleftS3 = 0;
+        public int YdownS3 = 0;
+        public int XrightS3 = 0;
+        public int YtopS3 = 0;
+
 
         private static int _numCreate = 0;
         public int numCreate = 0;
@@ -1542,30 +1614,49 @@ namespace Reinforcement
 
 
             //а теперь наполняем
-            int x = 0;
-            int y = 0;
+            int xs2 = 0;
+            int ys2 = 0;
+
+            int xs3 = 0;
+            int ys3 = 0;
+
             int iter = 0;
             foreach (var pile in Piles)
             {
                 
                 pile.PilesGroup = this;
                 
-                x += pile.Xs2;
-                y += pile.Ys2;
+                xs2 += pile.Xs2;
+                ys2 += pile.Ys2;
 
+                xs3 += pile.Xs3;
+                ys3 += pile.Ys3;
                 if (iter == 0)
                 {
-                     Xleft = pile.Xs2;
-                     Ydown = pile.Ys2;
-                     Xright = pile.Xs2;
-                     Ytop = pile.Ys2;
+                    XleftS2 = pile.Xs2;
+                    YdownS2 = pile.Ys2;
+                    XrightS2 = pile.Xs2;
+                    YtopS2 = pile.Ys2;
+
+                    XleftS3 = pile.Xs3;
+                    YdownS3 = pile.Ys3;
+                    XrightS3 = pile.Xs3;
+                    YtopS3 = pile.Ys3;
+
+
                 }
                 else
                 {
-                    Xleft = Math.Min(Xleft, pile.Xs2);
-                    Ydown  = Math.Min(Ydown, pile.Ys2);
-                    Xright = Math.Max(pile.Xs2, Xright);
-                    Ytop = Math.Max(pile.Ys2, Ytop);
+                    XleftS2 = Math.Min(XleftS2, pile.Xs2);
+                    YdownS2 = Math.Min(YdownS2, pile.Ys2);
+                    XrightS2 = Math.Max(pile.Xs2, XrightS2);
+                    YtopS2 = Math.Max(pile.Ys2, YtopS2);
+
+
+                    XleftS3 = Math.Min(XleftS3, pile.Xs3);
+                    YdownS3 = Math.Min(YdownS3, pile.Ys3);
+                    XrightS3 = Math.Max(pile.Xs3, XrightS3);
+                    YtopS3 = Math.Max(pile.Ys3, YtopS3);
                 }
 
                 iter++;
@@ -1576,15 +1667,14 @@ namespace Reinforcement
             {
                 //надо по сектору иначе нумератор свай плохой!!!!!
                 //но сектор берем свайный для точности
-                Center = ((int)Math.Round(((double)x / (double)intPiles)), (int)Math.Round(((double)y / (double)intPiles) ));
+                CenterS2 = ((int)Math.Round(((double)xs2 / (double)intPiles)), (int)Math.Round(((double)ys2 / (double)intPiles) ));
 
                 // Используйте реальные координаты, а не секторы:
-               // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
+                // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
+
+                CenterS3 = ((int)Math.Round(((double)xs3 / (double)intPiles)), (int)Math.Round(((double)ys3 / (double)intPiles)));
             }
-            else
-            {
-                Center = ( 0,  0);
-            }
+            
 
         }
     }
