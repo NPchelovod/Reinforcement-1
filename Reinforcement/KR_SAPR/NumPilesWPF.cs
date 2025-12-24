@@ -74,15 +74,27 @@ namespace Reinforcement
 
         private void InitializeComponent()
         {
-            this.Width = 520;
-            this.Height = 880; // Увеличили высоту для новых элементов
+            this.Width = 650; // Увеличили ширину
+            this.Height = 900; // Увеличили высоту
+            this.MinWidth = 600;
+            this.MinHeight = 700;
+            this.MaxHeight = 1200;
             this.Title = "Настройки нумерации и корректировки свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            this.ResizeMode = ResizeMode.NoResize;
+            this.ResizeMode = ResizeMode.CanResizeWithGrip; // Разрешаем изменение размера с ручкой
+            this.SizeToContent = SizeToContent.Manual;
+
+            // Создаем основной контейнер с прокруткой
+            var scrollViewer = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Padding = new Thickness(0)
+            };
 
             var mainStackPanel = new StackPanel
             {
-                Margin = new Thickness(20),
+                Margin = new Thickness(20, 10, 20, 20),
                 Orientation = Orientation.Vertical
             };
 
@@ -90,10 +102,11 @@ namespace Reinforcement
             var titleText = new TextBlock
             {
                 Text = "Параметры группировки и корректировки свай",
-                FontSize = 16,
+                FontSize = 18,
                 FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 20)
+                Margin = new Thickness(0, 0, 0, 20),
+                TextWrapping = TextWrapping.Wrap
             };
             mainStackPanel.Children.Add(titleText);
 
@@ -101,48 +114,25 @@ namespace Reinforcement
             pilesCountText = new TextBlock
             {
                 Text = $"Найдено свай: {FoundPilesCount}",
-                FontSize = 12,
+                FontSize = 14,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, 0, 0, 20),
-                FontWeight = FontWeights.Bold
+                FontWeight = FontWeights.Bold,
+                Foreground = System.Windows.Media.Brushes.DarkGreen
             };
             mainStackPanel.Children.Add(pilesCountText);
 
             // === РАЗДЕЛ: КОРРЕКТИРОВКА КООРДИНАТ СВАЙ ===
-            var correctionTitle = new TextBlock
-            {
-                Text = "Корректировка координат свай",
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 0, 0, 10),
-                Foreground = System.Windows.Media.Brushes.DarkBlue
-            };
+            var correctionTitle = CreateSectionTitle("Корректировка координат свай");
             mainStackPanel.Children.Add(correctionTitle);
 
             // Галочка для корректировки положений свай
-            var adjustPositionsPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            var adjustPositionsLabel = new TextBlock
-            {
-                Text = "Корректировать положения свай:",
-                FontSize = 12,
-                Width = 220,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            adjustPositionsCheckBox = new CheckBox
-            {
-                IsChecked = AdjustPilePositions,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Автоматически корректировать положения свай при пересечениях"
-            };
-            adjustPositionsPanel.Children.Add(adjustPositionsLabel);
-            adjustPositionsPanel.Children.Add(adjustPositionsCheckBox);
+            var adjustPositionsPanel = CreateCheckBoxPanel(
+                "Корректировать положения свай:",
+                AdjustPilePositions,
+                out adjustPositionsCheckBox,
+                "Автоматически корректировать положения свай при пересечениях"
+            );
             mainStackPanel.Children.Add(adjustPositionsPanel);
 
             // Поле для минимальной дистанции
@@ -150,7 +140,8 @@ namespace Reinforcement
                 "Минимальная дистанция между сваями (мм):",
                 MinDistanceBetweenPiles.ToString("F0"),
                 out minDistanceTextBox,
-                "Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка"
+                "Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка",
+                240
             );
             mainStackPanel.Children.Add(minDistancePanel);
 
@@ -159,144 +150,66 @@ namespace Reinforcement
                 "Шаг округления координат (мм):",
                 CoordinateRoundingStep.ToString("F0"),
                 out coordinateRoundingTextBox,
-                "Координаты свай будут округляться кратно этому числу"
+                "Координаты свай будут округляться кратно этому числу",
+                240
             );
             mainStackPanel.Children.Add(coordinateRoundingPanel);
 
             // Разделитель
-            var separator1 = new Separator
-            {
-                Margin = new Thickness(0, 10, 0, 20)
-            };
-            mainStackPanel.Children.Add(separator1);
+            mainStackPanel.Children.Add(CreateSeparator());
 
             // === РАЗДЕЛ: ОСНОВНЫЕ НАСТРОЙКИ ===
-            var mainSettingsTitle = new TextBlock
-            {
-                Text = "Основные настройки нумерации",
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 0, 0, 10),
-                Foreground = System.Windows.Media.Brushes.DarkBlue
-            };
+            var mainSettingsTitle = CreateSectionTitle("Основные настройки нумерации");
             mainStackPanel.Children.Add(mainSettingsTitle);
 
             // Галочка для установки номеров свай
-            var ustanNumPilePanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            var ustanNumPileLabel = new TextBlock
-            {
-                Text = "Нумеровать сваи:",
-                FontSize = 12,
-                Width = 180,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            ustanNumPileCheckBox = new CheckBox
-            {
-                IsChecked = UstanNumPile,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Установить марки (номера) для свай"
-            };
-            ustanNumPilePanel.Children.Add(ustanNumPileLabel);
-            ustanNumPilePanel.Children.Add(ustanNumPileCheckBox);
+            var ustanNumPilePanel = CreateCheckBoxPanel(
+                "Нумеровать сваи:",
+                UstanNumPile,
+                out ustanNumPileCheckBox,
+                "Установить марки (номера) для свай"
+            );
             mainStackPanel.Children.Add(ustanNumPilePanel);
 
             // Галочка для установки УГО
-            var ustanUGOPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            var ustanUGOLabel = new TextBlock
-            {
-                Text = "Установить УГО:",
-                FontSize = 12,
-                Width = 180,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            ustanUGOCheckBox = new CheckBox
-            {
-                IsChecked = UstanUGO,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Установить УГО для групп свай"
-            };
-            ustanUGOPanel.Children.Add(ustanUGOLabel);
-            ustanUGOPanel.Children.Add(ustanUGOCheckBox);
+            var ustanUGOPanel = CreateCheckBoxPanel(
+                "Установить УГО:",
+                UstanUGO,
+                out ustanUGOCheckBox,
+                "Установить УГО для групп свай"
+            );
             mainStackPanel.Children.Add(ustanUGOPanel);
 
             // Галочка - Не перенумеровывать нумерованные сваи
-            var doNotRenumberPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            var doNotRenumberLabel = new TextBlock
-            {
-                Text = "Не перенумеровывать нумерованные сваи:",
-                FontSize = 12,
-                Width = 180,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            doNotRenumberCheckBox = new CheckBox
-            {
-                IsChecked = DoNotRenumberNumberedPiles,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Если свая уже имеет маркировку (номер), не изменять его"
-            };
-            doNotRenumberPanel.Children.Add(doNotRenumberLabel);
-            doNotRenumberPanel.Children.Add(doNotRenumberCheckBox);
+            var doNotRenumberPanel = CreateCheckBoxPanel(
+                "Не перенумеровывать нумерованные сваи:",
+                DoNotRenumberNumberedPiles,
+                out doNotRenumberCheckBox,
+                "Если свая уже имеет маркировку (номер), не изменять его"
+            );
             mainStackPanel.Children.Add(doNotRenumberPanel);
 
             // Галочка - Не менять УГО если он есть
-            var doNotChangeUGOIfExistsPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            var doNotChangeUGOIfExistsLabel = new TextBlock
-            {
-                Text = "Не менять УГО если он есть:",
-                FontSize = 12,
-                Width = 180,
-                VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = FontWeights.Bold
-            };
-            doNotChangeUGOIfExistsCheckBox = new CheckBox
-            {
-                IsChecked = DoNotChangeUGOIfExists,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Если у сваи уже установлено УГО, не изменять его"
-            };
-            doNotChangeUGOIfExistsPanel.Children.Add(doNotChangeUGOIfExistsLabel);
-            doNotChangeUGOIfExistsPanel.Children.Add(doNotChangeUGOIfExistsCheckBox);
+            var doNotChangeUGOIfExistsPanel = CreateCheckBoxPanel(
+                "Не менять УГО если он есть:",
+                DoNotChangeUGOIfExists,
+                out doNotChangeUGOIfExistsCheckBox,
+                "Если у сваи уже установлено УГО, не изменять его"
+            );
             mainStackPanel.Children.Add(doNotChangeUGOIfExistsPanel);
 
             // Разделитель
-            var separator2 = new Separator
-            {
-                Margin = new Thickness(0, 10, 0, 20)
-            };
-            mainStackPanel.Children.Add(separator2);
+            mainStackPanel.Children.Add(CreateSeparator());
 
             // === ЧИСЛОВЫЕ ПАРАМЕТРЫ ===
 
             // Поле для sectorStep
             var sectorStepPanel = CreateNumberInputPanel(
-                "Шаг группировки свай в КУСТ (мм)",
+                "Шаг группировки свай в КУСТ (мм):",
                 SectorStep.ToString("F0"),
                 out sectorStepTextBox,
-                "Расстояние для группировки свай в один куст и дальнейшая его сортировка в кусте (200-1500)"
+                "Расстояние для группировки свай в один куст и дальнейшая его сортировка в кусте (200-1500)",
+                240
             );
             mainStackPanel.Children.Add(sectorStepPanel);
 
@@ -305,7 +218,8 @@ namespace Reinforcement
                 "Шаг рядов свай (мм):",
                 SectorStepPile.ToString("F0"),
                 out sectorStepPileTextBox,
-                "по рядам мы нумеруем, поэтому с данной погрешностью сваи будут считаться в одном ряду (450-1500)"
+                "По рядам мы нумеруем, поэтому с данной погрешностью сваи будут считаться в одном ряду (450-1500)",
+                240
             );
             mainStackPanel.Children.Add(sectorStepPilePanel);
 
@@ -314,7 +228,8 @@ namespace Reinforcement
                 "Шаг по высоте Z (мм):",
                 SectorStepZ.ToString("F0"),
                 out sectorStepZTextBox,
-                "Для группировки по оси Z (УГО)"
+                "Для группировки по оси Z (УГО)",
+                240
             );
             mainStackPanel.Children.Add(sectorStepZPanel);
 
@@ -323,7 +238,8 @@ namespace Reinforcement
                 "Лимит свай в КУСТе (шт):",
                 PredelGroup.ToString(),
                 out predelGroupTextBox,
-                "Максимальное количество свай в одной группе. 0 = без лимита, 1 = без кустов"
+                "Максимальное количество свай в одной группе. 0 = без лимита, 1 = без кустов",
+                240
             );
             mainStackPanel.Children.Add(predelGroupPanel);
 
@@ -332,7 +248,8 @@ namespace Reinforcement
                 "Код сортировки свай:",
                 SortCode,
                 out sortCodeTextBox,
-                "Введите код для пользовательской сортировки (например, 134)"
+                "Введите код для пользовательской сортировки (например, 134)",
+                240
             );
             mainStackPanel.Children.Add(sortCodePanel);
 
@@ -341,51 +258,138 @@ namespace Reinforcement
                 "Код сортировки УГО:",
                 SortCodeUGO,
                 out sortCodeUGOTextBox,
-                "Введите код для пользовательской сортировки (например, 123)"
+                "Введите код для пользовательской сортировки (например, 123)",
+                240
             );
             mainStackPanel.Children.Add(sortCodeUGOPanel);
 
-            // Подсказки (обновленные с новыми опциями)
+            // Разделитель перед подсказками
+            mainStackPanel.Children.Add(CreateSeparator());
+
+            // Подсказки (обновленные с новыми опциями) - в раскрывающемся элементе
+            var hintsExpander = new Expander
+            {
+                Header = "📚 Подсказки по настройкам",
+                IsExpanded = false,
+                Margin = new Thickness(0, 15, 0, 15),
+                BorderThickness = new Thickness(1),
+                BorderBrush = System.Windows.Media.Brushes.LightGray,
+                Padding = new Thickness(5)
+            };
+
             var hintsText = new TextBlock
             {
-                Text = "Подсказки:\n" +
-                       "• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены\n" +
-                       "• Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)\n" +
-                       "• Шаг округления координат: координаты свай будут округляться до ближайшего кратного значения\n" +
-                       "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
-                       "• Установить УГО: установит графическое обозначение сваям\n" +
-                       "• Не перенумеровывать нумерованные сваи: если свая уже имеет маркировку, не изменять ее\n" +
-                       "• Не менять УГО если он есть: если у сваи уже установлено УГО, не изменять его\n" +
-                       "• Шаг группировки свай в КУСТ: расстояние между соседними сваями для группировки в КУСТ и поиска соседей (чуть больше шага свай или 100 для игнора)\n" +
-                       "• Шаг рядов свай: точность расположения свай в 1 ряд\n" +
-                       "• Шаг по высоте Z: для группировки свай по УГО\n" +
-                       "• Лимит свай в КУСТе: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)\n" +
-                       "• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)\n" +
-                       "  1 - сортировка по Y затем по X, 2 - наоборот, 3 - по типу сваи, 4 - кол-ву свай в типе\n" +
-                       "  6 - вместо сортировки куста к левому верхнему углу использовать центр куста\n" +
-                       "  7 - сортировка сверху вниз\n" +
-                       "• Код сортировки УГО: 1 - сортировка по типу, 2 - по кол-ву свай в типе, 3 - по убыванию Z, 4 - по возрастанию Z",
-                FontSize = 10,
+                Text = GetHintsText(),
+                FontSize = 11,
                 FontStyle = FontStyles.Italic,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 20, 0, 20),
-                Padding = new Thickness(10),
+                Margin = new Thickness(5),
+                LineHeight = 16
             };
-            mainStackPanel.Children.Add(hintsText);
+
+            hintsExpander.Content = hintsText;
+            mainStackPanel.Children.Add(hintsExpander);
 
             // Кнопки
             var buttonPanel = CreateButtonPanel();
             mainStackPanel.Children.Add(buttonPanel);
 
+            // Устанавливаем контент в ScrollViewer
+            scrollViewer.Content = mainStackPanel;
+            this.Content = scrollViewer;
+
             // Устанавливаем фокус
             sectorStepTextBox.Focus();
             sectorStepTextBox.SelectAll();
+        }
 
-            this.Content = mainStackPanel;
+        private string GetHintsText()
+        {
+            return @"• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены
+• Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)
+• Шаг округления координат: координаты свай будут округляться до ближайшего кратного значения
+• Нумеровать сваи: установит марки свай (1, 2...)
+• Установить УГО: установит графическое обозначение сваям
+• Не перенумеровывать нумерованные сваи: если свая уже имеет маркировку, не изменять ее
+• Не менять УГО если он есть: если у сваи уже установлено УГО, не изменять его
+• Шаг группировки свай в КУСТ: расстояние между соседними сваями для группировки в КУСТ и поиска соседей (чуть больше шага свай или 100 для игнора)
+• Шаг рядов свай: точность расположения свай в 1 ряд
+• Шаг по высоте Z: для группировки свай по УГО
+• Лимит свай в КУСТе: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)
+• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)
+  1 - сортировка по Y затем по X
+  2 - наоборот, сортировка по X затем по Y
+  3 - по типу сваи
+  4 - по количеству свай в типе
+  6 - вместо сортировки куста к левому верхнему углу использовать центр куста
+  7 - сортировка сверху вниз
+• Код сортировки УГО:
+  1 - сортировка по типу
+  2 - по количеству свай в типе
+  3 - по убыванию Z
+  4 - по возрастанию Z";
+        }
+
+        // Вспомогательный метод для создания заголовка раздела
+        private TextBlock CreateSectionTitle(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 5, 0, 12),
+                Foreground = System.Windows.Media.Brushes.DarkBlue
+            };
+        }
+
+        // Вспомогательный метод для создания разделителя
+        private Separator CreateSeparator()
+        {
+            return new Separator
+            {
+                Margin = new Thickness(0, 10, 0, 15),
+                Height = 1,
+                Background = System.Windows.Media.Brushes.LightGray
+            };
+        }
+
+        // Вспомогательный метод для создания панели с чекбоксом
+        private StackPanel CreateCheckBoxPanel(string label, bool isChecked, out CheckBox checkBox, string tooltip)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            var labelControl = new TextBlock
+            {
+                Text = label,
+                FontSize = 12,
+                Width = 320,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            checkBox = new CheckBox
+            {
+                IsChecked = isChecked,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = tooltip,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+
+            panel.Children.Add(labelControl);
+            panel.Children.Add(checkBox);
+
+            return panel;
         }
 
         // Вспомогательный метод для создания панели с числовым вводом
-        private StackPanel CreateNumberInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip)
+        private StackPanel CreateNumberInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip, double labelWidth = 240)
         {
             var panel = new StackPanel
             {
@@ -397,8 +401,9 @@ namespace Reinforcement
             {
                 Text = label,
                 FontSize = 12,
-                Width = 220,
-                VerticalAlignment = VerticalAlignment.Center
+                Width = labelWidth,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
             };
 
             textBox = new TextBox
@@ -407,7 +412,8 @@ namespace Reinforcement
                 FontSize = 12,
                 Width = 120,
                 VerticalAlignment = VerticalAlignment.Center,
-                ToolTip = tooltip
+                ToolTip = tooltip,
+                Margin = new Thickness(5, 0, 0, 0)
             };
 
             panel.Children.Add(labelControl);
@@ -416,8 +422,8 @@ namespace Reinforcement
             return panel;
         }
 
-        // Новый метод для создания панели с текстовым вводом (для кода сортировки)
-        private StackPanel CreateTextInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip)
+        // Вспомогательный метод для создания панели с текстовым вводом
+        private StackPanel CreateTextInputPanel(string label, string defaultValue, out TextBox textBox, string tooltip, double labelWidth = 240)
         {
             var panel = new StackPanel
             {
@@ -429,8 +435,9 @@ namespace Reinforcement
             {
                 Text = label,
                 FontSize = 12,
-                Width = 220,
-                VerticalAlignment = VerticalAlignment.Center
+                Width = labelWidth,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
             };
 
             textBox = new TextBox
@@ -439,7 +446,8 @@ namespace Reinforcement
                 FontSize = 12,
                 Width = 120,
                 VerticalAlignment = VerticalAlignment.Center,
-                ToolTip = tooltip
+                ToolTip = tooltip,
+                Margin = new Thickness(5, 0, 0, 0)
             };
 
             panel.Children.Add(labelControl);
@@ -455,26 +463,28 @@ namespace Reinforcement
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 10, 0, 0)
+                Margin = new Thickness(0, 20, 0, 10)
             };
 
             var okButton = new Button
             {
-                Content = "Продолжить",
-                Width = 120,
-                Height = 30,
-                Margin = new Thickness(5),
+                Content = "✅ Продолжить",
+                Width = 150,
+                Height = 35,
+                Margin = new Thickness(10, 5, 10, 5),
                 FontWeight = FontWeights.Bold,
+                FontSize = 13,
                 IsDefault = true
             };
             okButton.Click += OkButton_Click;
 
             var cancelButton = new Button
             {
-                Content = "Отмена",
-                Width = 120,
-                Height = 30,
-                Margin = new Thickness(5),
+                Content = "❌ Отмена",
+                Width = 150,
+                Height = 35,
+                Margin = new Thickness(10, 5, 10, 5),
+                FontSize = 13,
                 IsCancel = true
             };
             cancelButton.Click += CancelButton_Click;
@@ -525,11 +535,11 @@ namespace Reinforcement
             if (!ValidateNumber(coordinateRoundingTextBox.Text, "Шаг округления координат", out double roundingStep, 0))
                 return;
 
-            // Проверка кода сортировки свай (только цифры 1-6 без повторений)
+            // Проверка кода сортировки свай
             if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6', '7', '8' }))
                 return;
 
-            // Проверка кода сортировки УГО (только цифры 1-4 без повторений)
+            // Проверка кода сортировки УГО
             if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6' }))
                 return;
 

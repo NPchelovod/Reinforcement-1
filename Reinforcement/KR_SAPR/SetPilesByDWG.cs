@@ -15,7 +15,7 @@ using System.Windows.Forms;
 namespace Reinforcement
 {
     //для корректировки позиций
-    public interface PileCorrect
+    public interface IPileCorrect
     {
         double initialX { get; set; }
         double initialY { get; set; }
@@ -30,7 +30,7 @@ namespace Reinforcement
         bool intersect { get; set; }
         bool zapretChangeCoord { get; set; }
         double intersectDist { get; set; }
-        HashSet<PileCorrect> PilesSosed { get; set; }
+        HashSet<IPileCorrect> PilesSosed { get; set; }
     }
 
 
@@ -175,7 +175,7 @@ namespace Reinforcement
 
 
 
-
+                bool applyRounding = false;
 
                 // чтобы убрать дубликаты свай
                 var HashNewPileDict = new Dictionary<(int x, int y), (double x, double y)>();
@@ -184,8 +184,9 @@ namespace Reinforcement
                     double xd = UnitUtils.ConvertFromInternalUnits(point.X, units);
                     double yd = UnitUtils.ConvertFromInternalUnits(point.Y, units);
 
-                    if (roundingStep>0.01)
+                    if (applyRounding||roundingStep > 0.01)
                     {
+                        applyRounding=true;
                         xd = Math.Round(xd / roundingStep) * roundingStep; // округляем мм
                         yd = Math.Round(yd / roundingStep) * roundingStep;
                     }
@@ -214,20 +215,16 @@ namespace Reinforcement
                 }
 
 
-
+                
                 //хотел чтоб этот метод покоординатно двигал
                 if (adjustPilePositions)
                 {
-                    var HashPileCorrect = new HashSet<PileCorrect>(HashPileDataCorrect) .ToHashSet();                // новый HashSet<PileDataCorrect>
-                    if (roundingStep > 1)
-                    {
-                        HashPileCorrect = MethodDepthPile(HashPileCorrect, minDistanceBetweenPiles, roundingStep);
-                    }
-                    else
-                    {
-                        HashPileCorrect = MethodDepthPile(HashPileCorrect,  minDistanceBetweenPiles);
-                    }
-                    HashPileDataCorrect = new HashSet<PileCorrect>(HashPileCorrect)
+                    var HashIPileCorrect = new HashSet<IPileCorrect>(HashPileDataCorrect) .ToHashSet();                // новый HashSet<PileDataCorrect>
+                    
+
+                     HashIPileCorrect = MethodDepthPile(HashIPileCorrect, minDistanceBetweenPiles, roundingStep, applyRounding);
+                   
+                    HashPileDataCorrect = new HashSet<IPileCorrect>(HashIPileCorrect)
                     .OfType<PileDataCorrect>()  // обратно в PileDataCorrect
                     .ToHashSet();                // новый HashSet<PileDataCorrect>
                 }
@@ -302,70 +299,80 @@ namespace Reinforcement
 
 
 
-        private HashSet<PileCorrect> MethodDepthPile(HashSet<PileCorrect> HashPileDataCorrect, double minDist = 900, double GRID_STEP = 50)
+        public static HashSet<IPileCorrect> MethodDepthPile(HashSet<IPileCorrect> piles, double minDist = 900, double roundingStep = 50, bool applyRounding=false, double minChangeThreshold = 2.0)
         {
 
-            // метод глубокой расстановки свай на основе 3D
-
-            //создания секторов перемещаемых свай и которые взаимно пересекаются, ой чушь
-
-            var distSosed = 3 * minDist;
-            
-
-
-            var listHashPileDataCorrect = HashPileDataCorrect.ToList();
-            var HashIntersect = new Dictionary< PileCorrect, HashSet<PileCorrect>>();
-
-            bool perehetSosed= true;
-
-            int iter = 0;
-            int maxIter = 1000;
-
-
-            while (iter < maxIter)
+            // Если roundingStep = 0 или applyRounding = false, округление не применяется
+            if (applyRounding && roundingStep > 0)
             {
-                iter++;
-                HashIntersect.Clear();
-                foreach (var pile in HashPileDataCorrect)
+                // Начальное округление координат до заданного шага
+                foreach (var pile in piles)
+                {
+                    pile.itogX = Math.Round(pile.initialX / roundingStep) * roundingStep;
+                    pile.itogY = Math.Round(pile.initialY / roundingStep) * roundingStep;
+                }
+            }
+            else
+            {
+                // Без округления используем исходные координаты
+                foreach (var pile in piles)
+                {
+                    pile.itogX = pile.initialX;
+                    pile.itogY = pile.initialY;
+                }
+            }
+
+            var distNeighbor = 3 * minDist;
+            var pileList = piles.ToList();
+            var intersectingPiles = new Dictionary<IPileCorrect, HashSet<IPileCorrect>>();
+
+            bool recalculateNeighbors = true;
+            int iteration = 0;
+            int maxIterations = 100;
+
+            while (iteration < maxIterations)
+            {
+                iteration++;
+                intersectingPiles.Clear();
+
+                foreach (var pile in piles)
                 {
                     pile.intersect = false;
                     pile.zapretChangeCoord = false;
                     pile.intersectDist = 0;
                 }
-                if (perehetSosed)// пересчет соседей
-                {
-                    perehetSosed = false;
 
-                    foreach (var pile in HashPileDataCorrect)
+                // Пересчет соседей
+                if (recalculateNeighbors)
+                {
+                    recalculateNeighbors = false;
+
+                    // Очищаем списки соседей
+                    foreach (var pile in piles)
                     {
                         pile.PilesSosed.Clear();
                     }
 
-                    //заполняем пересечения
-                    for (int i = 0; i < listHashPileDataCorrect.Count; i++)
+                    // Находим соседей (сваи в пределах 3 * minDist)
+                    for (int i = 0; i < pileList.Count; i++)
                     {
+                        var pile1 = pileList[i];
+                        var coord1 = (pile1.itogX, pile1.itogY);
 
-                        var pile1 = listHashPileDataCorrect[i];
-                        (double x, double y) coord1 = (pile1.itogX, pile1.itogY);
-
-                        for (int j = i + 1; j < listHashPileDataCorrect.Count; j++)
+                        for (int j = i + 1; j < pileList.Count; j++)
                         {
-                            var pile2 = listHashPileDataCorrect[j];
-                            (double x, double y) coord2 = (pile2.itogX, pile2.itogY);
+                            var pile2 = pileList[j];
+                            var coord2 = (pile2.itogX, pile2.itogY);
 
-                            double raznX = Math.Abs(coord2.x - coord1.x);
-                            double raznY = Math.Abs(coord2.y - coord1.y);
+                            double dx = Math.Abs(coord2.itogX - coord1.itogX);
+                            double dy = Math.Abs(coord2.itogY - coord1.itogY);
 
-                            if (raznX > distSosed || raznY > distSosed)
+                            if (dx > distNeighbor || dy > distNeighbor) continue;
+
+                            double distance = Math.Sqrt(dx * dx + dy * dy);
+
+                            if (distance < distNeighbor + 1) // +1 для учета погрешности
                             {
-                                continue;
-                            }
-
-                            double dist = Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY));
-
-                            if (distSosed > dist+1)
-                            {
-                                //значит соседи
                                 pile1.PilesSosed.Add(pile2);
                                 pile2.PilesSosed.Add(pile1);
                             }
@@ -373,148 +380,235 @@ namespace Reinforcement
                     }
                 }
 
-
-
-
-                // Проверяем пересечения только среди соседей
-
-                foreach (var pile1 in HashPileDataCorrect)
+                // Находим пересечения
+                foreach (var pile1 in piles)
                 {
-                    (double x, double y) coord1 = (pile1.itogX, pile1.itogY);
-                    foreach (var pile2 in pile1.PilesSosed)
+                    var coord1 = (pile1.itogX, pile1.itogY);
+
+                    foreach (IPileCorrect pile2Obj in pile1.PilesSosed)
                     {
-                        if(pile1 == pile2) {  continue; }// на всякий случай
-                        (double x, double y) coord2 = (pile2.itogX, pile2.itogY);
+                        if (pile1 == pile2Obj) continue;
 
-                        double raznX =  Math.Abs(coord2.x - coord1.x);
-                        double raznY =  Math.Abs(coord2.y - coord1.y);
+                        var pile2 = pile2Obj;
+                        var coord2 = (pile2.itogX, pile2.itogY);
 
-                        if (raznX > minDist || raznY > minDist)
+                        double dx = Math.Abs(coord2.itogX - coord1.itogX);
+                        double dy = Math.Abs(coord2.itogY - coord1.itogY);
+
+                        if (dx > minDist || dy > minDist) continue;
+
+                        double distance = Math.Sqrt(dx * dx + dy * dy);
+
+                        if (distance < minDist - 1) // -1 для учета погрешности
                         {
-                            continue;
-                        }
-
-                        double dist = Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY));
-
-                        if (minDist > dist+1) // 1 mm в запас
-                        {
-                            // пересечение
                             pile1.intersect = true;
                             pile2.intersect = true;
 
+                            pile1.intersectDist = Math.Max(pile1.intersectDist, distance);
+                            pile2.intersectDist = Math.Max(pile2.intersectDist, distance);
 
-                            pile1.intersectDist=Math.Max(pile1.intersectDist, dist);
-                            pile2.intersectDist = Math.Max(pile2.intersectDist, dist);
-
-
-                            if (!HashIntersect.ContainsKey(pile1))
-                            {
-                                HashIntersect[pile1] = new HashSet<PileCorrect> { pile2 };
-                            }
+                            // Добавляем в словарь пересечений
+                            if (!intersectingPiles.ContainsKey(pile1))
+                                intersectingPiles[pile1] = new HashSet<IPileCorrect> { pile2 };
                             else
-                            {
-                                HashIntersect[pile1].Add(pile2);    
-                            }
+                                intersectingPiles[pile1].Add(pile2);
 
-
-                            if (!HashIntersect.ContainsKey(pile2))
-                            {
-                                HashIntersect[pile2] = new HashSet<PileCorrect> { pile1 };
-                            }
+                            if (!intersectingPiles.ContainsKey(pile2))
+                                intersectingPiles[pile2] = new HashSet<IPileCorrect> { pile1 };
                             else
-                            {
-                                HashIntersect[pile2].Add(pile1);
-                            }
-                            
+                                intersectingPiles[pile2].Add(pile1);
                         }
                     }
                 }
-                
-                if (HashIntersect.Count==0)
-                {
-                    break;
-                }
-                var sortedKeys = HashIntersect
-                .OrderByDescending(kvp => kvp.Value.Count)  // по убыванию количества
-                .Select(kvp => kvp.Key)                      // только ключи
-                .ToList();
 
-                foreach (var pile in sortedKeys)
-                { 
-                    if(!HashIntersect.TryGetValue(pile, out var intersectingPiles) || pile.zapretChangeCoord)
-                    {
-                        continue; 
-                    }
-                    //корректируем pile относительно остальных
-                    // Корректируем pile относительно всех конфликтующих
-                    CorrectPilePosition(pile, intersectingPiles, minDist, GRID_STEP);
+                // Если пересечений нет, завершаем
+                if (intersectingPiles.Count == 0) break;
+
+                // Сортируем сваи по количеству пересечений (больше пересечений -> раньше корректируем)
+                var sortedPiles = intersectingPiles
+                    .OrderByDescending(kvp => kvp.Value.Count)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+
+                bool anyCorrectionMade = false;
+
+                foreach (var pile in sortedPiles)
+                {
+                    if (!intersectingPiles.TryGetValue(pile, out var conflictingPiles) ||
+                        pile.zapretChangeCoord) continue;
+
+                    // Сохраняем текущие координаты для сравнения
+                    double oldX = pile.itogX;
+                    double oldY = pile.itogY;
+
+                    // Корректируем позицию сваи
+                    CorrectPilePosition(pile, conflictingPiles, minDist, roundingStep, applyRounding, minChangeThreshold);
                     pile.zapretChangeCoord = true;
-                    HashIntersect.Remove(pile);
-                    foreach (var otherPile in intersectingPiles)
+
+                    // Проверяем, изменились ли координаты
+                    if (Math.Abs(oldX - pile.itogX) + Math.Abs(oldY - pile.itogY) >= minChangeThreshold)
                     {
-                        otherPile.zapretChangeCoord = true;
+                        anyCorrectionMade = true;
+                    }
+
+                    // Запрещаем изменение для конфликтующих свай в этой итерации
+                    foreach (var other in conflictingPiles)
+                    {
+                        other.zapretChangeCoord = true;
                     }
                 }
-                
-               
-            }
 
+                // Если в этой итерации не было сделано ни одной коррекции, выходим
+                if (!anyCorrectionMade) break;
 
-            return HashPileDataCorrect;
-
-        }
-
-        void CorrectPilePosition(PileCorrect pile, HashSet<PileCorrect> others, double minDist, double GRID_STEP)
-        {
-            double bestX = pile.initialX, bestY = pile.initialY;
-           
-            double minDistSq = Math.Pow(minDist, 2);
-            // Начинаем с ближайших ячеек и расширяем радиус
-            // Начинаем с ближайших ячеек и расширяем радиус
-            for (int radius = 1; radius <= 20; radius++)  // ±50мм, ±100мм, ...
-            {
-                for (int dx = -radius; dx <= radius; dx++)
+                // После обработки всех свай сбрасываем флаги запрета для следующей итерации
+                foreach (var pile in piles)
                 {
-                    // Верхняя и нижняя границы радиуса
-                    int dy1 = radius;
-                    int dy2 = -radius;
+                    pile.zapretChangeCoord = false;
+                }
 
-                    if (IsPositionValid(pile.initialX + dx * GRID_STEP,
-                                       pile.initialY + dy1 * GRID_STEP,
-                                       others, minDistSq, GRID_STEP))
-                    {
-                        pile.itogX = (int)Math.Round((pile.initialX + dx * GRID_STEP) / GRID_STEP);
-                        pile.itogY = (int)Math.Round((pile.initialY + dy1 * GRID_STEP) / GRID_STEP);
-                        return;  // первая валидная!
-                    }
-                    if (IsPositionValid(pile.initialX + dx * GRID_STEP,
-                                       pile.initialY + dy2 * GRID_STEP,
-                                       others, minDistSq, GRID_STEP))
-                    {
-                        pile.itogX = (int)Math.Round((pile.initialX + dx * GRID_STEP) / GRID_STEP);
-                        pile.itogY = (int)Math.Round((pile.initialY + dy2 * GRID_STEP) / GRID_STEP);
-                        return;
-                    }
+                // Пересчитываем соседей на следующей итерации
+                recalculateNeighbors = true;
+            }
+
+            return piles;
+
+
+            //return HashPileDataCorrect;
+
+        }
+
+        private static void CorrectPilePosition(IPileCorrect pile,
+                                HashSet<IPileCorrect> conflictingPiles,
+                                double minDist,
+                                double roundingStep,
+                                bool applyRounding,
+                                              double minChangeThreshold = 2.0)
+        {
+            // Проверяем, есть ли вообще конфликты
+            if (conflictingPiles == null || conflictingPiles.Count == 0) return;
+            // Векторный подход: вычисляем результирующий вектор смещения
+            double totalDx = 0;
+            double totalDy = 0;
+            int count = 0;
+
+            foreach (var other in conflictingPiles)
+            {
+                double dx = pile.itogX - other.itogX;
+                double dy = pile.itogY - other.itogY;
+                double distance = Math.Sqrt(dx * dx + dy * dy);
+
+                if (distance < minDist && distance > 0)
+                {
+                    // Вычисляем необходимый сдвиг
+                    double overlap = minDist - distance;
+                    double pushFactor = overlap / distance;
+
+                    totalDx += dx * pushFactor;
+                    totalDy += dy * pushFactor;
+                    count++;
                 }
             }
-        }
-        bool IsPositionValid(double testX, double testY, HashSet<PileCorrect> others,
-                     double minDistSq, double gridStep)
-        {
-            foreach (var other in others)
+
+            if (count == 0) return;
+
+            // Усредняем вектор смещения
+            double avgDx = totalDx / count;
+            double avgDy = totalDy / count;
+
+            
+            // Проверяем, достаточно ли велико смещение для применения
+            double totalChange = Math.Abs(avgDx) + Math.Abs(avgDy);
+            if (totalChange < minChangeThreshold)
             {
-                double dx = testX - other.itogX * gridStep;
-                double dy = testY - other.itogY * gridStep;
-                if (dx * dx + dy * dy < minDistSq)  // квадрат расстояния
+                // Смещение слишком мало, пропускаем
+                return;
+            }
+            // Применяем смещение
+            double newX = pile.itogX + avgDx;
+            double newY = pile.itogY + avgDy;
+            // Если нужно, округляем координаты
+            if (applyRounding && roundingStep > 0)
+            {
+                newX = Math.Round(newX / roundingStep) * roundingStep;
+                newY = Math.Round(newY / roundingStep) * roundingStep;
+            }
+
+            // Проверяем, что новая позиция не создает новые пересечения
+            if (IsValidPosition(newX, newY, pile, conflictingPiles, minDist))
+            {
+                pile.itogX = newX;
+                pile.itogY = newY;
+            }
+            else
+            {
+                // Если позиция невалидна, ищем альтернативную позицию по спирали
+                FindAlternativePosition(pile, conflictingPiles, minDist, roundingStep, applyRounding);
+            }
+        }
+
+        private static bool IsValidPosition(double x, double y, IPileCorrect currentPile,
+                                    HashSet<IPileCorrect> otherPiles, double minDist)
+        {
+            foreach (var other in otherPiles)
+            {
+                if (other == currentPile) continue;
+
+                double dx = x - other.itogX;
+                double dy = y - other.itogY;
+                double distance = Math.Sqrt(dx * dx + dy * dy);
+
+                if (distance < minDist - 1) // -1 для погрешности
                     return false;
             }
             return true;
         }
-       
+
+        private static void FindAlternativePosition(IPileCorrect pile,
+                                            HashSet<IPileCorrect> conflictingPiles,
+                                            double minDist,
+                                            double roundingStep,
+                                            bool applyRounding, double minChangeThreshold = 1)
+        {
+            double minDistSq = minDist * minDist;
+
+            // Поиск по спирали от начальной позиции
+            for (int radius = 1; radius <= 10; radius++) // до 10 шагов
+            {
+                for (int angleStep = 0; angleStep < 360; angleStep += 45) // каждые 45 градусов
+                {
+                    double angle = angleStep * Math.PI / 180.0;
+                    double testX = pile.initialX + radius * minDist * Math.Cos(angle);
+                    double testY = pile.initialY + radius * minDist * Math.Sin(angle);
+
+                    // Округляем если нужно
+                    if (applyRounding && roundingStep > 0)
+                    {
+                        testX = Math.Round(testX / roundingStep) * roundingStep;
+                        testY = Math.Round(testY / roundingStep) * roundingStep;
+                    }
+                    // Проверяем минимальное изменение
+                    double totalChange = Math.Abs(pile.initialX - testX) + Math.Abs(pile.initialY - testY);
+                    if (totalChange < minChangeThreshold)
+                    {
+                        continue;
+                    }
+                    if (IsValidPosition(testX, testY, pile, conflictingPiles, minDist))
+                    {
+                        pile.itogX = testX;
+                        pile.itogY = testY;
+                        return;
+                    }
+                }
+            }
+
+            // Если не нашли подходящую позицию, оставляем как есть
+        }
+
     }
 
 
-    public class PileDataCorrect : PileCorrect
+    public class PileDataCorrect : IPileCorrect
     {
         public double initialX { get; set; } = 0;
         public double initialY { get; set; } = 0;
@@ -536,7 +630,7 @@ namespace Reinforcement
         public bool zapretChangeCoord { get; set; } = false;// запрет двигать координаты если мы соседа подвигали для корректной отработки
         public double intersectDist { get; set; } = 0; // величина пересечения
 
-        public HashSet<PileCorrect> PilesSosed { get; set; } = new HashSet<PileCorrect>(); // сваи соседи
+        public HashSet<IPileCorrect> PilesSosed { get; set; } = new HashSet<IPileCorrect>(); // сваи соседи
 
 
         public (int Xs, int Ys) Sector = (0, 0);
