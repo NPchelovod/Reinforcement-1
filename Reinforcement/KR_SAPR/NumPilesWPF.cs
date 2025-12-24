@@ -25,12 +25,15 @@ namespace Reinforcement
         public double MinDistanceBetweenPiles { get; set; }
         public double CoordinateRoundingStep { get; set; }
 
+        // Новая опция - пересоздать все сваи
+        public bool RecreateAllPiles { get; set; }
+
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
             bool currentUstanNumPile, bool currentUstanUGO, bool currentDoNotRenumberNumberedPiles,
             bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO,
             bool currentAdjustPilePositions = false, double currentMinDistanceBetweenPiles = 900,
-            double currentCoordinateRoundingStep = 25)
+            double currentCoordinateRoundingStep = 25, bool currentRecreateAllPiles = false)
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
@@ -49,6 +52,7 @@ namespace Reinforcement
             AdjustPilePositions = currentAdjustPilePositions;
             MinDistanceBetweenPiles = currentMinDistanceBetweenPiles;
             CoordinateRoundingStep = currentCoordinateRoundingStep;
+            RecreateAllPiles = currentRecreateAllPiles;
 
             ContinueExecution = false;
 
@@ -65,6 +69,7 @@ namespace Reinforcement
             adjustPositionsCheckBox.IsChecked = currentAdjustPilePositions;
             minDistanceTextBox.Text = currentMinDistanceBetweenPiles.ToString();
             coordinateRoundingTextBox.Text = currentCoordinateRoundingStep.ToString();
+            recreateAllPilesCheckBox.IsChecked = currentRecreateAllPiles;
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
@@ -74,14 +79,14 @@ namespace Reinforcement
 
         private void InitializeComponent()
         {
-            this.Width = 650; // Увеличили ширину
-            this.Height = 900; // Увеличили высоту
+            this.Width = 650;
+            this.Height = 950; // Увеличили высоту для нового элемента
             this.MinWidth = 600;
             this.MinHeight = 700;
             this.MaxHeight = 1200;
             this.Title = "Настройки нумерации и корректировки свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            this.ResizeMode = ResizeMode.CanResizeWithGrip; // Разрешаем изменение размера с ручкой
+            this.ResizeMode = ResizeMode.CanResizeWithGrip;
             this.SizeToContent = SizeToContent.Manual;
 
             // Создаем основной контейнер с прокруткой
@@ -134,6 +139,15 @@ namespace Reinforcement
                 "Автоматически корректировать положения свай при пересечениях"
             );
             mainStackPanel.Children.Add(adjustPositionsPanel);
+
+            // Галочка для пересоздания всех свай
+            var recreateAllPilesPanel = CreateCheckBoxPanel(
+                "Пересоздать все сваи:",
+                RecreateAllPiles,
+                out recreateAllPilesCheckBox,
+                "Удалить все найденные сваи и создать их заново с учетом новых координат и параметров"
+            );
+            mainStackPanel.Children.Add(recreateAllPilesPanel);
 
             // Поле для минимальной дистанции
             var minDistancePanel = CreateNumberInputPanel(
@@ -306,6 +320,7 @@ namespace Reinforcement
         private string GetHintsText()
         {
             return @"• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены
+• Пересоздать все сваи: удалить все найденные сваи и создать их заново с учетом новых координат и параметров (может ускорить процесс при большом количестве изменений)
 • Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)
 • Шаг округления координат: координаты свай будут округляться до ближайшего кратного значения
 • Нумеровать сваи: установит марки свай (1, 2...)
@@ -505,6 +520,7 @@ namespace Reinforcement
 
         // Новые поля
         private CheckBox adjustPositionsCheckBox;
+        private CheckBox recreateAllPilesCheckBox;
         private TextBox minDistanceTextBox;
         private TextBox coordinateRoundingTextBox;
 
@@ -552,6 +568,7 @@ namespace Reinforcement
 
             // Новые параметры
             AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
+            RecreateAllPiles = recreateAllPilesCheckBox.IsChecked ?? false;
             MinDistanceBetweenPiles = minDistance;
             CoordinateRoundingStep = roundingStep;
 

@@ -31,7 +31,7 @@ namespace Reinforcement
         private void InitializeComponent()
         {
             this.Width = 500;
-            this.Height = 400;
+            this.Height = 570;
             this.Title = "Настройки расстановки свай по DWG";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;

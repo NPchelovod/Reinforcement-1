@@ -3,10 +3,12 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Visual;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
@@ -56,7 +58,16 @@ namespace Reinforcement
         public int pastNum = -1;
         public PilesGroup PilesGroup { get; set; }
         private int pilesYgo = -1;
-        public int PilesYGO { get; }
+        public int PilesYGO 
+        { get
+            {
+                if(pilesYgo<0 && YgoIndexDict.TryGetValue((Name, Zs), out var ugoData))
+                {
+                    pilesYgo = ugoData.nomer;
+                }
+                return pilesYgo;
+            }
+        }
         private Dictionary<(string name, int Z), (int nomer, int numPile)> YgoIndexDict;
         public bool reCoord = false;
         
@@ -114,6 +125,7 @@ namespace Reinforcement
 
         // В классе NumPiles добавьте новые статические переменные в начало класса:
         private static bool adjustPilePositions = false;
+        private static bool recreateAllPiles = false;
         private static double minDistanceBetweenPiles = 900;
         private static double coordinateRoundingStep = 25;
 
@@ -165,7 +177,9 @@ namespace Reinforcement
                 sortCodeUGO,
                 adjustPilePositions, // Новый параметр
                 minDistanceBetweenPiles, // Новый параметр
-                coordinateRoundingStep // Новый параметр
+                coordinateRoundingStep, // Новый параметр
+
+                recreateAllPiles
                 );
 
                 // Устанавливаем владельца окна
@@ -195,8 +209,37 @@ namespace Reinforcement
                 adjustPilePositions = settingsWindow.AdjustPilePositions;
                 minDistanceBetweenPiles = settingsWindow.MinDistanceBetweenPiles;
                 coordinateRoundingStep = settingsWindow.CoordinateRoundingStep;
+
+                recreateAllPiles = settingsWindow.RecreateAllPiles;
                 // 4. Продолжаем выполнение с новыми параметрами
-                return ProcessPiles(Seacher, commandData, doc);
+                // 3. ВСЕ операции в одной транзакционной группе
+                using (TransactionGroup transGroup = new TransactionGroup(doc, "Полная обработка свай"))
+                {
+                    transGroup.Start();
+
+                    try
+                    {
+                        Result result = ProcessPiles(Seacher, commandData, doc);
+
+                        if (result == Result.Succeeded)
+                        {
+                            transGroup.Assimilate(); // Фиксируем все изменения
+                            return Result.Succeeded;
+                        }
+                        else
+                        {
+                            transGroup.RollBack(); // Откатываем все изменения
+                            return result;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        transGroup.RollBack();
+                        message = $"Ошибка: {ex.Message}\n{ex.StackTrace}";
+                        TaskDialog.Show("Критическая ошибка", message);
+                        return Result.Failed;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -360,8 +403,12 @@ namespace Reinforcement
                                 numUGO = Math.Max(numUGO, number);
                                 hashZapretUGO.Add(number);
                                 ygoIndexDict[(name, Zs)] = (number, ygoIndexDict[(name, Zs)].numPile);
-
-                                PileClass.pastUGONum = true;
+                                
+                                // иначе заново ставим
+                                if (!recreateAllPiles)
+                                {
+                                    PileClass.pastUGONum = true;
+                                }
 
                             }
                             if (number > -1)
@@ -376,8 +423,9 @@ namespace Reinforcement
                 }
 
             }
+            
 
-            // Корректируем координаты свай если нужно
+             // Корректируем координаты свай если нужно
             if (adjustPilePositions && minDistanceBetweenPiles > 0)
             {
                 // Получаем настройки из окна
@@ -390,10 +438,78 @@ namespace Reinforcement
                     coordinateRoundingStep,
                     applyRounding
                 );
-                
+
                 // Обновляем физические позиции свай в Revit
-                UpdatePilePositionsInRevit(HashIPileCorrect.Where(p => p is PileData).Cast<PileData>().ToList());
+                if (!recreateAllPiles)
+                {
+                    //иначе они итак обновятся
+                    UpdatePilePositionsInRevit(HashIPileCorrect.Where(p => p is PileData).Cast<PileData>().ToList());
+                }
             }
+
+            if (recreateAllPiles)
+            {
+                using (Transaction recreateTrans = new Transaction(doc, "Пересоздание свай"))
+                {
+                    try
+                    {
+                        recreateTrans.Start();
+                        foreach (var pile in PropertiesPiles)
+                        {
+                            Element ePile = pile.Pile;
+                            if (ePile == null) { continue; }
+                            var locationPoint = ePile.Location as LocationPoint;
+                            if (locationPoint == null) continue;
+                            var familyInstance = pile.Pile as FamilyInstance;
+                            if (familyInstance == null) continue;
+                            // Получаем уровень из старой сваи
+                            var levelId = ePile.LevelId;
+                            var level = doc.GetElement(levelId) as Level;
+                            if (level == null) continue;
+                            // Получаем тип сваи
+                            var symbol = familyInstance.Symbol;
+                            if (symbol == null || !symbol.IsActive)
+                            {
+                                if (symbol != null) symbol.Activate();
+                                else continue;
+                            }
+                            // Вычисляем координаты
+                            double newX = UnitUtils.ConvertToInternalUnits(pile.itogX, units);
+                            double newY = UnitUtils.ConvertToInternalUnits(pile.itogY, units);
+
+                            var Point = new XYZ(newX, newY, locationPoint.Point.Z);
+                            
+
+
+
+                            var newPoint = new XYZ(newX, newY, locationPoint.Point.Z);
+                            // Создаем новую сваю
+                            // Создаем новую сваю
+                            FamilyInstance newPile = doc.Create.NewFamilyInstance(
+                                newPoint, symbol, level,
+                                Autodesk.Revit.DB.Structure.StructuralType.Footing);
+
+                            pile.Pile = newPile;
+                            doc.Delete(ePile.Id);
+
+                            
+                        }
+                        recreateTrans.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        recreateTrans.RollBack();
+                        TaskDialog.Show("Ошибка", $"Ошибка обработки свай: {ex.Message}");
+                        return Result.Failed;
+                    }
+                }
+                    
+                }
+            
+
+
+
+
 
             //сортируем все имена в порядке возрастания
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
@@ -432,20 +548,26 @@ namespace Reinforcement
                 }
  
             }
+            //foreach (var kvp in PropertiesPiles)
+            //{
+            //    if (ygoIndexDict.TryGetValue((kvp.Name, kvp.Zs), out var ugoData))
+            //    {
+            //        kvp.PilesYGO = ugoData.nomer;
+            //    }
+            //}
 
 
 
-            
 
             //создаем группы свай
 
             var ListPilesGroup = IntersectSectors(PropertiesPiles, sectorStep, namePileAndNum, ListNamesPiles, predelGroup).ToList();
-
+            
 
             //сортировка групп свай
             //теперь сортируем сначала по оси x идя по оси y
 
-            ListPilesGroup=sortedCodNumPile(ustanNumPile, sortCode , ListPilesGroup);
+            ListPilesGroup =sortedCodNumPile(ustanNumPile, sortCode , ListPilesGroup);
             bool yxSort = true;
             if(sortCode!=null && sortCode.Contains("2") && !sortCode.Contains("1"))
             {
@@ -565,11 +687,11 @@ namespace Reinforcement
 
            
 
-            using (Transaction trans = new Transaction(doc, "Установка марок свай и УГО"))
+            using (Transaction trans2 = new Transaction(doc, "Пересоздание свай"))
             {
                 try
                 {
-                    trans.Start();
+                    trans2.Start();
 
                     int successCount = 0;
                     int failCount = 0;
@@ -597,15 +719,17 @@ namespace Reinforcement
 
                         if (ustanNumPile)
                         {
-                            if (!doNotRenumberNumberedPiles || kvp.pastNum < 0)
+                            if (!doNotRenumberNumberedPiles || kvp.pastNum < 0 || recreateAllPiles)// чтобы заново номер присвоить
                             {
+
+
                                 resultNum = SetPileMark(pile, markValue.ToString(), nameMarks);
                             }
 
                         }
                         if (ustanUGO && kvp.PilesYGO>0)
                         {
-                            if (!doNotChangeUGOIfExist || !kvp.pastUGONum)
+                            if (!doNotChangeUGOIfExist || !kvp.pastUGONum || recreateAllPiles)
                             {
                                 string YGOValue = YGOPrefix + kvp.PilesYGO;
                                 resultUGO = SetUGOValue(doc, pile, kvp.PilesYGO);
@@ -647,7 +771,7 @@ namespace Reinforcement
 
                     }
 
-                    trans.Commit();
+                    trans2.Commit();
 
                     // Показываем результат
                     // Показ результата
@@ -686,7 +810,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                    trans.RollBack();
+                    trans2.RollBack();
                     TaskDialog.Show("Ошибка транзакции", $"Ошибка при установке марок: {ex.Message}");
                     return Result.Failed;
                 }
@@ -1783,10 +1907,6 @@ namespace Reinforcement
                 try
                 {
                     trans.Start();
-
-                    
-                    
-
                     foreach (var pileData in pilesToMove)
                     {
                         var locationPoint = pileData.Pile.Location as LocationPoint;
@@ -1819,8 +1939,8 @@ namespace Reinforcement
                     //    ElementTransformUtils.MoveElements(doc, elementIds, vectors);
                     //}
 
-                    trans.Commit();
 
+                    trans.Commit();
                     TaskDialog.Show("Корректировка завершена",
                         $"Перемещено свай: {movedCount}\n" +
                         $"Пропущено (изменение < {minRanzToCorrect} мм): {skippedCount}");
