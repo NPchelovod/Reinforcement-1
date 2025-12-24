@@ -14,16 +14,23 @@ namespace Reinforcement
         public bool UstanNumPile { get; set; }
         public bool UstanUGO { get; set; }
         public bool DoNotRenumberNumberedPiles { get; set; }
-        public bool DoNotChangeUGOIfExists { get; set; } // Новая булевая переменная
+        public bool DoNotChangeUGOIfExists { get; set; }
         public string SortCode { get; set; }
         public string SortCodeUGO { get; set; }
         public int FoundPilesCount { get; set; }
         public bool ContinueExecution { get; set; }
 
+        // Новые свойства для корректировки координат
+        public bool AdjustPilePositions { get; set; }
+        public double MinDistanceBetweenPiles { get; set; }
+        public double CoordinateRoundingStep { get; set; }
+
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
             bool currentUstanNumPile, bool currentUstanUGO, bool currentDoNotRenumberNumberedPiles,
-            bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO)
+            bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO,
+            bool currentAdjustPilePositions = false, double currentMinDistanceBetweenPiles = 900,
+            double currentCoordinateRoundingStep = 25)
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
@@ -34,9 +41,14 @@ namespace Reinforcement
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
             DoNotRenumberNumberedPiles = currentDoNotRenumberNumberedPiles;
-            DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists; // Новая переменная
+            DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists;
             SortCode = currentSortCode;
             SortCodeUGO = currentSortCodeUGO;
+
+            // Новые параметры
+            AdjustPilePositions = currentAdjustPilePositions;
+            MinDistanceBetweenPiles = currentMinDistanceBetweenPiles;
+            CoordinateRoundingStep = currentCoordinateRoundingStep;
 
             ContinueExecution = false;
 
@@ -49,17 +61,22 @@ namespace Reinforcement
             sortCodeTextBox.Text = currentSortCode;
             sortCodeUGOTextBox.Text = currentSortCodeUGO;
 
+            // Новые поля
+            adjustPositionsCheckBox.IsChecked = currentAdjustPilePositions;
+            minDistanceTextBox.Text = currentMinDistanceBetweenPiles.ToString();
+            coordinateRoundingTextBox.Text = currentCoordinateRoundingStep.ToString();
+
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
             doNotRenumberCheckBox.IsChecked = currentDoNotRenumberNumberedPiles;
-            doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists; // Новая галочка
+            doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists;
         }
 
         private void InitializeComponent()
         {
             this.Width = 520;
-            this.Height = 780; // Увеличили высоту для нового элемента
-            this.Title = "Настройки нумерации свай";
+            this.Height = 880; // Увеличили высоту для новых элементов
+            this.Title = "Настройки нумерации и корректировки свай";
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ResizeMode = ResizeMode.NoResize;
 
@@ -72,7 +89,7 @@ namespace Reinforcement
             // Заголовок
             var titleText = new TextBlock
             {
-                Text = "Параметры группировки свай",
+                Text = "Параметры группировки и корректировки свай",
                 FontSize = 16,
                 FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -91,7 +108,79 @@ namespace Reinforcement
             };
             mainStackPanel.Children.Add(pilesCountText);
 
-            // === ГАЛОЧКИ НАСТРОЕК (сначала) ===
+            // === РАЗДЕЛ: КОРРЕКТИРОВКА КООРДИНАТ СВАЙ ===
+            var correctionTitle = new TextBlock
+            {
+                Text = "Корректировка координат свай",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 0, 0, 10),
+                Foreground = System.Windows.Media.Brushes.DarkBlue
+            };
+            mainStackPanel.Children.Add(correctionTitle);
+
+            // Галочка для корректировки положений свай
+            var adjustPositionsPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            var adjustPositionsLabel = new TextBlock
+            {
+                Text = "Корректировать положения свай:",
+                FontSize = 12,
+                Width = 220,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            };
+            adjustPositionsCheckBox = new CheckBox
+            {
+                IsChecked = AdjustPilePositions,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = "Автоматически корректировать положения свай при пересечениях"
+            };
+            adjustPositionsPanel.Children.Add(adjustPositionsLabel);
+            adjustPositionsPanel.Children.Add(adjustPositionsCheckBox);
+            mainStackPanel.Children.Add(adjustPositionsPanel);
+
+            // Поле для минимальной дистанции
+            var minDistancePanel = CreateNumberInputPanel(
+                "Минимальная дистанция между сваями (мм):",
+                MinDistanceBetweenPiles.ToString("F0"),
+                out minDistanceTextBox,
+                "Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка"
+            );
+            mainStackPanel.Children.Add(minDistancePanel);
+
+            // Поле для шага округления координат
+            var coordinateRoundingPanel = CreateNumberInputPanel(
+                "Шаг округления координат (мм):",
+                CoordinateRoundingStep.ToString("F0"),
+                out coordinateRoundingTextBox,
+                "Координаты свай будут округляться кратно этому числу"
+            );
+            mainStackPanel.Children.Add(coordinateRoundingPanel);
+
+            // Разделитель
+            var separator1 = new Separator
+            {
+                Margin = new Thickness(0, 10, 0, 20)
+            };
+            mainStackPanel.Children.Add(separator1);
+
+            // === РАЗДЕЛ: ОСНОВНЫЕ НАСТРОЙКИ ===
+            var mainSettingsTitle = new TextBlock
+            {
+                Text = "Основные настройки нумерации",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 0, 0, 10),
+                Foreground = System.Windows.Media.Brushes.DarkBlue
+            };
+            mainStackPanel.Children.Add(mainSettingsTitle);
 
             // Галочка для установки номеров свай
             var ustanNumPilePanel = new StackPanel
@@ -168,7 +257,7 @@ namespace Reinforcement
             doNotRenumberPanel.Children.Add(doNotRenumberCheckBox);
             mainStackPanel.Children.Add(doNotRenumberPanel);
 
-            // Новая галочка - Не менять УГО если он есть
+            // Галочка - Не менять УГО если он есть
             var doNotChangeUGOIfExistsPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -194,11 +283,11 @@ namespace Reinforcement
             mainStackPanel.Children.Add(doNotChangeUGOIfExistsPanel);
 
             // Разделитель
-            var separator = new Separator
+            var separator2 = new Separator
             {
-                Margin = new Thickness(0, 0, 0, 20)
+                Margin = new Thickness(0, 10, 0, 20)
             };
-            mainStackPanel.Children.Add(separator);
+            mainStackPanel.Children.Add(separator2);
 
             // === ЧИСЛОВЫЕ ПАРАМЕТРЫ ===
 
@@ -256,10 +345,13 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(sortCodeUGOPanel);
 
-            // Подсказки (обновленные с новой опцией)
+            // Подсказки (обновленные с новыми опциями)
             var hintsText = new TextBlock
             {
                 Text = "Подсказки:\n" +
+                       "• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены\n" +
+                       "• Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)\n" +
+                       "• Шаг округления координат: координаты свай будут округляться до ближайшего кратного значения\n" +
                        "• Нумеровать сваи: установит марки свай (1, 2...)\n" +
                        "• Установить УГО: установит графическое обозначение сваям\n" +
                        "• Не перенумеровывать нумерованные сваи: если свая уже имеет маркировку, не изменять ее\n" +
@@ -305,7 +397,7 @@ namespace Reinforcement
             {
                 Text = label,
                 FontSize = 12,
-                Width = 180,
+                Width = 220,
                 VerticalAlignment = VerticalAlignment.Center
             };
 
@@ -337,7 +429,7 @@ namespace Reinforcement
             {
                 Text = label,
                 FontSize = 12,
-                Width = 180,
+                Width = 220,
                 VerticalAlignment = VerticalAlignment.Center
             };
 
@@ -373,7 +465,7 @@ namespace Reinforcement
                 Height = 30,
                 Margin = new Thickness(5),
                 FontWeight = FontWeights.Bold,
-                IsDefault = true // Enter активирует эту кнопку
+                IsDefault = true
             };
             okButton.Click += OkButton_Click;
 
@@ -383,7 +475,7 @@ namespace Reinforcement
                 Width = 120,
                 Height = 30,
                 Margin = new Thickness(5),
-                IsCancel = true // Esc закрывает окно
+                IsCancel = true
             };
             cancelButton.Click += CancelButton_Click;
 
@@ -401,10 +493,15 @@ namespace Reinforcement
         private TextBox sortCodeTextBox;
         private TextBox sortCodeUGOTextBox;
 
+        // Новые поля
+        private CheckBox adjustPositionsCheckBox;
+        private TextBox minDistanceTextBox;
+        private TextBox coordinateRoundingTextBox;
+
         private CheckBox ustanNumPileCheckBox;
         private CheckBox ustanUGOCheckBox;
         private CheckBox doNotRenumberCheckBox;
-        private CheckBox doNotChangeUGOIfExistsCheckBox; // Новая галочка
+        private CheckBox doNotChangeUGOIfExistsCheckBox;
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
@@ -421,12 +518,19 @@ namespace Reinforcement
             if (!ValidateInteger(predelGroupTextBox.Text, "Лимит группы", out int predelGroup, 0))
                 return;
 
+            // Валидация новых параметров
+            if (!ValidateNumber(minDistanceTextBox.Text, "Минимальная дистанция", out double minDistance, 0))
+                return;
+
+            if (!ValidateNumber(coordinateRoundingTextBox.Text, "Шаг округления координат", out double roundingStep, 0))
+                return;
+
             // Проверка кода сортировки свай (только цифры 1-6 без повторений)
-            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6','7','8' }))
+            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6', '7', '8' }))
                 return;
 
             // Проверка кода сортировки УГО (только цифры 1-4 без повторений)
-            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4','5','6' }))
+            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6' }))
                 return;
 
             SectorStep = sectorStep;
@@ -435,18 +539,16 @@ namespace Reinforcement
             PredelGroup = predelGroup;
             SortCode = sortCodeTextBox.Text;
             SortCodeUGO = sortCodeUGOTextBox.Text;
+
+            // Новые параметры
+            AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
+            MinDistanceBetweenPiles = minDistance;
+            CoordinateRoundingStep = roundingStep;
+
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
             DoNotRenumberNumberedPiles = doNotRenumberCheckBox.IsChecked ?? false;
-            DoNotChangeUGOIfExists = doNotChangeUGOIfExistsCheckBox.IsChecked ?? false; // Сохраняем значение новой галочки
-
-            // Проверка: хотя бы одна опция должна быть включена
-            //if (!UstanNumPile && !UstanUGO)
-            //{
-            //    MessageBox.Show("Не выбрано ни одной опции!\nВыберите хотя бы 'Нумеровать сваи' или 'Установить УГО'",
-            //        "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
-            //    return;
-            //}
+            DoNotChangeUGOIfExists = doNotChangeUGOIfExistsCheckBox.IsChecked ?? false;
 
             ContinueExecution = true;
             this.DialogResult = true;
@@ -466,10 +568,14 @@ namespace Reinforcement
 
                 if (fieldName.Contains("группировки"))
                     sectorStepTextBox.Focus();
-                else if (fieldName.Contains("округления"))
+                else if (fieldName.Contains("округления сваи"))
                     sectorStepPileTextBox.Focus();
                 else if (fieldName.Contains("высоте"))
                     sectorStepZTextBox.Focus();
+                else if (fieldName.Contains("дистанция"))
+                    minDistanceTextBox.Focus();
+                else if (fieldName.Contains("округления координат"))
+                    coordinateRoundingTextBox.Focus();
 
                 return false;
             }

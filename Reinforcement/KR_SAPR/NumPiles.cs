@@ -136,6 +136,12 @@ namespace Reinforcement
         private static string nameYGO = "ADSK_Типоразмер элемента узла";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
+
+        // В классе NumPiles добавьте новые статические переменные в начало класса:
+        private static bool adjustPilePositions = false;
+        private static double minDistanceBetweenPiles = 900;
+        private static double coordinateRoundingStep = 25;
+
         private static  double sectorStep = 1010; // шаг поиска соседей свай
         private static double sectorStepPile = 510;// округление координаты одной сваи
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
@@ -181,7 +187,10 @@ namespace Reinforcement
                 doNotRenumberNumberedPiles,
                 doNotChangeUGOIfExist,
                 sortCode, // Добавлен новый параметр
-                sortCodeUGO
+                sortCodeUGO,
+                adjustPilePositions, // Новый параметр
+                minDistanceBetweenPiles, // Новый параметр
+                coordinateRoundingStep // Новый параметр
                 );
 
                 // Устанавливаем владельца окна
@@ -207,6 +216,10 @@ namespace Reinforcement
                 sectorStepPile = settingsWindow.SectorStepPile;
                 sortCode = settingsWindow.SortCode;
                 sortCodeUGO = settingsWindow.SortCodeUGO;
+
+                adjustPilePositions = settingsWindow.AdjustPilePositions;
+                minDistanceBetweenPiles = settingsWindow.MinDistanceBetweenPiles;
+                coordinateRoundingStep = settingsWindow.CoordinateRoundingStep;
                 // 4. Продолжаем выполнение с новыми параметрами
                 return ProcessPiles(Seacher, commandData, doc);
             }
@@ -226,7 +239,7 @@ namespace Reinforcement
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();
 
-            var PropertiesPiles = new HashSet< PileData>();
+            
 
             var DictSector = new Dictionary<(int Xs, int Ys, string name), HashSet<PileData>>(); // сектор и имя сваи
 
@@ -269,7 +282,7 @@ namespace Reinforcement
             var ygoIndexDict = new Dictionary<(string name, int Zs), (int nomer, int numPile)>();
 
             var namePileAndNum = new Dictionary<string, int >();
-
+            var PropertiesPiles = new HashSet<PileData>();
 
             int numPile = 0;
             int numUGO = 0;
@@ -388,7 +401,13 @@ namespace Reinforcement
                 }
 
             }
-            
+
+            // Корректируем координаты свай если нужно
+            if (adjustPilePositions)
+            {
+                AdjustPileCoordinates(PropertiesPiles);
+            }
+
             //сортируем все имена в порядке возрастания
             var ListNamesPiles = PileNameSorter.SortPileNamesByLength(allNamesPile);
             //создаем список для словаря
@@ -1079,16 +1098,142 @@ namespace Reinforcement
         }
 
 
-        
+
+
+
+        // Добавьте новый метод в класс NumPiles для корректировки координат свай:
+        private void AdjustPileCoordinates(HashSet<PileData> pileDataList)
+        {
+            if (!adjustPilePositions || minDistanceBetweenPiles <= 0)
+                return;
+
+            var pileDataArray = pileDataList.ToList();
+            var movedPiles = new List<PileData>();
+            bool hasChanges;
+            int maxIterations = 1000;
+            int iteration = 0;
+
+            do
+            {
+                hasChanges = false;
+                iteration++;
+
+                for (int i = 0; i < pileDataArray.Count; i++)
+                {
+                    var pile1 = pileDataArray[i];
+                    if (pile1.reCoord) continue; // Если свая уже двигалась, пропускаем
+
+                    for (int j = i + 1; j < pileDataArray.Count; j++)
+                    {
+                        var pile2 = pileDataArray[j];
+                        if (pile2.reCoord) continue;
+
+                        double dx = pile1.X - pile2.X;
+                        double dy = pile1.Y - pile2.Y;
+                        double distance = Math.Sqrt(dx * dx + dy * dy);
+
+                        if (distance < minDistanceBetweenPiles && distance > 0)
+                        {
+                            // Сваи слишком близко, нужно сдвинуть
+                            double overlap = minDistanceBetweenPiles - distance;
+                            double moveDistance = overlap / 2.0;
+
+                            // Вычисляем вектор смещения
+                            double angle = Math.Atan2(dy, dx);
+
+                            // Сдвигаем сваи в противоположных направлениях
+                            pile1.X += moveDistance * Math.Cos(angle + Math.PI);
+                            pile1.Y += moveDistance * Math.Sin(angle + Math.PI);
+                            pile2.X += moveDistance * Math.Cos(angle);
+                            pile2.Y += moveDistance * Math.Sin(angle);
+
+                            // Округляем координаты если нужно
+                            if (coordinateRoundingStep > 0)
+                            {
+                                pile1.X = Math.Round(pile1.X / coordinateRoundingStep) * coordinateRoundingStep;
+                                pile1.Y = Math.Round(pile1.Y / coordinateRoundingStep) * coordinateRoundingStep;
+                                pile2.X = Math.Round(pile2.X / coordinateRoundingStep) * coordinateRoundingStep;
+                                pile2.Y = Math.Round(pile2.Y / coordinateRoundingStep) * coordinateRoundingStep;
+                            }
+
+                            pile1.reCoord = true;
+                            pile2.reCoord = true;
+                            movedPiles.Add(pile1);
+                            movedPiles.Add(pile2);
+                            hasChanges = true;
+                        }
+                    }
+                }
+
+                // Сбрасываем флаги для следующей итерации
+                foreach (var pile in movedPiles)
+                {
+                    pile.reCoord = false;
+                }
+                movedPiles.Clear();
+
+            } while (hasChanges && iteration < maxIterations);
+
+            // Обновляем физическое расположение свай в Revit
+            UpdatePilePositions(pileDataArray);
+        }
+
+        // Метод для обновления позиций свай в Revit
+        private void UpdatePilePositions(List<PileData> pileDataList)
+        {
+            using (Transaction trans = new Transaction(RevitAPI.Document, "Корректировка позиций свай"))
+            {
+                try
+                {
+                    trans.Start();
+
+                    ForgeTypeId units = UnitTypeId.Millimeters;
+                    int movedCount = 0;
+
+                    foreach (var pileData in pileDataList)
+                    {
+                        if (pileData.Pile == null) continue;
+
+                        // Получаем текущую позицию
+                        var locationPoint = pileData.Pile.Location as LocationPoint;
+                        if (locationPoint == null) continue;
+
+                        // Вычисляем новые координаты
+                        double newX = UnitUtils.ConvertToInternalUnits(pileData.X, units);
+                        double newY = UnitUtils.ConvertToInternalUnits(pileData.Y, units);
+                        double currentZ = locationPoint.Point.Z;
+
+                        // Создаем новую точку
+                        var newPoint = new XYZ(newX, newY, currentZ);
+
+                        // Перемещаем свая
+                        locationPoint.Point = newPoint;
+                        movedCount++;
+                    }
+
+                    trans.Commit();
+
+                    if (movedCount > 0)
+                    {
+                        TaskDialog.Show("Корректировка завершена",
+                            $"Скорректировано позиций свай: {movedCount}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    trans.RollBack();
+                    TaskDialog.Show("Ошибка корректировки",
+                        $"Не удалось скорректировать позиции свай: {ex.Message}");
+                }
+            }
+        }
 
 
 
 
 
 
-
-
-            // Метод для создания отчета о нумерации
+        // Метод для создания отчета о нумерации
         private void CreateNumberingReport(
             Dictionary<Element, (int Xs, int Ys, int Zs, double x, double y, double z, string Name, int numPile, PilesGroup pilesGroup)> properties,
             List<PilesGroup> groups)
