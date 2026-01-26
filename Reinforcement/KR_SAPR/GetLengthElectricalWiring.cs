@@ -31,9 +31,9 @@ namespace Reinforcement
         public static string prefix_EL = "ЭЛ_";
         public static List<string> all_diameters = new List<string>()
             {
-                "d15","d20","d25","d30", "d32" ,"d35","d40" , "d50", "d60","d80","d100","d120", "d150"
+                "d10","d15","d20","d25","d30", "d32" ,"d35","d40" ,"d45", "d50", "d60","d80","d100","d120", "d150"
             };
-
+        private static bool calcD=false;
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -58,6 +58,8 @@ namespace Reinforcement
 
             foreach (var diam in all_diameters)
             { dict_answer[diam] = 0; }
+
+            var all_diameters2= all_diameters.OrderByDescending(x=>x.Length).ToList(); // по убыванию так лучше иначе может быть большие диаметры пропустим
 
             double error = 0;
             string neraspozn_name = "";
@@ -98,7 +100,7 @@ namespace Reinforcement
 
                             bool proxod = false;
                             double dobavka = kol_vo * length;
-                            foreach (var tek_diametr in all_diameters)
+                            foreach (var tek_diametr in all_diameters2)
                             {
 
                                 if (tek_name_trub.Contains(tek_diametr))
