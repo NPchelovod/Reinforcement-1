@@ -52,6 +52,7 @@ namespace Reinforcement
                 "САПР",
                 "КР вставки",
                 "Copy / Кубики",
+                "Опции",
                 "Волшебная кнопка"
 
             };
@@ -89,6 +90,7 @@ namespace Reinforcement
                 "ОВ плит",
                 "АР панель",
                 "ЭЛ панель",
+                "Опции",
                 "Волшебная кнопка"
             };
 
@@ -141,6 +143,10 @@ namespace Reinforcement
 
                     case "ЭЛ панель":
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
+                        break;
+
+                    case "Опции":
+                        App_Panel_1_92_Opcii.AddSplitButton(panel, tabName);
                         break;
 
                     case "Волшебная кнопка":

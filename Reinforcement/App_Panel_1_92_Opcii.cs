@@ -18,7 +18,7 @@ using static Reinforcement.App;
 
 namespace Reinforcement
 {
-    public class App_Panel_1_92_Opcii
+    public class App_Panel_1_91_Toska
     {
 
         public static void AddSplitButton(RibbonPanel ribbonPanel, string name)
@@ -37,12 +37,12 @@ namespace Reinforcement
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)
         {
             var item = ribbonPanel.AddItem(data) as PulldownButton;
-            Image OV1 = Properties.Resources.Properties;
-            //Image OV2 = Properties.Resources.toska2;
+            Image OV1 = Properties.Resources.toska1;
+            Image OV2 = Properties.Resources.toska2;
             Image OV3 = Properties.Resources.Properties;
             //предполагается тест и так далее
-            App_Helper_Button.AddButtonToPullDownButton(item, "Маскировать", assemblyPath, "Reinforcement.PropertiesMask", "Кнопка для активации маскировки выносок с параметром \"ЕС_ID связанного элемента\"", OV1);
-            //App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV3);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Сюрприз", assemblyPath, "Reinforcement.Toska_1", "!", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV2);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Переопределить", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку чтобы переопределить семейство к нему относящееся", OV3);
 

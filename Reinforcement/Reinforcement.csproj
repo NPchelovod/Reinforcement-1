@@ -101,6 +101,7 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="App_Panel_1_92_Opcii.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
@@ -251,6 +252,7 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="0RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
+    <Compile Include="Opcii\PropertiesSbros.cs" />
     <Compile Include="Toska\PropertiesSbros.cs" />
     <Compile Include="Toska\Toska_1.cs" />
     <Compile Include="Toska\Toska_2.cs" />
@@ -267,9 +269,9 @@
     <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
-    <Compile Include="Updaters\AutoHoleFloorPoint.cs" />
-    <Compile Include="Updaters\ChangeWidthAnnotationTag.cs" />
-    <Compile Include="Updaters\RegisterUpdater.cs" />
+    <Compile Include="UpdatersInvoke\AutoHoleFloorPoint.cs" />
+    <Compile Include="UpdatersInvoke\ChangeWidthAnnotationTag.cs" />
+    <Compile Include="UpdatersInvoke\RegisterUpdater.cs" />
     <Compile Include="OV_Construct\Utilit_3_2Dict_Axis.cs" />
     <Compile Include="OV_Construct\Utilit_3_3Dict_numOV_nearAxes.cs" />
     <Compile Include="OV_Construct\Utilit_3_5Vinosky_ov_type_size.cs" />
