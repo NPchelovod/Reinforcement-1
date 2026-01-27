@@ -24,6 +24,20 @@ using System.Diagnostics;
 
 namespace Reinforcement
 {
+    public enum Panels
+    {
+        Конфигурация,
+        СПДС,
+        СхематичноеАрмирование,
+        ДетальноеАрмирование,
+        Оформление,
+        Выбор,
+        САПР,
+        КРвставки,
+        CopyКубики,
+        Опции,
+        ВолшебнаяKнопка
+    }
     internal class App : IExternalApplication
     {
 
@@ -65,7 +79,7 @@ namespace Reinforcement
 
         //    };
 
-
+        
 
     public Result OnStartup(UIControlledApplication app)
         {

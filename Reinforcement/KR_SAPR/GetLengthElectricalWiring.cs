@@ -163,9 +163,9 @@ namespace Reinforcement
             {
                 
 
-                foreach (KeyValuePair<string, double> entry in dict_answer)
+                foreach (var entry in dict_answer)
                 {
-                    if( entry.Value < 1) { continue; }
+                    if( entry.Value < 0.1) { continue; }
                     el_exist=true ;
                     double dobavka = Math.Round(entry.Value / 1000, 2);
                     sum_all += dobavka;
@@ -180,8 +180,8 @@ namespace Reinforcement
                         messageBuilder.AppendLine($" Суммарная ошибка: {Math.Round(error / 1000, 2)} м.");
                         messageBuilder.AppendLine($" Нераспознанные имена: {neraspozn_name}");
                     }
-                    messageBuilder.AppendLine($" Суммарная длина путей кабелей: {sum_all} м.");
-                    messageBuilder.AppendLine($" Суммарная длина лотков под кабели: {Math.Round(l_lotkov / 1000, 2)} м.");
+                    messageBuilder.AppendLine($" Суммарная длина труб ЭЛ: {sum_all} м.");
+                    messageBuilder.AppendLine($" Суммарная длина линий ЭЛ: {Math.Round(l_lotkov / 1000, 2)} м.");
                 }
             }
 
