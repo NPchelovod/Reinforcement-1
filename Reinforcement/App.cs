@@ -67,7 +67,7 @@ namespace Reinforcement
                 "КР вставки",
                 "Copy / Кубики",
                 "Опции",
-                "Волшебная кнопка"
+                "Сюрприз"
 
             };
 
@@ -105,7 +105,7 @@ namespace Reinforcement
                 "АР панель",
                 "ЭЛ панель",
                 "Опции",
-                "Волшебная кнопка"
+                "Сюрприз"
             };
 
             
@@ -163,7 +163,7 @@ namespace Reinforcement
                         App_Panel_1_92_Opcii.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Волшебная кнопка":
+                    case "Сюрприз":
                         App_Panel_1_91_Toska.AddSplitButton(panel, tabName);
                         break;
 

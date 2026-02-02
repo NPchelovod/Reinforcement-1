@@ -41,10 +41,10 @@ namespace Reinforcement
             //Image OV2 = Properties.Resources.toska2;
             Image OV3 = Properties.Resources.Properties;
             //предполагается тест и так далее
-            App_Helper_Button.AddButtonToPullDownButton(item, "Маскировать", assemblyPath, "Reinforcement.PropertiesMask", "Кнопка для активации маскировки выносок с параметром \"ЕС_ID связанного элемента\"", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Маск", assemblyPath, "Reinforcement.PropertiesMask", "не работает", OV1);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV3);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Переопределить", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку чтобы переопределить семейство к нему относящееся", OV3);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Переоп", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку, затем на аннотацию, чтобы переопределить кнопку на другое семейство", OV3);
 
 
             // Устанавливаем иконку для самой PulldownButton

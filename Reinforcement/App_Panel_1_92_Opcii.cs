@@ -44,7 +44,7 @@ namespace Reinforcement
             App_Helper_Button.AddButtonToPullDownButton(item, "Сюрприз", assemblyPath, "Reinforcement.Toska_1", "!", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV2);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Переопределить", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку чтобы переопределить семейство к нему относящееся", OV3);
+            ///*App_Helper_Button.AddButtonToPullDownButton(item, "Переопределить", assemblyPath, "Reinforcement.PropertiesSbros", "Нажмите на эту кнопку, а затем на любую СПДС кнопку */чтобы переопределить семейство к нему относящееся", OV3);
 
 
             // Устанавливаем иконку для самой PulldownButton
