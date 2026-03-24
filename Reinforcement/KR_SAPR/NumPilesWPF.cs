@@ -13,6 +13,8 @@ namespace Reinforcement
         public int PredelGroup { get; set; }
         public bool UstanNumPile { get; set; }
         public bool UstanUGO { get; set; }
+        public bool WriterPrimech { get; set; } = false;
+
         public bool DoNotRenumberNumberedPiles { get; set; }
         public bool DoNotChangeUGOIfExists { get; set; }
         public string SortCode { get; set; }
@@ -28,9 +30,10 @@ namespace Reinforcement
         // Новая опция - пересоздать все сваи
         public bool RecreateAllPiles { get; set; }
 
+        
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
-            bool currentUstanNumPile, bool currentUstanUGO, bool currentDoNotRenumberNumberedPiles,
+            bool currentUstanNumPile, bool currentUstanUGO ,bool currentDoNotRenumberNumberedPiles,
             bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO,
             bool currentAdjustPilePositions = false, double currentMinDistanceBetweenPiles = 900,
             double currentCoordinateRoundingStep = 25, bool currentRecreateAllPiles = false)
@@ -43,6 +46,7 @@ namespace Reinforcement
             PredelGroup = currentPredelGroup;
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
+            WriterPrimech = false;
             DoNotRenumberNumberedPiles = currentDoNotRenumberNumberedPiles;
             DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists;
             SortCode = currentSortCode;
@@ -73,6 +77,7 @@ namespace Reinforcement
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
+            WriterPrimechCheckBox.IsChecked = WriterPrimech;
             doNotRenumberCheckBox.IsChecked = currentDoNotRenumberNumberedPiles;
             doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists;
         }
@@ -194,6 +199,14 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(ustanUGOPanel);
 
+            // Галочка запись примечание
+            var WriterPrimechPanel = CreateCheckBoxPanel(
+                "Записать примечания ошибок:",
+                WriterPrimech,
+                out WriterPrimechCheckBox,
+                "Записать ошибки"
+            );
+            mainStackPanel.Children.Add(WriterPrimechPanel);
             // Галочка - Не перенумеровывать нумерованные сваи
             var doNotRenumberPanel = CreateCheckBoxPanel(
                 "Не перенумеровывать нумерованные сваи:",
@@ -332,6 +345,7 @@ namespace Reinforcement
 • Шаг по высоте Z: для группировки свай по УГО
 • Лимит свай в КУСТе: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)
 • Код сортировки свай: пользовательский код для порядка сортировки свай (1346)
+  0 - сортировка по УГО (чтобы табл свай была не огромной, бывает полезно группировать по УГО)
   1 - сортировка по Y затем по X
   2 - наоборот, сортировка по X затем по Y
   3 - по типу сваи
@@ -526,6 +540,7 @@ namespace Reinforcement
 
         private CheckBox ustanNumPileCheckBox;
         private CheckBox ustanUGOCheckBox;
+        private CheckBox WriterPrimechCheckBox;
         private CheckBox doNotRenumberCheckBox;
         private CheckBox doNotChangeUGOIfExistsCheckBox;
 
@@ -552,13 +567,13 @@ namespace Reinforcement
                 return;
 
             // Проверка кода сортировки свай
-            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '1', '2', '3', '4', '5', '6', '7', '8' }))
+            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8' }))
                 return;
 
             // Проверка кода сортировки УГО
             if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6' }))
                 return;
-
+            WriterPrimech = WriterPrimechCheckBox.IsChecked ?? false;
             SectorStep = sectorStep;
             SectorStepPile = sectorStepPile;
             SectorStepZ = sectorStepZ;

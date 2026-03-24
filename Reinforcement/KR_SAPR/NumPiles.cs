@@ -24,6 +24,7 @@ namespace Reinforcement
     
     public class PileData : IPileCorrect
     {
+        public int netrogat = 1;//для сортировки нужен всегда пусть будет один
         public Element Pile { get; set; }
         // Реализация интерфейса
         public double initialX { get; set; }
@@ -134,13 +135,14 @@ namespace Reinforcement
         private static double sectorStepZ = 100; // шаг разбивки УГО по высоте
         private static int predelGroup = 51; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
+        public bool WriterPrimech = false;
         private static bool ustanUGO = false;
         private static bool doNotRenumberNumberedPiles = false;
         private static bool doNotChangeUGOIfExist = false;
 
 
 
-        private static string sortCode = "1346"; // тип 2
+        private static string sortCode = "01346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
 
         public Result Execute(
@@ -205,7 +207,7 @@ namespace Reinforcement
                 sectorStepPile = settingsWindow.SectorStepPile;
                 sortCode = settingsWindow.SortCode;
                 sortCodeUGO = settingsWindow.SortCodeUGO;
-
+                WriterPrimech = settingsWindow.WriterPrimech;
                 adjustPilePositions = settingsWindow.AdjustPilePositions;
                 minDistanceBetweenPiles = settingsWindow.MinDistanceBetweenPiles;
                 coordinateRoundingStep = settingsWindow.CoordinateRoundingStep;
@@ -284,8 +286,8 @@ namespace Reinforcement
 
 
             //QuickUGOAudit(doc);
-
-            if (ustanUGO)
+            bool sortPilePoUgo = sortCode.Contains("0");
+            if (ustanUGO || sortPilePoUgo)
             {
                 // Инициализируем кэш типов УГО один раз для этого документа
                 InitializeUgoCache(doc);
@@ -386,7 +388,7 @@ namespace Reinforcement
                         // можно дубли еще посмотреть
                     }
                 }
-                if (doNotChangeUGOIfExist)
+                if (doNotChangeUGOIfExist || sortPilePoUgo)
                 {
                     Parameter UGOParam = pile.LookupParameter(nameYGO);
                     if (UGOParam != null && UGOParam.HasValue)
@@ -561,7 +563,7 @@ namespace Reinforcement
 
             //создаем группы свай
 
-            var ListPilesGroup = IntersectSectors(PropertiesPiles, sectorStep, namePileAndNum, ListNamesPiles, predelGroup).ToList();
+            var ListPilesGroup = IntersectSectors(PropertiesPiles, sectorStep, namePileAndNum, ListNamesPiles, predelGroup, sortPilePoUgo).ToList();
             
 
             //сортировка групп свай
@@ -711,7 +713,7 @@ namespace Reinforcement
                         
 
                         string primeh = kvp.Commit;
-                        if (primeh != "")
+                        if (primeh != "" && WriterPrimech)
                         {
                             //установка примечание
                             SetPileMark(pile, primeh, namePrimech);
@@ -841,7 +843,7 @@ namespace Reinforcement
             }
         }
 
-        private HashSet<PilesGroup> IntersectSectors(HashSet<PileData> PropertiesPiles, double distSector, Dictionary<string, int> namePileAndNum, List<string> ListNamesPiles, int predelGroup)
+        private HashSet<PilesGroup> IntersectSectors(HashSet<PileData> PropertiesPiles, double distSector, Dictionary<string, int> namePileAndNum, List<string> ListNamesPiles, int predelGroup, bool sortPilePoUgo)
         {
             var PropertiesPilesList = PropertiesPiles.ToList();
             
@@ -858,6 +860,8 @@ namespace Reinforcement
                         var pile2 = PropertiesPilesList[j];
 
                         if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
+                        if (sortPilePoUgo && pile1.PilesYGO!= pile2.PilesYGO) { continue; } //Разные УГО в разные части
+
 
 
                         var raznX = Math.Abs(pile2.X - pile1.X);
@@ -1046,9 +1050,10 @@ namespace Reinforcement
             }
 
 
-            IOrderedEnumerable<PilesGroup> sortedList = null;
+
             bool isFirst = true;
 
+            bool firstUGO = false;
 
             bool firstY = false;
             bool firstX = false;
@@ -1065,47 +1070,35 @@ namespace Reinforcement
                 //нумерация свай сверху вниз
                 inversSort = true;
             }
+
+
+
+            IOrderedEnumerable < PilesGroup > sortedList = ListPilesGroup.OrderBy(x => x.netrogat);
             foreach (char codeChar in sortCode)
             {
-
                 switch (codeChar)
                 {
-                    case '1': // сортировка сначала по Y потом по X
-                        {
-                           
-                            if(!firstY&&!firstX)
+                    case '0':
+                    {
                             {
-                                firstY=true;
-                            }
-                            else if(firstX)
-                            {
-                                XY = true;
-                                break;
+                               sortedList = sortedList.ThenBy(g => g.PilesYGO);
                             }
 
-                            if (isFirst)
+                            break;
+                    }
+                    case '1': // сортировка сначала по Y потом по X
+                        {
+
+                           
+                            if (!inversSort)
                             {
-                                if (!inversSort)
-                                { 
-                                    sortedList = ListPilesGroup.OrderBy(g => a ? g.YtopS2 : g.CenterS2.yS2); 
-                                }
-                                else
-                                {
-                                    sortedList = ListPilesGroup.OrderByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                                }
-                                isFirst = false;
+                                sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
                             }
                             else
                             {
-                                if (!inversSort)
-                                {
-                                    sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                                }
-                                else
-                                {
-                                    sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                                }
+                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
                             }
+                            
                             //sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                             // а по x мы можем сортировать по секетору 3
                             sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
@@ -1115,27 +1108,9 @@ namespace Reinforcement
 
                     case '2': // сортировка сначала по X потом по Y
                         {
+
+                             sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                             
-
-                            if (!firstY && !firstX)
-                            {
-                                firstX = true;
-                            }
-                            else if (firstY)
-                            {
-                                XY = true;
-                                break;
-                            }
-
-                            if (isFirst)
-                            {
-                                sortedList = ListPilesGroup.OrderBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-                                isFirst = false;
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-                            }
                             //sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
                             //а по y мы можем сортировать по сектору 3
                             if (!inversSort)
@@ -1147,41 +1122,27 @@ namespace Reinforcement
                                 sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
                             }
 
-
-
-
                         }
                         break;
 
                     case '3': // Ytop (по убыванию)
-                        if (isFirst)
-                        {
-                            sortedList = ListPilesGroup.OrderByDescending(g => g.kolVoPileName);
-                            isFirst = false;
-                        }
-                        else
-                        {
-                            sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
-                        }
+                        
+                        
+                        sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
+                        
                         break;
 
                     case '4': // Xleft
-                        if (isFirst)
-                        {
-                            sortedList = ListPilesGroup.OrderBy(g => g.numName);
-                            isFirst = false;
-                        }
-                        else
-                        {
-                            sortedList = sortedList.ThenBy(g => g.numName);
-                        }
+                        
+                        sortedList = sortedList.ThenBy(g => g.numName);
                         break;
+
                 }
-
-
             }
-            //сортировка глуюбже для глубокой расстановке
 
+
+
+            //сортировка глуюбже для глубокой расстановке
 
             if (firstY)
             {
@@ -1202,9 +1163,6 @@ namespace Reinforcement
                 sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
                 //sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
             }
-
-            
-
 
             return sortedList?.ToList() ?? ListPilesGroup.ToList();
 
@@ -1398,6 +1356,7 @@ namespace Reinforcement
         // Метод для установки марки сваи
         private bool SetPileMark(Element pile, string markValue, List<string> parameterNames)
         {
+            if (parameterNames.Count == 0) { return false; }
             Parameter markParam = null;
 
             foreach (var paramName in parameterNames)
@@ -1427,7 +1386,7 @@ namespace Reinforcement
         // 2. МЕТОД ДЛЯ ИНИЦИАЛИЗАЦИИ (ЗАПОЛНЕНИЯ) СЛОВАРЯ
         private static void InitializeUgoCache(Document doc, string prefix="УГО_")
         {
-            if (_ugoTypeCache != null) return; // Уже инициализирован
+            //if (_ugoTypeCache != null) return; // Уже инициализирован
 
             _ugoTypeCache = new Dictionary<string, ElementId>();
 
@@ -1962,7 +1921,7 @@ namespace Reinforcement
         private static int _numPilesGroup = 0;
 
         public int numPiles = 0;
-
+        public int netrogat = 1;//нужна для сортировки
 
         public HashSet<PileData> Piles = new HashSet<PileData>();
 
@@ -2001,7 +1960,7 @@ namespace Reinforcement
         public int numCreate = 0;
 
         public int kolVoPileName = 1;
-
+        public int PilesYGO => Piles.FirstOrDefault()?.PilesYGO ?? 0;
 
         public PilesGroup()
         {

@@ -278,168 +278,177 @@ namespace Reinforcement
 
                         foreach (var wall in wallList)
                         {
-                            List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
-                            EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
+                            try
+                            {
+                                List<Dimension> dimensions = new List<Dimension>();//create list of dimensions
+                                EdgeArray edges = wall.get_Geometry(optFloor).OfType<Solid>().Last().Edges; //get wall edges
 
 
 
-                            //creating dims X direction
-                            List<Line> edgeLinesY = new List<Line>();
-                            List<Edge> wallEdgesY = new List<Edge>();
-                            ReferenceArray referenceArray = new ReferenceArray();
-                            Line edgeLineX = null;
-                            foreach (Edge edge in edges)
-                            {
-                                Line edgeLine = edge.AsCurve() as Line;
-                                var directionY = Math.Abs(edgeLine.Direction.Y);
-                                var directionX = Math.Abs(edgeLine.Direction.X);
-                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
+                                //creating dims X direction
+                                List<Line> edgeLinesY = new List<Line>();
+                                List<Edge> wallEdgesY = new List<Edge>();
+                                ReferenceArray referenceArray = new ReferenceArray();
+                                Line edgeLineX = null;
+                                foreach (Edge edge in edges)
                                 {
-                                    edgeLinesY.Add(edgeLine);
-                                    wallEdgesY.Add(edge);
-                                    string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
-                                    int lastIndex = stableReference.LastIndexOf(':');
-                                    stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
-                                    var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
-                                    referenceArray.Insert(newStableReference, referenceArray.Size);
-                                }
-                                else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
-                                {
-                                    edgeLineX = edgeLine;
-                                }
-                            }
-                            if (referenceArray.Size == 0)
-                            {
-                                continue;
-                            }
-                            bool isAllDisjoint = YGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineX, out var res) == SetComparisonResult.Disjoint);
-                            if (isAllDisjoint)
-                            {
-                                var wallLocation = wall.Location as LocationCurve;
-                                var wallLocationX = (wallLocation.Curve.GetEndPoint(0).X + wallLocation.Curve.GetEndPoint(1).X) / 2;
-                                var nearestGrid = YGridList
-                                    .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).X - wallLocationX))
-                                    .First();
-                                int position = nearestGrid.Curve.GetEndPoint(0).X < wallLocationX ? 0 : 1;
-                                referenceArray.Insert(new Reference(nearestGrid), position);
-                            }
-                            else
-                            {
-                                foreach (Grid grid in YGridList)
-                                {
-                                    Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
-                                    var intersectX = gridCurve.Intersect(edgeLineX, out var res);
-                                    int i = 0;
-                                    if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                    Line edgeLine = edge.AsCurve() as Line;
+                                    var directionY = Math.Abs(edgeLine.Direction.Y);
+                                    var directionX = Math.Abs(edgeLine.Direction.X);
+                                    if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
                                     {
-                                       referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
+                                        edgeLinesY.Add(edgeLine);
+                                        wallEdgesY.Add(edge);
+                                        string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
+                                        int lastIndex = stableReference.LastIndexOf(':');
+                                        stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
+                                        var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
+                                        referenceArray.Insert(newStableReference, referenceArray.Size);
                                     }
-                                    else if (intersectX == SetComparisonResult.Overlap)
+                                    else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
                                     {
-                                        foreach (Line edge in edgeLinesY)
+                                        edgeLineX = edgeLine;
+                                    }
+                                }
+                                if (referenceArray.Size == 0)
+                                {
+                                    continue;
+                                }
+                                bool isAllDisjoint = YGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineX, out var res) == SetComparisonResult.Disjoint);
+                                if (isAllDisjoint)
+                                {
+                                    var wallLocation = wall.Location as LocationCurve;
+                                    var wallLocationX = (wallLocation.Curve.GetEndPoint(0).X + wallLocation.Curve.GetEndPoint(1).X) / 2;
+                                    var nearestGrid = YGridList
+                                        .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).X - wallLocationX))
+                                        .First();
+                                    int position = nearestGrid.Curve.GetEndPoint(0).X < wallLocationX ? 0 : 1;
+                                    referenceArray.Insert(new Reference(nearestGrid), position);
+                                }
+                                else
+                                {
+                                    foreach (Grid grid in YGridList)
+                                    {
+                                        Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
+                                        var intersectX = gridCurve.Intersect(edgeLineX, out var res);
+                                        int i = 0;
+                                        if (intersectX == SetComparisonResult.Overlap && !edgeLinesY.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
                                         {
-                                            if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
-                                            {
-                                                referenceArray.set_Item(i, new Reference(grid));
-                                                break;
-                                            }
-                                            i++;
+                                            referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
                                         }
-                                    }
-                                }//check for intersection between walls and grids, and find nearest grid to wall
-                            }
-
-                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
-                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
-                            lineDim = Line.CreateBound(endpoint1, endpoint2);
-                            referenceArray.ReverseIterator();
-                            var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            dimensions.Add(dimension);
-                            
-
-
-
-
-
-                            //creating dims Y direction
-                            List<Line> edgeLinesX = new List<Line>();
-                            List<Edge> wallEdgesX = new List<Edge>();
-                            referenceArray = new ReferenceArray();
-                            Line edgeLineY = null;
-                            foreach (Edge edge in edges)
-                            {
-                                Line edgeLine = edge.AsCurve() as Line;
-                                var directionY = Math.Abs(edgeLine.Direction.Y);
-                                var directionX = Math.Abs(edgeLine.Direction.X);
-                                if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
-                                {
-                                    edgeLinesX.Add(edgeLine);
-                                    wallEdgesX.Add(edge);
-                                    string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
-                                    int lastIndex = stableReference.LastIndexOf(':');
-                                    stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
-                                    var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
-                                    referenceArray.Insert(newStableReference, referenceArray.Size);
-                                }
-                                else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
-                                {
-                                    edgeLineY = edgeLine;
-                                }
-                            }
-                            if (referenceArray.Size == 0)
-                            {
-                                continue;
-                            }
-
-                            isAllDisjoint = XGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineY, out var res) == SetComparisonResult.Disjoint);
-                            if (isAllDisjoint)
-                            {
-                                var wallLocation = wall.Location as LocationCurve;
-                                var wallLocationY = (wallLocation.Curve.GetEndPoint(0).Y + wallLocation.Curve.GetEndPoint(1).Y) / 2;
-                                var nearestGrid = XGridList
-                                    .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).Y - wallLocationY))
-                                    .First();
-                                int position = nearestGrid.Curve.GetEndPoint(0).Y < wallLocationY ? 0 : 1;
-                                referenceArray.Insert(new Reference(nearestGrid), position);
-                            }
-                            else
-                            {
-                                foreach (Grid grid in XGridList)
-                                {
-                                    Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
-                                    var intersectY = gridCurve.Intersect(edgeLineY, out var res);
-                                    int i = 0;
-                                    if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
-                                    {
-                                        referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
-                                    }
-                                    else if (intersectY == SetComparisonResult.Overlap)
-                                    {
-                                        foreach (Line edge in edgeLinesX)
+                                        else if (intersectX == SetComparisonResult.Overlap)
                                         {
-                                            if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                            foreach (Line edge in edgeLinesY)
                                             {
-                                                referenceArray.set_Item(i, new Reference(grid));
-                                                break;
+                                                if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                                {
+                                                    referenceArray.set_Item(i, new Reference(grid));
+                                                    break;
+                                                }
+                                                i++;
                                             }
-                                            i++;
                                         }
+                                    }//check for intersection between walls and grids, and find nearest grid to wall
+                                }
+
+                                endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
+                                endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Max.X, wall.get_BoundingBox(activeView).Min.Y - RevitAPI.ToFoot(7 * viewScale), edgeLinesY.First().Origin.Z);
+                                lineDim = Line.CreateBound(endpoint1, endpoint2);
+                                referenceArray.ReverseIterator();
+                                var dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
+                                dimensions.Add(dimension);
+
+
+
+
+
+
+                                //creating dims Y direction
+                                List<Line> edgeLinesX = new List<Line>();
+                                List<Edge> wallEdgesX = new List<Edge>();
+                                referenceArray = new ReferenceArray();
+                                Line edgeLineY = null;
+                                foreach (Edge edge in edges)
+                                {
+                                    Line edgeLine = edge.AsCurve() as Line;
+                                    var directionY = Math.Abs(edgeLine.Direction.Y);
+                                    var directionX = Math.Abs(edgeLine.Direction.X);
+                                    if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionX == 1)
+                                    {
+                                        edgeLinesX.Add(edgeLine);
+                                        wallEdgesX.Add(edge);
+                                        string stableReference = edge.Reference.ConvertToStableRepresentation(doc);
+                                        int lastIndex = stableReference.LastIndexOf(':');
+                                        stableReference = stableReference.Substring(0, ++lastIndex) + "SURFACE";
+                                        var newStableReference = Reference.ParseFromStableRepresentation(doc, stableReference);
+                                        referenceArray.Insert(newStableReference, referenceArray.Size);
                                     }
-                                }//check for intersection between walls and grids, and find nearest grid to wall
+                                    else if (edge.Reference.ElementReferenceType == ElementReferenceType.REFERENCE_TYPE_CUT_EDGE && directionY == 1)
+                                    {
+                                        edgeLineY = edgeLine;
+                                    }
+                                }
+                                if (referenceArray.Size == 0)
+                                {
+                                    continue;
+                                }
+
+                                isAllDisjoint = XGridList.TrueForAll(x => x.get_Geometry(opt).OfType<Line>().First().Intersect(edgeLineY, out var res) == SetComparisonResult.Disjoint);
+                                if (isAllDisjoint)
+                                {
+                                    var wallLocation = wall.Location as LocationCurve;
+                                    var wallLocationY = (wallLocation.Curve.GetEndPoint(0).Y + wallLocation.Curve.GetEndPoint(1).Y) / 2;
+                                    var nearestGrid = XGridList
+                                        .OrderBy(x => Math.Abs(x.Curve.GetEndPoint(0).Y - wallLocationY))
+                                        .First();
+                                    int position = nearestGrid.Curve.GetEndPoint(0).Y < wallLocationY ? 0 : 1;
+                                    referenceArray.Insert(new Reference(nearestGrid), position);
+                                }
+                                else
+                                {
+                                    foreach (Grid grid in XGridList)
+                                    {
+                                        Line gridCurve = grid.get_Geometry(opt).OfType<Line>().First();
+                                        var intersectY = gridCurve.Intersect(edgeLineY, out var res);
+                                        int i = 0;
+                                        if (intersectY == SetComparisonResult.Overlap && !edgeLinesX.Any(x => gridCurve.Intersect(x) == SetComparisonResult.Equal))
+                                        {
+                                            referenceArray.Insert(new Reference(grid), referenceArray.Size / 2);
+                                        }
+                                        else if (intersectY == SetComparisonResult.Overlap)
+                                        {
+                                            foreach (Line edge in edgeLinesX)
+                                            {
+                                                if (gridCurve.Intersect(edge) == SetComparisonResult.Equal)
+                                                {
+                                                    referenceArray.set_Item(i, new Reference(grid));
+                                                    break;
+                                                }
+                                                i++;
+                                            }
+                                        }
+                                    }//check for intersection between walls and grids, and find nearest grid to wall
+                                }
+                                endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
+                                endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
+                                lineDim = Line.CreateBound(endpoint1, endpoint2);
+                                dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
+                                dimensions.Add(dimension);
+
+                                foreach (Dimension dim in dimensions)
+                                {
+                                    MoveTextInDimension.Move(dim, viewScale, activeView);
+                                }
+
+                                dimensions.Clear();
+
                             }
-                            endpoint1 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Min.Y, edgeLinesX.First().Origin.Z);
-                            endpoint2 = new XYZ(wall.get_BoundingBox(activeView).Min.X - RevitAPI.ToFoot(7 * viewScale), wall.get_BoundingBox(activeView).Max.Y, edgeLinesX.First().Origin.Z);
-                            lineDim = Line.CreateBound(endpoint1, endpoint2);
-                            dimension = doc.Create.NewDimension(activeView, lineDim, referenceArray); //create dimension
-                            dimensions.Add(dimension);
-                            
-                            foreach (Dimension dim in dimensions)
+                            catch
                             {
-                                MoveTextInDimension.Move(dim, viewScale, activeView);
+                                //скорее стена Дж не отдельно стоит а вместе с кем-то углом)!
                             }
-                            
-                            dimensions.Clear();
                         }
+                            
                         t2.Commit();
                     }
                     tg.Assimilate();
@@ -448,7 +457,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 //Код в случае ошибки
-                form.MessageBox.Show("Чет пошло не так!\n" + ex.Message);
+                form.MessageBox.Show("Чет пошло не так (скорее стена Дж не отдельно стоит а вместе с кем-то углом)!\n" + ex.Message);
                 return Result.Failed;
             }
             return Result.Succeeded;

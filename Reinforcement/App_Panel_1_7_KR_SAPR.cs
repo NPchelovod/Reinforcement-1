@@ -30,7 +30,7 @@ namespace Reinforcement
              "В Марка и отметки вписывается, например, (Пм3 на отм. +3,560) - это нужно только для формирования названий\n " +
              "В префикс вписывается 21, 22 и т.д, для организации видов\n По выбранному в списке уровню создаются подложки", panelSAPR);
             App_Helper_Button.CreateButton("Длина линий (электроразводки)", "Длина труб\nэлектроразводки", "Reinforcement.GetLengthElectricalWiring", Properties.Resources.ElectricalWiring,
-             "Позволяет рассчитать длину труб, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n Открыть вид с аннотационными линиями, для электрики линии должны быть вида <ЭЛ_d25x2, d40>",
+             "Позволяет рассчитать длину труб или просто линий, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n Открыть вид с аннотационными линиями, для электрики линии должны быть вида <ЭЛ_d25x2, d40>\n распознает диаметры 25 и 40 и кол-во труб d25 - 2 шт., d40 - 1шт.",
             panelSAPR);
 
             var data = new SplitButtonData(tabName, tabName);
@@ -52,9 +52,10 @@ namespace Reinforcement
             Image OV2 = Properties.Resources.ES_PilesFromDwg;
             
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG подложки \n\n на виде должны быть расчетная подложка DWG свай в виде точек", OV1);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Свай номера", assemblyPath, "Reinforcement.NumPiles", "Номера свай", OV2);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Свай номера", assemblyPath, "Reinforcement.NumPiles", "На виде должны быть сваи,\n\n позволяет нумеромать сваи и выставлять УГО", OV2);
+
 
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
