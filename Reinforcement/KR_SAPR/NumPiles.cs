@@ -860,7 +860,8 @@ namespace Reinforcement
                         var pile2 = PropertiesPilesList[j];
 
                         if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
-                        if (sortPilePoUgo && pile1.PilesYGO!= pile2.PilesYGO) { continue; } //Разные УГО в разные части
+
+                        if ( pile1.PilesYGO!= pile2.PilesYGO) { continue; } //(sortPilePoUgo && Разные УГО в разные части
 
 
 

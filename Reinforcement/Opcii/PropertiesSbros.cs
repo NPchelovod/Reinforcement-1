@@ -15,6 +15,7 @@ namespace Reinforcement
                 ref string message,
                 ElementSet elements)
             {
+                RevitAPI.Initialize(commandData);
                 //Utilit_1_1_Depth_Seach.ResetNamesParam=true;
                 ChangeWidthAnnotationTag.ChangeMaskField = !ChangeWidthAnnotationTag.ChangeMaskField;
                 return Result.Succeeded;

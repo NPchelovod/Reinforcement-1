@@ -65,7 +65,8 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "КР вставки",
-                "Copy / Кубики",
+                "Copy/Кубики",
+                "Импорт/Экспорт",
                 "Опции",
                 "Сюрприз"
 
@@ -101,6 +102,7 @@ namespace Reinforcement
                 "САПР",
                 "КР вставки",
                 "Copy / Кубики",
+                "Импорт/Экспорт",
                 "ОВ плит",
                 "АР панель",
                 "ЭЛ панель",
@@ -148,6 +150,12 @@ namespace Reinforcement
                     case "Copy / Кубики":
                         App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
                         break;
+
+                    case "Импорт/Экспорт":
+                        App_Panel_1_81_KR_Export.AddSplitButton(panel, tabName);
+                        break;
+
+
                     case "ОВ плит":
                         App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
                         break;

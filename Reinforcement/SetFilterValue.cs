@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using Reinforcement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace SetFilterValue
         static AddInId addinId = new AddInId(new Guid("80E287DF-4399-4DA1-938E-95548C0B6DAF"));
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             UIDocument uidoc = commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
             ICollection<ElementId> selectedIds = uidoc.Selection.GetElementIds();

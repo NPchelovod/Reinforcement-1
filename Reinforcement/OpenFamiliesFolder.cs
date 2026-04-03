@@ -24,6 +24,7 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             // Укажите путь к папке, которую вы хотите открыть
             string folderPath = @"Y:\Revit\_Семейства";
             string arguments = "\"" + folderPath + "\"";

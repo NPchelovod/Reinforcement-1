@@ -13,6 +13,7 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             try
             {
                 // URL с кириллическими символами (будет автоматически преобразован)

@@ -39,6 +39,7 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             UIDocument uiDocument = commandData.Application.ActiveUIDocument;
             Document doc = uiDocument.Document;
             Autodesk.Revit.DB.View activeView = uiDocument.ActiveView;

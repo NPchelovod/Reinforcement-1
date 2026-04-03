@@ -32,6 +32,7 @@ namespace Reinforcement
         
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;

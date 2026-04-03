@@ -44,7 +44,7 @@ namespace Reinforcement
         public HashSet<string> Piles = new HashSet<string>()
         {
             //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
-            "С140.30-С", "Буронабивная d"
+            "С140.30-С","С 70.30-9", "Буронабивная d"
         };
 
 
@@ -59,16 +59,23 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
 
             //FilteredElementCollector  FamNames = new FilteredElementCollector(doc);
+            ElementTypeOrSymbol Type_seach = ElementTypeOrSymbol.ElementType;
+            var Seacher = HelperSeach.GetExistFamily(Piles, Type_seach);
+            
+            //Piles = Seacher.PossibleNamesFamilySymbol;
 
-            var Seacher = HelperSeach.GetExistFamily(Piles, commandData);
-            FamilySymbol pile = Seacher.pile as FamilySymbol;
-            Piles = Seacher.PossibleNamesFamilySymbol;
-
+            if (Seacher == null)
+            {
+                MessageBox.Show("Семейство не загружено");
+                return Result.Failed;
+            }
+            FamilySymbol pile = Seacher as FamilySymbol;
             if (pile == null)
             {
                 MessageBox.Show("Семейство не загружено");
                 return Result.Failed;
             }
+
 
             ForgeTypeId units = UnitTypeId.Millimeters;
             ForgeTypeId units2 = UnitTypeId.Feet;
@@ -90,7 +97,7 @@ namespace Reinforcement
             while (iter2 < 2)
             {
                 iter2++;
-                while (iter < 7)
+                while (iter < 3)
                 {
                     try //ловим ошибку
                     {

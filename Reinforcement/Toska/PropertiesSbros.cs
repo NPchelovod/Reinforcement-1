@@ -14,7 +14,8 @@ namespace Reinforcement
                 ref string message,
                 ElementSet elements)
             {
-                Utilit_1_1_Depth_Seach.ResetNamesParam=true;
+            RevitAPI.Initialize(commandData);
+            HelperSeach.ResetNamesParam=true;
 
                 return Result.Succeeded;
             }

@@ -17,7 +17,7 @@ namespace Reinforcement
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
 
-
+            RevitAPI.Initialize(commandData);
             ExecuteLogic(commandData);
             return Result.Succeeded;
         }

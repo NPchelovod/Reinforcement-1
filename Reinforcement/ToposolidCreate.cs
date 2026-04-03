@@ -23,6 +23,7 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;

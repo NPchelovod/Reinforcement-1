@@ -24,6 +24,7 @@ namespace Reinforcement.CopySelectedSchedules
             ref string message,
             ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;

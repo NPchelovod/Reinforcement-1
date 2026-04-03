@@ -24,19 +24,19 @@ namespace Reinforcement
             ref string message,
             ElementSet elements)
         {
-
+            RevitAPI.Initialize(commandData);
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
 
             Document doc = uidoc.Document;
 
-           
 
-            string Type_seach = "Symbols";
+
+            ElementTypeOrSymbol Type_seach = ElementTypeOrSymbol.Symbol;
 
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(doc, uidoc, list_Name, Type_seach);
+                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
             }
             catch (Exception)
             {

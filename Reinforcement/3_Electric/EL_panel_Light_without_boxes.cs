@@ -36,7 +36,7 @@ namespace Reinforcement
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            
+            RevitAPI.Initialize(commandData);
             bool r= EL_panel_step0_allCommand.CopyTask(commandData, ref message, elements, elementCategories, replace_cubics);
 
 

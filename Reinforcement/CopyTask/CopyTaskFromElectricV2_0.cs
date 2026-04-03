@@ -37,7 +37,7 @@ namespace Reinforcement
             bool r = EL_panel_step0_allCommand.CopyTask(commandData, ref message, elements, elementCategories, replace_cubics);
 
             // просто скопировали коробки теперь надо удалить и создать этажи
-
+            RevitAPI.Initialize(commandData);
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;

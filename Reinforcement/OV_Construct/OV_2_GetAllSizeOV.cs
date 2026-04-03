@@ -16,6 +16,7 @@ namespace Reinforcement
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             if (!ExecuteLogic(commandData))
             {
                 TaskDialog.Show("Все типоразмеры шахт ОВ", "Список пуст");

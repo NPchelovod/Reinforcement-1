@@ -19,6 +19,7 @@ namespace Reinforcement
         static AddInId addinId = new AddInId(new Guid("424E29F8-20DE-49CB-8CF0-8627879F12C5"));
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             OV_Construct_All_Dictionary.ClearAll(); // чистим всё
             ExecuteLogic(commandData, ref message, elements);
 

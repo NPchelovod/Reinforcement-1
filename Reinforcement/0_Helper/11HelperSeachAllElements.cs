@@ -39,7 +39,7 @@ namespace Reinforcement
             UIDocument uiDoc = RevitAPI.UiDocument;
             FilteredElementCollector collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
             HashSet<Element> resultElements = new HashSet<Element>();
-            int maxAttempts = 5;
+            int maxAttempts = 4;
             int attempt = 0;
 
             while (attempt < maxAttempts)
