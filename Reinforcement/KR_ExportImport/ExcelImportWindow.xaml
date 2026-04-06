@@ -1,0 +1,54 @@
+﻿<Window x:Class="Reinforcement.ExcelImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Импорт/Экспорт данных Excel - Спецификация Revit" 
+        Height="420" Width="675" 
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Путь к файлу (для импорта) -->
+        <Label Grid.Row="0" Grid.Column="0" Content="Excel файл:" VerticalAlignment="Center" Margin="0,5"/>
+        <TextBox x:Name="FilePathTextBox" Grid.Row="0" Grid.Column="1" Margin="5,5" IsReadOnly="True" Background="LightGray"/>
+        <Button x:Name="BrowseButton" Grid.Row="0" Grid.Column="2" Content="Обзор..." Width="80" Margin="5,5" Click="BrowseButton_Click"/>
+
+        <!-- Выбор листа (для импорта) -->
+        <Label Grid.Row="1" Grid.Column="0" Content="Excel Лист:" VerticalAlignment="Center" Margin="0,5"/>
+        <ComboBox x:Name="SheetComboBox" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="5,5" IsEnabled="False"/>
+
+        <!-- Выбор спецификации Revit -->
+        <Label Grid.Row="2" Grid.Column="0" Content="Revit Спецификация:" VerticalAlignment="Center" Margin="0,5"/>
+        <ComboBox x:Name="ScheduleComboBox" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="5,5" IsEnabled="False"/>
+
+        <!-- Статус / сообщения -->
+        <TextBlock x:Name="StatusTextBlock" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="5,5" Foreground="Gray" TextWrapping="Wrap"/>
+
+        <!-- Кнопки действий -->
+        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
+            <Button x:Name="ImportDataButton" Content="Импорт данных (Excel → Revit)" Width="170" Margin="0,0,10,0" IsEnabled="False" Click="ImportDataButton_Click"/>
+            <Button x:Name="ExportDataButton" Content="Экспорт данных (Revit → Excel)" Width="170" Margin="0,0,10,0" IsEnabled="False" Click="ExportDataButton_Click"/>
+            <Button x:Name="WriteDataButton" Content="Записать в спецификацию" Width="150" Margin="0,0,10,0" IsEnabled="False" Click="WriteDataButton_Click"/>
+            <Button x:Name="CancelButton" Content="Отмена" Width="80" Click="CancelButton_Click"/>
+        </StackPanel>
+
+        <!-- Подсказка -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="5,15,5,5" FontSize="11" Foreground="Gray" TextWrapping="Wrap">
+            * Импорт: сначала выберите Excel-файл и лист, затем нажмите «Импорт данных». После этого нажмите «Записать в спецификацию».<LineBreak/>
+            * Экспорт: выберите спецификацию Revit, и укажите место сохранения Excel-файла и лист.
+        </TextBlock>
+    </Grid>
+</Window>

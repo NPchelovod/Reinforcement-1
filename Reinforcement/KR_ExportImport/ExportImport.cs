@@ -14,16 +14,28 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class ExportImport : IExternalCommand
     {
-
-
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            RevitAPI.Initialize(commandData);
+            RevitAPI.Initialize(commandData); // ваш существующий код инициализации
 
-            return Result.Succeeded;
+            // Создаём и показываем окно выбора Excel
+            var excelWindow = new ExcelImportWindow();
+            bool? result = excelWindow.ShowDialog();
+
+            if (result == true)
+            {
+                string filePath = excelWindow.SelectedFilePath;
+                string sheetName = excelWindow.SelectedSheetName;
+
+                // TODO: здесь вызовите метод формирования спецификации из выбранного листа
+                // Например: CreateSpecificationFromExcel(filePath, sheetName);
+                TaskDialog.Show("Успех", $"Выбран файл: {filePath}\nЛист: {sheetName}");
+                return Result.Succeeded;
+            }
+            else
+            {
+                return Result.Cancelled;
+            }
         }
     }
-}
+ }
