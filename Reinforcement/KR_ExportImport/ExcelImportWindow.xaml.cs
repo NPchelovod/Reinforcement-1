@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Microsoft.Win32;
 using Spire.Xls;
@@ -22,12 +23,17 @@ namespace Reinforcement
             InitializeComponent();
             LoadSchedules();
         }
+
+
+
+        private Dictionary<string, ViewSchedule> Specifications = new Dictionary<string, ViewSchedule>();
         // Загрузка списка спецификаций из текущего документа Revit
         private void LoadSchedules()
         {
             try
             {
-                ExportDataButton.IsEnabled = true;
+                
+                Specifications.Clear();
 
                 Document doc = RevitAPI.Document;
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -42,12 +48,19 @@ namespace Reinforcement
                 foreach (var schedule in schedules)
                 {
                     ScheduleComboBox.Items.Add(schedule.Name);
+                    Specifications[schedule.Name] = schedule;
                 }
+
+                //затем добавляем пользовательские спецухм
+
 
                 if (ScheduleComboBox.Items.Count > 0)
                 {
-                    ScheduleComboBox.SelectedIndex = 0;
                     ScheduleComboBox.IsEnabled = true;
+                    ScheduleComboBox.SelectedIndex = 0;
+
+                    ExportDataButton.IsEnabled = true;
+                    ImportDataButton.IsEnabled = true;
                 }
                 else
                 {
@@ -82,8 +95,8 @@ namespace Reinforcement
                 StatusTextBlock.Text = "Загрузка списка листов...";
                 SheetComboBox.Items.Clear();
                 SheetComboBox.IsEnabled = false;
-                ImportDataButton.IsEnabled = false;
-                WriteDataButton.IsEnabled = false;
+                
+                
 
                 using (Workbook workbook = new Workbook())
                 {
@@ -103,10 +116,10 @@ namespace Reinforcement
 
                     if (SheetComboBox.Items.Count > 0)
                     {
+                        
                         SheetComboBox.SelectedIndex = 0;
                         SheetComboBox.IsEnabled = true;
-                        ImportDataButton.IsEnabled = true;
-                        ExportDataButton.IsEnabled = true;
+                       
                     }
 
                     StatusTextBlock.Text = $"Найдено листов: {worksheets.Count}. Нажмите «Импорт данных» для загрузки.";
@@ -116,14 +129,23 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 StatusTextBlock.Text = $"Ошибка чтения файла: {ex.Message}";
-                SheetComboBox.IsEnabled = false;
-                ImportDataButton.IsEnabled = false;
+              
             }
         }
 
 
-        private  ExcellLoadData excellLoadData = null;
+       
+       
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        private ExcellLoadData excellLoadData = null;
         // Импорт данных из выбранного листа Excel в DataTable
+        // Запись данных в выбранную спецификацию Revit
         private void ImportDataButton_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FilePathTextBox.Text) || SheetComboBox.SelectedItem == null)
@@ -135,33 +157,20 @@ namespace Reinforcement
             SelectedFilePath = FilePathTextBox.Text;
 
             SelectedSheetName = SheetComboBox.SelectedItem.ToString();
-           
+
 
             try
             {
                 //загрузка данных
                 excellLoadData = new ExcellLoadData(SelectedFilePath, SelectedSheetName);
 
-                int c = 0;
-                WriteDataButton.IsEnabled = true;
             }
             catch (Exception ex)
             {
                 StatusTextBlock.Text = $"Ошибка импорта данных: {ex.Message}";
-                WriteDataButton.IsEnabled = false;
+
             }
-        }
 
-        
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
-            Close();
-        }
-
-        // Запись данных в выбранную спецификацию Revit
-        private void WriteDataButton_Click(object sender, RoutedEventArgs e)
-        {
             if (excellLoadData == null || excellLoadData.ValuesCorrect.Count == 0)
             {
                 MessageBox.Show("Нет импортированных данных. Сначала выполните «Импорт данных».", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -174,19 +183,19 @@ namespace Reinforcement
                 return;
             }
             Document doc = RevitAPI.Document;
-            string scheduleName = ScheduleComboBox.SelectedItem.ToString();
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            ViewSchedule targetSchedule = collector
-                .OfClass(typeof(ViewSchedule))
-                .Cast<ViewSchedule>()
-                .FirstOrDefault(vs => vs.Name == scheduleName && vs.IsTemplate == false);
 
-            if (targetSchedule == null)
+            string scheduleName = ScheduleComboBox.SelectedItem.ToString();
+
+            if (scheduleName!=null && Specifications.TryGetValue(scheduleName, out ViewSchedule schedule) && schedule != null && schedule.IsTemplate == false)
+            {
+            }
+            else
             {
                 MessageBox.Show("Выбранная спецификация не найдена в проекте.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
+           
             //SelectedSchedule = targetSchedule;
 
             // Здесь ваша логика переноса данных из _excelData в спецификацию
@@ -196,8 +205,11 @@ namespace Reinforcement
             {
                 // TODO: реализовать запись данных в спецификацию
                 // Например, для каждой строки DataTable создавать элемент и заполнять параметры.
-                DialogResult = true;
-                Close();
+                var importClass = new ImportExcel();
+                importClass.AddManualHeaderRow(schedule, excellLoadData);
+               
+                MessageBox.Show($"Данные спецификации успешно импортированы в :{scheduleName}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+
             }
             catch (Exception ex)
             {
@@ -206,15 +218,19 @@ namespace Reinforcement
         }
 
 
+        
+        private void WriterSpecData(ViewSchedule schedule)
+        {
+            //мы добавляем к строкам строки
+
+        }
 
 
 
 
 
 
-
-
-
+        private void InoneButton_Click(object sender, RoutedEventArgs e) { }
 
         // ========== ЭКСПОРТ ДАННЫХ ИЗ SPECIFICATION REVIT В EXCEL ==========
         private void ExportDataButton_Click(object sender, RoutedEventArgs e)
@@ -224,19 +240,23 @@ namespace Reinforcement
                 MessageBox.Show("Выберите спецификацию Revit для экспорта.", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+
+            
+
             Document doc = RevitAPI.Document;
             string scheduleName = ScheduleComboBox.SelectedItem.ToString();
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            ViewSchedule schedule = collector
-                .OfClass(typeof(ViewSchedule))
-                .Cast<ViewSchedule>()
-                .FirstOrDefault(vs => vs.Name == scheduleName && vs.IsTemplate == false);
-
-            if (schedule == null)
+            
+            
+            
+            if (scheduleName != null && Specifications.TryGetValue(scheduleName, out ViewSchedule schedule) && schedule != null && schedule.IsTemplate == false)
             {
-                MessageBox.Show("Спецификация не найдена.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else
+            {
+                MessageBox.Show("Выбранная спецификация не найдена в проекте.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+            
 
             // Диалог сохранения файла
             SaveFileDialog saveDialog = new SaveFileDialog
@@ -262,7 +282,7 @@ namespace Reinforcement
                 MessageBox.Show($"Ошибка при экспорте: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+        
         private void ExportScheduleToExcel(ViewSchedule schedule, string filePath)
         {
             // Получаем данные спецификации
@@ -271,6 +291,10 @@ namespace Reinforcement
             // Получаем секции: заголовки и тело
             TableSectionData headerSection = tableData.GetSectionData(SectionType.Header);
             TableSectionData bodySection = tableData.GetSectionData(SectionType.Body);
+
+            //у заголовка ищем 
+            int columnCountHeader = headerSection.NumberOfColumns;
+            int rowCountHeader = headerSection.NumberOfRows;
 
             // Количество столбцов и строк
             int columnCount = bodySection.NumberOfColumns;
@@ -284,22 +308,37 @@ namespace Reinforcement
                 workbook.Worksheets.Clear();
                 Worksheet sheet = workbook.Worksheets.Add(schedule.Name);
 
+                int row= 1;
+                int relativeRow = 0;
                 // Записываем заголовки столбцов (используем первую строку заголовка)
-                for (int col = 0; col < columnCount; col++)
+                for (relativeRow=0; relativeRow < rowCountHeader; relativeRow++)
                 {
-                    string headerText = GetCellText(schedule, SectionType.Header, 0, col);
-                    if (string.IsNullOrEmpty(headerText))
-                        headerText = $"Колонка {col + 1}";
-                    sheet.Range[1, col + 1].Text = headerText;
-                }
+                    row = relativeRow + 1;
+                    for (int col = 0; col < columnCountHeader; col++)
+                    {
 
+                        string headerText = GetCellText(schedule, SectionType.Header, relativeRow, col);
+                        if (string.IsNullOrEmpty(headerText))
+                        {
+                            continue;
+                        }
+
+                        sheet.Range[row, col + 1].Text = headerText;
+                    }
+                }
+                
                 // Записываем данные строк
-                for (int row = 0; row < rowCount; row++)
+                for (relativeRow = 0; relativeRow < rowCount; relativeRow++)
                 {
+                    row++;
                     for (int col = 0; col < columnCount; col++)
                     {
-                        string cellValue = GetCellText(schedule, SectionType.Body, row, col);
-                        sheet.Range[row + 2, col + 1].Text = cellValue;
+                        string cellValue = GetCellText(schedule, SectionType.Body, relativeRow, col);
+                        if (string.IsNullOrEmpty(cellValue))
+                        {
+                            continue;
+                        }
+                        sheet.Range[row, col + 1].Text = cellValue;
                     }
                 }
 
@@ -325,7 +364,7 @@ namespace Reinforcement
         
        
 
-}
+    }
 
 
 }

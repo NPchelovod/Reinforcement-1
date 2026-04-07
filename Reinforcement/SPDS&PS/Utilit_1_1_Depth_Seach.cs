@@ -24,11 +24,11 @@ namespace Reinforcement
 
         
 
-        public static bool GetResult( HashSet<String> FamNames, ElementTypeOrSymbol Type_seach )
+        public static bool GetResult( HashSet<String> FamNames, ElementTypeOrSymbol Type_seach, HashSet<string> TypeNames = null  )
         {
             //расстановка по модели элемента
 
-            Element element = HelperSeach.GetExistFamily(FamNames, Type_seach);
+            Element element = TypeNames == null ? HelperSeach.GetExistFamily(FamNames, Type_seach) : HelperSeach.GetExistFamily(FamNames, TypeNames, Type_seach);
 
             if ( element == null ) {return false;}
 

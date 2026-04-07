@@ -34,7 +34,7 @@ namespace Reinforcement
 
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
+                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach, list_Type_Name);
             }
             catch (Exception)
             {
@@ -42,13 +42,19 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
+        //имена семейсьва
         public static HashSet<string> list_Name = new HashSet<string>
         {
+             
             "ЕС_О_Линии разрыва",
             "ЕС_О_Линия обр",
-            "Линейный обрыв"
+            
         };
-        
+        //имена типа
+        public static HashSet<string> list_Type_Name = new HashSet<string>
+        {
+            "Линейный обрыв",
+        };
 
     }
 }

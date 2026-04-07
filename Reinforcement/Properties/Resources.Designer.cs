@@ -373,6 +373,16 @@ namespace Reinforcement.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap file_excel_icon {
+            get {
+                object obj = ResourceManager.GetObject("file_excel_icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap GRebar {
             get {
                 object obj = ResourceManager.GetObject("GRebar", resourceCulture);

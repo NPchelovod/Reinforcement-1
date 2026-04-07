@@ -33,10 +33,10 @@ namespace Reinforcement
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)
         {
             var item = ribbonPanel.AddItem(data) as PulldownButton;
-            Image OV1 = Properties.Resources.Properties;
+            Image OV1 = Properties.Resources.file_excel_icon;
             Image OV2 = Properties.Resources.Properties;
             //предполагается тест и так далее
-            App_Helper_Button.AddButtonToPullDownButton(item, "Эксп", assemblyPath, "Reinforcement.ExportImport", "Позволяет импортировать или экспортировать данные", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Экспорт", assemblyPath, "Reinforcement.ExportImport", "Позволяет импортировать или экспортировать данные", OV1);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Отверстия\n в плите", assemblyPath, "Reinforcement.RoundDistanceForOpeningsInSlabs", "Дорабатывает отверстия в плите для корректного отображения в ведомости отверстий\n\nОкругляет привязки выбранных отверстий до 5 мм. Поворачивает отверстия, чтобы Ширина - был размер по Х. Поворачивает отверстия для корректного отображения знака проема", OV2);
 
             // Устанавливаем иконку для самой PulldownButton

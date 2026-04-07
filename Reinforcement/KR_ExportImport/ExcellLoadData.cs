@@ -8,7 +8,7 @@ using Spire.Xls;
 
 namespace Reinforcement
 {
-    internal class ExcellLoadData
+    public class ExcellLoadData
     {
 
         public string SelectedFilePath { get; private set; }
@@ -90,10 +90,10 @@ namespace Reinforcement
                 }
 
                 //обрубка по строкам
-                if (existColData)
+                if (!existColData && Values.Count > 0)
                 {
                     emptyRow++;
-                    if(emptyRow> maxEmptyRow && Values.Count>0)
+                    if(emptyRow> maxEmptyRow)
                     {
                         break;
                     }
@@ -104,16 +104,17 @@ namespace Reinforcement
                 }
             }
 
-            //выполняем сортировку по строкам и по колоннам затем по возрастанию
+            //выполняем сортировку по строкам и по колоннам затем по возрастанию 
             Values = Values.OrderBy(x=>x.row).ThenBy(x=>x.column).ToList();
 
-            int minRow = Values.Select(x => x.row).Min()-1;
-            int minCol = Values.Select(x=>x.column).Min()-1;
+            //надо чтобы с нуля начиналось
+            int minRow = Values.Select(x => x.row).Min();
+            int minCol = Values.Select(x=>x.column).Min();
             foreach (var val in Values)
             {
-                ValuesCorrect.Add((val.row - minRow, val.column - minCol, val.data));
+                var dataCorrect = (val.row - minRow, val.column - minCol, val.data);
+                ValuesCorrect.Add(dataCorrect);
             }
-
 
         }
     }

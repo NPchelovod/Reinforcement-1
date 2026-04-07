@@ -29,12 +29,12 @@ namespace Reinforcement
 
                 // TODO: здесь вызовите метод формирования спецификации из выбранного листа
                 // Например: CreateSpecificationFromExcel(filePath, sheetName);
-                TaskDialog.Show("Успех", $"Выбран файл: {filePath}\nЛист: {sheetName}");
+                //TaskDialog.Show("Успех", $"Выбран файл: {filePath}\nЛист: {sheetName}");
                 return Result.Succeeded;
             }
             else
             {
-                return Result.Cancelled;
+                return Result.Succeeded;
             }
         }
     }

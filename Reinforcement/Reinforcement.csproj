@@ -129,6 +129,7 @@
     </Compile>
     <Compile Include="KR_ExportImport\ExcellLoadData.cs" />
     <Compile Include="KR_ExportImport\ExportImport.cs" />
+    <Compile Include="KR_ExportImport\ImportExcel.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
@@ -323,6 +324,7 @@
     <None Include="Resources\EL_panel\EL_svetilnic.png" />
     <Content Include="Resources\ES_OV_for_KR.png" />
     <None Include="Resources\Hole.png" />
+    <None Include="Resources\file_excel_icon_155407.png" />
     <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />
     <Content Include="Resources\KR_config.png" />

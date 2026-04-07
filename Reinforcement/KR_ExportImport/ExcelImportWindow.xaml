@@ -39,15 +39,16 @@
 
         <!-- Кнопки действий -->
         <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
-            <Button x:Name="ImportDataButton" Content="Импорт данных (Excel → Revit)" Width="170" Margin="0,0,10,0" IsEnabled="False" Click="ImportDataButton_Click"/>
-            <Button x:Name="ExportDataButton" Content="Экспорт данных (Revit → Excel)" Width="170" Margin="0,0,10,0" IsEnabled="False" Click="ExportDataButton_Click"/>
-            <Button x:Name="WriteDataButton" Content="Записать в спецификацию" Width="150" Margin="0,0,10,0" IsEnabled="False" Click="WriteDataButton_Click"/>
+            <Button x:Name="non" Content="не трогать" Width="70" Margin="0,0,10,0" IsEnabled="False" Click="InoneButton_Click"/>
+            <Button x:Name="ExportDataButton" Content="Экспорт данных (Revit=>Excel)" Width="180" Margin="0,0,10,0" IsEnabled="False" Click="ExportDataButton_Click"/>
+            <Button x:Name="ImportDataButton" Content="Импорт данных (Excel=>Revit)" Width="180" Margin="0,0,10,0" IsEnabled="False" Click="ImportDataButton_Click"/>
             <Button x:Name="CancelButton" Content="Отмена" Width="80" Click="CancelButton_Click"/>
         </StackPanel>
 
         <!-- Подсказка -->
         <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="5,15,5,5" FontSize="11" Foreground="Gray" TextWrapping="Wrap">
-            * Импорт: сначала выберите Excel-файл и лист, затем нажмите «Импорт данных». После этого нажмите «Записать в спецификацию».<LineBreak/>
+          
+            * Импорт: сначала выберите Excel-файл и лист, выбирете спецификацию, затем нажмите «Импорт данных».<LineBreak/>
             * Экспорт: выберите спецификацию Revit, и укажите место сохранения Excel-файла и лист.
         </TextBlock>
     </Grid>

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -25,6 +27,155 @@ namespace Reinforcement
 
         public static bool ResetNamesParam = true; // если тру то мы переопределяем параметр
 
+        //Element → ElementType → FamilySymbol
+
+
+        public static Element GetExistFamily(HashSet<string> PossibleNamesFamily, HashSet<string> PossibleNamesType, ElementTypeOrSymbol Type_seach)
+        {
+            //ищем и по имени семейства и по имени экземпляра семейства
+            //Element → ElementType → FamilySymbol
+            Document doc = RevitAPI.Document;
+
+            Element element = null;
+           
+            if (PastElements.TryGetValue(doc, out var dats))
+            {
+                // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
+
+
+                foreach (string name in PossibleNamesType)
+                {
+                    if (dats.TryGetValue(name, out element) && element != null)
+                    {
+                        return element;
+                    }
+                }
+
+            }
+            else
+            {
+                //dats = new Dictionary<HashSet<string>, ElementType>(HashSet<string>.CreateSetComparer());
+                dats = new Dictionary<string, Element>();
+                PastElements[doc] = dats;
+            }
+
+            //все типоразмеры семейства
+            FilteredElementCollector col = new FilteredElementCollector(doc);
+            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
+            //IList<ElementType> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
+
+            
+            int atempt = 0;
+            int atemptMax = 3;
+
+            bool stop = false;
+            double maxSimilarity = 0;
+            while (atempt < atemptMax &&!stop)
+            {
+                atempt++;
+
+                string maxNameType = "";
+
+                maxSimilarity = 0;
+                double similarity = 0;
+
+                bool existNamesFamily = PossibleNamesFamily.Count > 0;
+                bool existNamesType = PossibleNamesType.Count > 0;
+
+                if(!existNamesFamily && !existNamesType) { return null; }
+
+                foreach (ElementType elementType in elementTypes)
+                {
+
+                    //имя типоразмера
+                    string typeName = elementType.Name;
+                    //имя семейства
+                    string familyName = elementType.FamilyName;
+
+                    double SimilarityFamily = existNamesFamily?0:1;
+                    double SimilarityType = existNamesType ? 0:1;
+
+                    if(existNamesFamily && familyName.Length > 3)
+                    {
+                        foreach(string nameF in PossibleNamesFamily)
+                        {
+                            
+                             SimilarityFamily = Math.Max(SimilarityFamily, HelperPrivateStatic.CalculateSimilarity(nameF, familyName));
+                        }
+                    }
+                    
+                    if (existNamesType && typeName.Length > 3)
+                    {
+                        foreach (string nameT in PossibleNamesType)
+                        {
+                            
+                             SimilarityType = Math.Max(SimilarityType, HelperPrivateStatic.CalculateSimilarity(nameT, typeName)); 
+                        }
+                    }
+
+                    similarity = SimilarityFamily + SimilarityType;
+                    
+                    if(similarity <= maxSimilarity) { continue; }
+                    maxSimilarity = similarity;
+                    element = elementType;
+                    maxNameType = typeName;
+                    if (similarity>1.99)
+                    {
+                        stop=true;
+                    }
+
+                    if(stop)
+                    { break; }
+                }
+                if (stop)
+                { break; }
+
+
+                if(maxSimilarity<0.75)// меньше стольки запрашиваем диалог у пользователя
+                {
+                    // Спросить пользователя о использовании найденного семейства
+                    DialogResult result = MessageBox.Show(
+                    $"Точный типоразмер семейства '{PossibleNamesType.FirstOrDefault()}' не найден. Использовать '{maxNameType}'?",
+                    "Семейство не найдено",
+                    MessageBoxButtons.YesNo);
+                    if (result == DialogResult.Yes && maxSimilarity > 0.2)
+                    {
+                        stop = true;
+                        break;
+                    }
+                    int iter2 = 0;
+                    bool proxod = true;
+                    while (iter2 < 3)
+                    {
+                        iter2++;
+                        var input = HelperPrivateStatic.GetUserInputWithForm();
+                        if (!input.Item2) { proxod = false; break; }
+
+
+                        if (input.Item1.Count() > 2)
+                        {
+                            PossibleNamesType.Add( input.Item1);
+                            break;
+                        }
+                    }
+                    if (!proxod)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if(element == null || maxSimilarity<0.65) { return null; }
+
+
+            PossibleNamesType.Add(element.Name);
+            dats[element.Name] = element;
+
+            //это ошибка можно без этого
+            FamilySymbol familySymbol = element as FamilySymbol;
+
+            return familySymbol;
+        }
 
         public static Element GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ElementTypeOrSymbol Type_seach)
         {
@@ -195,6 +346,17 @@ namespace Reinforcement
             return ("", null);
 
         }
+
+        //глубокий поиск
+
+        //Element → ElementType → FamilySymbol
+
+
+
+
+
+
+
 
         //public static (Element pile, string PossibleNamesFamilySymbol) GetElement(HashSet<string> PossibleNamesFamilySymbol)
         //{ 
