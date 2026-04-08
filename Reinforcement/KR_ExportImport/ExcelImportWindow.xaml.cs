@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -155,7 +156,6 @@ namespace Reinforcement
             }
 
             SelectedFilePath = FilePathTextBox.Text;
-
             SelectedSheetName = SheetComboBox.SelectedItem.ToString();
 
 
@@ -259,20 +259,48 @@ namespace Reinforcement
             
 
             // Диалог сохранения файла
+           
+            bool saveExistFile = false;
+            string exportPath = null;
+
+            // Сначала предлагаем сохранить в новый файл
             SaveFileDialog saveDialog = new SaveFileDialog
             {
                 Filter = "Excel файлы|*.xlsx",
                 Title = "Сохранить экспорт спецификации как",
                 FileName = $"{scheduleName}_export.xlsx"
             };
-            if (saveDialog.ShowDialog() != true) return;
 
-            string exportPath = saveDialog.FileName;
+            if (saveDialog.ShowDialog() == true)
+            {
+                exportPath = saveDialog.FileName;
+                saveExistFile = false;
+            }
+            else
+            {
+                // Пользователь отменил диалог – проверяем, выбран ли существующий файл и лист
+                if (string.IsNullOrEmpty(FilePathTextBox.Text) || SheetComboBox.SelectedItem == null)
+                    return;
+                SelectedFilePath = FilePathTextBox.Text;
+                SelectedSheetName = SheetComboBox.SelectedItem.ToString();
+
+                var result = MessageBox.Show($"Сохранить данные на лист \"{SheetComboBox.SelectedItem}\" в файл \"{FilePathTextBox.Text}\"?",
+                                             "Запись в существующий файл",
+                                             MessageBoxButton.YesNo,
+                                             MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+
+                exportPath = SelectedFilePath;
+                saveExistFile = true;
+            }
 
             try
             {
                 StatusTextBlock.Text = "Экспорт данных из спецификации Revit...";
-                ExportScheduleToExcel(schedule, exportPath);
+                ExportScheduleToExcel(schedule, exportPath, saveExistFile);
                 StatusTextBlock.Text = $"Экспорт завершён. Файл сохранён: {exportPath}";
                 MessageBox.Show($"Данные спецификации успешно экспортированы в файл:\n{exportPath}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -283,7 +311,7 @@ namespace Reinforcement
             }
         }
         
-        private void ExportScheduleToExcel(ViewSchedule schedule, string filePath)
+        private void ExportScheduleToExcel(ViewSchedule schedule, string filePath, bool saveExistFile)
         {
             // Получаем данные спецификации
             TableData tableData = schedule.GetTableData();
@@ -305,10 +333,34 @@ namespace Reinforcement
 
             using (Workbook workbook = new Workbook())
             {
-                workbook.Worksheets.Clear();
-                Worksheet sheet = workbook.Worksheets.Add(schedule.Name);
+                Worksheet sheet = null;
 
-                int row= 1;
+                if(!saveExistFile)
+                {
+                    workbook.Worksheets.Clear();
+                    sheet = workbook.Worksheets.Add(schedule.Name);
+                }
+                else
+                {
+                    
+                    workbook.LoadFromFile(filePath);
+                    //удаляем это имя
+                   
+                    // Ищем лист с указанным именем
+                    sheet = workbook.Worksheets.Cast<Worksheet>().FirstOrDefault(s => s.Name == SelectedSheetName);
+                    if (sheet == null) 
+                    {
+                        sheet = workbook.Worksheets.Add(SelectedSheetName);
+                    }
+                    else
+                    {
+                        sheet.Clear(); // Очищаем содержимое, но не удаляем лист
+                    }
+                }
+
+
+
+                int row = 1;
                 int relativeRow = 0;
                 // Записываем заголовки столбцов (используем первую строку заголовка)
                 for (relativeRow=0; relativeRow < rowCountHeader; relativeRow++)
@@ -317,13 +369,25 @@ namespace Reinforcement
                     for (int col = 0; col < columnCountHeader; col++)
                     {
 
-                        string headerText = GetCellText(schedule, SectionType.Header, relativeRow, col);
-                        if (string.IsNullOrEmpty(headerText))
+                        string cellValue = GetCellText(schedule, SectionType.Header, relativeRow, col);
+                        if (string.IsNullOrEmpty(cellValue))
                         {
                             continue;
                         }
-
-                        sheet.Range[row, col + 1].Text = headerText;
+                        CellRange cell = sheet.Range[row, col + 1];
+                        //cell.Text = cellValue;
+                        // Пытаемся преобразовать в число
+                        string normalized = cellValue.Replace(',', '.');
+                        if (double.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out double numericValue))
+                        {
+                            cell.NumberValue = numericValue;
+                            // Дополнительно можно задать формат (например, 2 знака после запятой)
+                            cell.NumberFormat = "0.###"; // или "General", "0.00" и т.д.
+                        }
+                        else
+                        {
+                            cell.Text = cellValue;
+                        }
                     }
                 }
                 
@@ -338,12 +402,25 @@ namespace Reinforcement
                         {
                             continue;
                         }
-                        sheet.Range[row, col + 1].Text = cellValue;
+                        CellRange cell = sheet.Range[row, col + 1];
+
+                        string normalized = cellValue.Replace(',', '.');
+                        if (double.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out double numericValue))
+                        {
+                            cell.NumberValue = numericValue;
+                            // Дополнительно можно задать формат (например, 2 знака после запятой)
+                            cell.NumberFormat = "0.###"; // или "General", "0.00" и т.д.
+                        }
+                        else
+                        {
+                            cell.Text = cellValue;
+                        }
                     }
                 }
 
                 // Автоширина колонок
                 sheet.AllocatedRange.AutoFitColumns();
+                sheet.AllocatedRange.AutoFitRows();
                 workbook.SaveToFile(filePath, ExcelVersion.Version2016);
             }
         }

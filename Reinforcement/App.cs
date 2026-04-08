@@ -68,7 +68,8 @@ namespace Reinforcement
                 "Copy/Кубики",
                 "Импорт/Экспорт",
                 "Опции",
-                "Сюрприз"
+                "Сюрприз",
+                
 
             };
 
@@ -105,6 +106,7 @@ namespace Reinforcement
                 "Импорт/Экспорт",
                 "ОВ плит",
                 "АР панель",
+                "ОВ панель",
                 "ЭЛ панель",
                 "Опции",
                 "Сюрприз"
@@ -161,6 +163,10 @@ namespace Reinforcement
                         break;
                     case "АР панель":
                         App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
+                        break;
+
+                    case "ОВ панель":
+                        App_Panel_3_2_OV_utilit.OV_utilit(panel, tabName);
                         break;
 
                     case "ЭЛ панель":
