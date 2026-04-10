@@ -138,6 +138,9 @@
     <Compile Include="OV_Construct\OV_1_GetAllOV.cs" />
     <Compile Include="OV_Construct\OV_2_GetAllSizeOV.cs" />
     <Compile Include="OV_Construct\OV_3_SovpadFloor.cs" />
+    <Compile Include="OV_Panel\OV_AERO_WPF.xaml.cs">
+      <DependentUpon>OV_AERO_WPF.xaml</DependentUpon>
+    </Compile>
     <Compile Include="OV_Panel\OV_Panel_Calculate.cs" />
     <Compile Include="OV_Panel\OV_Panel_GetPipes.cs" />
     <Compile Include="RoundDistanceForOpeningsInSlabs.cs" />
@@ -433,6 +436,10 @@
     <Page Include="MainViewWall.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="OV_Panel\OV_AERO_WPF.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ReinforcementList\MainViewReinforcementList.xaml">
       <Generator>MSBuild:Compile</Generator>

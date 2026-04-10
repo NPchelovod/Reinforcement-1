@@ -114,12 +114,94 @@ namespace Reinforcement
             //2 эти элементы строим граф по координатам
 
             var elementsDatasList = ElementDatas.ToList();
+
+            //теперь ищем самые близкие
+            for(int i = 0; i < elementsDatasList.Count; i++)
+            {
+                ElementData elementData1 = elementsDatasList[i];
+                ElementData elementDataBetter=null;
+
+                var elementDatasBetter = new HashSet<ElementData>();
+               
+                double minDist = errorDistance + 1;
+                for (int j = i+1; j < elementsDatasList.Count; j++)
+                {
+                    ElementData elementData2 = elementsDatasList[j];
+                     
+                    //ищем дистанцию
+                    bool betterED=false;
+                    foreach(XYZ xYZ1 in  elementData1.XYZsMM)
+                    {
+                        foreach (XYZ xYZ2 in elementData2.XYZsMM)
+                        {
+                            double distance = xYZ1.DistanceTo(xYZ2);
+                            //то все, в цепочке э
+                            if (distance <= minDist)
+                            {
+                                minDist = distance;
+                                betterED = true;
+                            }
+                        }
+                    }
+                    if(betterED)
+                    {
+                        elementDataBetter = elementData2;
+                        if (minDist < 1)
+                        {
+                            elementDatasBetter.Add(elementData1);
+                        }
+                    }
+                }
+                if (elementDataBetter == null) { continue; }
+
+                elementDatasBetter.Add(elementDataBetter);
+
+
+                foreach (var elementData in elementDatasBetter)
+                {
+                    elementData1.NearlyElements.Add(elementData);
+                    elementData.NearlyElements.Add(elementData1);
+                }
+
+                //иначе значи мы нашли пару, печаль в том что пар может быть несколько???
+
+            }
+
+            //собрав надо построить графы - самое сложное кто с кем пара
+            WaysSeach();
         }
 
+
+
+        public void WaysSeach()
+        {
+            HashSet<ElementData> elementDatasPast = new HashSet<ElementData>();
+
+
+            //вычлиняем тех у кого только один сосед
+            var initialsWays = ElementDatas.Where(x => x.NearlyElements.Count == 1).OrderByDescending(x=>x.RasxodAir).ToHashSet();
+
+            
+            foreach (var elementData in initialsWays)
+            {
+                //
+                if (elementDatasPast.Contains(elementData)) {  continue; }
+
+                
+            }
+        }
+
+
+
+
+        public static double errorDistance = 100;// погрешность поиска совпадений мм/304.8 для дюймов
+        public static double convertMM = 304.8;// mm in dyem
         public class ElementData
         {
             
-            public List<XYZ> XYZs = new List<XYZ>();
+            public List<XYZ> XYZs = new List<XYZ>();//дюймы!!!!
+            public List<XYZ> XYZsMM = new List<XYZ>();
+
             public Element Element { get; set; }
 
             public bool Vrezka = false;
@@ -127,6 +209,11 @@ namespace Reinforcement
 
             public double RasxodAir = 0;
             public double LockAir = 0;
+
+
+            public HashSet<ElementData> NearlyElements = new HashSet<ElementData>();
+
+
             public ElementData(Element element, string familyName, string typeName)
             {
                 this.Element = element;
@@ -172,6 +259,12 @@ namespace Reinforcement
                     }
 
                 }
+                //перевод в мм
+                foreach (XYZ xYZ in XYZs)
+                {
+                    XYZsMM.Add(new XYZ(xYZ.X* convertMM, xYZ.Y * convertMM, xYZ.Z * convertMM));
+                }
+
 
                 //врезка ли это
                 foreach(var name in NamesOvVrezka)
@@ -233,7 +326,7 @@ namespace Reinforcement
 
         public class GroupOVElements
         {
-
+            //public HashSet<>
         }
         public Dictionary<Element, GroupOVElements> NearlyElements = new Dictionary<Element, GroupOVElements>();
     
