@@ -21,7 +21,7 @@ namespace Reinforcement
 
 
         //здесь скрыты полные имена поисковые если мы раньше не нашли
-        private static Dictionary<HashSet<string>, List<string>> newNames = new Dictionary<HashSet<string>, List<string>>();
+        public static Dictionary<HashSet<string>, List<string>> newNames = new Dictionary<HashSet<string>, List<string>>();
 
         public static HashSet<Element> SeachAllElements(HashSet<string> names, ExternalCommandData commandData, bool activView=false)
         {

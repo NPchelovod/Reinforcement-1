@@ -23,12 +23,42 @@ namespace Reinforcement
 
         //обеспечивает скорость в дальнейшем
         //обеспечивает скорость в дальнейшем
-        private static Dictionary<Document, Dictionary<string, Element>> PastElements = new Dictionary<Document, Dictionary<string, Element>>();
+        public static Dictionary<Document, Dictionary<string, Element>> PastElements = new Dictionary<Document, Dictionary<string, Element>>();
 
-        public static bool ResetNamesParam = true; // если тру то мы переопределяем параметр
+        public static bool ResetNamesParam = false; // если тру то мы переопределяем параметр
 
         //Element → ElementType → FamilySymbol
 
+
+        public static  HashSet<string> PereopPossibleNamesType(HashSet<string> PossibleNamesType)
+        {
+            
+
+            ResetNamesParam = false;
+            DialogResult result = MessageBox.Show(
+                   $"Вы хотите переопределить семейство '{PossibleNamesType.FirstOrDefault()}'. Ввести свой'?",
+                   "Переопределение семейства",
+                   MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes)
+            {
+                int iter2 = 0;
+                
+                while (iter2 < 3)
+                {
+                    iter2++;
+                    var input = HelperPrivateStatic.GetUserInputWithForm();
+                    if (!input.Item2) {  break; }
+                    if (input.Item1.Count() > 2)
+                    {
+                        PossibleNamesType.Clear();
+                        PossibleNamesType.Add(input.Item1);
+                        break;
+                    }
+                }
+
+            }
+            return PossibleNamesType;
+        }
 
         public static Element GetExistFamily(HashSet<string> PossibleNamesFamily, HashSet<string> PossibleNamesType, ElementTypeOrSymbol Type_seach)
         {
@@ -37,7 +67,16 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
 
             Element element = null;
-           
+
+
+            if (ResetNamesParam)
+            {
+                PastElements.Clear();
+                PereopPossibleNamesType(PossibleNamesType);
+                ResetNamesParam = false ;
+            }
+
+
             if (PastElements.TryGetValue(doc, out var dats))
             {
                 // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
@@ -138,7 +177,7 @@ namespace Reinforcement
                     $"Точный типоразмер семейства '{PossibleNamesType.FirstOrDefault()}' не найден. Использовать '{maxNameType}'?",
                     "Семейство не найдено",
                     MessageBoxButtons.YesNo);
-                    if (result == DialogResult.Yes && maxSimilarity > 0.2)
+                    if (result == DialogResult.Yes && element != null)
                     {
                         stop = true;
                         break;
@@ -165,7 +204,7 @@ namespace Reinforcement
                 }
             }
 
-            if(element == null || maxSimilarity<0.65) { return null; }
+            if(element == null) { return null; }
 
 
             PossibleNamesType.Add(element.Name);
@@ -179,14 +218,22 @@ namespace Reinforcement
 
         public static Element GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ElementTypeOrSymbol Type_seach)
         {
-
+            if(PossibleNamesFamilySymbol.Count==0 || PossibleNamesFamilySymbol.Count==1 && string.IsNullOrEmpty(PossibleNamesFamilySymbol.FirstOrDefault()))
+            {
+                return null;
+            }
             //поиск конкретного типоразмера элемента по имени семейства
 
             Document doc = RevitAPI.Document;
 
             Element element = null;
-           
-            
+
+            if (ResetNamesParam)
+            {
+                PastElements.Clear();
+                PereopPossibleNamesType(PossibleNamesFamilySymbol);
+                ResetNamesParam = false;
+            }
 
             if (PastElements.TryGetValue(doc, out var dats))
             {
@@ -238,11 +285,10 @@ namespace Reinforcement
                 if (string.IsNullOrEmpty(answer.ePile)) { return null; }
                 dictAnswer.TryGetValue(answer.ePile, out element);
 
-                if (ResetNamesParam)
-                {
-                    dats[answer.ePile] = element;
-                    PossibleNamesFamilySymbol.Add(answer.ePile);
-                }
+                
+                dats[answer.ePile] = element;
+                PossibleNamesFamilySymbol.Add(answer.ePile);
+                
                 
             }
             return element;
@@ -310,7 +356,7 @@ namespace Reinforcement
                 $"Точный типоразмер семейства '{nPile}' не найден. Использовать '{ePile}'?",
                 "Семейство не найдено",
                 MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes && maxSimilarity > 0.2)
+                if (result == DialogResult.Yes && ePile.Length>3)
                 {
                     famExist = true;
 

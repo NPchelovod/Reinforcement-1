@@ -123,7 +123,7 @@
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="App_Panel_1_81_KR_Export.cs" />
-    <Compile Include="App_Panel_1_92_Opcii.cs" />
+    <Compile Include="App_Panel_1_92_Toska.cs" />
     <Compile Include="App_Panel_3_2_OV_utilit.cs" />
     <Compile Include="KR_ExportImport\ExcelImportWindow.xaml.cs">
       <DependentUpon>ExcelImportWindow.xaml</DependentUpon>
@@ -131,9 +131,18 @@
     <Compile Include="KR_ExportImport\ExcellLoadData.cs" />
     <Compile Include="KR_ExportImport\ExportImport.cs" />
     <Compile Include="KR_ExportImport\ImportExcel.cs" />
+    <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
+    <Compile Include="KR_vstavka\Lestnica\GeneratorLestnicaMK.cs" />
+    <Compile Include="KR_vstavka\Lestnica\StairCreator.cs" />
+    <Compile Include="KR_vstavka\Lestnica\StairParametersViewModel.cs" />
+    <Compile Include="KR_vstavka\Lestnica\StairParametersWindow.xaml.cs">
+      <DependentUpon>StairParametersWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="KR_vstavka\VstavkaAnyElement.cs" />
+    <Compile Include="Opcii\PropertiesPereop.cs" />
     <Compile Include="OV_Construct\OV_0_Parameters.cs" />
     <Compile Include="OV_Construct\OV_1_GetAllOV.cs" />
     <Compile Include="OV_Construct\OV_2_GetAllSizeOV.cs" />
@@ -147,7 +156,7 @@
     <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
     <Compile Include="App_Helper_Button.cs" />
-    <Compile Include="App_Panel_1_91_Toska.cs" />
+    <Compile Include="App_Panel_1_91_Opcii.cs" />
     <Compile Include="App_Panel_1_71_KR_vstavka.cs" />
     <Compile Include="App_Panel_1_1_Configuration.cs" />
     <Compile Include="App_Panel_1_1_Configuration_KR.cs" />
@@ -286,8 +295,8 @@
     <Compile Include="LinearCopy\LinearCopyElement.cs" />
     <Compile Include="0RevitAPI.cs" />
     <Compile Include="SPDS&amp;PS\DrBreakLineCommand.cs" />
+    <Compile Include="Opcii\PropertiesMask.cs" />
     <Compile Include="Opcii\PropertiesSbros.cs" />
-    <Compile Include="Toska\PropertiesSbros.cs" />
     <Compile Include="Toska\Toska_1.cs" />
     <Compile Include="Toska\Toska_2.cs" />
     <Compile Include="TransparentNotificationWindow.xaml.cs">
@@ -322,6 +331,7 @@
   <ItemGroup>
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
+    <None Include="Resources\Снимок.PNG" />
     <None Include="Resources\CopyTaskFromElectric.png" />
     <None Include="Resources\AR_panel\rashet_walls2.png" />
     <Content Include="Resources\EL_config.png" />
@@ -428,6 +438,10 @@
     <Page Include="KR_SAPR\CreateViewPlan\MainViewCreateViewPlan.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="KR_vstavka\Lestnica\StairParametersWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="LinearCopy\MainViewLinearCopyElement.xaml">
       <SubType>Designer</SubType>

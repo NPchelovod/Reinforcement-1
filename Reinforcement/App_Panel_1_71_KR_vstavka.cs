@@ -16,6 +16,7 @@ using AW = Autodesk.Windows;
 using System.Linq;
 using static Reinforcement.App;
 
+
 namespace Reinforcement
 {
     public class App_Panel_1_71_KR_vstavka
@@ -38,10 +39,13 @@ namespace Reinforcement
         {
             var item = ribbonPanel.AddItem(data) as PulldownButton;
             Image OV1 = Properties.Resources.hole_in_walls;
-            
 
+            Image OV2 = Properties.Resources.LestnicaMK;
             App_Helper_Button.AddButtonToPullDownButton(item, "Перфорация\n стены", assemblyPath, "Reinforcement.Perforation_walls_Command", "перфорация стены", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Перфорация\n перекрытия", assemblyPath, "Reinforcement.Perforation_floor_Command", "перфорация перекрытия", OV1);
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Лестница\nМеталл", assemblyPath, "Reinforcement.GeneratorLestnicaMK", "Создание металлической лестницы", OV2);
 
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);

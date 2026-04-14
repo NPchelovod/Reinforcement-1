@@ -19,11 +19,13 @@ namespace Reinforcement
     {
         public static void KR_SAPR(RibbonPanel panelSAPR, string tabName)
         {
-            App_Helper_Button.CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
-                    "Позволяет скопировать спецификации с заменой марки конструкции",
-                    "Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку",
-                   panelSAPR);
-           
+            //App_Helper_Button.CreateButton("Копирование спецификаций", "Копирование\nспецификаций", "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", Properties.Resources.ES_Specification,
+            //        "Позволяет скопировать спецификации с заменой марки конструкции",
+            //        "Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку",
+            //       panelSAPR);
+            var data = new SplitButtonData("СпецКор", "СпецКор");
+
+            FillPullDown2(panelSAPR, data);
 
             App_Helper_Button.CreateButton("Подложки для плит", "Подложки\nдля плит", "Reinforcement.CommandCreateViewPlan", Properties.Resources.ES_ViewsForSlab,
              "Позволяет создать подложки для плиты и вынести их на новый лист", "Создается 3 вида, создается лист. В видах формируется имя вида и заголовок на листе\n" +
@@ -33,15 +35,12 @@ namespace Reinforcement
              "Позволяет рассчитать длину труб или просто линий, видимых на виде, сгруппированную по диаметрам", "Алгоритм работы с планами электроразводки:\n Открыть вид с аннотационными линиями, для электрики линии должны быть вида <ЭЛ_d25x2, d40>\n распознает диаметры 25 и 40 и кол-во труб d25 - 2 шт., d40 - 1шт.",
             panelSAPR);
 
-            var data = new SplitButtonData(tabName, tabName);
+            data = new SplitButtonData("СвайКор", "СвайКор");
             FillPullDown(panelSAPR, data);
 
             //App_Helper_Button.CreateButton("Расставить сваи по DWG", "Расставить\nсваи по DWG", "Reinforcement.SetPilesByDWG", Properties.Resources.ES_PilesFromDwg,
             //"Позволяет расставить экземпляры свай по подгруженной DWG подложке", "Команда позволяет расставить экземпляры семейства в плане. Нужно не забывать кусты свай подвинуть под центр тяжести конструкций (при необходимости)",
             //panelSAPR);
-
-
-
 
         }
         private static readonly string assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -61,6 +60,24 @@ namespace Reinforcement
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;
         }
+        private static void FillPullDown2(RibbonPanel ribbonPanel, PulldownButtonData data)
+        {
+            var item = ribbonPanel.AddItem(data) as PulldownButton;
+            Image OV1 = Properties.Resources.ES_Specification;
+            Image OV2 = Properties.Resources.ES_Specification;
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Копирование\nспецификаций", assemblyPath, "Reinforcement.CopySelectedSchedules.CommandCopySelectedSchedules", "Позволяет скопировать спецификации с заменой марки конструкции \n Для работы плагина нужно сначала выделить спецификации для копирования, а потом нажать на кнопку", OV1);
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Групповая\nспецификация", assemblyPath, "Reinforcement.GroupSpecification", "Редактор групповой спецификации ДЖ, ПМ", OV2);
+
+            // Устанавливаем иконку для самой PulldownButton
+            System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
+            item.LargeImage = imageSource;
+        }
+
+
     }
 
 }

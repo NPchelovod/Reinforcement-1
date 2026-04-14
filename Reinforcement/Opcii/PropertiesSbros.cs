@@ -2,23 +2,23 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.Attributes;
-using Updaters;
 
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
     
-        public class PropertiesMask : IExternalCommand
+        public class PropertiesSbros : IExternalCommand
         {
             public Result Execute(
                 ExternalCommandData commandData,
                 ref string message,
                 ElementSet elements)
             {
-                RevitAPI.Initialize(commandData);
-                //Utilit_1_1_Depth_Seach.ResetNamesParam=true;
-                ChangeWidthAnnotationTag.ChangeMaskField = !ChangeWidthAnnotationTag.ChangeMaskField;
-                return Result.Succeeded;
+            RevitAPI.Initialize(commandData);
+            //сброс поисковых параметров статики
+            HelperSeach.PastElements.Clear();
+            HelperSeachAllElements.newNames.Clear();
+            return Result.Succeeded;
             }
         }
     }

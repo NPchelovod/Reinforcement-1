@@ -201,7 +201,7 @@ namespace Reinforcement
             
             public List<XYZ> XYZs = new List<XYZ>();//дюймы!!!!
             public List<XYZ> XYZsMM = new List<XYZ>();
-
+            public XYZ AveragePoint = null;
             public Element Element { get; set; }
 
             public bool Vrezka = false;
@@ -265,9 +265,13 @@ namespace Reinforcement
                     XYZsMM.Add(new XYZ(xYZ.X* convertMM, xYZ.Y * convertMM, xYZ.Z * convertMM));
                 }
 
-
+                int numCoords = XYZsMM.Count;
+                if (numCoords > 0)
+                {  //среднее для поиска врезок и тд
+                    AveragePoint = new XYZ(XYZsMM.Select(x => x.X).Sum() / numCoords, XYZsMM.Select(x => x.Y).Sum() / numCoords, XYZsMM.Select(x => x.Z).Sum() / numCoords);
+                }
                 //врезка ли это
-                foreach(var name in NamesOvVrezka)
+                foreach (var name in NamesOvVrezka)
                 {
                     if(familyName.Contains(name))
                     {
