@@ -137,6 +137,7 @@
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
     <Compile Include="KR_vstavka\Lestnica\GeneratorLestnicaMK.cs" />
     <Compile Include="KR_vstavka\Lestnica\StairCreator.cs" />
+    <Compile Include="KR_vstavka\Lestnica\StairCreator2.cs" />
     <Compile Include="KR_vstavka\Lestnica\StairParametersViewModel.cs" />
     <Compile Include="KR_vstavka\Lestnica\StairParametersWindow.xaml.cs">
       <DependentUpon>StairParametersWindow.xaml</DependentUpon>

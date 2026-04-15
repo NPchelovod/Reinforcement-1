@@ -36,19 +36,25 @@ namespace Reinforcement
             // Создаём и показываем окно
             var window = new StairParametersWindow(viewModel);
 
-
-            // Для модальности относительно Revit
-            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            System.Windows.Interop.WindowInteropHelper helper = new System.Windows.Interop.WindowInteropHelper(window);
-            helper.Owner = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-
-            bool? result = window.ShowDialog();
-            if (result == true)
+            try
             {
-                // Создание уже выполняется в команде ViewModel, но можно и здесь обработать
+                // Для модальности относительно Revit
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                System.Windows.Interop.WindowInteropHelper helper = new System.Windows.Interop.WindowInteropHelper(window);
+                helper.Owner = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+
+                bool? result = window.ShowDialog();
+                if (result == true)
+                {
+                    // Создание уже выполняется в команде ViewModel, но можно и здесь обработать
+                    return Result.Succeeded;
+                }
                 return Result.Succeeded;
             }
-            return Result.Succeeded;
+            catch (Exception ex)
+            {
+                return Result.Failed;
+            }
         }
     }
 }

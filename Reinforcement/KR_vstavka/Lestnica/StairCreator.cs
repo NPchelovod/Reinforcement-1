@@ -12,7 +12,7 @@ using Autodesk.Revit.Creation;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
-using static Reinforcement.StairCreator;
+
 
 namespace Reinforcement
 {
@@ -35,7 +35,7 @@ namespace Reinforcement
         public static double CosourZazor = 85;
         public static double AngleTg => Math.Atan(StairHeight / StairLength);
 
-        
+        public static double WidthPloshadka = 1300;//ширина площадки
         public static void CreateStairComponents(StairParametersViewModel vm)
         {
             VM = vm;
@@ -67,7 +67,7 @@ namespace Reinforcement
                 return;
             }
 
-            Level LevelCreator = viewPlan.GenLevel;
+            LevelCreator = viewPlan.GenLevel;
             if (LevelCreator == null)
             {
                 TaskDialog.Show("Ошибка", "Не удалось определить уровень для активного вида.");
@@ -103,79 +103,125 @@ namespace Reinforcement
 
 
 
+        //public class DataSymbol
+        //{
+        //    //X — направление оси балки (от startPoint к endPoint).
+
+        //   // Y — горизонтальная(боковая) ось, перпендикулярная X.
+
+        //    //Z — вертикальная ось (вверх), перпендикулярная X и Y.
+
+
+
+        //    //в мм
+        //    public double WidthPlaceY { get; set; } = 0;
+        //    public double HeightPlaceZ { get; set; } = 0;
+        //    public double ExcentrPlaceY { get; set; } = 0;
+        //    public double ExcentrPlaceZ { get; set; } = 0;
+
+        //    public double WidthVertY { get; set; } = 0;
+        //    public double HeighVertX { get; set; } = 0;
+        //    public double ExcentrVertY { get; set; } = 0;
+        //    public double ExcentrVertX { get; set; } = 0;
+
+        //    public double W { get; set; } = 0;//размеры сечения профиля
+        //    public double H { get; set; } = 0;
+        //    public DataSymbol(FamilySymbol familyType, Level levelCreator)
+        //    {
+        //        Autodesk.Revit.DB.Document doc = RevitAPI.Document;
+
+        //        const double length = 10.0; // длина временной балки в футах
+
+        //        XYZ startPoint = new XYZ(0, 0, 0);
+        //        XYZ endPoint = new XYZ(length, 0, 0);
+        //        Line beamCurve = Line.CreateBound(startPoint, endPoint);
+
+        //        Element element = doc.Create.NewFamilyInstance(beamCurve, familyType, levelCreator, StructuralType.Beam);
+
+        //        doc.Regenerate();
+
+        //        BoundingBoxXYZ box = element.get_BoundingBox(null);  // <-- null вместо вида возврат глобального бокса
+        //        if (box != null)
+        //        {
+        //            // Компоненты в локальных координатах (футах)
+
+        //            // 4. Вычисляем размеры в футах
+        //            WidthPlaceY = Math.Abs(box.Max.Y - box.Min.Y) * MMFromFeet;   // ширина сечения по Y
+        //            HeightPlaceZ = Math.Abs(box.Max.Z - box.Min.Z) * MMFromFeet; // высота сечения по Z
+
+        //            ExcentrPlaceY = (box.Max.Y + box.Min.Y) / 2 * MMFromFeet;//ексцентрик привязки
+        //            ExcentrPlaceZ = (box.Max.Z + box.Min.Z) / 2 * MMFromFeet;//для колонн если по X
+        //        }
+        //        //удаляем элемент
+        //        doc.Delete(element.Id);
+
+        //        startPoint = new XYZ(0, 0, 0);
+        //        endPoint = new XYZ(0, 0, length);
+        //        beamCurve = Line.CreateBound(startPoint, endPoint);
+        //        element = doc.Create.NewFamilyInstance(beamCurve, familyType, levelCreator, StructuralType.Beam);
+        //        doc.Regenerate();
+        //        box = element.get_BoundingBox(null);
+
+        //        if (box != null)
+        //        {
+        //            WidthVertY = Math.Abs(box.Max.Y - box.Min.Y) * MMFromFeet;   // ширина сечения по Y
+        //            HeighVertX = Math.Abs(box.Max.X - box.Min.X) * MMFromFeet; // высота сечения по Z
+
+        //            ExcentrVertY = (box.Max.Y + box.Min.Y) / 2 * MMFromFeet;//ексцентрик привязки
+        //            ExcentrVertX = (box.Max.X + box.Min.X) / 2 * MMFromFeet;//для колонн если по X
+
+        //        }
+        //        doc.Delete(element.Id);
+
+        //        List<double> distances = new List<double>()
+        //        {
+        //            WidthPlaceY, HeightPlaceZ, WidthVertY, HeighVertX
+        //        };
+        //        distances = distances.Where(distance => distance > 0).ToList();
+
+        //        W = distances.Min();
+        //        H = distances.Max();
+        //    }
+        //}
+
         public class DataSymbol
         {
-            //X — направление оси балки (от startPoint к endPoint).
-
-           // Y — горизонтальная(боковая) ось, перпендикулярная X.
-
-            //Z — вертикальная ось (вверх), перпендикулярная X и Y.
-
-           
-            
-            //в мм
-            public double WidthPlaceY { get; set; } = 0;
-            public double HeightPlaceZ { get; set; } = 0;
-            public double ExcentrPlaceY { get; set; } = 0;
-            public double ExcentrPlaceZ { get; set; } = 0;
-
-            public double WidthVertY { get; set; } = 0;
-            public double HeighVertX { get; set; } = 0;
-            public double ExcentrVertY { get; set; } = 0;
-            public double ExcentrVertX { get; set; } = 0;
-
+            // Размеры и эксцентриситеты в локальной системе семейства (в мм)
             public double W { get; set; } = 0;//размеры сечения профиля
             public double H { get; set; } = 0;
+            public double WidthY { get; set; } = 0;   // ширина по локальной оси Y
+            public double HeightZ { get; set; } = 0;  // высота по локальной оси Z
+            public double ExcentrY { get; set; } = 0; // смещение центра по Y (от оси)
+            public double ExcentrZ { get; set; } = 0; // смещение центра по Z
+
             public DataSymbol(FamilySymbol familyType, Level levelCreator)
             {
+                DataSymbols[familyType] = this;
                 Autodesk.Revit.DB.Document doc = RevitAPI.Document;
+                const double length = 10.0; // футов
 
-                const double length = 10.0; // длина временной балки в футах
+                // Создаём временный горизонтальный элемент вдоль оси X
+                Line tempCurve = Line.CreateBound(new XYZ(0, 0, 0), new XYZ(length, 0, 0));
 
-                XYZ startPoint = new XYZ(0, 0, 0);
-                XYZ endPoint = new XYZ(length, 0, 0);
-                Line beamCurve = Line.CreateBound(startPoint, endPoint);
+                
 
-                Element element = doc.Create.NewFamilyInstance(beamCurve, familyType, levelCreator, StructuralType.Beam);
-
+                FamilyInstance element = doc.Create.NewFamilyInstance(tempCurve, familyType, levelCreator, StructuralType.Beam);
                 doc.Regenerate();
-
-                BoundingBoxXYZ box = element.get_BoundingBox(null);  // <-- null вместо вида возврат глобального бокса
+                BoundingBoxXYZ box = element.get_BoundingBox(null);
                 if (box != null)
                 {
-                    // Компоненты в локальных координатах (футах)
-
-                    // 4. Вычисляем размеры в футах
-                    WidthPlaceY = Math.Abs(box.Max.Y - box.Min.Y) * MMFromFeet;   // ширина сечения по Y
-                    HeightPlaceZ = Math.Abs(box.Max.Z - box.Min.Z) * MMFromFeet; // высота сечения по Z
-
-                    ExcentrPlaceY = (box.Max.Y + box.Min.Y) / 2 * MMFromFeet;//ексцентрик привязки
-                    ExcentrPlaceZ = (box.Max.Z + box.Min.Z) / 2 * MMFromFeet;//для колонн если по X
+                    // Все значения в миллиметрах
+                    WidthY = Math.Abs(box.Max.Y - box.Min.Y) * 304.8;
+                    HeightZ = Math.Abs(box.Max.Z - box.Min.Z) * 304.8;
+                    ExcentrY = ((box.Max.Y + box.Min.Y) / 2.0) * 304.8;
+                    ExcentrZ = ((box.Max.Z + box.Min.Z) / 2.0) * 304.8;
                 }
-                //удаляем элемент
+
                 doc.Delete(element.Id);
-
-                startPoint = new XYZ(0, 0, 0);
-                endPoint = new XYZ(0, 0, length);
-                beamCurve = Line.CreateBound(startPoint, endPoint);
-                element = doc.Create.NewFamilyInstance(beamCurve, familyType, levelCreator, StructuralType.Beam);
-                doc.Regenerate();
-                box = element.get_BoundingBox(null);
-
-                if (box != null)
-                {
-                    WidthVertY = Math.Abs(box.Max.Y - box.Min.Y) * MMFromFeet;   // ширина сечения по Y
-                    HeighVertX = Math.Abs(box.Max.X - box.Min.X) * MMFromFeet; // высота сечения по Z
-
-                    ExcentrVertY = (box.Max.Y + box.Min.Y) / 2 * MMFromFeet;//ексцентрик привязки
-                    ExcentrVertX = (box.Max.X + box.Min.X) / 2 * MMFromFeet;//для колонн если по X
-
-                }
-                doc.Delete(element.Id);
-
+                
                 List<double> distances = new List<double>()
                 {
-                    WidthPlaceY, HeightPlaceZ, WidthVertY, HeighVertX
+                    WidthY,HeightZ
                 };
                 distances = distances.Where(distance => distance > 0).ToList();
 
@@ -184,86 +230,173 @@ namespace Reinforcement
             }
         }
 
+
+
+
+
         public static Dictionary<FamilySymbol, DataSymbol> DataSymbols { get; set; } = new Dictionary<FamilySymbol, DataSymbol>();
 
 
         public static double MMFromFeet = 304.8; // из футов в мм
 
 
-        public static Element CreateElement(FamilySymbol familySymbol, Level levelCreator, XYZ startPoint, XYZ endPoint, double rotateRadians = 0)
+        //public static Element CreateElement(FamilySymbol familySymbol, Level levelCreator, XYZ startPoint, XYZ endPoint, double rotateRadians = 0)
+        //{
+        //    //привязка центральная 
+        //    if(!DataSymbols.TryGetValue(familySymbol, out var data))
+        //    {
+        //        data = new DataSymbol(familySymbol, LevelCreator);
+        //        DataSymbols[familySymbol] = data;
+        //    }
+
+        //    Autodesk.Revit.DB.Document doc = RevitAPI.Document;
+
+        //    double lengthFeet = startPoint.DistanceTo(endPoint); // длина в футах
+
+
+        //    XYZ direction = (endPoint - startPoint).Normalize();
+        //    double angleToVertical = direction.AngleTo(XYZ.BasisZ); // радианы, 0 = строго вверх
+        //    const double verticalThreshold = Math.PI / 4; // 45 градусов
+
+        //    StructuralType sType;
+        //    bool colEl = false;
+        //    if (angleToVertical < verticalThreshold)
+        //    {
+        //        sType = StructuralType.Column; 
+        //        colEl = true;  // элемент близок к вертикали
+        //    }
+        //    else
+        //    {
+        //        sType = StructuralType.Beam;      // элемент близок к горизонтали
+        //    }
+        //    sType = StructuralType.Beam;
+
+        //    Line Curve = Line.CreateBound(startPoint, endPoint);
+        //    FamilyInstance element = doc.Create.NewFamilyInstance(Curve, familySymbol, levelCreator, sType);
+
+        //    if(!colEl)
+        //    {
+        //        if (Math.Abs(data.ExcentrPlaceY) > 0.001 || Math.Abs(data.ExcentrPlaceZ) > 0.001)
+        //        {
+        //            XYZ Offset = new XYZ(0, -data.ExcentrPlaceY/MMFromFeet, -data.ExcentrPlaceZ / MMFromFeet);
+        //            ElementTransformUtils.MoveElement(doc, element.Id, Offset);
+        //            doc.Regenerate();
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (Math.Abs(data.ExcentrVertX) > 0.001 || Math.Abs(data.ExcentrVertY) > 0.001)
+        //        {
+        //            XYZ Offset = new XYZ(-data.ExcentrVertX / MMFromFeet, -data.ExcentrVertY / MMFromFeet, 0);
+        //            ElementTransformUtils.MoveElement(doc, element.Id, Offset);
+        //            doc.Regenerate();
+        //        }
+        //    }
+
+        //    // 5. Если требуется дополнительный поворот сечения вокруг оси элемента (например, двутавр на 90°)
+        //    if (Math.Abs(rotateRadians) > 0.001)
+        //    {
+        //        Line elementAxis = Line.CreateBound(startPoint, endPoint);
+        //        ElementTransformUtils.RotateElement(doc, element.Id, elementAxis, rotateRadians);
+        //        doc.Regenerate();
+        //    }
+
+        //    return element;
+        //}
+        public static Dictionary<ElementId, Line> ElementCentralAxes { get; set; } = new Dictionary<ElementId, Line>();
+        public static Element CreateElement(FamilySymbol familySymbol, Level levelCreator,
+                                    XYZ startPoint, XYZ endPoint, double rotateRadians = 0)
         {
-            //привязка центральная 
-            if(!DataSymbols.TryGetValue(familySymbol, out var data))
+            // Получаем или вычисляем данные о сечении
+            if (!DataSymbols.TryGetValue(familySymbol, out var data))
             {
-                data = new DataSymbol(familySymbol, LevelCreator);
+                data = new DataSymbol(familySymbol, levelCreator);
                 DataSymbols[familySymbol] = data;
             }
 
-            Autodesk.Revit.DB.Document doc = RevitAPI.Document;
+            Autodesk.Revit.DB.Document  doc = RevitAPI.Document;
 
-            double lengthFeet = startPoint.DistanceTo(endPoint); // длина в футах
-
-
+            // Определяем тип элемента (балка или колонна) по углу наклона
             XYZ direction = (endPoint - startPoint).Normalize();
-            double angleToVertical = direction.AngleTo(XYZ.BasisZ); // радианы, 0 = строго вверх
+            double angleToVertical = direction.AngleTo(XYZ.BasisZ);
             const double verticalThreshold = Math.PI / 4; // 45 градусов
-
-            StructuralType sType;
-            bool colEl = false;
-            if (angleToVertical < verticalThreshold)
-            {
-                sType = StructuralType.Column; 
-                colEl = true;  // элемент близок к вертикали
-            }
-            else
-            {
-                sType = StructuralType.Beam;      // элемент близок к горизонтали
-            }
+            StructuralType sType = (angleToVertical < verticalThreshold)
+                                    ? StructuralType.Column
+                                    : StructuralType.Beam;
             sType = StructuralType.Beam;
+            // Создаём элемент по заданной кривой
+            Line curve = Line.CreateBound(startPoint, endPoint);
+            FamilyInstance element = doc.Create.NewFamilyInstance(curve, familySymbol, levelCreator, sType);
+            doc.Regenerate();
 
-            Line Curve = Line.CreateBound(startPoint, endPoint);
-            FamilyInstance element = doc.Create.NewFamilyInstance(Curve, familySymbol, levelCreator, sType);
-
-            if(!colEl)
+            // Компенсация эксцентриситета (если есть)
+            if (Math.Abs(data.ExcentrY) > 0.001 || Math.Abs(data.ExcentrZ) > 0.001)
             {
-                if (Math.Abs(data.ExcentrPlaceY) > 0.001 || Math.Abs(data.ExcentrPlaceZ) > 0.001)
+                Transform trans = element.GetTotalTransform();
+                if (trans != null)
                 {
-                    XYZ Offset = new XYZ(0, -data.ExcentrPlaceY/MMFromFeet, -data.ExcentrPlaceZ / MMFromFeet);
-                    ElementTransformUtils.MoveElement(doc, element.Id, Offset);
+                    // Вектор смещения в локальной системе семейства (футы)
+                    // Знак минус – чтобы вернуть геометрический центр на ось
+                    XYZ localOffset = new XYZ(0, -data.ExcentrY / 304.8, -data.ExcentrZ / 304.8);
+                    XYZ globalOffset = trans.OfVector(localOffset);
+                    ElementTransformUtils.MoveElement(doc, element.Id, globalOffset);
                     doc.Regenerate();
                 }
             }
-            else
-            {
-                if (Math.Abs(data.ExcentrVertX) > 0.001 || Math.Abs(data.ExcentrVertY) > 0.001)
-                {
-                    XYZ Offset = new XYZ(-data.ExcentrVertX / MMFromFeet, -data.ExcentrVertY / MMFromFeet, 0);
-                    ElementTransformUtils.MoveElement(doc, element.Id, Offset);
-                    doc.Regenerate();
-                }
-            }
-
-            // 5. Если требуется дополнительный поворот сечения вокруг оси элемента (например, двутавр на 90°)
+            ElementCentralAxes[element.Id] = Line.CreateBound(startPoint, endPoint);
+            // Дополнительный поворот сечения вокруг оси элемента
             if (Math.Abs(rotateRadians) > 0.001)
             {
-                Line elementAxis = Line.CreateBound(startPoint, endPoint);
-                ElementTransformUtils.RotateElement(doc, element.Id, elementAxis, rotateRadians);
+                Line centralAxis = ElementCentralAxes[element.Id];
+                ElementTransformUtils.RotateElement(doc, element.Id, centralAxis, rotateRadians);
                 doc.Regenerate();
+                // Обновляем центральную ось после поворота
+                ElementCentralAxes[element.Id] = TransformLine(centralAxis, rotateRadians);
             }
 
             return element;
         }
-
+        private static Line TransformLine(Line line, double angleRadians)
+        {
+            XYZ start = line.GetEndPoint(0);
+            XYZ end = line.GetEndPoint(1);
+            XYZ dir = line.Direction;
+            Transform rot = Transform.CreateRotationAtPoint(dir, angleRadians, start);
+            XYZ newStart = rot.OfPoint(start);
+            XYZ newEnd = rot.OfPoint(end);
+            return Line.CreateBound(newStart, newEnd);
+        }
         public static Element CreateMoveElement(Element element, XYZ translation,  double rotateRadians = 0)
         {
+            if (element == null) { return null; }
             Autodesk.Revit.DB.Document doc = RevitAPI.Document;
-            var newEId=  ElementTransformUtils.CopyElement(
-            doc, element.Id, translation).FirstOrDefault();
-            if(newEId ==null) {return null;}
-            Element newElement = doc.GetElement(newEId);
+            
+
+            ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(doc, element.Id, translation);
+            if (copiedIds == null || !copiedIds.Any())
+            {
+                // Обработка ошибки: элемент не скопирован
+                
+                return null;
+            }
+            ElementId newId = copiedIds.First();
+
+            if (newId == null) {return null;}
+            Element newElement = doc.GetElement(newId);
+
+            if(ElementCentralAxes.TryGetValue(element.Id, out Line centerLine))
+            {
+                XYZ startPoint = centerLine.GetEndPoint(0);
+                XYZ endPoint = centerLine.GetEndPoint(1);
+                startPoint = new XYZ(startPoint.X + translation.X, startPoint.Y + translation.Y, startPoint.Z + translation.Z);
+                endPoint = new XYZ(endPoint.X + translation.X, endPoint.Y + translation.Y, endPoint.Z + translation.Z);
+                ElementCentralAxes[newElement.Id] = Line.CreateBound(startPoint, endPoint);
+            }
+            
 
             if (Math.Abs(rotateRadians) < 0.001 || newElement ==null)
             {
+                doc.Regenerate();
                 return newElement;
             }
 
@@ -273,218 +406,118 @@ namespace Reinforcement
 
         }
 
-        public static Element RotateElement(Element element, double rotateRadians = 0)
+        public static Element RotateElement(Element element, double rotateRadians)
         {
-            // Получаем текущую Curve (рабочая ось)
-            LocationCurve locCurve = element.Location as LocationCurve;
-            Line line = null;
-            XYZ dir = null;
-            if (locCurve != null)
-            {
-                if (locCurve.Curve != null)
+            if(element == null) { return null;}
+            Autodesk.Revit.DB.Document doc = element.Document;
+            //FamilyInstance beam = element as FamilyInstance;
+            //if (beam == null) return element;
+
+            //// Получаем текущую кривую элемента
+            //LocationCurve locCurve = beam.Location as LocationCurve;
+            //if (locCurve == null) return element;
+            //Line currentLine = locCurve.Curve as Line;
+            //if (currentLine == null) return element;
+
+            //XYZ startPoint = currentLine.GetEndPoint(0);
+            //XYZ endPoint = currentLine.GetEndPoint(1);
+
+            if (ElementCentralAxes.TryGetValue(element.Id, out Line centralAxis))
+            {  // или вычислить заново
+
+                // Если поворот на 180° (с допустимой погрешностью)
+                if (Math.Abs(rotateRadians - Math.PI) < 0.001 || Math.Abs(rotateRadians + Math.PI) < 0.001)
                 {
-                    line = locCurve.Curve as Line;
-                    if (line != null)
+
+                    // Пересоздаём элемент с обратным направлением
+                    //тут должны быть другие точки - центр сечения
+                    XYZ start = centralAxis.GetEndPoint(0);
+                    XYZ end = centralAxis.GetEndPoint(1);
+                    FamilyInstance beam = element as FamilyInstance;
+                    Element newElement = CreateElement(beam.Symbol, LevelCreator, end, start, 0);
+                    ElementCentralAxes.Remove(element.Id);
+                    doc.Delete(element.Id);
+                    doc.Regenerate();
+                    return newElement;
+
+                }
+            }
+
+            // Для остальных углов: поворачиваем вокруг оси элемента
+           
+                // Ось вращения – текущая линия элемента (рабочая ось)
+             ElementTransformUtils.RotateElement(doc, element.Id, centralAxis, rotateRadians);//так верно
+            doc.Regenerate();
+
+            return element;
+        }
+        public static Line GetCentralAxis(Element element)
+        {
+            Autodesk.Revit.DB.Document doc = element.Document;
+            Options opt = new Options();
+            opt.DetailLevel = ViewDetailLevel.Fine;
+            GeometryElement geoElem = element.get_Geometry(opt);
+
+            List<Face> endFaces = new List<Face>();
+            XYZ direction = null;
+
+            // Получаем текущую LocationCurve как приблизительное направление
+            LocationCurve locCurve = element.Location as LocationCurve;
+            if (locCurve != null && locCurve.Curve is Line line)
+                direction = line.Direction;
+            else
+                direction = XYZ.BasisX; // запасной вариант
+
+            // Обходим геометрию, ищем грани, перпендикулярные направлению (торцы)
+            foreach (GeometryObject geomObj in geoElem)
+            {
+                if (geomObj is GeometryInstance geomInst)
+                {
+                    GeometryElement instGeom = geomInst.GetInstanceGeometry();
+                    foreach (GeometryObject instObj in instGeom)
                     {
-                        dir = line.Direction;
+                        if (instObj is Solid solid && solid.Volume > 0)
+                        {
+                            foreach (Face face in solid.Faces)
+                            {
+                                XYZ normal = face.ComputeNormal(new UV(0.5, 0.5));
+                                // Если нормаль почти параллельна направлению элемента -> это торец
+                                if (Math.Abs(normal.DotProduct(direction)) > 0.9)
+                                {
+                                    endFaces.Add(face);
+                                }
+                            }
+                        }
                     }
                 }
             }
-            if (dir == null)
-            {
 
-                return element;
-            }
-            Autodesk.Revit.DB.Document doc = RevitAPI.Document;
-            FamilyInstance beam = element as FamilyInstance;
-            FamilySymbol familySymbol = beam.Symbol;
-            if (!DataSymbols.TryGetValue(familySymbol, out var data))
-            {
-                data = new DataSymbol(familySymbol, LevelCreator);
-                DataSymbols[familySymbol] = data;
-            }
+            if (endFaces.Count < 2)
+                return null;
 
-            //находим истинную ось элемента вокруг которой и вертим
-            double angleToVertical = dir.AngleTo(XYZ.BasisZ); // радианы, 0 = строго вверх
-            const double verticalThreshold = Math.PI / 4; // 45 градусов
+            // Вычисляем центры торцевых граней
+            XYZ center1 = GetFaceCenter(endFaces[0]);
+            XYZ center2 = GetFaceCenter(endFaces[1]);
 
-
-            XYZ startPoint = line.GetEndPoint(0);  // Начальная точка
-            XYZ endPoint = line.GetEndPoint(1);    // Конечная точка
-
-            bool colEl = false;
-
-            XYZ startPointAxe = null;
-            XYZ endPointAxe = null;
-            if (angleToVertical < verticalThreshold)
-            {
-                colEl = true;  // элемент близок к вертикали
-                startPointAxe = new XYZ(startPoint.X, startPoint.Y + data.ExcentrPlaceY / MMFromFeet, startPoint.Z + data.ExcentrPlaceZ / MMFromFeet);
-                endPointAxe = new XYZ(endPoint.X, endPoint.Y + data.ExcentrPlaceY / MMFromFeet, endPoint.Z);
-            }
-            else
-            {
-                startPointAxe = new XYZ(startPoint.X + data.ExcentrVertX / MMFromFeet, startPoint.Y + data.ExcentrVertY / MMFromFeet, startPoint.Z);
-                endPointAxe = new XYZ(endPoint.X + data.ExcentrVertX / MMFromFeet, endPoint.Y + data.ExcentrVertY / MMFromFeet, endPoint.Z);
-            }
-
-            if(Math.Abs(rotateRadians- Math.PI)<0.001)
-            {
-                //надежнее пересоздать элемент с начала в конец
-                Element newElement = CreateElement(familySymbol, LevelCreator, endPointAxe, startPointAxe);
-
-                doc.Delete(element.Id);
-                element = newElement;
-                return element;
-            }
-
-            Line Curve = Line.CreateBound(startPointAxe, endPointAxe);
-
-            ElementTransformUtils.RotateElement(doc, element.Id, Curve, rotateRadians);
-            //doc.Regenerate();
-            return element;
+            // Сортируем по расстоянию от начала координат (необязательно)
+            // Но главное - создать линию
+            return Line.CreateBound(center1, center2);
         }
 
-        public static void  CreateOpors()
+        // Вспомогательный метод: центр грани (среднее арифметическое точек её периметра)
+        private static XYZ GetFaceCenter(Face face)
         {
-            //поиск семейства по типоразмеру
-            (string nameFamily, Element element) = VM.NamesFamilies[LestnicaData.Kolonn];
-            element = HelperSeach.GetExistFamily(new HashSet<string> { nameFamily }, ElementTypeOrSymbol.ElementType);
-            VM.NamesFamilies[LestnicaData.Kolonn] = (nameFamily, element);
-
-            if (element == null)
+            Mesh mesh = face.Triangulate();
+            XYZ sum = XYZ.Zero;
+            int count = 0;
+            foreach (XYZ pt in mesh.Vertices)
             {
-                return;
+                sum += pt;
+                count++;
             }
-            FamilySymbol symbol = element as FamilySymbol;
-            if (symbol == null) { return; }
-
-
-            if (!DataSymbols.TryGetValue(symbol, out Column))
-            {
-                Column = new DataSymbol(symbol, LevelCreator);
-                DataSymbols[symbol] = Column;
-            }
-
-
-            //в миллиметрах
-            //на виде сбоку это ширина сечения и высота
-            //на плане это размер по Y, затем по X
-
-           
-
-
-            //// Revit работает во внутренних футах. Вводимые пользователем миллиметры нужно преобразовывать: double feet = mm / 304.8;.
-            XYZ startPoint1 = new XYZ(Column.W/2 / MMFromFeet,0, GZ / MMFromFeet);
-            XYZ endPoint1 = new XYZ(Column.W / 2 / MMFromFeet, 0, ColumnTopZ / MMFromFeet);
-            //CreateElement(symbol, LevelCreator, new XYZ(0, 0, 0), new XYZ(0, 0, 2));
-            //CreateElement(symbol, LevelCreator, new XYZ(0, 0, 0), new XYZ(0, 0, 2), Math.PI / 2);
-
-            CreateElement(symbol, LevelCreator, startPoint1, endPoint1, Math.PI / 2);
-
-
-            Column2EndX = (StupenL + StairLength);//задняя часть колонны
-            double Column2CenterX = Column2EndX - Column.W / 2;
-
-            XYZ startPoint2 = new XYZ(Column2CenterX / MMFromFeet, 0, GZ / MMFromFeet);
-            XYZ endPoint2 = new XYZ(Column2CenterX / MMFromFeet, 0, ColumnTopZ / MMFromFeet);
-
-            CreateElement(symbol, LevelCreator, startPoint2, endPoint2);
-            CreateElement(symbol, LevelCreator, startPoint2, endPoint2, Math.PI / 2);
-
-            CreateCosours();
+            return sum / count;
         }
-
-
         
-
-
-        public static double ColumnTopZ = 0;//футы
-        public static double Column2EndX = 0;//край второй колонны прям задний край
-        public static DataSymbol Column;
-        public static DataSymbol Cosour;
-        public static void CreateCosours()
-        {
-            (string nameFamily, Element element) = VM.NamesFamilies[LestnicaData.BeamCosour];
-            element = HelperSeach.GetExistFamily(new HashSet<string> { nameFamily }, ElementTypeOrSymbol.ElementType);
-            VM.NamesFamilies[LestnicaData.BeamCosour] = (nameFamily, element);
-
-            if (element == null)
-            {
-                return;
-            }
-            FamilySymbol symbol = element as FamilySymbol;
-            if (symbol == null) { return; }
-
-            if (!DataSymbols.TryGetValue(symbol, out Cosour))
-            {
-                Cosour = new DataSymbol(symbol, LevelCreator);
-                DataSymbols[symbol] = Cosour;
-            }
-
-
-
-
-
-            //смещения для косоура центра чтобы его них оказался как раз
-            double dx = Cosour.H/ 2 * Math.Sin(AngleTg);
-            double dz = Cosour.H / 2 * Math.Cos(AngleTg);
-
-            double yBorder = -(Cosour.W + Column.H) / 2;
-
-            XYZ startPoint1 = new XYZ(-dx / MMFromFeet, yBorder / MMFromFeet, (dz + GZ) / MMFromFeet);
-
-
-            //для кончика косоура
-            double xBorder = -dx + Column2EndX;
-            double zBroder = (xBorder - startPoint1.X * MMFromFeet) * Math.Tan(AngleTg);
-
-            XYZ endPoint1 = new XYZ(xBorder / MMFromFeet, yBorder / MMFromFeet, startPoint1.Z + zBroder / MMFromFeet);
-
-
-            Line beamCurve1 = Line.CreateBound(startPoint1, endPoint1);
-           
-            Element cosour1 = CreateElement(symbol, LevelCreator, startPoint1, endPoint1);
-
-
-            cosour1 = RotateElement(cosour1, Math.PI);
-
-
-            //тест
-            XYZ startPoint = new XYZ(startPoint1.X, 0, startPoint1.Z);
-            XYZ endPoint = new XYZ(endPoint1.X, 0, endPoint1.Z);
-            Element cosour = CreateElement(symbol, LevelCreator, startPoint, endPoint);
-            Element cosour22 = CreateElement(symbol, LevelCreator, startPoint, endPoint);
-            cosour22 = RotateElement(cosour22, Math.PI);
-
-
-
-
-
-
-
-            XYZ translation = new XYZ(0, (-StairWidth - Cosour.W) / MMFromFeet, 0);
-            Element cosour2 = CreateMoveElement(cosour1, translation, 0);
-            cosour2 = RotateElement(cosour2, Math.PI);
-
-
-            //ElementTransformUtils.RotateElement(Doc, cosour1.Id, beamCurve1, Math.PI);
-
-            //XYZ translation = new XYZ(0, (-StairWidth - Cosour.W) / MMFromFeet, 0);
-
-
-
-
-            //Element cosour2 = CreateMoveElement(cosour1, translation, Math.PI);
-
-
-
-            //ElementTransformUtils.CopyElement(
-            //Doc, cosour1.Id, translation);
-
-            //ElementTransformUtils.RotateElement(Doc, cosour1.Id, beamCurve1, Math.PI);
-
-        }
 
 
         
