@@ -36,7 +36,7 @@ namespace Reinforcement
             // Создаём и показываем окно
             var window = new StairParametersWindow(viewModel);
 
-            try
+            //try
             {
                 // Для модальности относительно Revit
                 window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -51,7 +51,7 @@ namespace Reinforcement
                 }
                 return Result.Succeeded;
             }
-            catch (Exception ex)
+            //catch (Exception ex)
             {
                 return Result.Failed;
             }

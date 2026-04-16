@@ -152,6 +152,8 @@ namespace Reinforcement
 
             Element cosourPlos21 = CreateElement(symbol, LevelCreator, endPoint1, startPointPlos21);
             cosourPlos11 = RotateElement(cosourPlos21, Math.PI);
+
+
             Doc.Regenerate();
             //и отражаем их
             Element cosourPlos12 = CreateMoveElement(cosourPlos11, translation, 0);

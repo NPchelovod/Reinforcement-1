@@ -327,7 +327,7 @@ namespace Reinforcement
             // Создаём элемент по заданной кривой
             Line curve = Line.CreateBound(startPoint, endPoint);
             FamilyInstance element = doc.Create.NewFamilyInstance(curve, familySymbol, levelCreator, sType);
-            doc.Regenerate();
+            //doc.Regenerate();
 
             // Компенсация эксцентриситета (если есть)
             if (Math.Abs(data.ExcentrY) > 0.001 || Math.Abs(data.ExcentrZ) > 0.001)
@@ -340,18 +340,22 @@ namespace Reinforcement
                     XYZ localOffset = new XYZ(0, -data.ExcentrY / 304.8, -data.ExcentrZ / 304.8);
                     XYZ globalOffset = trans.OfVector(localOffset);
                     ElementTransformUtils.MoveElement(doc, element.Id, globalOffset);
-                    doc.Regenerate();
+                    //doc.Regenerate();
                 }
             }
-            ElementCentralAxes[element.Id] = Line.CreateBound(startPoint, endPoint);
+            Line centralAxis = Line.CreateBound(startPoint, endPoint);
+            ElementCentralAxes[element.Id] = centralAxis;
             // Дополнительный поворот сечения вокруг оси элемента
             if (Math.Abs(rotateRadians) > 0.001)
             {
-                Line centralAxis = ElementCentralAxes[element.Id];
+                
                 ElementTransformUtils.RotateElement(doc, element.Id, centralAxis, rotateRadians);
-                doc.Regenerate();
+                //doc.Regenerate();
                 // Обновляем центральную ось после поворота
-                ElementCentralAxes[element.Id] = TransformLine(centralAxis, rotateRadians);
+                
+
+                //наверно не надо трансфомировать линию
+                //ElementCentralAxes[element.Id] = TransformLine(centralAxis, rotateRadians);
             }
 
             return element;
@@ -370,17 +374,19 @@ namespace Reinforcement
         {
             if (element == null) { return null; }
             Autodesk.Revit.DB.Document doc = RevitAPI.Document;
-            
-
-            ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(doc, element.Id, translation);
-            if (copiedIds == null || !copiedIds.Any())
+            ElementId newId = null;
+            try
             {
-                // Обработка ошибки: элемент не скопирован
-                
-                return null;
+                ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(doc, element.Id, translation);
+                if (copiedIds == null || !copiedIds.Any())
+                {
+                    // Обработка ошибки: элемент не скопирован
+                    return null;
+                }
+                newId = copiedIds.First();
             }
-            ElementId newId = copiedIds.First();
-
+            catch { return null; }
+            
             if (newId == null) {return null;}
             Element newElement = doc.GetElement(newId);
 
@@ -396,7 +402,7 @@ namespace Reinforcement
 
             if (Math.Abs(rotateRadians) < 0.001 || newElement ==null)
             {
-                doc.Regenerate();
+                //doc.Regenerate();
                 return newElement;
             }
 
@@ -437,7 +443,7 @@ namespace Reinforcement
                     Element newElement = CreateElement(beam.Symbol, LevelCreator, end, start, 0);
                     ElementCentralAxes.Remove(element.Id);
                     doc.Delete(element.Id);
-                    doc.Regenerate();
+                    //doc.Regenerate();
                     return newElement;
 
                 }
@@ -447,7 +453,7 @@ namespace Reinforcement
            
                 // Ось вращения – текущая линия элемента (рабочая ось)
              ElementTransformUtils.RotateElement(doc, element.Id, centralAxis, rotateRadians);//так верно
-            doc.Regenerate();
+            //doc.Regenerate();
 
             return element;
         }
