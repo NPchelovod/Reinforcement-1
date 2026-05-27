@@ -210,9 +210,12 @@ namespace Reinforcement
 
 
 
-            //8. Updater
+            //8. Updaterû
             RegisterUpdater.addInId = app.ActiveAddInId;
             RegisterUpdater.Register();
+
+            RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
+            RegisterZakladkaUpdater.Register();
 
             return Result.Succeeded;
         }

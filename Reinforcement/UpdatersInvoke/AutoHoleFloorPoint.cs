@@ -50,7 +50,16 @@ namespace Updaters
                 }
                 else
                 {
-                    return;
+                    ElementType elementType = element as ElementType;
+                    
+                    if (elementType == null) { return; }
+                    string familyName = elementType.FamilyName;
+                    if(familyName.Contains("Закладная"))
+                    { 
+                        //пытаемся определить изменения если его подвинули то надо сброить 
+
+                    }
+
                 }
                 //TaskDialog.Show("Revit updater",$"Имя измененного элемента {element.Name}");
             }
