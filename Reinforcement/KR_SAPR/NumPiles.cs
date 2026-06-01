@@ -1161,6 +1161,9 @@ namespace Reinforcement
                     case '8':
                         sortedList = sortedList.ThenBy(g => g.comentDouble);
                         break;
+                    case '9':
+                        sortedList = sortedList.ThenByDescending(g => g.comentDouble);
+                        break;
 
                 }
             }
