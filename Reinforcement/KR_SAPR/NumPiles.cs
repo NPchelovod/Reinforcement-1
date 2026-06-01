@@ -25,6 +25,7 @@ namespace Reinforcement
     public class PileData : IPileCorrect
     {
         public int netrogat = 1;//для сортировки нужен всегда пусть будет один
+        public double comentDouble = 0;
         public Element Pile { get; set; }
         // Реализация интерфейса
         public double initialX { get; set; }
@@ -142,7 +143,7 @@ namespace Reinforcement
 
 
 
-        private static string sortCode = "01346"; // тип 2
+        private static string sortCode = "801346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
 
         public Result Execute(
@@ -292,7 +293,7 @@ namespace Reinforcement
                 // Инициализируем кэш типов УГО один раз для этого документа
                 InitializeUgoCache(doc);
             }
-
+            bool sortPoComment = sortCode.Contains("8");
             //if(! ustanUGO&& !ustanNumPile)
             //{
             //    return Result.Succeeded;
@@ -372,7 +373,24 @@ namespace Reinforcement
                 {
                     namePileAndNum[name] = 1;
                 }
-                
+                double comment = 0;
+                if(sortPoComment)
+                {
+                    var comParam = pile.LookupParameter("Комментарии");
+                    if(comParam != null && comParam.HasValue)
+                    {
+                        string cp = comParam.AsString();
+                        if (!string.IsNullOrEmpty(cp))
+                        {
+                            if (!double.TryParse(comParam.AsString(), out comment))
+                            {
+                                comment = comParam.AsString().Length;
+                            }
+                            PileClass.comentDouble = comment;
+                        }
+                       
+                    }
+                }
                 if(doNotRenumberNumberedPiles)
                 {
                     var markParam = pile.LookupParameter(Marka);
@@ -862,7 +880,7 @@ namespace Reinforcement
                         if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
 
                         if ( pile1.PilesYGO!= pile2.PilesYGO) { continue; } //(sortPilePoUgo && Разные УГО в разные части
-
+                        if(pile1.comentDouble!=pile2.comentDouble) { continue; }
 
 
                         var raznX = Math.Abs(pile2.X - pile1.X);
@@ -879,6 +897,7 @@ namespace Reinforcement
                         if (pilesGroup2 == null && pilesGroup == null)
                         {
                             pilesGroup = new PilesGroup();
+                            pilesGroup.comentDouble=pile1.comentDouble;
                         }
                         else if (pilesGroup2 != null && pilesGroup == null)
                         {
@@ -916,6 +935,8 @@ namespace Reinforcement
                 if(pilesGroup==null)
                 {
                     pilesGroup = new PilesGroup();
+                    pilesGroup.comentDouble = pile1.comentDouble;
+
                     pile1.PilesGroup = pilesGroup;
                     pilesGroup.Piles.Add(pile1);
                 }
@@ -1136,6 +1157,9 @@ namespace Reinforcement
                     case '4': // Xleft
                         
                         sortedList = sortedList.ThenBy(g => g.numName);
+                        break;
+                    case '8':
+                        sortedList = sortedList.ThenBy(g => g.comentDouble);
                         break;
 
                 }
@@ -1918,7 +1942,7 @@ namespace Reinforcement
 
     public class PilesGroup
     {
-
+        public double comentDouble = 0;
         private static int _numPilesGroup = 0;
 
         public int numPiles = 0;
