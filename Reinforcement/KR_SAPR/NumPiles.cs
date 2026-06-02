@@ -437,11 +437,8 @@ namespace Reinforcement
                             }
                         }
                         
-                        
-
                     }
                 }
-
             }
             
 
@@ -674,16 +671,14 @@ namespace Reinforcement
                     int x =(int) Math.Round(pile.X);
                     int y = (int)Math.Round(pile.Y);
 
-                    if (!doNotRenumberNumberedPiles || pile.pastNum<0)
+                    if (!doNotRenumberNumberedPiles || pile.pastNum<=0)
                     {
                         while(zapretNumPile.Contains(numPile))
                         {
                             numPile++;
                         }
                         pile.NumPile = numPile;
-                        zapretNumPile.Add(numPile);
-
-                        numPile++;
+                        //numPile++;
                     }
                     else if (pile.pastNum>0)
                     {
@@ -693,9 +688,10 @@ namespace Reinforcement
                         }
 
                         pile.NumPile = pile.pastNum;
-                        zapretNumPile.Add(pile.pastNum);
+                        
                         //numPile--;
                     }
+                    zapretNumPile.Add(pile.NumPile);
 
                     string primeh = pile.NumPile+", УГО_" + pile.PilesYGO + ", КУСТ_" + kust+", X="+ x+", Y="+ y;
                     if((x+y)%50>0)
@@ -913,7 +909,7 @@ namespace Reinforcement
                         if (pilesGroup2 == null && pilesGroup == null)
                         {
                             pilesGroup = new PilesGroup();
-                            pilesGroup.comentDouble=pile1.comentDouble;
+                            //pilesGroup.comentDouble=pile1.comentDouble;
                         }
                         else if (pilesGroup2 != null && pilesGroup == null)
                         {
@@ -951,7 +947,7 @@ namespace Reinforcement
                 if(pilesGroup==null)
                 {
                     pilesGroup = new PilesGroup();
-                    pilesGroup.comentDouble = pile1.comentDouble;
+                    //pilesGroup.comentDouble = pile1.comentDouble;
 
                     pile1.PilesGroup = pilesGroup;
                     pilesGroup.Piles.Add(pile1);
@@ -983,6 +979,7 @@ namespace Reinforcement
                     foreach(var piles in pilesGroup.Piles)
                     {
                         piles.PilesGroup = new PilesGroup();
+                        piles.comentDouble = pile.comentDouble;
                         piles.PilesGroup.Piles.Add(piles);
                         piles.PilesGroup.Initializator(namePileAndNum[piles.Name], ListNamesPiles.IndexOf(piles.Name));
                         addPilesGroup.Add(piles.PilesGroup);
@@ -1961,7 +1958,7 @@ namespace Reinforcement
 
     public class PilesGroup
     {
-        public int comentDouble = 0;
+        public int comentDouble => Piles.Count>0? Piles.First().comentDouble:-1;
         private static int _numPilesGroup = 0;
 
         public int numPiles = 0;
