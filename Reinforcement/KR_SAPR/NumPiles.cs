@@ -25,7 +25,7 @@ namespace Reinforcement
     public class PileData : IPileCorrect
     {
         public int netrogat = 1;//для сортировки нужен всегда пусть будет один
-        public double comentDouble = 0;
+        public int comentDouble = 0;
         public Element Pile { get; set; }
         // Реализация интерфейса
         public double initialX { get; set; }
@@ -373,7 +373,7 @@ namespace Reinforcement
                 {
                     namePileAndNum[name] = 1;
                 }
-                double comment = 0;
+                int comment = 0;
                 if(sortPoComment)
                 {
                     var comParam = pile.LookupParameter("Комментарии");
@@ -382,7 +382,7 @@ namespace Reinforcement
                         string cp = comParam.AsString();
                         if (!string.IsNullOrEmpty(cp))
                         {
-                            if (!double.TryParse(comParam.AsString(), out comment))
+                            if (!int.TryParse(comParam.AsString(), out comment))
                             {
                                 comment = comParam.AsString().Length;
                             }
@@ -611,6 +611,8 @@ namespace Reinforcement
 
             int kust = 0;
             numPile++;
+            HashSet<int> zapretNumPile = new HashSet<int>();
+            HashSet<PileData> pastPileData = new HashSet<PileData>();
             foreach (var classPile in ListPilesGroup)
             {
                 kust++;
@@ -666,18 +668,32 @@ namespace Reinforcement
                 
                 foreach (var pile in allPilesGroup)
                 {
-                    
+                    if (pastPileData.Contains(pile)) { continue; }
+                    pastPileData.Add(pile);
+
                     int x =(int) Math.Round(pile.X);
                     int y = (int)Math.Round(pile.Y);
 
                     if (!doNotRenumberNumberedPiles || pile.pastNum<0)
                     {
+                        while(zapretNumPile.Contains(numPile))
+                        {
+                            numPile++;
+                        }
                         pile.NumPile = numPile;
+                        zapretNumPile.Add(numPile);
+
                         numPile++;
                     }
                     else if (pile.pastNum>0)
                     {
+                        while (zapretNumPile.Contains(pile.pastNum))
+                        {
+                            pile.pastNum++;
+                        }
+
                         pile.NumPile = pile.pastNum;
+                        zapretNumPile.Add(pile.pastNum);
                         //numPile--;
                     }
 
@@ -1945,7 +1961,7 @@ namespace Reinforcement
 
     public class PilesGroup
     {
-        public double comentDouble = 0;
+        public int comentDouble = 0;
         private static int _numPilesGroup = 0;
 
         public int numPiles = 0;
