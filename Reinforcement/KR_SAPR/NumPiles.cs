@@ -105,7 +105,7 @@ namespace Reinforcement
     }
 
     [Transaction(TransactionMode.Manual)]
-    public class NumPiles : IExternalCommand
+    public partial class NumPiles : IExternalCommand
     {
         private static int SizePile3D=900;// меньше которого нельзя
         //имена типоразмеров семейства
@@ -145,7 +145,7 @@ namespace Reinforcement
 
         private static string sortCode = "801346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
-
+        public bool RotorPiles { get; set; } = false;
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -214,6 +214,7 @@ namespace Reinforcement
                 coordinateRoundingStep = settingsWindow.CoordinateRoundingStep;
 
                 recreateAllPiles = settingsWindow.RecreateAllPiles;
+                RotorPiles = settingsWindow.RotorPiles;
                 // 4. Продолжаем выполнение с новыми параметрами
                 // 3. ВСЕ операции в одной транзакционной группе
                 using (TransactionGroup transGroup = new TransactionGroup(doc, "Полная обработка свай"))
@@ -251,11 +252,19 @@ namespace Reinforcement
                 return Result.Failed;
             }
         }
+
         private Result ProcessPiles(
                 HashSet<Element> Seacher,
                 ExternalCommandData commandData,
                 Document doc)
         {
+
+            //если надо повернуть сваи
+            if (RotorPiles)
+            {
+                NumPilesRotate.RotatePiles(doc, Seacher);
+            }
+
 
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();

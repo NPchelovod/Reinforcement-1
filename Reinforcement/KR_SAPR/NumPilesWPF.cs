@@ -29,8 +29,8 @@ namespace Reinforcement
 
         // Новая опция - пересоздать все сваи
         public bool RecreateAllPiles { get; set; }
+        public bool RotorPiles { get; set; } = false;
 
-        
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
             bool currentUstanNumPile, bool currentUstanUGO ,bool currentDoNotRenumberNumberedPiles,
@@ -153,6 +153,16 @@ namespace Reinforcement
                 "Удалить все найденные сваи и создать их заново с учетом новых координат и параметров"
             );
             mainStackPanel.Children.Add(recreateAllPilesPanel);
+            
+            // Галочка для поворота всех свай
+            var RotorPile = CreateCheckBoxPanel(
+                "Поворот свай в 0:",
+                RotorPiles,
+                out rotatePilesCheckBox,
+                "Повернуть неправильно повернутые сваи"
+            );
+            mainStackPanel.Children.Add(RotorPile);
+
 
             // Поле для минимальной дистанции
             var minDistancePanel = CreateNumberInputPanel(
@@ -537,6 +547,8 @@ namespace Reinforcement
         // Новые поля
         private CheckBox adjustPositionsCheckBox;
         private CheckBox recreateAllPilesCheckBox;
+
+        private CheckBox rotatePilesCheckBox;
         private TextBox minDistanceTextBox;
         private TextBox coordinateRoundingTextBox;
 
@@ -586,6 +598,7 @@ namespace Reinforcement
             // Новые параметры
             AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
             RecreateAllPiles = recreateAllPilesCheckBox.IsChecked ?? false;
+            RotorPiles = rotatePilesCheckBox.IsChecked ?? false;
             MinDistanceBetweenPiles = minDistance;
             CoordinateRoundingStep = roundingStep;
 
