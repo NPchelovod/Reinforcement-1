@@ -264,7 +264,7 @@ namespace Reinforcement
             {
                 NumPilesRotate.RotatePiles(doc, Seacher);
             }
-
+            
 
             ForgeTypeId units = UnitTypeId.Millimeters;
             //var DictPiles = new Dictionary<(int Xs, int Ys), D<Element>>();
@@ -1185,6 +1185,9 @@ namespace Reinforcement
                         break;
                     case '9':
                         sortedList = sortedList.ThenByDescending(g => g.comentDouble);
+                        break;
+                    default:
+                        // Здесь можно добавить логику для случая по умолчанию
                         break;
 
                 }
