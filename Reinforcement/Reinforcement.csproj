@@ -136,6 +136,7 @@
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\NumPiles_0Process.cs" />
     <Compile Include="KR_SAPR\NumPiles_1RotatePiles.cs" />
+    <Compile Include="KR_SAPR\SeachWayCut.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
     <Compile Include="KR_vstavka\Lestnica\GeneratorLestnicaMK.cs" />
     <Compile Include="KR_vstavka\Lestnica\StairCreator.cs" />
