@@ -134,8 +134,11 @@
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
-    <Compile Include="KR_SAPR\NumPiles_0Process.cs" />
-    <Compile Include="KR_SAPR\NumPiles_1RotatePiles.cs" />
+    <Compile Include="KR_SAPR\NumPiles_1Process.cs" />
+    <Compile Include="KR_SAPR\NumPiles_2RotatePiles.cs" />
+    <Compile Include="KR_SAPR\NumPiles_0PileData.cs" />
+    <Compile Include="KR_SAPR\NumPiles_3RecreatePiles.cs" />
+    <Compile Include="KR_SAPR\NumPiles_4Marks.cs" />
     <Compile Include="KR_SAPR\SeachWayCut.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
     <Compile Include="KR_vstavka\Lestnica\GeneratorLestnicaMK.cs" />
