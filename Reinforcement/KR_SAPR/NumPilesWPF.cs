@@ -133,7 +133,7 @@ namespace Reinforcement
             mainStackPanel.Children.Add(pilesCountText);
 
             // === РАЗДЕЛ: КОРРЕКТИРОВКА КООРДИНАТ СВАЙ ===
-            var correctionTitle = CreateSectionTitle("Корректировка координат свай");
+            var correctionTitle = CreateSectionTitle("Корректировка координат свай, лучше на 3D виде где все сваи видны");
             mainStackPanel.Children.Add(correctionTitle);
 
             // Галочка для корректировки положений свай
@@ -581,11 +581,11 @@ namespace Reinforcement
                 return;
 
             // Проверка кода сортировки свай
-            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8' }))
+            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8','9' }))
                 return;
 
             // Проверка кода сортировки УГО
-            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6' }))
+            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
                 return;
             WriterPrimech = WriterPrimechCheckBox.IsChecked ?? false;
             SectorStep = sectorStep;
