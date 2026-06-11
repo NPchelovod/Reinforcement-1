@@ -4,13 +4,63 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.Revit.DB;
+using System.Windows.Controls;
+using Autodesk.Revit.UI;
 namespace Reinforcement
 {
     public partial class NumPiles
     {
        List<PileDataGroup> pileDataGroup = new List<PileDataGroup>();
-        public void CalculateMarks()
+        public Result CalculateMarks()
         {
+            //нам надо собрать все сваи в группы по важности чтобы потом сортировать
+            SortPileImportent();
+            var result = OpenTspSolver.Solve(AllPiles.Cast<CoordData>().ToList(), TimeSpan.FromSeconds(10));
+            //отсортированный возвращаем
+            var allPiles = result.Cast<PileData>().ToList();
+            int mark = 0;
+            foreach (var pile in allPiles)
+            {
+                mark++;
+                pile.MarkNew = mark;
+            }
+            //устанавливаем марку нашу
+            int ustanMarok = 0;
+            using (Transaction trans2 = new Transaction(Document, "Установка Марки"))
+            {
+                try
+                {
+                    trans2.Start();
+                    foreach (var pileClass in allPiles)
+                    {
+                        Element pile = pileClass.Pile;
+                        if (pile == null) {continue;}
+                        
+                        if( SetPileMark(pile, pileClass.MarkNew.ToString(), nameMarks))
+                        {
+                            ustanMarok++;
+                        }
+
+                    }
+                    trans2.Commit();
+                    string resultMessage = $"Всего свай: {AllPiles.Count}\n";
+                    resultMessage += $"Установлено марок: {ustanMarok}\n";
+                    TaskDialog.Show("Результат", resultMessage);
+                    return Result.Succeeded;
+                }
+                catch (Exception ex)
+                {
+
+                    trans2.RollBack();
+                    TaskDialog.Show("Ошибка транзакции", $"Ошибка при установке марок: {ex.Message}");
+                    return Result.Failed;
+                }
+            }
+        }
+        public void SortPileImportent()
+        {
+            pileDataGroup.Clear();
             //нам надо собрать все сваи в группы
             foreach (var pile in AllPiles)
             {
@@ -18,7 +68,7 @@ namespace Reinforcement
                 bool set = false;
                 foreach (PileDataGroup pileDataGroops in pileDataGroup)
                 {
-                    if(pileDataGroops.SravnList.Equals(SravnList))
+                    if (pileDataGroops.SravnList.SequenceEqual(SravnList))
                     {
                         pileDataGroops.PileDatas.Add(pile);
                         pile.PileDataGroop = pileDataGroops;
@@ -28,103 +78,49 @@ namespace Reinforcement
                 }
                 if (!set)
                 {
-                    pileDataGroup.Add(new PileDataGroup(SravnList));
+                    var pg = new PileDataGroup(SravnList);
+                    pg.PileDatas.Add(pile);
+                    pile.PileDataGroop = pg;
+                    pileDataGroup.Add(pg);
                 }
             }
-            if(pileDataGroup.Count == 0) {return; }
+            if (pileDataGroup.Count == 0) { return; }
+
             var sortDataLis = CalcSort(pileDataGroup.Cast<SortData>().ToList(), sortCode);
+
+            //отсортированный возвращаем
             pileDataGroup = sortDataLis.Cast<PileDataGroup>().ToList();
+
+            int NumWay = 0;
+            foreach (var pileGroup in pileDataGroup)
+            {
+                NumWay++;
+                foreach (var pile in pileGroup.PileDatas)
+                {
+                    pile.NumWay = NumWay;
+                }
+            }
         }
+
         public List<SortData> CalcSort(List<SortData> sortDatas, string sortCod)
         {
             var sorted = sortDatas.OrderBy(x => x.netrogat);
+            
             foreach (char codeChar in sortCode)
             {
                 switch (codeChar)
                 {
                     case '9':
-                        sorted.ThenByDescending(x => x.Count());
+                        sorted = sorted.ThenByDescending(x => x.Count());
                         break;
                     case '8':
-                        sorted.ThenBy(x => x.Comment());
+                        sorted = sorted.ThenBy(x => x.Comment());
+                        break;
+                   default:
                         break;
                 }
             }
-
-
-
-            foreach (char codeChar in sortCode)
-            {
-                switch (codeChar)
-                {
-                    case '0':
-                        {
-                            {
-                                sortedList = sortedList.ThenBy(g => g.PilesYGO);
-                            }
-
-                            break;
-                        }
-                    case '1': // сортировка сначала по Y потом по X
-                        {
-
-
-                            if (!inversSort)
-                            {
-                                sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            }
-
-                            //sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-                            // а по x мы можем сортировать по секетору 3
-                            sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
-                        }
-                        break;
-
-                    case '2': // сортировка сначала по X потом по Y
-                        {
-
-                            sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-
-                            //sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            //а по y мы можем сортировать по сектору 3
-                            if (!inversSort)
-                            {
-                                sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                            }
-
-                        }
-                        break;
-
-                    case '3': // Ytop (по убыванию)
-
-
-                        sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
-                        break;
-
-                    case '4': // Xleft
-
-                        sortedList = sortedList.ThenBy(g => g.numName);
-                        break;
-                    case '8':
-                        sortedList = sortedList.ThenBy(g => g.comentDouble);
-                        break;
-                    case '9':
-                        sortedList = sortedList.ThenByDescending(g => g.comentDouble);
-                        break;
-                    default:
-                        // Здесь можно добавить логику для случая по умолчанию
-                        break;
-
-                }
-                return sorted.ToList();
+            return sorted.ToList();
         }
     }
     

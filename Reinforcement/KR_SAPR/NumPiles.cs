@@ -200,158 +200,158 @@ namespace Reinforcement
        
 
 
-        private void control3D(HashSet<PileData> PropertiesPiles, double size3D=900)
-        {
-            //взаименое пересечение свай
-            var PropertiesPilesList = PropertiesPiles.ToList();
-            for (int i = 0; i < PropertiesPilesList.Count; i++)
-            {
-                var pile1 = PropertiesPilesList[i];
-                for (int j = i+1; j< PropertiesPilesList.Count; j++)
-                {
-                    var pile2 = PropertiesPilesList[j];
-                    var raznX = Math.Abs(pile2.X - pile1.X);
-                    if(raznX > size3D) {continue;}
-                    var raznY = Math.Abs(pile2.Y - pile1.Y);
-                    if (raznY > size3D) { continue; }
+        //private void control3D(HashSet<PileData> PropertiesPiles, double size3D=900)
+        //{
+        //    //взаименое пересечение свай
+        //    var PropertiesPilesList = PropertiesPiles.ToList();
+        //    for (int i = 0; i < PropertiesPilesList.Count; i++)
+        //    {
+        //        var pile1 = PropertiesPilesList[i];
+        //        for (int j = i+1; j< PropertiesPilesList.Count; j++)
+        //        {
+        //            var pile2 = PropertiesPilesList[j];
+        //            var raznX = Math.Abs(pile2.X - pile1.X);
+        //            if(raznX > size3D) {continue;}
+        //            var raznY = Math.Abs(pile2.Y - pile1.Y);
+        //            if (raznY > size3D) { continue; }
 
-                    var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - size3D);
-                    if (dist>0) { continue; }
-                    pile1.intersect3D = Math.Max(pile1.intersect3D, Math.Abs(dist));
-                    pile2.intersect3D = Math.Max(pile2.intersect3D, Math.Abs(dist));
-                }
-            }
-        }
+        //            var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - size3D);
+        //            if (dist>0) { continue; }
+        //            pile1.intersect3D = Math.Max(pile1.intersect3D, Math.Abs(dist));
+        //            pile2.intersect3D = Math.Max(pile2.intersect3D, Math.Abs(dist));
+        //        }
+        //    }
+        //}
 
-        private HashSet<PilesGroup> IntersectSectors(HashSet<PileData> PropertiesPiles, double distSector, Dictionary<string, int> namePileAndNum, List<string> ListNamesPiles, int predelGroup, bool sortPilePoUgo)
-        {
-            var PropertiesPilesList = PropertiesPiles.ToList();
+        //private HashSet<PilesGroup> IntersectSectors(HashSet<PileData> PropertiesPiles, double distSector, Dictionary<string, int> namePileAndNum, List<string> ListNamesPiles, int predelGroup, bool sortPilePoUgo)
+        //{
+        //    var PropertiesPilesList = PropertiesPiles.ToList();
             
-            var HashPilesGroup = new HashSet<PilesGroup> ();
-            for (int i = 0; i < PropertiesPilesList.Count; i++)
-            {
-                var pile1 = PropertiesPilesList[i];
-                var pilesGroup = pile1.PilesGroup;
+        //    var HashPilesGroup = new HashSet<PilesGroup> ();
+        //    for (int i = 0; i < PropertiesPilesList.Count; i++)
+        //    {
+        //        var pile1 = PropertiesPilesList[i];
+        //        var pilesGroup = pile1.PilesGroup;
 
-                if (predelGroup != 1)
-                {
-                    for (int j = i + 1; j < PropertiesPilesList.Count; j++)
-                    {
-                        var pile2 = PropertiesPilesList[j];
+        //        if (predelGroup != 1)
+        //        {
+        //            for (int j = i + 1; j < PropertiesPilesList.Count; j++)
+        //            {
+        //                var pile2 = PropertiesPilesList[j];
 
-                        if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
+        //                if (pile1.Name != pile2.Name) { continue; } // не одинаковое имя - разные кусты кустики кустья
 
-                        if ( pile1.PilesYGO!= pile2.PilesYGO) { continue; } //(sortPilePoUgo && Разные УГО в разные части
-                        if(pile1.comentDouble!=pile2.comentDouble) { continue; }
-
-
-                        var raznX = Math.Abs(pile2.X - pile1.X);
-                        if (raznX > distSector) { continue; }
-                        var raznY = Math.Abs(pile2.Y - pile1.Y);
-                        if (raznY > distSector) { continue; }
-
-                        var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - distSector);
-                        if (dist > 0) { continue; }
-
-                        //обнаружено пересечение
-                        var pilesGroup2 = pile2.PilesGroup;
-                        PilesGroup pileReplace = null; // группа замены в группу pilesGroup
-                        if (pilesGroup2 == null && pilesGroup == null)
-                        {
-                            pilesGroup = new PilesGroup();
-                            //pilesGroup.comentDouble=pile1.comentDouble;
-                        }
-                        else if (pilesGroup2 != null && pilesGroup == null)
-                        {
-                            pilesGroup = pilesGroup2;
-
-                        }
-                        else if (pilesGroup2 == null && pilesGroup != null)
-                        {
-                            //итак норм
-
-                        }
-                        else if (pilesGroup2 != null && pilesGroup != null)
-                        {
-                            pileReplace = pilesGroup2;// ну так принимаем группу замены
-
-                        }
-
-                        if (pileReplace != null)
-                        {
-                            HashPilesGroup.Remove(pileReplace);
-                            foreach (var pile in pileReplace.Piles)
-                            {
-                                pilesGroup.Piles.Add(pile);
-                                pile.PilesGroup = pilesGroup;
-                            }
-                        }
-                        pilesGroup.Piles.Add(pile1);
-                        pilesGroup.Piles.Add(pile2);
-                        pile1.PilesGroup = pilesGroup;
-                        pile2.PilesGroup = pilesGroup;
-                    }
-                }
-
-                //ни одного пересечения и группы не создано
-                if(pilesGroup==null)
-                {
-                    pilesGroup = new PilesGroup();
-                    //pilesGroup.comentDouble = pile1.comentDouble;
-
-                    pile1.PilesGroup = pilesGroup;
-                    pilesGroup.Piles.Add(pile1);
-                }
-                HashPilesGroup.Add(pilesGroup);
-            }
+        //                if ( pile1.PilesYGO!= pile2.PilesYGO) { continue; } //(sortPilePoUgo && Разные УГО в разные части
+        //                if(pile1.comentDouble!=pile2.comentDouble) { continue; }
 
 
-            var removeHashPilesGroup = new HashSet<PilesGroup>();
-            var addPilesGroup = new HashSet<PilesGroup>();
-            //находим центра масс
-            foreach (var pilesGroup in HashPilesGroup)
-            {
-                var pile = pilesGroup.Piles.FirstOrDefault();
-                if(pile == null) 
-                {
-                    removeHashPilesGroup.Add(pilesGroup);// пустую группу не её...
-                    continue; 
-                }
-                if(predelGroup == 0 || predelGroup >= pilesGroup.Piles.Count)
-                {
-                    pilesGroup.Initializator(namePileAndNum[pile.Name], ListNamesPiles.IndexOf(pile.Name));
-                }
-                else
-                {
-                    //расформировываем эту группу
-                    removeHashPilesGroup.Add(pilesGroup);
-                    //и создаем из ее элементов отдельные
-                    foreach(var piles in pilesGroup.Piles)
-                    {
-                        piles.PilesGroup = new PilesGroup();
-                        piles.comentDouble = pile.comentDouble;
-                        piles.PilesGroup.Piles.Add(piles);
-                        piles.PilesGroup.Initializator(namePileAndNum[piles.Name], ListNamesPiles.IndexOf(piles.Name));
-                        addPilesGroup.Add(piles.PilesGroup);
-                    }
+        //                var raznX = Math.Abs(pile2.X - pile1.X);
+        //                if (raznX > distSector) { continue; }
+        //                var raznY = Math.Abs(pile2.Y - pile1.Y);
+        //                if (raznY > distSector) { continue; }
 
-                }
+        //                var dist = (int)Math.Round(Math.Sqrt(raznX * raznX + raznY * raznY) - distSector);
+        //                if (dist > 0) { continue; }
+
+        //                //обнаружено пересечение
+        //                var pilesGroup2 = pile2.PilesGroup;
+        //                PilesGroup pileReplace = null; // группа замены в группу pilesGroup
+        //                if (pilesGroup2 == null && pilesGroup == null)
+        //                {
+        //                    pilesGroup = new PilesGroup();
+        //                    //pilesGroup.comentDouble=pile1.comentDouble;
+        //                }
+        //                else if (pilesGroup2 != null && pilesGroup == null)
+        //                {
+        //                    pilesGroup = pilesGroup2;
+
+        //                }
+        //                else if (pilesGroup2 == null && pilesGroup != null)
+        //                {
+        //                    //итак норм
+
+        //                }
+        //                else if (pilesGroup2 != null && pilesGroup != null)
+        //                {
+        //                    pileReplace = pilesGroup2;// ну так принимаем группу замены
+
+        //                }
+
+        //                if (pileReplace != null)
+        //                {
+        //                    HashPilesGroup.Remove(pileReplace);
+        //                    foreach (var pile in pileReplace.Piles)
+        //                    {
+        //                        pilesGroup.Piles.Add(pile);
+        //                        pile.PilesGroup = pilesGroup;
+        //                    }
+        //                }
+        //                pilesGroup.Piles.Add(pile1);
+        //                pilesGroup.Piles.Add(pile2);
+        //                pile1.PilesGroup = pilesGroup;
+        //                pile2.PilesGroup = pilesGroup;
+        //            }
+        //        }
+
+        //        //ни одного пересечения и группы не создано
+        //        if(pilesGroup==null)
+        //        {
+        //            pilesGroup = new PilesGroup();
+        //            //pilesGroup.comentDouble = pile1.comentDouble;
+
+        //            pile1.PilesGroup = pilesGroup;
+        //            pilesGroup.Piles.Add(pile1);
+        //        }
+        //        HashPilesGroup.Add(pilesGroup);
+        //    }
+
+
+        //    var removeHashPilesGroup = new HashSet<PilesGroup>();
+        //    var addPilesGroup = new HashSet<PilesGroup>();
+        //    //находим центра масс
+        //    foreach (var pilesGroup in HashPilesGroup)
+        //    {
+        //        var pile = pilesGroup.Piles.FirstOrDefault();
+        //        if(pile == null) 
+        //        {
+        //            removeHashPilesGroup.Add(pilesGroup);// пустую группу не её...
+        //            continue; 
+        //        }
+        //        if(predelGroup == 0 || predelGroup >= pilesGroup.Piles.Count)
+        //        {
+        //            pilesGroup.Initializator(namePileAndNum[pile.Name], ListNamesPiles.IndexOf(pile.Name));
+        //        }
+        //        else
+        //        {
+        //            //расформировываем эту группу
+        //            removeHashPilesGroup.Add(pilesGroup);
+        //            //и создаем из ее элементов отдельные
+        //            foreach(var piles in pilesGroup.Piles)
+        //            {
+        //                piles.PilesGroup = new PilesGroup();
+        //                piles.comentDouble = pile.comentDouble;
+        //                piles.PilesGroup.Piles.Add(piles);
+        //                piles.PilesGroup.Initializator(namePileAndNum[piles.Name], ListNamesPiles.IndexOf(piles.Name));
+        //                addPilesGroup.Add(piles.PilesGroup);
+        //            }
+
+        //        }
 
                 
-            }
+        //    }
 
-            foreach (var del in removeHashPilesGroup)
-            {
-                HashPilesGroup.Remove(del);
-            }
-            foreach (var add in addPilesGroup)
-            {
-                HashPilesGroup.Add(add);
-            }
+        //    foreach (var del in removeHashPilesGroup)
+        //    {
+        //        HashPilesGroup.Remove(del);
+        //    }
+        //    foreach (var add in addPilesGroup)
+        //    {
+        //        HashPilesGroup.Add(add);
+        //    }
 
-            return HashPilesGroup;
+        //    return HashPilesGroup;
 
-        }
+        //}
 
 
 
@@ -427,141 +427,141 @@ namespace Reinforcement
             return sortedList?.ToList() ?? listForYgoSort.ToList();
         }
        
-        private List<PilesGroup> sortedCodNumPile( bool ustanNumPile, string sortCode, List<PilesGroup> ListPilesGroup)
-        {
-            if (!ustanNumPile || string.IsNullOrEmpty(sortCode))
-            {
-                return ListPilesGroup;
-            }
+        //private List<PilesGroup> sortedCodNumPile( bool ustanNumPile, string sortCode, List<PilesGroup> ListPilesGroup)
+        //{
+        //    if (!ustanNumPile || string.IsNullOrEmpty(sortCode))
+        //    {
+        //        return ListPilesGroup;
+        //    }
 
 
 
-            bool isFirst = true;
+        //    bool isFirst = true;
 
-            bool firstUGO = false;
+        //    bool firstUGO = false;
 
-            bool firstY = false;
-            bool firstX = false;
-            bool XY = false; // разрешение на сортировку двойную
-            bool pastSort = false;
-            bool a = true;
+        //    bool firstY = false;
+        //    bool firstX = false;
+        //    bool XY = false; // разрешение на сортировку двойную
+        //    bool pastSort = false;
+        //    bool a = true;
 
-            if (sortCode.Contains("6"))
-            { a = false; }
+        //    if (sortCode.Contains("6"))
+        //    { a = false; }
 
-            bool inversSort = false;
-            if (sortCode.Contains("7"))
-            {
-                //нумерация свай сверху вниз
-                inversSort = true;
-            }
+        //    bool inversSort = false;
+        //    if (sortCode.Contains("7"))
+        //    {
+        //        //нумерация свай сверху вниз
+        //        inversSort = true;
+        //    }
 
 
 
-            IOrderedEnumerable < PilesGroup > sortedList = ListPilesGroup.OrderBy(x => x.netrogat);
-            foreach (char codeChar in sortCode)
-            {
-                switch (codeChar)
-                {
-                    case '0':
-                    {
-                            {
-                               sortedList = sortedList.ThenBy(g => g.PilesYGO);
-                            }
+        //    IOrderedEnumerable < PilesGroup > sortedList = ListPilesGroup.OrderBy(x => x.netrogat);
+        //    foreach (char codeChar in sortCode)
+        //    {
+        //        switch (codeChar)
+        //        {
+        //            case '0':
+        //            {
+        //                    {
+        //                       sortedList = sortedList.ThenBy(g => g.PilesYGO);
+        //                    }
 
-                            break;
-                    }
-                    case '1': // сортировка сначала по Y потом по X
-                        {
+        //                    break;
+        //            }
+        //            case '1': // сортировка сначала по Y потом по X
+        //                {
 
                            
-                            if (!inversSort)
-                            {
-                                sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            }
+        //                    if (!inversSort)
+        //                    {
+        //                        sortedList = sortedList.ThenBy(g => a ? g.YtopS2 : g.CenterS2.yS2);
+        //                    }
+        //                    else
+        //                    {
+        //                        sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+        //                    }
                             
-                            //sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
-                            // а по x мы можем сортировать по секетору 3
-                            sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+        //                    //sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
+        //                    // а по x мы можем сортировать по секетору 3
+        //                    sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
 
-                        }
-                        break;
+        //                }
+        //                break;
 
-                    case '2': // сортировка сначала по X потом по Y
-                        {
+        //            case '2': // сортировка сначала по X потом по Y
+        //                {
 
-                             sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
+        //                     sortedList = sortedList.ThenBy(g => a ? g.XleftS2 : g.CenterS2.xS2);
                             
-                            //sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
-                            //а по y мы можем сортировать по сектору 3
-                            if (!inversSort)
-                            {
-                                sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                            }
-                            else
-                            {
-                                sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                            }
+        //                    //sortedList = sortedList.ThenByDescending(g => a ? g.YtopS2 : g.CenterS2.yS2);
+        //                    //а по y мы можем сортировать по сектору 3
+        //                    if (!inversSort)
+        //                    {
+        //                        sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
+        //                    }
+        //                    else
+        //                    {
+        //                        sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+        //                    }
 
-                        }
-                        break;
+        //                }
+        //                break;
 
-                    case '3': // Ytop (по убыванию)
+        //            case '3': // Ytop (по убыванию)
                         
                         
-                        sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
+        //                sortedList = sortedList.ThenByDescending(g => g.kolVoPileName);
                         
-                        break;
+        //                break;
 
-                    case '4': // Xleft
+        //            case '4': // Xleft
                         
-                        sortedList = sortedList.ThenBy(g => g.numName);
-                        break;
-                    case '8':
-                        sortedList = sortedList.ThenBy(g => g.comentDouble);
-                        break;
-                    case '9':
-                        sortedList = sortedList.ThenByDescending(g => g.comentDouble);
-                        break;
-                    default:
-                        // Здесь можно добавить логику для случая по умолчанию
-                        break;
+        //                sortedList = sortedList.ThenBy(g => g.numName);
+        //                break;
+        //            case '8':
+        //                sortedList = sortedList.ThenBy(g => g.comentDouble);
+        //                break;
+        //            case '9':
+        //                sortedList = sortedList.ThenByDescending(g => g.comentDouble);
+        //                break;
+        //            default:
+        //                // Здесь можно добавить логику для случая по умолчанию
+        //                break;
 
-                }
-            }
-
-
-
-            //сортировка глуюбже для глубокой расстановке
-
-            if (firstY)
-            {
-                pastSort = true;
-                if (!inversSort)
-                {
-                    sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                }
-                else
-                {
-                    sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
-                }
-                //sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
-            }
-            else if (firstX)
-            {
-                pastSort = true;
-                sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
-                //sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
-            }
-
-            return sortedList?.ToList() ?? ListPilesGroup.ToList();
+        //        }
+        //    }
 
 
-        }
+
+        //    //сортировка глуюбже для глубокой расстановке
+
+        //    if (firstY)
+        //    {
+        //        pastSort = true;
+        //        if (!inversSort)
+        //        {
+        //            sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
+        //        }
+        //        else
+        //        {
+        //            sortedList = sortedList.ThenByDescending(g => a ? g.YtopS3 : g.CenterS3.yS3);
+        //        }
+        //        //sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+        //    }
+        //    else if (firstX)
+        //    {
+        //        pastSort = true;
+        //        sortedList = sortedList.ThenBy(g => a ? g.XleftS3 : g.CenterS3.xS3);
+        //        //sortedList = sortedList.ThenBy(g => a ? g.YtopS3 : g.CenterS3.yS3);
+        //    }
+
+        //    return sortedList?.ToList() ?? ListPilesGroup.ToList();
+
+
+        //}
 
 
 
@@ -1219,239 +1219,239 @@ namespace Reinforcement
         //    }
         //}
 
-        private void UpdatePilePositionsInRevit(List<PileData> pileDataList)
-        {
-            Document doc = RevitAPI.Document;
-            // Проверяем, есть ли что корректировать
-            int movedCount = 0;
-            int skippedCount = 0;
-            double minRanzToCorrect = 2; // 2 mm
-            ForgeTypeId units = UnitTypeId.Millimeters;
-            double mmToInternal = UnitUtils.ConvertToInternalUnits(1, units);
-            var pilesToMove = new List<PileData>();
+        //private void UpdatePilePositionsInRevit(List<PileData> pileDataList)
+        //{
+        //    Document doc = RevitAPI.Document;
+        //    // Проверяем, есть ли что корректировать
+        //    int movedCount = 0;
+        //    int skippedCount = 0;
+        //    double minRanzToCorrect = 2; // 2 mm
+        //    ForgeTypeId units = UnitTypeId.Millimeters;
+        //    double mmToInternal = UnitUtils.ConvertToInternalUnits(1, units);
+        //    var pilesToMove = new List<PileData>();
 
-            // 1. Сначала собираем только сваи, которые действительно нужно переместить
-            foreach (var pileData in pileDataList)
-            {
-                if (pileData.Pile == null) continue;
+        //    // 1. Сначала собираем только сваи, которые действительно нужно переместить
+        //    foreach (var pileData in pileDataList)
+        //    {
+        //        if (pileData.Pile == null) continue;
 
-                double totalChange = Math.Abs(pileData.initialX - pileData.itogX) +
-                                   Math.Abs(pileData.initialY - pileData.itogY);
+        //        double totalChange = Math.Abs(pileData.initialX - pileData.itogX) +
+        //                           Math.Abs(pileData.initialY - pileData.itogY);
 
-                if (totalChange < minRanzToCorrect)
-                {
-                    skippedCount++;
-                    continue;
-                }
+        //        if (totalChange < minRanzToCorrect)
+        //        {
+        //            skippedCount++;
+        //            continue;
+        //        }
 
-                pilesToMove.Add(pileData);
-            }
+        //        pilesToMove.Add(pileData);
+        //    }
 
-            if (pilesToMove.Count == 0)
-            {
-                TaskDialog.Show("Корректировка",
-                    $"Все сваи уже находятся в корректных позициях (изменение < {minRanzToCorrect} мм).");
-                return;
-            }
+        //    if (pilesToMove.Count == 0)
+        //    {
+        //        TaskDialog.Show("Корректировка",
+        //            $"Все сваи уже находятся в корректных позициях (изменение < {minRanzToCorrect} мм).");
+        //        return;
+        //    }
 
-            // 2. Используем более эффективный подход - ElementTransformUtils для массового перемещения
-            using (Transaction trans = new Transaction(doc, "Корректировка позиций свай"))
-            {
-                try
-                {
-                    trans.Start();
-                    foreach (var pileData in pilesToMove)
-                    {
-                        var locationPoint = pileData.Pile.Location as LocationPoint;
-                        if (locationPoint == null) continue;
+        //    // 2. Используем более эффективный подход - ElementTransformUtils для массового перемещения
+        //    using (Transaction trans = new Transaction(doc, "Корректировка позиций свай"))
+        //    {
+        //        try
+        //        {
+        //            trans.Start();
+        //            foreach (var pileData in pilesToMove)
+        //            {
+        //                var locationPoint = pileData.Pile.Location as LocationPoint;
+        //                if (locationPoint == null) continue;
 
-                        // Вычисляем вектор перемещения
-                        double dx = pileData.itogX - pileData.initialX;
-                        double dy = pileData.itogY - pileData.initialY;
+        //                // Вычисляем вектор перемещения
+        //                double dx = pileData.itogX - pileData.initialX;
+        //                double dy = pileData.itogY - pileData.initialY;
 
                         
-                        // Если перемещение очень маленькое, пропускаем
-                        if (Math.Abs(dx) < 1 && Math.Abs(dy) < 1)
-                        {
-                            skippedCount++;
-                            continue;
-                        }
-                        double newX = pileData.itogX * mmToInternal;
-                        double newY = pileData.itogY * mmToInternal;
+        //                // Если перемещение очень маленькое, пропускаем
+        //                if (Math.Abs(dx) < 1 && Math.Abs(dy) < 1)
+        //                {
+        //                    skippedCount++;
+        //                    continue;
+        //                }
+        //                double newX = pileData.itogX * mmToInternal;
+        //                double newY = pileData.itogY * mmToInternal;
 
 
-                        locationPoint.Point = new XYZ(newX, newY, locationPoint.Point.Z);
-                        //vectors.Add(new XYZ(dx, dy, 0));
-                        movedCount++;
-                        //ElementTransformUtils.MoveElement(doc, pileData.Pile.Id, new XYZ(dx* mmToInternal, dy* */mmToInternal, 0));
-                    }
+        //                locationPoint.Point = new XYZ(newX, newY, locationPoint.Point.Z);
+        //                //vectors.Add(new XYZ(dx, dy, 0));
+        //                movedCount++;
+        //                //ElementTransformUtils.MoveElement(doc, pileData.Pile.Id, new XYZ(dx* mmToInternal, dy* */mmToInternal, 0));
+        //            }
 
-                    // Массовое перемещение - это должно быть быстрее
-                    //if (elementIds.Count > 0)
-                    //{
-                    //    ElementTransformUtils.MoveElements(doc, elementIds, vectors);
-                    //}
+        //            // Массовое перемещение - это должно быть быстрее
+        //            //if (elementIds.Count > 0)
+        //            //{
+        //            //    ElementTransformUtils.MoveElements(doc, elementIds, vectors);
+        //            //}
 
 
-                    trans.Commit();
-                    TaskDialog.Show("Корректировка завершена",
-                        $"Перемещено свай: {movedCount}\n" +
-                        $"Пропущено (изменение < {minRanzToCorrect} мм): {skippedCount}");
-                }
-                catch (Exception ex)
-                {
-                    trans.RollBack();
-                    TaskDialog.Show("Ошибка корректировки",
-                        $"Не удалось скорректировать позиции свай: {ex.Message}");
-                }
-            }
-        }
+        //            trans.Commit();
+        //            TaskDialog.Show("Корректировка завершена",
+        //                $"Перемещено свай: {movedCount}\n" +
+        //                $"Пропущено (изменение < {minRanzToCorrect} мм): {skippedCount}");
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            trans.RollBack();
+        //            TaskDialog.Show("Ошибка корректировки",
+        //                $"Не удалось скорректировать позиции свай: {ex.Message}");
+        //        }
+        //    }
+        //}
     }
 
 
-    public class PilesGroup
-    {
-        public int comentDouble => Piles.Count>0? Piles.First().comentDouble:-1;
-        private static int _numPilesGroup = 0;
+    //public class PilesGroup
+    //{
+    //    public int comentDouble => Piles.Count>0? Piles.First().comentDouble:-1;
+    //    private static int _numPilesGroup = 0;
 
-        public int numPiles = 0;
-        public int netrogat = 1;//нужна для сортировки
+    //    public int numPiles = 0;
+    //    public int netrogat = 1;//нужна для сортировки
 
-        public HashSet<PileData> Piles = new HashSet<PileData>();
+    //    public HashSet<PileData> Piles = new HashSet<PileData>();
 
-        public HashSet<(int Xs, int Ys, string name)> dataPiles = new HashSet<(int Xs, int Ys, string name)>();
+    //    public HashSet<(int Xs, int Ys, string name)> dataPiles = new HashSet<(int Xs, int Ys, string name)>();
 
         
 
-        //public List<(int Xs, int Ys, string name)> PilesSort = new List<(int Xs, int Ys, string name)> (); // отсортированный по координатам
+    //    //public List<(int Xs, int Ys, string name)> PilesSort = new List<(int Xs, int Ys, string name)> (); // отсортированный по координатам
 
-        public int  numName =0;
-
-
-
-
-        public string namePile = "";
-
-        public int intPiles = 1;// но это кол-во секторов а не кол-во свай!!!!!
-        public (int xS2, int yS2) CenterS2 =(0,0);
-        public (int xS3, int yS3) CenterS3 = (0, 0);
-
-        //для красоты не по центру масс нумеровать а по крайним точкам
-        public int XleftS2 = 0;
-        public int YdownS2 = 0;
-        public int XrightS2 = 0;
-        public int YtopS2 = 0;
+    //    public int  numName =0;
 
 
 
-        public int XleftS3 = 0;
-        public int YdownS3 = 0;
-        public int XrightS3 = 0;
-        public int YtopS3 = 0;
 
+    //    public string namePile = "";
 
-        private static int _numCreate = 0;
-        public int numCreate = 0;
+    //    public int intPiles = 1;// но это кол-во секторов а не кол-во свай!!!!!
+    //    public (int xS2, int yS2) CenterS2 =(0,0);
+    //    public (int xS3, int yS3) CenterS3 = (0, 0);
 
-        public int kolVoPileName = 1;
-        public int PilesYGO => Piles.FirstOrDefault()?.PilesYGO ?? 0;
-
-        public PilesGroup()
-        {
-            _numPilesGroup++;
-            numPiles = _numPilesGroup;
-        }
-
-        public void Initializator( int kolVoPileName,int numName)
-        {
-
-            this.kolVoPileName = kolVoPileName;
-            _numCreate++;
-            numCreate = _numCreate;
-
-            if(Piles.Count==0)
-            {
-                return;
-            }
-
-            var anyPile = Piles.FirstOrDefault();
-
-
-            // когда обьявили элемент pile ищем его родственников всех
-
-            //если prinudOne = true то только один элемент в класс
-
-            namePile = anyPile.Name;
-            this.numName = numName;
+    //    //для красоты не по центру масс нумеровать а по крайним точкам
+    //    public int XleftS2 = 0;
+    //    public int YdownS2 = 0;
+    //    public int XrightS2 = 0;
+    //    public int YtopS2 = 0;
 
 
 
-            //а теперь наполняем
-            int xs2 = 0;
-            int ys2 = 0;
+    //    public int XleftS3 = 0;
+    //    public int YdownS3 = 0;
+    //    public int XrightS3 = 0;
+    //    public int YtopS3 = 0;
 
-            int xs3 = 0;
-            int ys3 = 0;
 
-            int iter = 0;
-            foreach (var pile in Piles)
-            {
+    //    private static int _numCreate = 0;
+    //    public int numCreate = 0;
+
+    //    public int kolVoPileName = 1;
+    //    public int PilesYGO => Piles.FirstOrDefault()?.PilesYGO ?? 0;
+
+    //    public PilesGroup()
+    //    {
+    //        _numPilesGroup++;
+    //        numPiles = _numPilesGroup;
+    //    }
+
+    //    public void Initializator( int kolVoPileName,int numName)
+    //    {
+
+    //        this.kolVoPileName = kolVoPileName;
+    //        _numCreate++;
+    //        numCreate = _numCreate;
+
+    //        if(Piles.Count==0)
+    //        {
+    //            return;
+    //        }
+
+    //        var anyPile = Piles.FirstOrDefault();
+
+
+    //        // когда обьявили элемент pile ищем его родственников всех
+
+    //        //если prinudOne = true то только один элемент в класс
+
+    //        namePile = anyPile.Name;
+    //        this.numName = numName;
+
+
+
+    //        //а теперь наполняем
+    //        int xs2 = 0;
+    //        int ys2 = 0;
+
+    //        int xs3 = 0;
+    //        int ys3 = 0;
+
+    //        int iter = 0;
+    //        foreach (var pile in Piles)
+    //        {
                 
-                pile.PilesGroup = this;
+    //            pile.PilesGroup = this;
                 
-                xs2 += pile.Xs2;
-                ys2 += pile.Ys2;
+    //            xs2 += pile.Xs2;
+    //            ys2 += pile.Ys2;
 
-                xs3 += pile.Xs3;
-                ys3 += pile.Ys3;
-                if (iter == 0)
-                {
-                    XleftS2 = pile.Xs2;
-                    YdownS2 = pile.Ys2;
-                    XrightS2 = pile.Xs2;
-                    YtopS2 = pile.Ys2;
+    //            xs3 += pile.Xs3;
+    //            ys3 += pile.Ys3;
+    //            if (iter == 0)
+    //            {
+    //                XleftS2 = pile.Xs2;
+    //                YdownS2 = pile.Ys2;
+    //                XrightS2 = pile.Xs2;
+    //                YtopS2 = pile.Ys2;
 
-                    XleftS3 = pile.Xs3;
-                    YdownS3 = pile.Ys3;
-                    XrightS3 = pile.Xs3;
-                    YtopS3 = pile.Ys3;
-
-
-                }
-                else
-                {
-                    XleftS2 = Math.Min(XleftS2, pile.Xs2);
-                    YdownS2 = Math.Min(YdownS2, pile.Ys2);
-                    XrightS2 = Math.Max(pile.Xs2, XrightS2);
-                    YtopS2 = Math.Max(pile.Ys2, YtopS2);
+    //                XleftS3 = pile.Xs3;
+    //                YdownS3 = pile.Ys3;
+    //                XrightS3 = pile.Xs3;
+    //                YtopS3 = pile.Ys3;
 
 
-                    XleftS3 = Math.Min(XleftS3, pile.Xs3);
-                    YdownS3 = Math.Min(YdownS3, pile.Ys3);
-                    XrightS3 = Math.Max(pile.Xs3, XrightS3);
-                    YtopS3 = Math.Max(pile.Ys3, YtopS3);
-                }
+    //            }
+    //            else
+    //            {
+    //                XleftS2 = Math.Min(XleftS2, pile.Xs2);
+    //                YdownS2 = Math.Min(YdownS2, pile.Ys2);
+    //                XrightS2 = Math.Max(pile.Xs2, XrightS2);
+    //                YtopS2 = Math.Max(pile.Ys2, YtopS2);
 
-                iter++;
-            }
 
-            intPiles = Piles.Count;
-            if (intPiles > 0)
-            {
-                //надо по сектору иначе нумератор свай плохой!!!!!
-                //но сектор берем свайный для точности
-                CenterS2 = ((int)Math.Round(((double)xs2 / (double)intPiles)), (int)Math.Round(((double)ys2 / (double)intPiles) ));
+    //                XleftS3 = Math.Min(XleftS3, pile.Xs3);
+    //                YdownS3 = Math.Min(YdownS3, pile.Ys3);
+    //                XrightS3 = Math.Max(pile.Xs3, XrightS3);
+    //                YtopS3 = Math.Max(pile.Ys3, YtopS3);
+    //            }
 
-                // Используйте реальные координаты, а не секторы:
-                // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
+    //            iter++;
+    //        }
 
-                CenterS3 = ((int)Math.Round(((double)xs3 / (double)intPiles)), (int)Math.Round(((double)ys3 / (double)intPiles)));
-            }
+    //        intPiles = Piles.Count;
+    //        if (intPiles > 0)
+    //        {
+    //            //надо по сектору иначе нумератор свай плохой!!!!!
+    //            //но сектор берем свайный для точности
+    //            CenterS2 = ((int)Math.Round(((double)xs2 / (double)intPiles)), (int)Math.Round(((double)ys2 / (double)intPiles) ));
+
+    //            // Используйте реальные координаты, а не секторы:
+    //            // Center = ((int)Math.Round(x / (double)intPiles), (int)Math.Round(y / (double)intPiles));
+
+    //            CenterS3 = ((int)Math.Round(((double)xs3 / (double)intPiles)), (int)Math.Round(((double)ys3 / (double)intPiles)));
+    //        }
             
 
-        }
+    //    }
         
-    }
+    //}
 
 
     public class PileNameSorter

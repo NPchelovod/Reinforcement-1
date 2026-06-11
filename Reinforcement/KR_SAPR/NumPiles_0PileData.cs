@@ -26,7 +26,7 @@ namespace Reinforcement
     public class PileData : CoordData, SortData
     {
         public int netrogat { get; set; } = 0;
-        public Element Pile { get; set; }
+        public Element Pile { get; set; } = null;
         
         // Реализация интерфейса
         //прошлые данные
@@ -40,11 +40,13 @@ namespace Reinforcement
         public double X { get; set; } = 0;
         public double Y { get; set; } = 0;
         public double Z { get; set; } = 0;
-
+        public int NumWay { get; set; } = 0;//номер типоразмера класстера сваи
+        public int MarkNew = 0;
 
 
         public PileData(Element pile)
         {
+            Pile = pile;
             LocationPoint tek_locate = pile.Location as LocationPoint; // текущая локация вентканала
             XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
 
@@ -96,15 +98,29 @@ namespace Reinforcement
             var rezalt = new List<string>() { TypePile };
             string sortCode = NumPiles.sortCode;
 
-            rezalt.Add(((int)Z).ToString());
-
-            if (sortCode.Contains("8"))
+            foreach (char codeChar in sortCode)
             {
-                rezalt.Add(Commentary);
+                switch (codeChar)
+                {
+                    case '0':
+                        rezalt.Add(UGOPast);
+                        rezalt.Add(((int)Math.Round(Z, 0)).ToString());
+                        break;
+                    case '3':
+                        rezalt.Add(TypePile);
+                        break;
+
+                    case '8':
+                        rezalt.Add(Commentary);
+                        break;
+                    default:
+                        break;
+                }
             }
-            rezalt.Add(UGOPast);
+            
             return rezalt;
         }
+
         public PileDataGroup PileDataGroop = null;
         public int Count()
         {
@@ -124,12 +140,11 @@ namespace Reinforcement
     {
         public int netrogat { get; set; } = 0;
 
-        public List<PileData> PileDatas;
+        public List<PileData> PileDatas = new List<PileData>();
         public List<string> SravnList = new List<string>();
 
         public PileDataGroup( List<string> sravnList)
         {
-           
             SravnList = sravnList;
         }
 
