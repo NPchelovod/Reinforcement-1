@@ -17,6 +17,11 @@ namespace Reinforcement
 
         int NumWay { get; set; } // число которое показывает порядок, 1 - первые элементы значит идут до вторых и тд
 
+        bool BorderWays { get; set; }
+
+        HashSet<CoordData> AllowedPaths { get; set; }
+        double Dist(CoordData b );
+
     }
     public static class OpenTspSolver
     {
@@ -247,9 +252,10 @@ namespace Reinforcement
         {
             //Замена Math.Sqrt(dx*dx + dy*dy) на просто (dx*dx + dy*dy) нарушит логику алгоритма, потому
             //Если заменить d на d², то порядок величин изменится нелинейно.
-            double dx = a.X - b.X;
-            double dy = a.Y - b.Y;
-            return Math.Sqrt(dx * dx + dy * dy);
+            //double dx = a.X - b.X;
+            //double dy = a.Y - b.Y;
+            return a.Dist(b);
+            //return Math.Sqrt(dx * dx + dy * dy);
         }
 
         private static double TourLength(List<CoordData> tour)
