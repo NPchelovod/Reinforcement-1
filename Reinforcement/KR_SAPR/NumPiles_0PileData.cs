@@ -42,6 +42,14 @@ namespace Reinforcement
         public double Z { get; set; } = 0;
         public int NumWay { get; set; } = 0;//номер типоразмера класстера сваи
         public int MarkNew = 0;
+        public bool BorderWays { get; set; } = false;
+
+        public HashSet<CoordData> AllowedPaths { get; set; }
+        public double Dist( CoordData b)
+        {
+            double dx = X - b.X, dy = Y - b.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
 
         public static double SectorStep = 150;//
         public double Xs  => Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
