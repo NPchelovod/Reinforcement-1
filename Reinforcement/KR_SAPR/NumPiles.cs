@@ -56,6 +56,7 @@ namespace Reinforcement
         public static double sectorStepZ = 100; // шаг разбивки УГО по высоте
         public static int predelGroup = 51; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
+        public static bool BoolNumPileIandex = true;
         public bool WriterPrimech = false;
         private static bool ustanUGO = false;
         private static bool doNotRenumberNumberedPiles = false;
@@ -126,6 +127,7 @@ namespace Reinforcement
                 sectorStepZ = SettingsWindow.SectorStepZ;
                 predelGroup = SettingsWindow.PredelGroup;
                 ustanNumPile = SettingsWindow.UstanNumPile;
+                BoolNumPileIandex = SettingsWindow.BoolNumPileIandex;
                 ustanUGO = SettingsWindow.UstanUGO;
                 doNotRenumberNumberedPiles = SettingsWindow.DoNotRenumberNumberedPiles;
                 doNotChangeUGOIfExist = SettingsWindow.DoNotChangeUGOIfExists;

@@ -12,6 +12,7 @@ namespace Reinforcement
         public double SectorStepZ { get; set; }
         public int PredelGroup { get; set; }
         public bool UstanNumPile { get; set; }
+        public bool BoolNumPileIandex { get; set; }
         public bool UstanUGO { get; set; }
         public bool WriterPrimech { get; set; } = false;
 
@@ -199,6 +200,15 @@ namespace Reinforcement
                 "Установить марки (номера) для свай"
             );
             mainStackPanel.Children.Add(ustanNumPilePanel);
+            
+            // Галочка для установки динамической нумеровки
+            var ustanNumPileIandex = CreateCheckBoxPanel(
+                "Нумеровать сваи алгоритм Яндекс карт?:",
+                BoolNumPileIandex,
+                out boolNumPileIandex,
+                "Установить номера свай по алгоритму Яндекс карт?"
+            );
+            mainStackPanel.Children.Add(ustanNumPileIandex);
 
             // Галочка для установки УГО
             var ustanUGOPanel = CreateCheckBoxPanel(
@@ -553,6 +563,7 @@ namespace Reinforcement
         private TextBox coordinateRoundingTextBox;
 
         private CheckBox ustanNumPileCheckBox;
+        private CheckBox boolNumPileIandex;
         private CheckBox ustanUGOCheckBox;
         private CheckBox WriterPrimechCheckBox;
         private CheckBox doNotRenumberCheckBox;
@@ -585,7 +596,7 @@ namespace Reinforcement
                 return;
 
             // Проверка кода сортировки УГО
-            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
+            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
                 return;
             WriterPrimech = WriterPrimechCheckBox.IsChecked ?? false;
             SectorStep = sectorStep;
@@ -603,6 +614,7 @@ namespace Reinforcement
             CoordinateRoundingStep = roundingStep;
 
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
+            BoolNumPileIandex = boolNumPileIandex.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
             DoNotRenumberNumberedPiles = doNotRenumberCheckBox.IsChecked ?? false;
             DoNotChangeUGOIfExists = doNotChangeUGOIfExistsCheckBox.IsChecked ?? false;

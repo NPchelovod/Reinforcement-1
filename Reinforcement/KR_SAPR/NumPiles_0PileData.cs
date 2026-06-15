@@ -43,7 +43,11 @@ namespace Reinforcement
         public int NumWay { get; set; } = 0;//номер типоразмера класстера сваи
         public int MarkNew = 0;
 
-
+        public static double SectorStep = 150;//
+        public double Xs  => Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
+        public double Ys => Math.Round(Y / SectorStep);
+        public double Xsg => Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
+        public double Ysg => Math.Round(Y / SectorStep);
         public PileData(Element pile)
         {
             Pile = pile;
@@ -156,6 +160,27 @@ namespace Reinforcement
         {
             return PileDatas.First().Comment();
         }
+
+        private bool calcSectors=false;
+        private double xsg = 0;
+        private double ysg = 0;
+        public void CalcSectorData()
+        {
+            if(calcSectors || PileDatas.Count==0) { return;}
+            
+            xsg = PileDatas.Select(x => x.X).Sum() / PileDatas.Count();
+            ysg = PileDatas.Select(x => x.Y).Sum() / PileDatas.Count();
+            
+        }
+        public double Xsg
+        {
+            get { CalcSectorData();  return xsg; }
+        }
+        public double Ysg
+        {
+            get { CalcSectorData(); return ysg; }
+        }
+
     }
 
 
