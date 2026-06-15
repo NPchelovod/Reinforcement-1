@@ -12,7 +12,7 @@ namespace Reinforcement
         public double SectorStepZ { get; set; }
         public int PredelGroup { get; set; }
         public bool UstanNumPile { get; set; }
-        public bool BoolNumPileIandex { get; set; }
+        public bool BoolNumPileIandex { get; set; } = true;
         public bool UstanUGO { get; set; }
         public bool WriterPrimech { get; set; } = false;
 
@@ -31,6 +31,12 @@ namespace Reinforcement
         // Новая опция - пересоздать все сваи
         public bool RecreateAllPiles { get; set; }
         public bool RotorPiles { get; set; } = false;
+
+
+        //новая опция - повышение/понижение УГО
+        public bool ReloadUGO { get; set; }
+
+
 
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
@@ -165,6 +171,14 @@ namespace Reinforcement
             mainStackPanel.Children.Add(RotorPile);
 
 
+            // Галочка для УГО вверх затем вниз
+            var ReloadUGOPanel = CreateCheckBoxPanel(
+                "Перезагрузить УГО свай",
+                ReloadUGO,
+                out reloadUGOCheckBox,
+                "Если спадает УГО можно перезапустить"
+            );
+            mainStackPanel.Children.Add(ReloadUGOPanel);
             // Поле для минимальной дистанции
             var minDistancePanel = CreateNumberInputPanel(
                 "Минимальная дистанция между сваями (мм):",
@@ -366,14 +380,16 @@ namespace Reinforcement
 • Лимит свай в КУСТе: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)
 • Код сортировки свай: пользовательский код для порядка сортировки свай (1346)
   0 - сортировка по УГО (чтобы табл свай была не огромной, бывает полезно группировать по УГО)
-  1 - сортировка по Y затем по X
-  2 - наоборот, сортировка по X затем по Y
-  3 - по типу сваи
-  4 - по количеству свай в типе
-  6 - вместо сортировки куста к левому верхнему углу использовать центр куста
+  1 - сортировка по комментарию (номер пусто, 0, 1...)
+  2 - сортировка по ADSK_группирование
+  3 - сортировка по кол-ву свай в типе
+  4 - сортировка по типу сваи
+  5 - сортировка по Y затем по X
+  6 - наоборот, сортировка по X затем по Y
   7 - сортировка сверху вниз
-  8 - сортировать по номеру в комментарии (номер пусто, 0, 1...)
-  9  - сортировать по количеству свай в типе
+  8 - вместо сортировки куста к левому верхнему углу использовать центр куста
+  
+  
 • Код сортировки УГО:
   1 - сортировка по типу
   2 - по количеству свай в типе
@@ -559,6 +575,7 @@ namespace Reinforcement
         private CheckBox recreateAllPilesCheckBox;
 
         private CheckBox rotatePilesCheckBox;
+        private CheckBox reloadUGOCheckBox;
         private TextBox minDistanceTextBox;
         private TextBox coordinateRoundingTextBox;
 
@@ -610,6 +627,7 @@ namespace Reinforcement
             AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
             RecreateAllPiles = recreateAllPilesCheckBox.IsChecked ?? false;
             RotorPiles = rotatePilesCheckBox.IsChecked ?? false;
+            ReloadUGO = reloadUGOCheckBox.IsChecked ?? false;
             MinDistanceBetweenPiles = minDistance;
             CoordinateRoundingStep = roundingStep;
 

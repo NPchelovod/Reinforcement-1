@@ -10,24 +10,7 @@ namespace Reinforcement
 {
     // Поиск кратчайшего маршрута как в Яндекс яндекс картах
 
-    public interface CoordData
-    {
-        double X { get; set; }
-        double Y { get; set; }
-
-        int NumWay { get; set; } // число которое показывает порядок, 1 - первые элементы значит идут до вторых и тд
-
-        bool BorderWays { get; set; }
-
-        HashSet<CoordData> AllowedPaths { get; set; }
-        double Dist(CoordData b );
-
-        double Xs {  get;  } // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
-        double Ys { get;  }
-
-        double Xsg { get; } // сектор группы которой принадлежит данный массив свай
-        double Ysg { get; }// сектор группы которой принадлежит данный массив свай
-    }
+    
     public static class OpenTspSolver
     {
         /// <summary>
@@ -439,8 +422,8 @@ namespace Reinforcement
 
         static double Dist(CoordData a, CoordData b)
         {
-            double dx = a.X - b.X, dy = a.Y - b.Y;
-            return Math.Sqrt(dx * dx + dy * dy);
+            //double dx = a.X - b.X, dy = a.Y - b.Y;
+            return a.Dist(b);//Math.Sqrt(dx * dx + dy * dy);
         }
 
         static double TourLength(List<CoordData> tour)

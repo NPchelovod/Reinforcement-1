@@ -63,7 +63,7 @@ namespace Reinforcement
         private static bool doNotChangeUGOIfExist = false;
 
 
-
+        public static List<SortCodeEnum> sortCodeEnums = new List<SortCodeEnum>();
         public static string sortCode = "801346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
         public bool RotorPiles { get; set; } = false;
@@ -122,6 +122,8 @@ namespace Reinforcement
                     return Result.Cancelled;
                 }
 
+
+
                 // 3. Получаем новые настройки из окна
                 sectorStep = SettingsWindow.SectorStep;
                 sectorStepZ = SettingsWindow.SectorStepZ;
@@ -141,6 +143,46 @@ namespace Reinforcement
 
                 recreateAllPiles = SettingsWindow.RecreateAllPiles;
                 RotorPiles = SettingsWindow.RotorPiles;
+
+                //настраиваем список сортировки
+                sortCodeEnums.Clear();
+                foreach (char codeChar in sortCode)
+                {
+                    switch (codeChar)
+                    {
+                        case '0':
+                            sortCodeEnums.Add(SortCodeEnum.SortUGO);
+                            break;
+                        case '1':
+                            sortCodeEnums.Add(SortCodeEnum.SortNumComment);
+                            break;
+                        case '2':
+                            sortCodeEnums.Add(SortCodeEnum.SortADSKGroup);
+                            break;
+                        case '3':
+                            sortCodeEnums.Add(SortCodeEnum.SortCountPiles);
+                            break;
+                        case '4':
+                            sortCodeEnums.Add(SortCodeEnum.SortTypePile);
+                            break;
+                        case '5':
+                            sortCodeEnums.Add(SortCodeEnum.SortYthenX);
+                            break;
+                        case '6':
+                            sortCodeEnums.Add(SortCodeEnum.SortXthenY);
+                            break;
+                        case '7':
+                            sortCodeEnums.Add(SortCodeEnum.SortUpToDown);
+                            break;
+                        case '8':
+                            sortCodeEnums.Add(SortCodeEnum.SortOnCenterCust);
+                            break;
+
+                    }
+                }
+         
+
+
                 // 4. Продолжаем выполнение с новыми параметрами
                 // 3. ВСЕ операции в одной транзакционной группе
                 using (TransactionGroup transGroup = new TransactionGroup(doc, "Полная обработка свай"))

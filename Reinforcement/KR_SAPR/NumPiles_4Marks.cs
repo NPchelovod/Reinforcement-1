@@ -16,17 +16,19 @@ namespace Reinforcement
         {
             //нам надо собрать все сваи в группы по важности чтобы потом сортировать
             SortPileImportent();
+
             List<PileData> allPiles = new List<PileData>();
             if (BoolNumPileIandex)
             {
-                var result = OpenTspSolver.Solve(AllPiles.Cast<CoordData>().ToList(), TimeSpan.FromSeconds(10));
+                var result = OpenTspSolver.Solve(AllPiles.Cast<CoordData>().ToList(), TimeSpan.FromSeconds(AllPiles.Count/1000*15));
                 //отсортированный возвращаем
                 allPiles = result.Cast<PileData>().ToList();
             }
             else
             {
                 //сортировка по старому доброму методу
-
+                var result = CalcSortPileData(AllPiles.Cast<CoordData>().ToList(), sortCode);
+                allPiles = result.Cast<PileData>().ToList();
             }
             int mark = 0;
             foreach (var pile in allPiles)
@@ -114,13 +116,38 @@ namespace Reinforcement
 
         public List<SortData> CalcSort(List<SortData> sortDatas, string sortCod)
         {
+            //сортировка групп свай
             var sorted = sortDatas.OrderBy(x => x.netrogat);
             
             foreach (char codeChar in sortCode)
             {
                 switch (codeChar)
                 {
-                    case '9':
+                    case '0':
+                        sorted = sorted.ThenBy(x => x.NumUGO());
+                        break;
+                    case '1':
+                        if (!sortCode.Contains("7"))
+                        {
+                            sorted = sorted.ThenBy(x => x.Y).ThenBy(x => x.X);
+                        }
+                        else
+                        {
+                            sorted = sorted.OrderBy(x => x.Y).ThenBy(x => x.X);
+                        }
+                        break;
+                    case '2':
+                        sorted = sorted.ThenBy(x => x.X);
+                        if (!sortCode.Contains("7"))
+                        {
+                            sorted = sorted.ThenBy(x => x.Y);
+                        }
+                        else
+                        {
+                            sorted = sorted.OrderBy(x => x.Y);
+                        }
+                        break;
+                    case '4':
                         sorted = sorted.ThenByDescending(x => x.Count());
                         break;
                     case '8':
