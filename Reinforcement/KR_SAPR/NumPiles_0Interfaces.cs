@@ -40,12 +40,15 @@ namespace Reinforcement
     {
         int Xs { get; }
         int Ys { get; }
+        int Zs { get; }
     }
     public interface CoordData : Coord, CoordSector
     {
+        int netrogat { get; set; } // для сортировки
         int NumWay { get; set; } // число которое показывает порядок, 1 - первые элементы значит идут до вторых и тд
         bool BorderWays { get; set; }
-        HashSet<CoordData> NestedCoordData { get; set; } // вложенные
+        CoordData Father { get; set; } // отец
+        List<CoordData> NestedCoordData { get; set; } // вложенные
         HashSet<CoordData> AllowedPaths { get; set; } //разрешенные пути
         double Dist(CoordData b);
 
@@ -53,7 +56,9 @@ namespace Reinforcement
         List<string> GetSravnDataString();
         List<int> GetSravnDataInt();
 
+        void SortNestedCoordData();
 
+        void CutPileOnGroop();
 
     }
     //public interface SortData : CoordData  // для сортировки надо

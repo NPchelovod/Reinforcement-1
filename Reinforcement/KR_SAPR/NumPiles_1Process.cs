@@ -69,7 +69,13 @@ namespace Reinforcement
                 //"Пересоздание свай";
                 RecreatePiles.RecreatePile(doc, AllPiles);
             }
+            if(ReloadUGO)
+            {
+                //перезапуск уго чтобы отображалась по человечески
 
+            }
+            //поиск ошибок
+            SeachErrors();
             return result;
 
 

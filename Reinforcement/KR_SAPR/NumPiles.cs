@@ -67,7 +67,7 @@ namespace Reinforcement
         public static string sortCode = "801346"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
         public bool RotorPiles { get; set; } = false;
-
+        public bool ReloadUGO => SettingsWindow.ReloadUGO;
         PileSettingsWindow SettingsWindow = null;
 
         public HashSet<Element> Seacher = new HashSet<Element>();
@@ -224,6 +224,7 @@ namespace Reinforcement
 
         public void CorrectData()
         {
+            _ugoTypeCache = null;
             if (sectorStepPile < 1)
             {
                 sectorStepPile = 10;
@@ -817,84 +818,9 @@ namespace Reinforcement
         }
 
 
-        // 1. ОБЪЯВЛЯЕМ СТАТИЧЕСКИЙ СЛОВАРЬ ДЛЯ КЭШИРОВАНИЯ
-        // Ключ: Имя типа (например, "УГО_1"), Значение: ElementId этого типа
-        private static Dictionary<string, ElementId> _ugoTypeCache = null;
+        
 
-        // 2. МЕТОД ДЛЯ ИНИЦИАЛИЗАЦИИ (ЗАПОЛНЕНИЯ) СЛОВАРЯ
-        private static void InitializeUgoCache(Document doc, string prefix="УГО_")
-        {
-            //if (_ugoTypeCache != null) return; // Уже инициализирован
-
-            _ugoTypeCache = new Dictionary<string, ElementId>();
-
-            FilteredElementCollector collector = new FilteredElementCollector(doc)
-                .OfClass(typeof(FamilySymbol));
-
-            //foreach (FamilySymbol symbol in collector)
-            //{
-            //    string symbolName = symbol.Name;
-            //    // Сохраняем ВСЕ типы, которые могут быть УГО (или начинаются на "УГО_")
-            //    // Это позволит быстро находить их позже.
-            //    _ugoTypeCache[symbolName] = symbol.Id;
-
-            //    // Опционально: можно добавить логирование для отладки
-            //    // TaskDialog.Show("Кэш", $"Добавлено в кэш: {symbolName} -> {symbol.Id.IntegerValue}");
-            //}
-
-            // Если вы точно знаете, что нужны только типы, начинающиеся с "УГО_",
-            // можно фильтровать сразу здесь, уменьшив размер словаря:
-            // var ugoSymbols = collector.Cast<FamilySymbol>().Where(s => s.Name.StartsWith("УГО_"));
-            // foreach (var symbol in ugoSymbols) { _ugoTypeCache[symbol.Name] = symbol.Id; }
-            var ugoSymbols = collector.Cast<FamilySymbol>().Where(s => s.Name.StartsWith(prefix));
-            foreach (var symbol in ugoSymbols) { _ugoTypeCache[symbol.Name] = symbol.Id; }
-
-
-        }
-
-        // 3. ОПТИМИЗИРОВАННЫЙ МЕТОД SetUGOValue
-        private bool SetUGOValue(Document doc, Element pileElement, int ygoIndex)
-        {
-            // Убедимся, что кэш инициализирован (делаем это один раз за запуск)
-            if (_ugoTypeCache == null)
-            {
-                InitializeUgoCache(doc);
-            }
-
-            // 1. Формируем имя типа
-            string targetUgoName = "УГО_" + ygoIndex;
-
-            // 2. Пытаемся получить ID типа ИЗ КЭША (мгновенно!)
-            if (!_ugoTypeCache.TryGetValue(targetUgoName, out ElementId targetTypeId))
-            {
-                // Если не нашли в кэше, значит, такого типа действительно нет в проекте
-                //TaskDialog.Show("Ошибка",
-                //    $"Тип '{targetUgoName}' не найден в проекте.\n" +
-                //    $"Возможно, в проекте нет типов УГО, или их имена отличаются.\n" +
-                //    $"Доступные имена в кэше: {string.Join(", ", _ugoTypeCache.Keys.OrderBy(k => k))}");
-                return false;
-            }
-
-            // 3. Нашли ID! Теперь находим и устанавливаем параметр на свае.
-            Parameter ugoParam = pileElement.LookupParameter("ADSK_Типоразмер элемента узла");
-
-            if (ugoParam == null || ugoParam.IsReadOnly)
-            {
-                // Можно не показывать диалог для каждой ошибки, а просто вернуть false
-                // и вести статистику в основном методе
-                return false;
-            }
-
-            // 4. Устанавливаем значение
-            try
-            {
-                return ugoParam.Set(targetTypeId);
-            }
-            catch
-            {
-                return false;
-            }
-        }
+       
 
         private bool ppSetUGOValue(Document doc, Element pileElement, int ygoIndex)
         {

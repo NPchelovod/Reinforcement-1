@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 using System.Windows.Controls;
 using Autodesk.Revit.UI;
+using System.Security.Cryptography;
 namespace Reinforcement
 {
     public partial class NumPiles
@@ -23,19 +24,46 @@ namespace Reinforcement
                 var result = OpenTspSolver.Solve(AllPiles.Cast<CoordData>().ToList(), TimeSpan.FromSeconds(AllPiles.Count/1000*15));
                 //отсортированный возвращаем
                 allPiles = result.Cast<PileData>().ToList();
+                int mark = 0;
+                foreach (var pile in allPiles)
+                {
+                    mark++;
+                    pile.MarkNew = mark;
+                }
             }
             else
             {
-                //сортировка по старому доброму методу
-                var result = CalcSortPileData(AllPiles.Cast<CoordData>().ToList(), sortCode);
-                allPiles = result.Cast<PileData>().ToList();
+                //стандарнтно нумеруем
+                foreach (var pg in pileDataGroup)
+                {
+                    pg.CutPileOnGroop();
+                }
+                int mark = 0;
+                foreach (var pg in pileDataGroup)
+                {
+                    foreach(var ns in pg.NestedCoordData)
+                    {
+                        if(ns is PileData pileData)
+                        {
+                            mark++;
+                            pileData.MarkNew = mark;
+                        }
+                        else
+                        {
+                            foreach (var ns2 in pg.NestedCoordData)
+                            {
+                                if (ns2 is PileData pileData2)
+                                {
+                                    mark++;
+                                    pileData2.MarkNew = mark;
+                                }
+                            }
+                        }
+                    }
+                }    
+                    
             }
-            int mark = 0;
-            foreach (var pile in allPiles)
-            {
-                mark++;
-                pile.MarkNew = mark;
-            }
+            
             //устанавливаем марку нашу
             int ustanMarok = 0;
             using (Transaction trans2 = new Transaction(Document, "Установка Марки"))
@@ -75,14 +103,14 @@ namespace Reinforcement
             //нам надо собрать все сваи в группы
             foreach (var pile in AllPiles)
             {
-                List<string> SravnList = pile.GetSravnData();
+                List<string> SravnList = pile.GetSravnDataString();
                 bool set = false;
                 foreach (PileDataGroup pileDataGroops in pileDataGroup)
                 {
                     if (pileDataGroops.SravnList.SequenceEqual(SravnList))
                     {
-                        pileDataGroops.PileDatas.Add(pile);
-                        pile.PileDataGroop = pileDataGroops;
+                        pileDataGroops.NestedCoordData.Add(pile);
+                        pile.Father = pileDataGroops;
                         set = true;
                         break;
                     }
@@ -90,76 +118,33 @@ namespace Reinforcement
                 if (!set)
                 {
                     var pg = new PileDataGroup(SravnList);
-                    pg.PileDatas.Add(pile);
-                    pile.PileDataGroop = pg;
+                    pg.NestedCoordData.Add(pile);
+                    pile.Father = pg;
                     pileDataGroup.Add(pg);
                 }
             }
             if (pileDataGroup.Count == 0) { return; }
 
             //сортировка группы по её свойствам
-            var sortDataLis = CalcSort(pileDataGroup.Cast<SortData>().ToList(), sortCode);
+            pileDataGroup = PileDataGroup.SortNestedCoordData(NumPiles.sortCodeEnums, pileDataGroup.Cast<CoordData>().ToList()).Cast<PileDataGroup>().ToList(); 
+
+            //pileDataGroup = CalcSort(pileDataGroup.ToList(), NumPiles.sortCodeEnums);
 
             //отсортированный возвращаем
-            pileDataGroup = sortDataLis.Cast<PileDataGroup>().ToList();
-
+            
             int NumWay = 0;
             foreach (var pileGroup in pileDataGroup)
             {
                 NumWay++;
-                foreach (var pile in pileGroup.PileDatas)
+                pileGroup.NumWay = NumWay;
+                foreach (var pile in pileGroup.NestedCoordData)
                 {
                     pile.NumWay = NumWay;
                 }
             }
         }
 
-        public List<SortData> CalcSort(List<SortData> sortDatas, string sortCod)
-        {
-            //сортировка групп свай
-            var sorted = sortDatas.OrderBy(x => x.netrogat);
-            
-            foreach (char codeChar in sortCode)
-            {
-                switch (codeChar)
-                {
-                    case '0':
-                        sorted = sorted.ThenBy(x => x.NumUGO());
-                        break;
-                    case '1':
-                        if (!sortCode.Contains("7"))
-                        {
-                            sorted = sorted.ThenBy(x => x.Y).ThenBy(x => x.X);
-                        }
-                        else
-                        {
-                            sorted = sorted.OrderBy(x => x.Y).ThenBy(x => x.X);
-                        }
-                        break;
-                    case '2':
-                        sorted = sorted.ThenBy(x => x.X);
-                        if (!sortCode.Contains("7"))
-                        {
-                            sorted = sorted.ThenBy(x => x.Y);
-                        }
-                        else
-                        {
-                            sorted = sorted.OrderBy(x => x.Y);
-                        }
-                        break;
-                    case '4':
-                        sorted = sorted.ThenByDescending(x => x.Count());
-                        break;
-                    case '8':
-                        sorted = sorted.ThenBy(x => x.Comment());
-                        break;
-                   default:
-                        break;
-                }
-            }
-            return sorted.ToList();
-        }
-
+        
         public List<CoordData> CalcSortPileData(List<CoordData> sortDatas, string sortCod)
         {
             //если не по алгоритму яндекс карта

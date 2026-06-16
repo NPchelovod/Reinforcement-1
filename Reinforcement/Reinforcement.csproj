@@ -139,6 +139,9 @@
     <Compile Include="KR_SAPR\NumPiles_0PileData.cs" />
     <Compile Include="KR_SAPR\NumPiles_3RecreatePiles.cs" />
     <Compile Include="KR_SAPR\NumPiles_4Marks.cs" />
+    <Compile Include="KR_SAPR\NumPiles_0Interfaces.cs" />
+    <Compile Include="KR_SAPR\NumPiles_5ReloadUGO.cs" />
+    <Compile Include="KR_SAPR\NumPiles_6SeachErrors.cs" />
     <Compile Include="KR_SAPR\SeachWayCut.cs" />
     <Compile Include="KR_SAPR\SeachWayCut2.cs" />
     <Compile Include="KR_SAPR\SetPilesByWPF.cs" />
