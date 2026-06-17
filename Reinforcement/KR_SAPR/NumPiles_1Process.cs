@@ -27,7 +27,34 @@ namespace Reinforcement
                 AllPiles.Add(new PileData(pile));
                
             }
+            //также определяем соседей
+            sosedPiles();
         }
+
+       
+        private void sosedPiles()
+        {
+            double sosedDistance = Math.Max(minDistanceBetweenPiles+1, sectorStep+1);
+            
+            var Piles = AllPiles.ToList();
+
+            for (int i = 0; i < Piles.Count; i++)
+            {
+                var pile1 = Piles[i];
+
+                for (int j = i + 1; j < Piles.Count; j++)
+                {
+                    var pile2 = Piles[j];
+                    if(pile1.Dist(pile2)> sosedDistance) { continue; }
+                    {
+                        pile1.SosedPileData.Add(pile2);
+                        pile2.SosedPileData.Add(pile1);
+                    }
+                }
+            }
+        }
+
+
         Document Document { get; set; }
         private Result ProcessPiles(
                 
@@ -72,7 +99,7 @@ namespace Reinforcement
             if(ReloadUGO)
             {
                 //перезапуск уго чтобы отображалась по человечески
-
+                ReloadUGOM();
             }
             //поиск ошибок
             SeachErrors();

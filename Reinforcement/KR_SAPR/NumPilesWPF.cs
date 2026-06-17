@@ -14,7 +14,7 @@ namespace Reinforcement
         public bool UstanNumPile { get; set; }
         public bool BoolNumPileIandex { get; set; } = true;
         public bool UstanUGO { get; set; }
-        public bool WriterPrimech { get; set; } = false;
+        public bool GroupPiles { get; set; } = true;// группировка свай
 
         public bool DoNotRenumberNumberedPiles { get; set; }
         public bool DoNotChangeUGOIfExists { get; set; }
@@ -53,7 +53,7 @@ namespace Reinforcement
             PredelGroup = currentPredelGroup;
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
-            WriterPrimech = false;
+            GroupPiles = true;
             DoNotRenumberNumberedPiles = currentDoNotRenumberNumberedPiles;
             DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists;
             SortCode = currentSortCode;
@@ -84,7 +84,7 @@ namespace Reinforcement
 
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
-            WriterPrimechCheckBox.IsChecked = WriterPrimech;
+            GroupPilesCheckBox.IsChecked = GroupPiles;
             doNotRenumberCheckBox.IsChecked = currentDoNotRenumberNumberedPiles;
             doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists;
         }
@@ -224,6 +224,14 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(ustanNumPileIandex);
 
+            // Галочка группировать сваи в нумерации
+            var WriterPrimechPanel = CreateCheckBoxPanel(
+                "Группировать сваи в нумерации:",
+                GroupPiles,
+                out GroupPilesCheckBox,
+                "Группировать"
+            );
+            mainStackPanel.Children.Add(WriterPrimechPanel);
             // Галочка для установки УГО
             var ustanUGOPanel = CreateCheckBoxPanel(
                 "Установить УГО:",
@@ -233,14 +241,7 @@ namespace Reinforcement
             );
             mainStackPanel.Children.Add(ustanUGOPanel);
 
-            // Галочка запись примечание
-            var WriterPrimechPanel = CreateCheckBoxPanel(
-                "Записать примечания ошибок:",
-                WriterPrimech,
-                out WriterPrimechCheckBox,
-                "Записать ошибки"
-            );
-            mainStackPanel.Children.Add(WriterPrimechPanel);
+            
             // Галочка - Не перенумеровывать нумерованные сваи
             var doNotRenumberPanel = CreateCheckBoxPanel(
                 "Не перенумеровывать нумерованные сваи:",
@@ -582,7 +583,7 @@ namespace Reinforcement
         private CheckBox ustanNumPileCheckBox;
         private CheckBox boolNumPileIandex;
         private CheckBox ustanUGOCheckBox;
-        private CheckBox WriterPrimechCheckBox;
+        private CheckBox GroupPilesCheckBox;
         private CheckBox doNotRenumberCheckBox;
         private CheckBox doNotChangeUGOIfExistsCheckBox;
 
@@ -615,7 +616,7 @@ namespace Reinforcement
             // Проверка кода сортировки УГО
             if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
                 return;
-            WriterPrimech = WriterPrimechCheckBox.IsChecked ?? false;
+            GroupPiles = GroupPilesCheckBox.IsChecked ?? false;
             SectorStep = sectorStep;
             SectorStepPile = sectorStepPile;
             SectorStepZ = sectorStepZ;

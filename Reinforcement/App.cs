@@ -102,7 +102,7 @@ namespace Reinforcement
                 "Выбор",
                 "САПР",
                 "КР вставки",
-                "Copy / Кубики",
+                "Copy/Кубики",
                 "Импорт/Экспорт",
                 "ОВ плит",
                 "АР панель",
@@ -149,7 +149,7 @@ namespace Reinforcement
                         App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Copy / Кубики":
+                    case "Copy/Кубики":
                         App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
                         break;
 

@@ -57,7 +57,7 @@ namespace Reinforcement
         public static int predelGroup = 51; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         public static bool BoolNumPileIandex = true;
-        public bool WriterPrimech = false;
+        public bool GroupPiles = false;// группиовать ли нумератор свай
         private static bool ustanUGO = false;
         private static bool doNotRenumberNumberedPiles = false;
         private static bool doNotChangeUGOIfExist = false;
@@ -136,7 +136,7 @@ namespace Reinforcement
                 sectorStepPile = SettingsWindow.SectorStepPile;
                 sortCode = SettingsWindow.SortCode;
                 sortCodeUGO = SettingsWindow.SortCodeUGO;
-                WriterPrimech = SettingsWindow.WriterPrimech;
+                GroupPiles = SettingsWindow.GroupPiles;
                 adjustPilePositions = SettingsWindow.AdjustPilePositions;
                 minDistanceBetweenPiles = SettingsWindow.MinDistanceBetweenPiles;
                 coordinateRoundingStep = SettingsWindow.CoordinateRoundingStep;
@@ -225,6 +225,7 @@ namespace Reinforcement
         public void CorrectData()
         {
             _ugoTypeCache = null;
+           
             if (sectorStepPile < 1)
             {
                 sectorStepPile = 10;

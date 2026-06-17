@@ -8,36 +8,174 @@ using Autodesk.Revit.UI;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using Newtonsoft.Json.Linq;
 
 namespace Reinforcement
 {
     public partial class NumPiles
     {
 
-        public double minDistPiles = 900;
+        public double minDistPiles => minDistanceBetweenPiles - 2;
         public void SeachErrors()
         {
             var Piles = AllPiles.OrderBy(x=>x.MarkNew).ThenBy(x=>x.MarkPast).ToList();
             var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //ошибки в сваях дистанция соседней
+
+
+            bool existNewMark = Piles.Where(x => x.MarkNew > 0).Count() > 0;
+            bool existPastMark = Piles.Where(x => x.MarkPast > 0).Count() > 0;
+            bool existNewUGO = Piles.Where(x => x.UGONewNum > 0).Count() > 0;
+            bool existPastUGO = Piles.Where(x => !string.IsNullOrEmpty(x.UGOPast)).Count() > 0;
             for (int i = 0; i < Piles.Count; i++)
             {
                 var Pile1 = Piles[i];
                 for (int j = i + 1; j < Piles.Count; j++)
                 {
                     var Pile2 = Piles[j];
-                    double dist = Pile1.Dist(Pile2)+2;
+                    double dist = Pile1.Dist(Pile2);
                     if (minDistPiles > dist)
                     {
-
                         //запись ошибки
-                        string errorMessage = $"Дистанция свая {(Pile1.MarkNew>0? Pile1.MarkNew:Pile1.MarkPast) } ({Pile1.MarkPast}) - свая {(Pile2.MarkNew > 0 ? Pile2.MarkNew : Pile2.MarkPast)} ({Pile2.MarkPast}) = {(int) dist} м. " +
-                                  $"Должно быть ≥ {minDistPiles:F2} м.";
+                        string errorMessage = $"Дистанция {(int)dist} мм, свая марки new/past ({Pile1.MarkNew })/({Pile1.MarkPast}) - свая ({Pile2.MarkNew})/({Pile2.MarkPast})" +
+                                  $", должно быть ≥ {minDistPiles}, ID:({Pile1.IdValue}),({Pile2.IdValue})";
                         errors.Add(errorMessage);
                     }
                 }
             }
+            //дублирование или пропуск номера нумерации
+            if (ustanNumPile && existNewMark)
+            {
+                Piles = AllPiles.OrderBy(x => x.MarkNew).ToList();
+                for (int i = 0; i < Piles.Count-1; i++)
+                {
+                    var Pile1 = Piles[i];
+                    var Pile2 = Piles[i+1];
+                    if(Pile1.MarkNew != Pile2.MarkNew-1)
+                    {
+                        string errorMessage = $"Нумерация new свая марки {Pile2.MarkNew} от сваи {Pile1.MarkNew} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
+                        errors.Add(errorMessage);
+                    }
+                }
+            }
+            else if(existPastMark)
+            {
+                Piles = AllPiles.OrderBy(x => x.MarkPast).ToList();
+                for (int i = 0; i < Piles.Count - 1; i++)
+                {
+                    var Pile1 = Piles[i];
+                    var Pile2 = Piles[i + 1];
+                    if (Pile1.MarkPast != Pile2.MarkPast - 1 && (Pile1.MarkPastIsString != Pile2.MarkPastIsString))
+                    {
+                        string errorMessage = $"Нумерация past свая марки {Pile2.MarkPast} от сваи {Pile1.MarkPast} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
+                        errors.Add(errorMessage);
+                    }
+                }
 
+            }
+            //проверка УГО соотсветсвию всем требованиям
+            if (!ustanUGO && existPastUGO)
+            {
+                ///*var PilesUGO =  Piles.Where(x => !string.IsNullOrEmpty(x.UGOPast)).OrderBy(x=>x.UGOPastNum).ThenBy(x=>x.UGOPast).ThenBy(x => ustanNumPile?x.MarkNew: */x.MarkPast).ToList();
+                var groupedPiles = Piles
+                .Where(x => !string.IsNullOrEmpty(x.UGOPast))
+                .OrderBy(x => x.UGOPastNum)
+                .ThenBy(x => x.UGOPast)
+                .ThenBy(x => ustanNumPile ? x.MarkNew : x.MarkPast)
+                .GroupBy(x => x.UGOPast)
+                .ToList();
+
+                
+                foreach (var group in groupedPiles)
+                {
+                    
+                    var groupAsList = group.OrderBy(x=>x.MarkNew).ToList();
+
+                    //в отдельной группе проверяем нумерацию свай
+                    if(ustanNumPile && existNewMark)
+                    {
+                        for (int i = 0; i < groupAsList.Count - 1; i++)
+                        {
+                            var Pile1 = groupAsList[i];
+                            var Pile2 = groupAsList[i + 1];
+                            if (Pile1.MarkNew != Pile2.MarkNew - 1)
+                            {
+                                string errorMessage = "";
+                                var PileAver = AllPiles.Where(x => x.MarkNew == Pile1.MarkNew + 1).FirstOrDefault();
+                                if (PileAver != null)
+                                {
+                                    if(PileAver.TypePile!= Pile1.TypePile)
+                                    {
+                                        errorMessage += "!(тип свай) ";
+                                    }
+                                }
+                                errorMessage += $"Нерационально УГО_{Pile1.UGOPastNum} разрыв номера {Pile2.MarkNew} от сваи {Pile1.MarkNew} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
+
+                                if (PileAver != null)
+                                {
+                                    errorMessage += $" Промежуточная свая {PileAver.MarkNew} с УГО_{PileAver.UGOPastNum} и ID:{PileAver.IdValue}";
+                                }
+                                errors.Add(errorMessage);
+                            }
+                        }
+                    }
+                    else if(existPastMark)
+                    {
+                        groupAsList = group.OrderBy(x => x.MarkPast).ToList();
+                        for (int i = 0; i < groupAsList.Count - 1; i++)
+                        {
+                            var Pile1 = groupAsList[i];
+                            var Pile2 = groupAsList[i + 1];
+                            if (Pile1.MarkPast != Pile2.MarkPast - 1 && (Pile1.MarkPastIsString !=Pile2.MarkPastIsString))
+                            {
+
+                                var PileAver = AllPiles.Where(x => x.MarkPast == Pile1.MarkPast + 1).OrderBy(x => x.MarkPastIsString).FirstOrDefault();
+                                string errorMessage = "";
+                                if (PileAver != null)
+                                {
+                                    if (PileAver.TypePile != Pile1.TypePile)
+                                    {
+                                        errorMessage += "!(тип свай) ";
+                                    }
+                                }
+                                 errorMessage += $"Нерационально УГО_{Pile1.UGOPastNum} разрыв номера {Pile2.MarkPast} от сваи {Pile1.MarkPast} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
+
+                                //попытка найти промежуточную сваю
+                                
+                                if (PileAver != null)
+                                {
+                                    errorMessage += $" Промежуточная свая {PileAver.MarkPast} с УГО_{PileAver.UGOPastNum} и ID:{PileAver.IdValue}";
+                                }
+                                errors.Add(errorMessage);
+                            }
+                        }
+                    }
+
+                    //поиск несовпадающих
+                    var grouped2 = groupAsList.GroupBy(x => new { x.Zs, x.TypePile });
+                    
+                    if (grouped2.Count()>1)
+                    {
+                        var maxGroup = grouped2.OrderByDescending(g => g.Count()).First();
+                        var pileEtalon = maxGroup.First();
+                        foreach (var group2 in grouped2)
+                        {
+                            // Сравниваем ключи групп, а не объекты
+                            if (!group2.Key.Equals(maxGroup.Key))
+                            {
+                                foreach(var item in group2)
+                                {
+                                    string errorMessage = $"Несовпадение УГО_{pileEtalon.UGOPastNum} сваи марки new/past ({item.MarkNew})/ ({item.MarkPast}),Z = ({(int)item.Z}), type = ({item.TypePile}) с эталоном ({pileEtalon.MarkNew})/ ({pileEtalon.MarkPast}),Z = ({(int)pileEtalon.Z}), type = ({pileEtalon.TypePile}), ID:({pileEtalon.IdValue}),({item.IdValue})";
+                                    errors.Add(errorMessage);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //поиск свай которые не перпендикулярны следующей и последующей сваи
 
 
             // Записываем ошибки в файл на рабочем столе
@@ -61,13 +199,72 @@ namespace Reinforcement
                 catch (Exception ex)
                 {
                     //MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}",
-                     //             "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    //             "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
             {
-               // MessageBox.Show("Ошибок не обнаружено.", "Информация",
+                // MessageBox.Show("Ошибок не обнаружено.", "Информация",
                 //              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+       
+        //поиск не перпендикулярной сваи
+        public void SeachNotPerpendicularPiles()
+        {
+            //сначала находим достоверные горизонтали 
+            //и достоверные вертикали
+            HashSet<PileData> XEquel = new HashSet<PileData>();
+            HashSet<PileData> YEquel = new HashSet<PileData>();
+            double errorSize = 1;//1 мм для горизонтов и вертикала
+            foreach (var pile in AllPiles)
+            {
+                foreach (var sosed in pile.SosedPileData)
+                {
+                    if(Math.Abs(sosed.X-pile.X)< errorSize)
+                    {
+                        XEquel.Add(sosed);
+                        XEquel.Add(pile);
+                    }
+                    else if(Math.Abs(sosed.Y-pile.Y)< errorSize)
+                    {
+                        YEquel.Add(sosed);
+                        YEquel.Add(pile);
+                    }
+                }
+            }
+            //нашли все соседи 
+            foreach (var pile in AllPiles)
+            {
+                if (pile.SosedPileData.Count == 0) { continue; }
+                //соседи есть, сама не параллельная им по одной из линий
+                bool notX = !XEquel.Contains(pile);
+                bool notY = !YEquel.Contains(pile);
+
+                if(notX)
+                {
+                    var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
+                }
+
+                if (notY)
+                {
+                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
+                    //if()
+                }
+
+                if (pile.SosedPileData.Count>0 && (!XEquel.Contains(pile) || !YEquel.Contains(pile)))
+                {
+                    
+
+                    //считаем что 2 вертикальных соседа - треа
+                    var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
+                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
+                    foreach (var sosed in pile.SosedPileData)
+                    {
+
+                    }
+                }
             }
         }
     }

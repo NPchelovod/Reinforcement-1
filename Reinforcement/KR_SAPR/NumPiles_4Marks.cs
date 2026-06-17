@@ -16,54 +16,98 @@ namespace Reinforcement
         public Result CalculateMarks()
         {
             //нам надо собрать все сваи в группы по важности чтобы потом сортировать
-            SortPileImportent();
+            SortPileImportent();//сначала по важности сортируем
 
-            List<PileData> allPiles = new List<PileData>();
-            if (BoolNumPileIandex)
+            //List<PileData> allPiles = new List<PileData>();
+
+            var listCD = new List<CoordData>();//это если группировка есть - список групп свай иначе список свай
+            if (GroupPiles)
             {
-                var result = OpenTspSolver.Solve(AllPiles.Cast<CoordData>().ToList(), TimeSpan.FromSeconds(AllPiles.Count/1000*15));
-                //отсортированный возвращаем
-                allPiles = result.Cast<PileData>().ToList();
-                int mark = 0;
-                foreach (var pile in allPiles)
-                {
-                    mark++;
-                    pile.MarkNew = mark;
-                }
-            }
-            else
-            {
-                //стандарнтно нумеруем
+                //группировка
                 foreach (var pg in pileDataGroup)
                 {
                     pg.CutPileOnGroop();
                 }
-                int mark = 0;
+            }
+
+            // и теперь эти группы должны в один список 
+            foreach (var pg in pileDataGroup)
+            {
+                foreach (var ns in pg.NestedCoordData)
+                {
+                    ns.NumWay = pg.NumWay;//на всякий случай
+                    listCD.Add(ns);
+                }
+            }
+
+            if (BoolNumPileIandex)
+            {
+
+                listCD = OpenTspSolver.Solve(listCD, TimeSpan.FromSeconds((double)AllPiles.Count/ 1000.0*15));
+                //отсортированный возвращаем
+                var allpSpisok = new List<CoordData>();
+                foreach (var pg in listCD) //это если группировка есть - список групп свай иначе список свай
+                {
+                    
+                    if (pg is PileData pileData)
+                    {
+                        allpSpisok.Add(pg);
+                    }
+                    else
+                    {
+                        //вложенная группировка
+                        var listInsider = OpenTspSolver.Solve(pg.NestedCoordData, TimeSpan.FromSeconds(3));
+                        foreach (var ns2 in listInsider)
+                        {
+                            if (ns2 is PileData pileData2)
+                            {
+                                allpSpisok.Add(ns2);
+                            }
+                        }
+                    }
+                    
+                }
+                listCD = allpSpisok;
+            }
+            else
+            {
+                listCD.Clear();
                 foreach (var pg in pileDataGroup)
                 {
-                    foreach(var ns in pg.NestedCoordData)
+                    pg.SortNestedCoordData(); //сортируем внутри группу или сваи
+                    foreach (var ns in pg.NestedCoordData)
                     {
                         if(ns is PileData pileData)
                         {
-                            mark++;
-                            pileData.MarkNew = mark;
+                            listCD.Add(ns);
                         }
                         else
                         {
-                            foreach (var ns2 in pg.NestedCoordData)
+                            ns.SortNestedCoordData();
+                            foreach (var ns2 in ns.NestedCoordData)
                             {
                                 if (ns2 is PileData pileData2)
                                 {
-                                    mark++;
-                                    pileData2.MarkNew = mark;
+                                    listCD.Add(ns);
                                 }
                             }
                         }
                     }
-                }    
-                    
+                }      
             }
-            
+
+            int mark = 0;
+            List< PileData> allPiles = new List< PileData>();
+            foreach (var coord in listCD)
+            {
+                if (coord is PileData pile)
+                {
+                    mark++;
+                    pile.MarkNew = mark;
+                    allPiles.Add(pile);
+                }
+            }
+
             //устанавливаем марку нашу
             int ustanMarok = 0;
             using (Transaction trans2 = new Transaction(Document, "Установка Марки"))

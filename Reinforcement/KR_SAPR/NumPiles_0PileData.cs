@@ -25,6 +25,9 @@ namespace Reinforcement
         public int ADSK_GroupNum = -1;
 
         public int MarkPast = 0;
+        public string MarkPastString = "";
+        public bool MarkPastIsString = true;
+
         public string UGOPast = "";
         public int UGOPastNum = 0;
 
@@ -39,7 +42,7 @@ namespace Reinforcement
         public int NumWay { get; set; } = 0;//номер типоразмера класстера сваи
         public int MarkNew = 0;
         public bool BorderWays { get; set; } = false;
-        public List<CoordData> NestedCoordData { get; set; }//вложенные
+        public List<CoordData> NestedCoordData { get; set; } = new List<CoordData>();//вложенные
         public HashSet<CoordData> AllowedPaths { get; set; }
         public double Dist(CoordData b)
         {
@@ -50,10 +53,15 @@ namespace Reinforcement
         public static double SectorStep = 150;//
         public int Xs => (int) Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
         public int Ys => (int) Math.Round(Y / SectorStep);
-        public int Zs => (int)Math.Round(Z );
+        public int Zs => (int) (Math.Round(Z / 3.0) * 3.0);
+        public long IdValue = 0;
         public PileData(Element pile)
         {
             Pile = pile;
+
+            ElementId elementId = Pile.Id;
+            IdValue = elementId.Value;
+
             LocationPoint tek_locate = pile.Location as LocationPoint; // текущая локация вентканала
             XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
 
@@ -77,8 +85,23 @@ namespace Reinforcement
             var markParam = pile.LookupParameter("Марка");
             if (markParam != null && markParam.HasValue)
             {
-                var oldMarkValue = markParam.AsString();
-                Int32.TryParse(oldMarkValue, out int MarkPast);
+                MarkPastString = markParam.AsString();
+                if (!string.IsNullOrEmpty(MarkPastString))
+                {
+                    if (int.TryParse(MarkPastString, out MarkPast))
+                    {
+                        MarkPastIsString = false;
+                    }
+                    else
+                    {
+                        // Извлекаем первую последовательность цифр
+                        var match = System.Text.RegularExpressions.Regex.Match(MarkPastString, @"\d+");
+                        if (match.Success && Int32.TryParse(match.Value, out MarkPast))
+                        {
+                            // MarkPast готов: "10к" → 10, "а1" → 1, "5" → 5
+                        }
+                    }
+                }
             }
 
             Parameter UGOParam = pile.LookupParameter(NumPiles.nameYGO);
@@ -154,6 +177,8 @@ namespace Reinforcement
         }
         public void CutPileOnGroop() { }
         //public PileDataGroup PileDataGroop = null;
+
+        public HashSet<PileData> SosedPileData { get; set; } = new HashSet<PileData>();
 
     }
 
@@ -297,13 +322,13 @@ namespace Reinforcement
                     case SortCodeEnum.SortUGO:
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.UGOPastNum ?? -1;
                         });
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.UGOPast ?? "";
                         });
@@ -312,13 +337,13 @@ namespace Reinforcement
                     case SortCodeEnum.SortNumComment:
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.CommentaryNum ?? -1;
                         });
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.Commentary ?? "";
                         });
@@ -327,13 +352,13 @@ namespace Reinforcement
                     case SortCodeEnum.SortADSKGroup:
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.ADSK_GroupNum ?? -1;
                         });
                         sorted = sorted.ThenBy(x =>
                         {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
+                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
                              ?? (x as PileData);
                             return pile?.ADSK_Group ?? "";
                         });
@@ -402,7 +427,8 @@ namespace Reinforcement
             {
                 nc.Father=null;//сбиваем отца
             }
-            
+            NestedCoordData.Clear();//жертва ЕГЭ
+
             // var dictSravn = new Dictionary<CoordData, PileDataGroup>();
             for (int i = 0; i < listIter.Count; i++)
             {
@@ -428,10 +454,14 @@ namespace Reinforcement
                         father.NestedCoordData.Add(coord2);
                         
                     }
-                    else if(f2 == null)
+                    else if(f1 ==f2)
+                    {
+                        continue;
+                    }
+                    else if (f2 == null)
                     {
                         father = f1;
-                        if (father.NestedCoordData.Count< maxGroup)
+                        if (father.NestedCoordData.Count < maxGroup)
                         {
                             coord2.Father = father;
                             father.NestedCoordData.Add(coord2);
@@ -448,7 +478,7 @@ namespace Reinforcement
                     }
                     else
                     {
-                       
+
                         if (f1.NestedCoordData.Count > f2.NestedCoordData.Count)
                         {
                             father = f1;
@@ -460,7 +490,7 @@ namespace Reinforcement
                                     father.NestedCoordData.Add(coord);
 
                                 }
-                                f2.NestedCoordData.Clear();  
+                                f2.NestedCoordData.Clear();
                             }
                         }
                         else
@@ -468,7 +498,7 @@ namespace Reinforcement
                             father = f2;
                             if (father.NestedCoordData.Count < maxGroup)
                             {
-                                foreach (var coord in f2.NestedCoordData)
+                                foreach (var coord in f1.NestedCoordData)
                                 {
                                     coord.Father = father;
                                     father.NestedCoordData.Add(coord);
