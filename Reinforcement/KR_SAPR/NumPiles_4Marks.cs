@@ -144,7 +144,7 @@ namespace Reinforcement
         public void SortPileImportent()
         {
             pileDataGroup.Clear();
-            //нам надо собрать все сваи в группы
+            //нам надо собрать все сваи в группы по важности и по  и по типу сваи были и по z разные
             foreach (var pile in AllPiles)
             {
                 List<string> SravnList = pile.GetSravnDataString();
@@ -189,40 +189,40 @@ namespace Reinforcement
         }
 
         
-        public List<CoordData> CalcSortPileData(List<CoordData> sortDatas, string sortCod)
-        {
-            //если не по алгоритму яндекс карта
-            var sorted = sortDatas.OrderBy(x => x.NumWay);
-            foreach (char codeChar in sortCode)
-            {
-                switch (codeChar)
-                {
-                    case '1':
-                        if (!sortCode.Contains("7"))
-                        {
-                            sorted = sorted.ThenBy(x => x.Ys).ThenBy(x => x.Xs);
-                        }
-                        else
-                        {
-                            sorted = sorted.OrderBy(x => x.Ys).ThenBy(x => x.Xs);
-                        }
-                            break;
-                    case '2':
-                        sorted = sorted.ThenBy(x => x.X);
-                        if (!sortCode.Contains("7"))
-                        {
-                            sorted = sorted.ThenBy(x => x.Ys);
-                        }
-                        else
-                        {
-                            sorted = sorted.OrderBy(x => x.Ys);
-                        }
-                        break;
+        //public List<CoordData> CalcSortPileData(List<CoordData> sortDatas, string sortCod)
+        //{
+        //    //если не по алгоритму яндекс карта
+        //    var sorted = sortDatas.OrderBy(x => x.NumWay);
+        //    foreach (char codeChar in sortCode)
+        //    {
+        //        switch (codeChar)
+        //        {
+        //            case '1':
+        //                if (!sortCode.Contains("7"))
+        //                {
+        //                    sorted = sorted.ThenBy(x => x.Ys).ThenBy(x => x.Xs);
+        //                }
+        //                else
+        //                {
+        //                    sorted = sorted.OrderBy(x => x.Ys).ThenBy(x => x.Xs);
+        //                }
+        //                    break;
+        //            case '2':
+        //                sorted = sorted.ThenBy(x => x.X);
+        //                if (!sortCode.Contains("7"))
+        //                {
+        //                    sorted = sorted.ThenBy(x => x.Ys);
+        //                }
+        //                else
+        //                {
+        //                    sorted = sorted.OrderBy(x => x.Ys);
+        //                }
+        //                break;
 
-                }
-            }
-            return sorted.ToList();
-        }
+        //        }
+        //    }
+        //    return sorted.ToList();
+        //}
     }
     
 }

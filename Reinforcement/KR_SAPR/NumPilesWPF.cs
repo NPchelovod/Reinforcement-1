@@ -16,7 +16,7 @@ namespace Reinforcement
         public bool UstanUGO { get; set; }
         public bool GroupPiles { get; set; } = true;// группировка свай
 
-        public bool DoNotRenumberNumberedPiles { get; set; }
+        public bool SetNumComment { get; set; }
         public bool DoNotChangeUGOIfExists { get; set; }
         public string SortCode { get; set; }
         public string SortCodeUGO { get; set; }
@@ -40,7 +40,7 @@ namespace Reinforcement
 
         public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
-            bool currentUstanNumPile, bool currentUstanUGO ,bool currentDoNotRenumberNumberedPiles,
+            bool currentUstanNumPile, bool currentUstanUGO ,bool currentCommentCheckBox,
             bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO,
             bool currentAdjustPilePositions = false, double currentMinDistanceBetweenPiles = 900,
             double currentCoordinateRoundingStep = 25, bool currentRecreateAllPiles = false)
@@ -54,7 +54,7 @@ namespace Reinforcement
             UstanNumPile = currentUstanNumPile;
             UstanUGO = currentUstanUGO;
             GroupPiles = true;
-            DoNotRenumberNumberedPiles = currentDoNotRenumberNumberedPiles;
+            SetNumComment = currentCommentCheckBox;
             DoNotChangeUGOIfExists = currentDoNotChangeUGOIfExists;
             SortCode = currentSortCode;
             SortCodeUGO = currentSortCodeUGO;
@@ -85,7 +85,7 @@ namespace Reinforcement
             ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
             ustanUGOCheckBox.IsChecked = currentUstanUGO;
             GroupPilesCheckBox.IsChecked = GroupPiles;
-            doNotRenumberCheckBox.IsChecked = currentDoNotRenumberNumberedPiles;
+            setNumCommentCheckBox.IsChecked = currentCommentCheckBox;
             doNotChangeUGOIfExistsCheckBox.IsChecked = currentDoNotChangeUGOIfExists;
         }
 
@@ -243,13 +243,13 @@ namespace Reinforcement
 
             
             // Галочка - Не перенумеровывать нумерованные сваи
-            var doNotRenumberPanel = CreateCheckBoxPanel(
-                "Не перенумеровывать нумерованные сваи:",
-                DoNotRenumberNumberedPiles,
-                out doNotRenumberCheckBox,
+            var setNumCommentPanel = CreateCheckBoxPanel(
+                "Установить номера сортировки в комментарий:",
+                SetNumComment,
+                out setNumCommentCheckBox,
                 "Если свая уже имеет маркировку (номер), не изменять его"
             );
-            mainStackPanel.Children.Add(doNotRenumberPanel);
+            mainStackPanel.Children.Add(setNumCommentPanel);
 
             // Галочка - Не менять УГО если он есть
             var doNotChangeUGOIfExistsPanel = CreateCheckBoxPanel(
@@ -584,7 +584,7 @@ namespace Reinforcement
         private CheckBox boolNumPileIandex;
         private CheckBox ustanUGOCheckBox;
         private CheckBox GroupPilesCheckBox;
-        private CheckBox doNotRenumberCheckBox;
+        private CheckBox setNumCommentCheckBox;
         private CheckBox doNotChangeUGOIfExistsCheckBox;
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -635,7 +635,7 @@ namespace Reinforcement
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
             BoolNumPileIandex = boolNumPileIandex.IsChecked ?? false;
             UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
-            DoNotRenumberNumberedPiles = doNotRenumberCheckBox.IsChecked ?? false;
+            SetNumComment = setNumCommentCheckBox.IsChecked ?? false;
             DoNotChangeUGOIfExists = doNotChangeUGOIfExistsCheckBox.IsChecked ?? false;
 
             ContinueExecution = true;

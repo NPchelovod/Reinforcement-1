@@ -71,6 +71,12 @@ namespace Reinforcement
             //чтение всех свай
             ReadPiles();
 
+            if(SetNumComment)
+            {
+                //установка номера комментария всем сваям
+                SetComment();
+            }
+
             // Корректируем координаты свай если нужно
             if (adjustPilePositions && minDistanceBetweenPiles > 0)
             {
@@ -80,8 +86,13 @@ namespace Reinforcement
                 ReadPiles();
             }
 
+            if (recreateAllPiles)
+            {
+                //"Пересоздание свай";
+                RecreatePiles.RecreatePile(doc, AllPiles);
+            }
 
-            if(ustanNumPile)
+            if (ustanNumPile)
             {
                 //устанавливаем марку
                 result= CalculateMarks();
@@ -89,13 +100,10 @@ namespace Reinforcement
             if(ustanUGO)
             {
                 //устанавливаем угошку
+                UstanUGOProcess();
             }
 
-            if (recreateAllPiles)
-            {
-                //"Пересоздание свай";
-                RecreatePiles.RecreatePile(doc, AllPiles);
-            }
+            
             if(ReloadUGO)
             {
                 //перезапуск уго чтобы отображалась по человечески

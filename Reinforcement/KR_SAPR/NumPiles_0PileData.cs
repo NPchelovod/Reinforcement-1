@@ -308,7 +308,7 @@ namespace Reinforcement
             coordDatas = new List<CoordData> ( coordDatas );
 
             //сортировка внутренних коорд дата
-            if (sortCodeEnums.Count == 0) { return coordDatas; }
+            if (sortCodeEnums.Count <= 1) { return coordDatas; }
             //сортировка вложенных обьектов в самого себя
 
             //сортировка групп свай
@@ -419,9 +419,10 @@ namespace Reinforcement
             //дробление свай на вложенные группы 
             double distGroup = NumPiles.sectorStep;
             int maxGroup = NumPiles.predelGroup;
+            if (maxGroup <= 1) { return; }
             var listIter = new List<CoordData>(NestedCoordData);
 
-            if (maxGroup <= 1) { return; }
+            
 
             foreach(var nc in NestedCoordData)
             {

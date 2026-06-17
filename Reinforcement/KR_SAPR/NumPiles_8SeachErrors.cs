@@ -176,7 +176,7 @@ namespace Reinforcement
 
 
             //поиск свай которые не перпендикулярны следующей и последующей сваи
-
+            errors.AddRange(SeachNotPerpendicularPiles());
 
             // Записываем ошибки в файл на рабочем столе
             if (errors.Count > 0)
@@ -211,13 +211,15 @@ namespace Reinforcement
 
        
         //поиск не перпендикулярной сваи
-        public void SeachNotPerpendicularPiles()
+        public List<string> SeachNotPerpendicularPiles()
         {
+            var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //сначала находим достоверные горизонтали 
             //и достоверные вертикали
             HashSet<PileData> XEquel = new HashSet<PileData>();
             HashSet<PileData> YEquel = new HashSet<PileData>();
             double errorSize = 1;//1 мм для горизонтов и вертикала
+            double errorOtSosed = 250;//до этого отклонения от сосендних вертикал и горизонтальных соседей - мы считаем за ошибку иначе наверно это так надо
             foreach (var pile in AllPiles)
             {
                 foreach (var sosed in pile.SosedPileData)
@@ -239,33 +241,48 @@ namespace Reinforcement
             {
                 if (pile.SosedPileData.Count == 0) { continue; }
                 //соседи есть, сама не параллельная им по одной из линий
-                bool notX = !XEquel.Contains(pile);
-                bool notY = !YEquel.Contains(pile);
+                bool osX = XEquel.Contains(pile);
+                bool osY = YEquel.Contains(pile);
 
-                if(notX)
+                if(osX && osY) { continue; }
+
+                bool readErrorX = false;
+                bool readErrorY = false;
+                if(!osX)
                 {
                     var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
-                }
-
-                if (notY)
-                {
-                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
-                    //if()
-                }
-
-                if (pile.SosedPileData.Count>0 && (!XEquel.Contains(pile) || !YEquel.Contains(pile)))
-                {
                     
-
-                    //считаем что 2 вертикальных соседа - треа
-                    var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
-                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
-                    foreach (var sosed in pile.SosedPileData)
+                    foreach(var x in sosX)
                     {
+                        if(errorOtSosed> Math.Abs(x.X - pile.X))
+                        {
+                            readErrorX=true;
+                        }
+                    }
+                    
+                }
 
+                if (!osY)
+                {
+                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
+                    foreach (var y in sosY)
+                    {
+                        if (errorOtSosed > Math.Abs(y.Y - pile.Y))
+                        {
+                            readErrorY = true;
+                        }
                     }
                 }
+                if (readErrorX || readErrorY)
+                {
+                    string errorMessage = $"Несоосна соседям свая марки new/past ({pile.MarkNew })/({pile.MarkPast}), ID:({pile.IdValue})";
+                    errors.Add(errorMessage);
+                }
+
+
+
             }
+            return errors;
         }
     }
 }

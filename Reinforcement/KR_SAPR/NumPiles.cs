@@ -59,7 +59,7 @@ namespace Reinforcement
         public static bool BoolNumPileIandex = true;
         public bool GroupPiles = false;// группиовать ли нумератор свай
         private static bool ustanUGO = false;
-        private static bool doNotRenumberNumberedPiles = false;
+        private static bool SetNumComment = false;
         private static bool doNotChangeUGOIfExist = false;
 
 
@@ -99,7 +99,7 @@ namespace Reinforcement
                 predelGroup,
                 ustanNumPile,
                 ustanUGO,
-                doNotRenumberNumberedPiles,
+                SetNumComment,
                 doNotChangeUGOIfExist,
                 sortCode, // Добавлен новый параметр
                 sortCodeUGO,
@@ -131,7 +131,7 @@ namespace Reinforcement
                 ustanNumPile = SettingsWindow.UstanNumPile;
                 BoolNumPileIandex = SettingsWindow.BoolNumPileIandex;
                 ustanUGO = SettingsWindow.UstanUGO;
-                doNotRenumberNumberedPiles = SettingsWindow.DoNotRenumberNumberedPiles;
+                SetNumComment = SettingsWindow.SetNumComment;
                 doNotChangeUGOIfExist = SettingsWindow.DoNotChangeUGOIfExists;
                 sectorStepPile = SettingsWindow.SectorStepPile;
                 sortCode = SettingsWindow.SortCode;
