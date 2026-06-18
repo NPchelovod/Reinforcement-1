@@ -9,6 +9,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Newtonsoft.Json.Linq;
+using Autodesk.Revit.DB.Visual;
+using System.Security.Policy;
 
 namespace Reinforcement
 {
@@ -19,9 +21,15 @@ namespace Reinforcement
         public void SeachErrors()
         {
             var Piles = AllPiles.OrderBy(x=>x.MarkNew).ThenBy(x=>x.MarkPast).ToList();
+
+            //ДЛЯ ОТЛАДКИ уго ВСЕХ ТИПОВ
+            var ugos = Piles.Select(x => x.UGOPast).ToHashSet();
+
             var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //ошибки в сваях дистанция соседней
 
+            //запись данных какие сваи какие
+            errors.AddRange(SeachNumAndTypePiles());
 
             bool existNewMark = Piles.Where(x => x.MarkNew > 0).Count() > 0;
             bool existPastMark = Piles.Where(x => x.MarkPast > 0).Count() > 0;
@@ -208,14 +216,99 @@ namespace Reinforcement
                 //              MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+        public List<string> SeachNumAndTypePiles()
+        {
+            //сортировка по типу и сваям номеров
+            var writerTypes = new List<string>(); // Список для хранения сообщений об ошибках
+            var povtorTypes = new List<string>();
+            var Piles = AllPiles.OrderBy(x => x.MarkNew).ThenBy(x => x.MarkPast).ToList();
 
-       
+            string typeIn = Piles[0].TypePile;
+            (int MarkNew, int MarkPast) numPilesIn = (Piles[0].MarkNew, Piles[0].MarkPast);
+            (int MarkNew, int MarkPast) numPilesCurrent = (Piles[0].MarkNew, Piles[0].MarkPast);
+            HashSet<string> pastType = new HashSet<string> { typeIn };
+            int ugo = Piles[0].UGOPastNum;
+            HashSet<int> Ugo = new HashSet<int>(ugo);
+            string message = "";
+            for (int i = 1; i < Piles.Count; i++) 
+            {
+                var pile = Piles[i];
+                string typeInIter = pile.TypePile;
+                ugo = pile.UGOPastNum;
+
+                if(typeInIter!= typeIn)
+                {
+                     message = $"{numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, тип: {typeIn}, УГО: {string.Join(", ", Ugo.OrderBy(x => x))}";
+                    writerTypes.Add(message);
+                    Ugo.Clear();
+
+                    typeIn = typeInIter;
+                    if (pastType.Contains(typeIn))
+                    {
+                        povtorTypes.Add($"Повтор типа {typeInIter}");
+                    }
+                    pastType.Add(typeIn);
+                    numPilesIn = (pile.MarkNew, pile.MarkPast);
+                    
+
+                }
+                Ugo.Add(ugo);
+                //чтобы была вчерашняя итерация
+                numPilesCurrent = (pile.MarkNew, pile.MarkPast);
+            }
+            //и тут добавляем оканцовку так то
+             message = $"{numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, тип: {typeIn}, УГО: {string.Join(", ", Ugo.OrderBy(x => x))}";
+            writerTypes.Add(message);
+
+            var writerAnswer = new List<string>(writerTypes);
+            writerAnswer.AddRange(povtorTypes);
+
+            //заодно уго запоминаем каким рядам свай пренадлежит
+
+
+
+            //ugo = Piles[0].UGOPastNum;
+            //numPilesIn = (Piles[0].MarkNew, Piles[0].MarkPast);
+            //numPilesCurrent = (Piles[0].MarkNew, Piles[0].MarkPast);
+            //HashSet<int> pastUGO = new HashSet<int>(ugo);
+            //for (int i = 1; i < Piles.Count; i++)
+            //{
+            //    var pile = Piles[i];
+            //    int ugoCur = pile.UGOPastNum;
+            //    if (ugoCur != ugo)
+            //    {
+            //        message = $"Марки УГО {numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, УГО_{ugo}";
+            //        writerAnswer.Add(message);
+            //        pastUGO.Add(ugo);
+                    
+            //        ugo = ugoCur;
+            //        if (pastUGO.Contains(ugo))
+            //        {
+            //            writerAnswer.Add($"Разрыв нумерации с одним УГО {ugo})");
+            //        }
+            //    }
+                
+
+            //    //чтобы была вчерашняя итерация
+            //    numPilesCurrent = (pile.MarkNew, pile.MarkPast);
+
+            //}
+            //message = $"Марки УГО {numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, УГО_{ugo}";
+            //writerAnswer.Add(message);
+
+
+
+            return writerAnswer;
+        }
+
         //поиск не перпендикулярной сваи
         public List<string> SeachNotPerpendicularPiles()
         {
             var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //сначала находим достоверные горизонтали 
             //и достоверные вертикали
+            HashSet<int> XAxes = new HashSet<int>();
+            HashSet<int> YAxes = new HashSet<int>();
             HashSet<PileData> XEquel = new HashSet<PileData>();
             HashSet<PileData> YEquel = new HashSet<PileData>();
             double errorSize = 1;//1 мм для горизонтов и вертикала
@@ -228,11 +321,13 @@ namespace Reinforcement
                     {
                         XEquel.Add(sosed);
                         XEquel.Add(pile);
+                        XAxes.Add((int)Math.Round((sosed.X + pile.X) / 2));
                     }
                     else if(Math.Abs(sosed.Y-pile.Y)< errorSize)
                     {
                         YEquel.Add(sosed);
                         YEquel.Add(pile);
+                        YAxes.Add((int)Math.Round((sosed.Y + pile.Y) / 2));
                     }
                 }
             }
@@ -248,7 +343,7 @@ namespace Reinforcement
 
                 bool readErrorX = false;
                 bool readErrorY = false;
-                if(!osX)
+                if(!osX && !XAxes.Contains((int)pile.X))
                 {
                     var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
                     
@@ -262,7 +357,7 @@ namespace Reinforcement
                     
                 }
 
-                if (!osY)
+                if (!osY && !YAxes.Contains((int)pile.Y))
                 {
                     var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
                     foreach (var y in sosY)

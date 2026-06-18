@@ -32,11 +32,18 @@ namespace Reinforcement
             }
             
             int comment = -1;
-            var pilesGroup = AllPiles.GroupBy(x=>new { x.TypePile }).OrderByDescending(x=>x.Count()).ToList();
+            var pilesGroup = AllPiles
+            .GroupBy(x => x.TypePile)
+            .OrderByDescending(x => sortOnCount ? x.Count() : 0)
+            .ThenBy(x => x.Key)
+            .ToList();
+
+
+
             foreach (var pileGroup1 in pilesGroup)
             {
                 //тут делаем сортировку уже по Z
-                var pilesGroup2 = pileGroup1.GroupBy(x => new { x.Zs }).OrderByDescending(x => x.Count()).ToList();
+                var pilesGroup2 = pileGroup1.GroupBy(x => new { x.Zs }).OrderByDescending(x => sortOnCount ? x.Count() : 0).ThenBy(x => x.Key).ToList();
                 //и идем по отдельной группы тут у нас 
                 
                 foreach (var pileGroup2 in pilesGroup2)
@@ -45,6 +52,7 @@ namespace Reinforcement
                     foreach (var pile in pileGroup2)
                     {
                         pile.CommentaryNum = comment;
+                        pile.Commentary = comment.ToString();
                     }
                 }
             }
@@ -60,7 +68,7 @@ namespace Reinforcement
                         Element pile = pileClass.Pile;
                         if (pile == null) { continue; }
 
-                        SetPileMark(pile, pileClass.CommentaryNum.ToString(), paramCom);
+                        SetPileMark(pile, pileClass.Commentary, paramCom);
                        
                     }
                     trans2.Commit();

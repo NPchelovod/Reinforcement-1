@@ -112,10 +112,10 @@ namespace Reinforcement
                 if (!string.IsNullOrEmpty(UGOPast))
                 {
                     Match match = Regex.Match(UGOPast, @"\d+");
-                    if (match.Success)
+                    if (match.Success && Int32.TryParse(match.Value, out UGOPastNum))
                     {
 
-                        UGOPastNum = int.Parse(match.Value);
+                        
                     }
                 }
             }

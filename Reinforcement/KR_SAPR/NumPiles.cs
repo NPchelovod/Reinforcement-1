@@ -64,7 +64,7 @@ namespace Reinforcement
 
 
         public static List<SortCodeEnum> sortCodeEnums = new List<SortCodeEnum>();
-        public static string sortCode = "801346"; // тип 2
+        public static string sortCode = "134058"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
         public bool RotorPiles { get; set; } = false;
         public bool ReloadUGO => SettingsWindow.ReloadUGO;

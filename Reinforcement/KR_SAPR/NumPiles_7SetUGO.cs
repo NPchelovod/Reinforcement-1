@@ -17,10 +17,24 @@ namespace Reinforcement
         private void UstanUGOProcess()
         {
             //надо установить угошку при этом надо отсортировать как-то...
+
             var sortedGroups = AllPiles
-            .GroupBy(x => x.CommentaryNum)
-            .OrderBy(g => g.Key) // Сортируем группы по возрастанию CommentaryNum (ключ группы)
-            .ToList();
+            .GroupBy(x => x.netrogat).ToList();
+
+            if (sortCodeEnums.Contains(SortCodeEnum.SortNumComment))
+            {
+                 sortedGroups = AllPiles
+                .GroupBy(x => x.CommentaryNum)
+                .OrderBy(g => g.Key) // Сортируем группы по возрастанию CommentaryNum (ключ группы)
+                .ToList();
+            }
+            else if(sortCodeEnums.Contains(SortCodeEnum.SortADSKGroup))
+            {
+                sortedGroups = AllPiles
+               .GroupBy(x => x.ADSK_GroupNum)
+               .OrderBy(g => g.Key) // Сортируем группы по возрастанию CommentaryNum (ключ группы)
+               .ToList();
+            }
 
             int ugo = -1;
             foreach (var group1 in sortedGroups) 
