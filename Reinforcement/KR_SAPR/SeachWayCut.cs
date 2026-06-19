@@ -26,7 +26,11 @@ namespace Reinforcement
                 return new List<CoordData>();
 
             var stopwatch = Stopwatch.StartNew();
+//            Стартует с крайней правой нижней точки в первой группе.
 
+//Распределяет общее время timeLimit между группами пропорционально числу точек.
+
+//Склеивает группы, разворачивая их при необходимости для минимизации расстояния между стыками.
             // Группируем по NumWay, сортируем группы по возрастанию номера
             var groups = points
                 .GroupBy(p => p.NumWay)
@@ -36,23 +40,44 @@ namespace Reinforcement
 
             // Если группа одна — просто решаем открытый TSP для неё
             if (groups.Count == 1)
-                return SolveSingleGroup(groups[0], timeLimit);
+            {
+                // Для единственной группы тоже можем применить крайнюю точку, если нужно
+                var singleGroup = groups[0];
+                var startPoint = GetRightBottomPoint(singleGroup);
+                int startIdx = singleGroup.IndexOf(startPoint);
+                return SolveSingleGroup(singleGroup, timeLimit, startIdx);
+            }
 
-            // Распределяем время между группами пропорционально количеству точек
             int totalPoints = points.Count;
             var solutions = new List<List<CoordData>>();
 
-            foreach (var group in groups)
+            for (int i = 0; i < groups.Count; i++)
             {
+                var group = groups[i];
                 if (group.Count == 0) continue;
 
+                // Вычисляем время для группы пропорционально её размеру
                 double fraction = (double)group.Count / totalPoints;
                 var remaining = timeLimit - stopwatch.Elapsed;
                 if (remaining <= TimeSpan.Zero)
-                    remaining = TimeSpan.FromMilliseconds(10);
-
+                    remaining = TimeSpan.FromMilliseconds(10); // минимум 10 мс
                 var groupTimeLimit = TimeSpan.FromMilliseconds(remaining.TotalMilliseconds * fraction);
-                solutions.Add(SolveSingleGroup(group, groupTimeLimit));
+
+                if (i == 0) // первая группа
+                {
+                    var startPoint = GetRightBottomPoint(group);
+                    int startIdx = group.IndexOf(startPoint);
+                    solutions.Add(SolveSingleGroup(group, groupTimeLimit, startIdx));
+                }
+                else
+                {
+                    //Для остальных групп без фиксации начала(или с фиксацией по ближайшей к концу предыдущей)
+                    // Опционально: можно улучшить стыковку, зафиксировав начало
+                     var lastPoint = solutions.Last().Last();
+                    int nearestIdx = FindNearestIndex(group, lastPoint);
+                    solutions.Add(SolveSingleGroup(group, groupTimeLimit, nearestIdx));
+                    solutions.Add(SolveSingleGroup(group, groupTimeLimit));
+                }
             }
 
             // Склеиваем цепочки с оптимизацией ориентации стыков
@@ -62,7 +87,25 @@ namespace Reinforcement
         /// <summary>
         /// Решает открытый TSP для одной группы точек (без учёта NumWay).
         /// </summary>
-        private static List<CoordData> SolveSingleGroup(List<CoordData> group, TimeSpan timeLimit)
+        /// 
+
+        private static int FindNearestIndex(List<CoordData> group, CoordData target)
+        {
+            int best = 0;
+            double minDist = double.MaxValue;
+            for (int i = 0; i < group.Count; i++)
+            {
+                double d = Dist(group[i], target);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    best = i;
+                }
+            }
+            return best;
+        }
+        private static List<CoordData> SolveSingleGroup(
+    List<CoordData> group, TimeSpan timeLimit, int? startIndex = null)
         {
             if (group.Count <= 2)
                 return new List<CoordData>(group);
@@ -70,15 +113,26 @@ namespace Reinforcement
             var stopwatch = Stopwatch.StartNew();
             var rnd = new Random();
             int n = group.Count;
+
+            // Определяем индексы, с которых будем пробовать NN
+            var startCandidates = new List<int>();
+            if (startIndex.HasValue)
+            {
+                startCandidates.Add(startIndex.Value);
+            }
+            else
+            {
+                int attempts = Math.Min(20, n);
+                for (int i = 0; i < attempts; i++)
+                    startCandidates.Add(i == 0 ? 0 : rnd.Next(n));
+            }
+
             var bestTour = new List<CoordData>();
             double bestLength = double.MaxValue;
 
-            // 1. Быстрый мультистарт Nearest Neighbor из нескольких случайных начальных точек
-            int nnAttempts = Math.Min(20, n);
-            for (int attempt = 0; attempt < nnAttempts; attempt++)
+            foreach (int idx in startCandidates)
             {
-                int startIdx = attempt == 0 ? 0 : rnd.Next(n);
-                var tour = NearestNeighborTour(group, startIdx);
+                var tour = NearestNeighborTour(group, idx);
                 double len = TourLength(tour);
                 if (len < bestLength)
                 {
@@ -87,20 +141,16 @@ namespace Reinforcement
                 }
             }
 
-            // 2. Итеративный локальный поиск (2-opt + double-bridge)
-            int maxIdle = 50;
-            int idle = 0;
+            // 2-opt + double bridge (как прежде)
             var currentTour = new List<CoordData>(bestTour);
             double currentLength = bestLength;
+            int idle = 0, maxIdle = 50;
 
             while (stopwatch.Elapsed < timeLimit && idle < maxIdle)
             {
                 bool improved;
-                do
-                {
-                    improved = TwoOpt(currentTour);
-                    currentLength = TourLength(currentTour);
-                } while (improved);
+                do { improved = TwoOpt(currentTour); currentLength = TourLength(currentTour); }
+                while (improved);
 
                 if (currentLength < bestLength - 1e-12)
                 {
@@ -108,16 +158,21 @@ namespace Reinforcement
                     bestTour = new List<CoordData>(currentTour);
                     idle = 0;
                 }
-                else
-                {
-                    idle++;
-                }
+                else idle++;
 
                 if (stopwatch.Elapsed < timeLimit)
                 {
                     DoubleBridgePerturbation(currentTour, rnd);
                     currentLength = TourLength(currentTour);
                 }
+            }
+            // Если задан стартовый индекс, гарантируем, что путь начинается с него
+            // (2‑opt не меняет крайние точки, но double bridge может; тогда принудительно не фиксируем, 
+            // но если нужна жёсткая гарантия, можно просто вернуть tour с нужным началом, развернув при необходимости)
+            if (startIndex.HasValue && bestTour[0] != group[startIndex.Value])
+            {
+                // Если double bridge случайно развернул путь, вернём ориентацию
+                bestTour.Reverse();
             }
 
             return bestTour;
@@ -253,7 +308,12 @@ namespace Reinforcement
                 len += Dist(tour[i - 1], tour[i]);
             return len;
         }
-
+        private static CoordData GetRightBottomPoint(List<CoordData> points)
+        {
+            return points.OrderByDescending(p => p.Xs)
+                         .ThenBy(p => p.Ys)
+                         .First();
+        }
         #endregion
     }
 
@@ -422,8 +482,7 @@ namespace Reinforcement
 
         static double Dist(CoordData a, CoordData b)
         {
-            //double dx = a.X - b.X, dy = a.Y - b.Y;
-            return a.Dist(b);//Math.Sqrt(dx * dx + dy * dy);
+            return a.Dist(b);
         }
 
         static double TourLength(List<CoordData> tour)

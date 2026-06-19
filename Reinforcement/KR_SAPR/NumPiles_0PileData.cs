@@ -50,10 +50,12 @@ namespace Reinforcement
             return Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public static double SectorStep = 150;//
+        public static double SectorStep = NumPiles.coordinateRoundingStep>0? NumPiles.coordinateRoundingStep : 150;//
+        public static double SectorStepZ => NumPiles.sectorStepZ;
+
         public int Xs => (int) Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
         public int Ys => (int) Math.Round(Y / SectorStep);
-        public int Zs => (int) (Math.Round(Z / 3.0) * 3.0);
+        public int Zs => (int) (Math.Round(Z / SectorStepZ));
         public long IdValue = 0;
         public PileData(Element pile)
         {
@@ -175,7 +177,7 @@ namespace Reinforcement
         {
 
         }
-        public void CutPileOnGroop() { }
+        public void CutPileOnGroop(double distance) { }
         //public PileDataGroup PileDataGroop = null;
 
         public HashSet<PileData> SosedPileData { get; set; } = new HashSet<PileData>();
@@ -305,240 +307,247 @@ namespace Reinforcement
         public static List<CoordData> SortNestedCoordData( List<SortCodeEnum> sortCodeEnums, List<CoordData> coordDatas)
         {
             //сортировка чего угодно
-            coordDatas = new List<CoordData> ( coordDatas );
-
-            //сортировка внутренних коорд дата
-            if (sortCodeEnums.Count <= 1) { return coordDatas; }
+            var list = new List<CoordData>(coordDatas);
+            if (sortCodeEnums.Count <=1) return list;
             //сортировка вложенных обьектов в самого себя
 
             //сортировка групп свай
-            var sorted = coordDatas.OrderBy(x => x.netrogat);
+            // Вспомогательная функция
+            PileData GetPile(CoordData x) =>
+                x.NestedCoordData?.FirstOrDefault() as PileData ?? x as PileData;
+
+            IOrderedEnumerable<CoordData> sorted = list.OrderBy(x => x.netrogat); // или убрать, если не нужно
 
             foreach (var sortCode in sortCodeEnums)
             {
                 switch (sortCode)
                 {
-
                     case SortCodeEnum.SortUGO:
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.UGOPastNum ?? -1;
-                        });
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.UGOPast ?? "";
-                        });
-                        sorted = sorted.ThenBy(x => x.Zs);
+                        sorted = sorted.ThenBy(x => GetPile(x)?.UGOPastNum ?? -1);
+                        sorted = sorted.ThenBy(x => GetPile(x)?.UGOPast ?? "");
+                        //sorted = sorted.ThenBy(x => x.Zs);
                         break;
                     case SortCodeEnum.SortNumComment:
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.CommentaryNum ?? -1;
-                        });
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.Commentary ?? "";
-                        });
+                        sorted = sorted.ThenBy(x => GetPile(x)?.CommentaryNum ?? -1);
+                        sorted = sorted.ThenBy(x => GetPile(x)?.Commentary ?? "");
                         break;
-
                     case SortCodeEnum.SortADSKGroup:
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.ADSK_GroupNum ?? -1;
-                        });
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData?.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.ADSK_Group ?? "";
-                        });
-
+                        sorted = sorted.ThenBy(x => GetPile(x)?.ADSK_GroupNum ?? -1);
+                        sorted = sorted.ThenBy(x => GetPile(x)?.ADSK_Group ?? "");
                         break;
                     case SortCodeEnum.SortCountPiles:
-
-                        sorted = sorted.ThenByDescending(x => x.NestedCoordData.Count);
+                        sorted = sorted.ThenByDescending(x => x.NestedCoordData?.Count ?? 0);
                         break;
                     case SortCodeEnum.SortTypePile:
-
-                        sorted = sorted.ThenBy(x =>
-                        {
-                            var pile = x.NestedCoordData.FirstOrDefault() as PileData
-                             ?? (x as PileData);
-                            return pile?.TypePile ?? "";
-                        });
-
+                        sorted = sorted.ThenBy(x => GetPile(x)?.TypePile ?? "");
                         break;
-
                     case SortCodeEnum.SortYthenX:
-
-                        if (sortCodeEnums.Contains(SortCodeEnum.SortUpToDown))
-                        {
-                            sorted = sorted.ThenByDescending(x => x.Ys);
-                        }
-                        else
-                        {
-                            sorted = sorted.ThenBy(x => x.Ys);
-                        }
+                        sorted = sortCodeEnums.Contains(SortCodeEnum.SortUpToDown)
+                            ? sorted.ThenByDescending(x => x.Ys)
+                            : sorted.ThenBy(x => x.Ys);
                         sorted = sorted.ThenBy(x => x.Xs);
                         break;
                     case SortCodeEnum.SortXthenY:
                         sorted = sorted.ThenBy(x => x.Xs);
-                        if (sortCodeEnums.Contains(SortCodeEnum.SortUpToDown))
-                        {
-                            sorted = sorted.ThenByDescending(x => x.Ys);
-                        }
-                        else
-                        {
-                            sorted = sorted.ThenBy(x => x.Ys);
-                        }
+                        sorted = sortCodeEnums.Contains(SortCodeEnum.SortUpToDown)
+                            ? sorted.ThenByDescending(x => x.Ys)
+                            : sorted.ThenBy(x => x.Ys);
+                        break;
+                    case SortCodeEnum.SortZ:
+                        sorted = sorted.ThenBy(x => x.Zs);
+                        
                         break;
                 }
             }
-            coordDatas = sorted.ToList();
 
-
-
-            return coordDatas;
+            return sorted.ToList();
         }
 
 
 
 
-        public void CutPileOnGroop()
+        public void CutPileOnGroop(double distance)
         {
+            //        Вход: точки coords, distance D, maxSize K
+            //1.Построить список всех пар(i, j), у которых расстояние ≤ D.
+            //2.Отсортировать пары по возрастанию расстояния.
+            //3.Каждая точка – отдельная группа. Размеры групп size[i] = 1.
+            //   Система непересекающихся множеств(DSU) с учётом размера группы.
+            //4.Для каждой пары(a, b) из отсортированного списка:
+            //            ga = find(a), gb = find(b)
+            //       если ga != gb и size[ga] +size[gb] ≤ K:
+            //            union(ga, gb)
+            //           обновить общий размер
+            //5.Результат: компоненты DSU – итоговые группы.
+            //   Одиночные точки(не соединённые ни с кем) остаются отдельно.
             //дробление свай на вложенные группы 
-            double distGroup = NumPiles.sectorStep;
+
+
+            double distGroup = distance;
             int maxGroup = NumPiles.predelGroup;
             if (maxGroup <= 1) { return; }
-            var listIter = new List<CoordData>(NestedCoordData);
 
-            
+            var points = NestedCoordData.ToList();
 
-            foreach(var nc in NestedCoordData)
-            {
-                nc.Father=null;//сбиваем отца
-            }
-            NestedCoordData.Clear();//жертва ЕГЭ
-
-            // var dictSravn = new Dictionary<CoordData, PileDataGroup>();
-            for (int i = 0; i < listIter.Count; i++)
-            {
-                var coord1 = listIter[i];
-                for (int j = i+1; j < listIter.Count; j++)
+            int n = points.Count;
+            var dsu = new DisjointSetUnion(n);
+            // Собираем все пары в пределах distance
+            var edges = new List<(int i, int j, double dist)>();
+            for (int i = 0; i < n; i++)
+                for (int j = i + 1; j < n; j++)
                 {
-                    var coord2 = listIter[j];
-                    if(coord1.Dist(coord2)> distGroup)
-                    {
-                        continue;
-                    }
-                    CoordData father=null;
-                    CoordData f1 = coord1.Father;
-                    CoordData f2 = coord2.Father;
-
-                    if(f1 == null && f2 == null)
-                    {
-                        father = new PileDataGroup(SravnList);
-                        coord1.Father = father;
-                        coord2.Father = father;
-
-                        father.NestedCoordData.Add(coord1);
-                        father.NestedCoordData.Add(coord2);
-                        
-                    }
-                    else if(f1 ==f2)
-                    {
-                        continue;
-                    }
-                    else if (f2 == null)
-                    {
-                        father = f1;
-                        if (father.NestedCoordData.Count < maxGroup)
-                        {
-                            coord2.Father = father;
-                            father.NestedCoordData.Add(coord2);
-                        }
-                    }
-                    else if (f1 == null)
-                    {
-                        father = f2;
-                        if (father.NestedCoordData.Count < maxGroup)
-                        {
-                            coord1.Father = father;
-                            father.NestedCoordData.Add(coord1);
-                        }
-                    }
-                    else
-                    {
-
-                        if (f1.NestedCoordData.Count > f2.NestedCoordData.Count)
-                        {
-                            father = f1;
-                            if (father.NestedCoordData.Count < maxGroup)
-                            {
-                                foreach (var coord in f2.NestedCoordData)
-                                {
-                                    coord.Father = father;
-                                    father.NestedCoordData.Add(coord);
-
-                                }
-                                f2.NestedCoordData.Clear();
-                            }
-                        }
-                        else
-                        {
-                            father = f2;
-                            if (father.NestedCoordData.Count < maxGroup)
-                            {
-                                foreach (var coord in f1.NestedCoordData)
-                                {
-                                    coord.Father = father;
-                                    father.NestedCoordData.Add(coord);
-
-                                }
-                                f1.NestedCoordData.Clear();
-                            }
-                        }
-                    }
-
-
+                    double d = points[i].Dist(points[j]);
+                    if (d <= distance)
+                        edges.Add((i, j, d));
                 }
-            }
-            foreach(var vlog in listIter)
+            // Сортируем по расстоянию (ближайшие вперёд)
+            edges.Sort((a, b) => a.dist.CompareTo(b.dist));
+
+            foreach (var (i, j, dist) in edges)
             {
-                if(vlog.Father == null)
-                {
-                    NestedCoordData.Add(vlog);
-                }
-                else
-                {
-                    NestedCoordData.Add(vlog.Father);
-                }
+                int rootI = dsu.Find(i);
+                int rootJ = dsu.Find(j);
+                if (rootI != rootJ && dsu.Size[rootI] + dsu.Size[rootJ] <= maxGroup)
+                    dsu.Union(rootI, rootJ);
             }
-            NestedCoordData = NestedCoordData.ToHashSet().ToList();
+
+            // Группируем результат
+            var groupDict = new Dictionary<int, List<CoordData>>();
+            for (int i = 0; i < n; i++)
+            {
+                int root = dsu.Find(i);
+                if (!groupDict.ContainsKey(root))
+                    groupDict[root] = new List<CoordData>();
+                groupDict[root].Add(points[i]);
+            }
+
+            // Формируем PileDataGroup (как у вас)
+            var result = new List<PileDataGroup>();
+            foreach (var kv in groupDict)
+            {
+                var group = new PileDataGroup(SravnList); // предполагается, что такой конструктор есть
+
+                group.NumWay = NumWay;
+                group.Father = this;
+
+                foreach (var kv2 in kv.Value)
+                {
+                    kv2.Father = group;
+                    group.NestedCoordData.Add(kv2);
+                }
+
+                result.Add(group);
+            }
+
+            NestedCoordData = result.Cast<CoordData>().ToList();
+
+
+            //double distGroup = distance;
+            //int maxGroup = NumPiles.predelGroup;
+            //if (maxGroup <= 1) { return; }
+            //var listIter = new List<CoordData>(NestedCoordData);
+
+
+            ////координата каждой сваи и её соседи...
+            //Dictionary<CoordData, HashSet<CoordData>> DictFathers = new Dictionary<CoordData, HashSet<CoordData>>();
+
+            //foreach (var nc in NestedCoordData)
+            //{
+            //    nc.Father=null;//сбиваем отца
+            //    nc.NestedCoordData.Clear();
+            //    DictFathers[nc] = new HashSet<CoordData> {nc};
+            //}
+            //NestedCoordData.Clear();//
+
+            //// var dictSravn = new Dictionary<CoordData, PileDataGroup>();
+
+
+            //for (int i = 0; i < listIter.Count; i++)
+            //{
+            //    var coord = listIter[i];
+
+            //    double distMin = distGroup;
+
+            //    CoordData betterSosed = null;
+            //    var nested = DictFathers[coord];
+            //    if(nested.Count>=maxGroup) {continue;}
+
+            //    for (int j = i+1; j < listIter.Count; j++)
+            //    {
+            //        var sosed = listIter[j];
+            //        double dist = coord.Dist(sosed);
+
+            //        if (dist > distMin)//1 добавляем для чёткости
+            //        {
+            //            continue;
+            //        }
+
+            //        var sosedNested = DictFathers[sosed];
+            //        if (sosedNested.Count+ nested.Count > maxGroup || sosedNested== nested) { continue;}
+
+
+            //        betterSosed = sosed;
+            //        distMin = dist;
+            //    }
+            //    if (betterSosed == null) { continue; }
+            //    {
+            //        var sosedNested = DictFathers[betterSosed];
+            //        //иначе добавляем соседуса
+            //        foreach (var s in nested)
+            //        {
+            //            sosedNested.Add(s);
+            //        }
+            //        nested.Clear();
+            //    }
+
+            //}
+            //List<string> list = new List<string>(); 
+
+            //foreach(var coordDict in DictFathers)
+            //{
+            //    var pd = new PileDataGroup(SravnList);
+            //    foreach(var coord in coordDict.Value)
+            //    {
+            //        pd.NestedCoordData.Add(coord);
+            //    }
+            //    NestedCoordData.Add(pd);
+            //}
+
+
 
 
             //сортируем вложенные
-            foreach (var nc in NestedCoordData)
-            {
-                nc.SortNestedCoordData();//сбиваем отца
-            }
-            //итогово сортируем
-            SortNestedCoordData();
-            
+            //foreach (var nc in NestedCoordData)
+            //{
+            //    nc.SortNestedCoordData();//сбиваем отца
+            //}
+            ////итогово сортируем
+            //SortNestedCoordData();
+
         }
 
 
     }
 
-
+    public class DisjointSetUnion
+    {
+        int[] parent;
+        public int[] Size;
+        public DisjointSetUnion(int n)
+        {
+            parent = new int[n];
+            Size = new int[n];
+            for (int i = 0; i < n; i++) { parent[i] = i; Size[i] = 1; }
+        }
+        public int Find(int x) => parent[x] == x ? x : parent[x] = Find(parent[x]);
+        public void Union(int a, int b)
+        {
+            a = Find(a); b = Find(b);
+            if (a == b) return;
+            // присоединяем меньшее к большему (опционально)
+            if (Size[a] < Size[b]) (a, b) = (b, a);
+            parent[b] = a;
+            Size[a] += Size[b];
+        }
+    }
 }

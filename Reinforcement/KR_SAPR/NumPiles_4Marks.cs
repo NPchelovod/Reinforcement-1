@@ -26,7 +26,7 @@ namespace Reinforcement
                 //группировка
                 foreach (var pg in pileDataGroup)
                 {
-                    pg.CutPileOnGroop();
+                    pg.CutPileOnGroop(NumPiles.sectorStep);
                 }
             }
 
@@ -56,12 +56,13 @@ namespace Reinforcement
                     else
                     {
                         //вложенная группировка
-                        var listInsider = OpenTspSolver.Solve(pg.NestedCoordData, TimeSpan.FromSeconds(3));
-                        foreach (var ns2 in listInsider)
+                        //var listInsider = OpenTspSolver.Solve(pg.NestedCoordData, TimeSpan.FromSeconds(3));
+                        pg.SortNestedCoordData();
+                        foreach (var ns in pg.NestedCoordData)
                         {
-                            if (ns2 is PileData pileData2)
+                            if (ns is PileData pileData2)
                             {
-                                allpSpisok.Add(ns2);
+                                allpSpisok.Add(ns);
                             }
                         }
                     }

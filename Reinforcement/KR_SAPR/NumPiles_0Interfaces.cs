@@ -20,7 +20,8 @@ namespace Reinforcement
         SortXthenY,
         SortUpToDown,
         SortOnCenterCust,
-       
+        SortZ
+
     }
     public enum PileEnum
     {
@@ -58,7 +59,7 @@ namespace Reinforcement
 
         void SortNestedCoordData();
 
-        void CutPileOnGroop();
+        void CutPileOnGroop(double distance);
 
     }
     //public interface SortData : CoordData  // для сортировки надо
