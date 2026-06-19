@@ -36,7 +36,9 @@ namespace Reinforcement
                .ToList();
             }
 
-            int ugo = -1;
+
+
+            int ugo = 0;
             foreach (var group1 in sortedGroups) 
             {
                 //а группы на всякий случай группируем по типу и количеству

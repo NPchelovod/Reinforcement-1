@@ -132,7 +132,7 @@ namespace Reinforcement
                     if (match.Success)
                     {
 
-                        UGOPastNum = int.Parse(match.Value);
+                        ADSK_GroupNum = int.Parse(match.Value);
                     }
                 }
             }
@@ -151,7 +151,7 @@ namespace Reinforcement
                 {
                     case SortCodeEnum.SortUGO:
                         rezalt.Add(UGOPast);
-                        rezalt.Add(((int)Math.Round(Z, 0)).ToString());
+                        //rezalt.Add(Zs.ToString());
                         break;
                     case SortCodeEnum.SortNumComment:
                         rezalt.Add(Commentary);
@@ -161,6 +161,9 @@ namespace Reinforcement
                         break;
                     case SortCodeEnum.SortTypePile:
                         rezalt.Add(TypePile);
+                        break;
+                    case SortCodeEnum.SortZ:
+                        rezalt.Add(Zs.ToString());
                         break;
                     default:
                         break;
@@ -249,7 +252,17 @@ namespace Reinforcement
         private double zsg = 0;
         private void CalcSectorData()
         {
-            if(calcSectors || NestedCoordData.Count==0) { return;}
+            if(calcSectors) { return;}
+            calcSectors = true;
+
+            if(NestedCoordData.Count == 0)
+            {
+                xsg = X;
+                ysg = Y;
+                zsg = Zs;
+                return;
+            }
+
 
             CoordData coordData = null;
             if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortOnCenterCust))// значит сортируем по центру
@@ -280,7 +293,7 @@ namespace Reinforcement
 
             }
             zsg = NestedCoordData.First().Zs;
-
+            
 
         }
 
@@ -388,6 +401,7 @@ namespace Reinforcement
             if (maxGroup <= 1) { return; }
 
             var points = NestedCoordData.ToList();
+            //NestedCoordData.Clear();
 
             int n = points.Count;
             var dsu = new DisjointSetUnion(n);

@@ -27,8 +27,10 @@ namespace Reinforcement
                 foreach (var pg in pileDataGroup)
                 {
                     pg.CutPileOnGroop(NumPiles.sectorStep);
+                    
                 }
             }
+            
 
             // и теперь эти группы должны в один список 
             foreach (var pg in pileDataGroup)
@@ -36,6 +38,7 @@ namespace Reinforcement
                 foreach (var ns in pg.NestedCoordData)
                 {
                     ns.NumWay = pg.NumWay;//на всякий случай
+                    ns.SortNestedCoordData();
                     listCD.Add(ns);
                 }
             }
@@ -43,69 +46,34 @@ namespace Reinforcement
             if (BoolNumPileIandex)
             {
 
-                listCD = OpenTspSolver.Solve(listCD, TimeSpan.FromSeconds((double)AllPiles.Count/ 1000.0*15));
+                listCD = OpenTspSolver.Solve(new List<CoordData>(listCD), TimeSpan.FromSeconds((double)AllPiles.Count / 1000.0 * 15));
                 //отсортированный возвращаем
-                var allpSpisok = new List<CoordData>();
-                foreach (var pg in listCD) //это если группировка есть - список групп свай иначе список свай
-                {
-                    
-                    if (pg is PileData pileData)
-                    {
-                        allpSpisok.Add(pg);
-                    }
-                    else
-                    {
-                        //вложенная группировка
-                        //var listInsider = OpenTspSolver.Solve(pg.NestedCoordData, TimeSpan.FromSeconds(3));
-                        pg.SortNestedCoordData();
-                        foreach (var ns in pg.NestedCoordData)
-                        {
-                            if (ns is PileData pileData2)
-                            {
-                                allpSpisok.Add(ns);
-                            }
-                        }
-                    }
-                    
-                }
-                listCD = allpSpisok;
+
             }
             else
             {
-                listCD.Clear();
+                listCD = new List<CoordData>(pileDataGroup);
                 foreach (var pg in pileDataGroup)
                 {
                     pg.SortNestedCoordData(); //сортируем внутри группу или сваи
                     foreach (var ns in pg.NestedCoordData)
                     {
-                        if(ns is PileData pileData)
-                        {
-                            listCD.Add(ns);
-                        }
-                        else
-                        {
-                            ns.SortNestedCoordData();
-                            foreach (var ns2 in ns.NestedCoordData)
-                            {
-                                if (ns2 is PileData pileData2)
-                                {
-                                    listCD.Add(ns);
-                                }
-                            }
-                        }
+                        ns.SortNestedCoordData();
                     }
-                }      
+                }
             }
 
+
             int mark = 0;
-            List< PileData> allPiles = new List< PileData>();
-            foreach (var coord in listCD)
+            List< PileData> allPiles = GetPileData(listCD);
+
+            foreach (var pile in allPiles)
             {
-                if (coord is PileData pile)
+                if (pile.MarkNew==0)//тут и на 0 так как дубляжи реально возможны...
                 {
                     mark++;
                     pile.MarkNew = mark;
-                    allPiles.Add(pile);
+                    
                 }
             }
 
@@ -119,7 +87,7 @@ namespace Reinforcement
                     foreach (var pileClass in allPiles)
                     {
                         Element pile = pileClass.Pile;
-                        if (pile == null) {continue;}
+                        if (pile == null || pileClass.MarkNew == 0) {continue;}
                         
                         if( SetPileMark(pile, pileClass.MarkNew.ToString(), nameMarks))
                         {
@@ -142,6 +110,24 @@ namespace Reinforcement
                 }
             }
         }
+        public List<PileData> GetPileData(List<CoordData> coordList, List<PileData> answer=null)
+        {
+            //рекурсивное нахождение сваи
+            if(answer== null) answer = new List<PileData>();
+            foreach (var coord in coordList)
+            {
+                if(coord is PileData pile)
+                {
+                    answer.Add(pile);
+                }
+                else
+                {
+                    answer.AddRange(GetPileData(coord.NestedCoordData));
+                }
+            }
+            return answer;
+        }
+
         public void SortPileImportent()
         {
             pileDataGroup.Clear();

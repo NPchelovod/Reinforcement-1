@@ -253,7 +253,7 @@ namespace Reinforcement
 
             // Галочка - Не менять УГО если он есть
             var doNotChangeUGOIfExistsPanel = CreateCheckBoxPanel(
-                "Не менять УГО если он есть:",
+                "не работает///Не менять УГО если он есть:",
                 DoNotChangeUGOIfExists,
                 out doNotChangeUGOIfExistsCheckBox,
                 "Если у сваи уже установлено УГО, не изменять его"

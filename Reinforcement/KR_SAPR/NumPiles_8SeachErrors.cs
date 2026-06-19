@@ -31,10 +31,10 @@ namespace Reinforcement
             //запись данных какие сваи какие
             errors.AddRange(SeachNumAndTypePiles());
 
-            bool existNewMark = Piles.Where(x => x.MarkNew > 0).Count() > 0;
-            bool existPastMark = Piles.Where(x => x.MarkPast > 0).Count() > 0;
-            bool existNewUGO = Piles.Where(x => x.UGONewNum > 0).Count() > 0;
-            bool existPastUGO = Piles.Where(x => !string.IsNullOrEmpty(x.UGOPast)).Count() > 0;
+            bool existNewMark = Piles.Any(x => x.MarkNew > 0);
+            bool existPastMark = Piles.Any(x => x.MarkPast > 0);
+            bool existNewUGO = Piles.Any(x => x.UGONewNum > 0) ;
+            bool existPastUGO = Piles.Any(x => !string.IsNullOrEmpty(x.UGOPast));
             for (int i = 0; i < Piles.Count; i++)
             {
                 var Pile1 = Piles[i];
@@ -79,108 +79,9 @@ namespace Reinforcement
                         errors.Add(errorMessage);
                     }
                 }
-
             }
-            //проверка УГО соотсветсвию всем требованиям
-            if (!ustanUGO && existPastUGO)
-            {
-                ///*var PilesUGO =  Piles.Where(x => !string.IsNullOrEmpty(x.UGOPast)).OrderBy(x=>x.UGOPastNum).ThenBy(x=>x.UGOPast).ThenBy(x => ustanNumPile?x.MarkNew: */x.MarkPast).ToList();
-                var groupedPiles = Piles
-                .Where(x => !string.IsNullOrEmpty(x.UGOPast))
-                .OrderBy(x => x.UGOPastNum)
-                .ThenBy(x => x.UGOPast)
-                .ThenBy(x => ustanNumPile ? x.MarkNew : x.MarkPast)
-                .GroupBy(x => x.UGOPast)
-                .ToList();
 
-                
-                foreach (var group in groupedPiles)
-                {
-                    
-                    var groupAsList = group.OrderBy(x=>x.MarkNew).ToList();
 
-                    //в отдельной группе проверяем нумерацию свай
-                    if(ustanNumPile && existNewMark)
-                    {
-                        for (int i = 0; i < groupAsList.Count - 1; i++)
-                        {
-                            var Pile1 = groupAsList[i];
-                            var Pile2 = groupAsList[i + 1];
-                            if (Pile1.MarkNew != Pile2.MarkNew - 1)
-                            {
-                                string errorMessage = "";
-                                var PileAver = AllPiles.Where(x => x.MarkNew == Pile1.MarkNew + 1).FirstOrDefault();
-                                if (PileAver != null)
-                                {
-                                    if(PileAver.TypePile!= Pile1.TypePile)
-                                    {
-                                        errorMessage += "!(тип свай) ";
-                                    }
-                                }
-                                errorMessage += $"Нерационально УГО_{Pile1.UGOPastNum} разрыв номера {Pile2.MarkNew} от сваи {Pile1.MarkNew} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
-
-                                if (PileAver != null)
-                                {
-                                    errorMessage += $" Промежуточная свая {PileAver.MarkNew} с УГО_{PileAver.UGOPastNum} и ID:{PileAver.IdValue}";
-                                }
-                                errors.Add(errorMessage);
-                            }
-                        }
-                    }
-                    else if(existPastMark)
-                    {
-                        groupAsList = group.OrderBy(x => x.MarkPast).ToList();
-                        for (int i = 0; i < groupAsList.Count - 1; i++)
-                        {
-                            var Pile1 = groupAsList[i];
-                            var Pile2 = groupAsList[i + 1];
-                            if (Pile1.MarkPast != Pile2.MarkPast - 1 && (Pile1.MarkPastIsString !=Pile2.MarkPastIsString))
-                            {
-
-                                var PileAver = AllPiles.Where(x => x.MarkPast == Pile1.MarkPast + 1).OrderBy(x => x.MarkPastIsString).FirstOrDefault();
-                                string errorMessage = "";
-                                if (PileAver != null)
-                                {
-                                    if (PileAver.TypePile != Pile1.TypePile)
-                                    {
-                                        errorMessage += "!(тип свай) ";
-                                    }
-                                }
-                                 errorMessage += $"Нерационально УГО_{Pile1.UGOPastNum} разрыв номера {Pile2.MarkPast} от сваи {Pile1.MarkPast} отличаться должны на 1, ID:({Pile2.IdValue}),({Pile1.IdValue})";
-
-                                //попытка найти промежуточную сваю
-                                
-                                if (PileAver != null)
-                                {
-                                    errorMessage += $" Промежуточная свая {PileAver.MarkPast} с УГО_{PileAver.UGOPastNum} и ID:{PileAver.IdValue}";
-                                }
-                                errors.Add(errorMessage);
-                            }
-                        }
-                    }
-
-                    //поиск несовпадающих
-                    var grouped2 = groupAsList.GroupBy(x => new { x.Zs, x.TypePile });
-                    
-                    if (grouped2.Count()>1)
-                    {
-                        var maxGroup = grouped2.OrderByDescending(g => g.Count()).First();
-                        var pileEtalon = maxGroup.First();
-                        foreach (var group2 in grouped2)
-                        {
-                            // Сравниваем ключи групп, а не объекты
-                            if (!group2.Key.Equals(maxGroup.Key))
-                            {
-                                foreach(var item in group2)
-                                {
-                                    string errorMessage = $"Несовпадение УГО_{pileEtalon.UGOPastNum} сваи марки new/past ({item.MarkNew})/ ({item.MarkPast}),Z = ({(int)item.Z}), type = ({item.TypePile}) с эталоном ({pileEtalon.MarkNew})/ ({pileEtalon.MarkPast}),Z = ({(int)pileEtalon.Z}), type = ({pileEtalon.TypePile}), ID:({pileEtalon.IdValue}),({item.IdValue})";
-                                    errors.Add(errorMessage);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
 
             //поиск свай которые не перпендикулярны следующей и последующей сваи
@@ -218,87 +119,76 @@ namespace Reinforcement
         }
         public List<string> SeachNumAndTypePiles()
         {
-            //сортировка по типу и сваям номеров
-            var writerTypes = new List<string>(); // Список для хранения сообщений об ошибках
-            var povtorTypes = new List<string>();
-            var Piles = AllPiles.OrderBy(x => x.MarkNew).ThenBy(x => x.MarkPast).ToList();
 
-            string typeIn = Piles[0].TypePile;
-            (int MarkNew, int MarkPast) numPilesIn = (Piles[0].MarkNew, Piles[0].MarkPast);
-            (int MarkNew, int MarkPast) numPilesCurrent = (Piles[0].MarkNew, Piles[0].MarkPast);
-            HashSet<string> pastType = new HashSet<string> { typeIn };
-            int ugo = Piles[0].UGOPastNum;
-            HashSet<int> Ugo = new HashSet<int>(ugo);
-            string message = "";
-            for (int i = 1; i < Piles.Count; i++) 
+
+            var PilesGroup = AllPiles
+            .GroupBy(x => new { x.UGOPastNum, x.TypePile })
+            .OrderBy(g => g.Min(x => x.MarkNew))
+            .ThenBy(g => g.Min(x => x.MarkPast)) // Или Min/Max/Average - зависит от логики
+            .ToList();
+
+            var groupAnswer = PilesGroup.Select(g => 
             {
-                var pile = Piles[i];
-                string typeInIter = pile.TypePile;
-                ugo = pile.UGOPastNum;
+                var minNew = g.Min(x => x.MarkNew);
+                var maxNew = g.Max(x => x.MarkNew);
+                var minPast = g.Min(x => x.MarkPast);
+                var maxPast = g.Max(x => x.MarkPast);
 
-                if(typeInIter!= typeIn)
-                {
-                     message = $"{numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, тип: {typeIn}, УГО: {string.Join(", ", Ugo.OrderBy(x => x))}";
-                    writerTypes.Add(message);
-                    Ugo.Clear();
+                // Формируем строку для группы
+                var groupInfo = $"«{minNew}...{maxNew} new/past {minPast}...{maxPast}, тип: {g.Key.TypePile}, УГО: {g.Key.UGOPastNum}, срывы »";
 
-                    typeIn = typeInIter;
-                    if (pastType.Contains(typeIn))
-                    {
-                        povtorTypes.Add($"Повтор типа {typeInIter}");
-                    }
-                    pastType.Add(typeIn);
-                    numPilesIn = (pile.MarkNew, pile.MarkPast);
-                    
-
-                }
-                Ugo.Add(ugo);
-                //чтобы была вчерашняя итерация
-                numPilesCurrent = (pile.MarkNew, pile.MarkPast);
-            }
-            //и тут добавляем оканцовку так то
-             message = $"{numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, тип: {typeIn}, УГО: {string.Join(", ", Ugo.OrderBy(x => x))}";
-            writerTypes.Add(message);
-
-            var writerAnswer = new List<string>(writerTypes);
-            writerAnswer.AddRange(povtorTypes);
-
-            //заодно уго запоминаем каким рядам свай пренадлежит
-
-
-
-            //ugo = Piles[0].UGOPastNum;
-            //numPilesIn = (Piles[0].MarkNew, Piles[0].MarkPast);
-            //numPilesCurrent = (Piles[0].MarkNew, Piles[0].MarkPast);
-            //HashSet<int> pastUGO = new HashSet<int>(ugo);
-            //for (int i = 1; i < Piles.Count; i++)
-            //{
-            //    var pile = Piles[i];
-            //    int ugoCur = pile.UGOPastNum;
-            //    if (ugoCur != ugo)
-            //    {
-            //        message = $"Марки УГО {numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, УГО_{ugo}";
-            //        writerAnswer.Add(message);
-            //        pastUGO.Add(ugo);
-                    
-            //        ugo = ugoCur;
-            //        if (pastUGO.Contains(ugo))
-            //        {
-            //            writerAnswer.Add($"Разрыв нумерации с одним УГО {ugo})");
-            //        }
-            //    }
+                string promegPiles ="";
+                string zerrors = "";// ошибки в Z координатах
                 
+                //поиск промежуточной сваи
+                var piles = g.ToList();
+                var pileLast = piles[0];
+               
+                foreach(var pile in piles)
+                {
+                    if(pile== pileLast) { continue; }
+                    if(ustanNumPile && pile.MarkNew!= pileLast.MarkNew+1)
+                    {
+                        promegPiles = $"Разрыв нумерации {pile.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей с ID:{pile.IdValue}";
+                        groupInfo += pile.MarkNew + ", ";
+                        break;
+                    }
+                    else if(pile.MarkPast != pileLast.MarkPast + 1)
+                    {
+                        promegPiles = $"Разрыв нумерации {pile.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей с ID:{pile.IdValue}";
+                        groupInfo += pile.MarkPast+", ";
+                        break;
+                    }
+                    pileLast = pile;
+                }
 
-            //    //чтобы была вчерашняя итерация
-            //    numPilesCurrent = (pile.MarkNew, pile.MarkPast);
+                var groupZ = g.GroupBy(x => x.Zs).OrderBy(x => x.Count()).ToList();
+                if (groupZ.Count > 1)
+                {
+                    int Zetalon = (int)groupZ.Last().First().Z;
+                    var pile = groupZ.First().First();
+                    zerrors = $"Для УГО_{pile.UGOPastNum} и Типа {pile.TypePile} неверная отметка Z={pile.Z} сваи относительно других с Z={Zetalon}, свая ({pile.MarkNew})/({pile.MarkPast}), с ID:{pile.IdValue}";
+                }
 
-            //}
-            //message = $"Марки УГО {numPilesIn.MarkNew}...{numPilesCurrent.MarkNew} / {numPilesIn.MarkPast}...{numPilesCurrent.MarkPast}, УГО_{ugo}";
-            //writerAnswer.Add(message);
+                return new
+                {
+                    PromegPiles = promegPiles,
+                    Zerrors = zerrors,
+                    g.Key.UGOPastNum,
+                    g.Key.TypePile,
+                    MinMarkNew = minNew,
+                    MaxMarkNew = maxNew,
+                    MinMarkPast = minPast,
+                    MaxMarkPast = maxPast,
+                    InfoString = groupInfo  // <-- строка с информацией
+                };
+            });
 
+            var answer = groupAnswer.Select(x=>x.InfoString).ToList();
+            answer.AddRange(groupAnswer.Where(x=>!string.IsNullOrEmpty(x.PromegPiles)).Select(x => x.PromegPiles).ToList());
+            answer.AddRange(groupAnswer.Where(x => !string.IsNullOrEmpty(x.Zerrors)).Select(x => x.Zerrors).ToList());
+            return answer;
 
-
-            return writerAnswer;
         }
 
         //поиск не перпендикулярной сваи

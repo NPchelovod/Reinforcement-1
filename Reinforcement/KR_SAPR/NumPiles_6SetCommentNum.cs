@@ -43,9 +43,13 @@ namespace Reinforcement
             foreach (var pileGroup1 in pilesGroup)
             {
                 //тут делаем сортировку уже по Z
-                var pilesGroup2 = pileGroup1.GroupBy(x => new { x.Zs }).OrderByDescending(x => sortOnCount ? x.Count() : 0).ThenBy(x => x.Key).ToList();
+                //var pilesGroup2 = pileGroup1.GroupBy(x => new { x.Zs }).OrderByDescending(x => sortOnCount ? x.Count() : 0).ThenBy(x => x.Key).ToList();
                 //и идем по отдельной группы тут у нас 
-                
+                var pilesGroup2 = pileGroup1
+                .GroupBy(x => new { x.Zs })
+                .OrderByDescending(x => sortOnCount ? x.Count() : 0)
+                .ThenBy(x => x.Key.Zs)  // ← вот здесь исправление!
+                .ToList();
                 foreach (var pileGroup2 in pilesGroup2)
                 {
                     comment++;

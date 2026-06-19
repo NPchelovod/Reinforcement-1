@@ -76,7 +76,7 @@ namespace Reinforcement
                      var lastPoint = solutions.Last().Last();
                     int nearestIdx = FindNearestIndex(group, lastPoint);
                     solutions.Add(SolveSingleGroup(group, groupTimeLimit, nearestIdx));
-                    solutions.Add(SolveSingleGroup(group, groupTimeLimit));
+                    //solutions.Add(SolveSingleGroup(group, groupTimeLimit));
                 }
             }
 
