@@ -53,9 +53,9 @@ namespace Reinforcement
         public static double SectorStep = NumPiles.coordinateRoundingStep>0? NumPiles.coordinateRoundingStep : 150;//
         public static double SectorStepZ => NumPiles.sectorStepZ;
 
-        public int Xs => (int) Math.Round(X / SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
-        public int Ys => (int) Math.Round(Y / SectorStep);
-        public int Zs => (int) (Math.Round(Z / SectorStepZ));
+        public int Xs => (int) (Math.Round(X / SectorStep)* SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
+        public int Ys => (int) (Math.Round(Y / SectorStep) * SectorStep);
+        public int Zs => (int) (Math.Round(Z / SectorStepZ)* SectorStepZ);
         public long IdValue = 0;
         public PileData(Element pile)
         {

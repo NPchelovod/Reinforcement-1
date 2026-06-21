@@ -20,7 +20,7 @@ namespace Reinforcement
 
             //List<PileData> allPiles = new List<PileData>();
 
-            var listCD = new List<CoordData>();//это если группировка есть - список групп свай иначе список свай
+            
             if (GroupPiles)
             {
                 //группировка
@@ -33,21 +33,25 @@ namespace Reinforcement
             
 
             // и теперь эти группы должны в один список 
-            foreach (var pg in pileDataGroup)
-            {
-                foreach (var ns in pg.NestedCoordData)
-                {
-                    ns.NumWay = pg.NumWay;//на всякий случай
-                    ns.SortNestedCoordData();
-                    listCD.Add(ns);
-                }
-            }
+            
 
+            var listCD = new List<CoordData>();//это если группировка есть - список групп свай иначе список свай
             if (BoolNumPileIandex)
             {
+                foreach (var pg in pileDataGroup)
+                {
+                    foreach (var ns in pg.NestedCoordData)
+                    {
+                        listCD.Add(ns);
+                    }
+                }
 
                 listCD = OpenTspSolver.Solve(new List<CoordData>(listCD), TimeSpan.FromSeconds((double)AllPiles.Count / 1000.0 * 15));
                 //отсортированный возвращаем
+                foreach (var ns in listCD)
+                {
+                    ns.SortNestedCoordData();
+                }
 
             }
             else
@@ -114,14 +118,19 @@ namespace Reinforcement
         {
             //рекурсивное нахождение сваи
             if(answer== null) answer = new List<PileData>();
+
+            bool selfP = false; // для надежности только одну кучу смотрим
+            bool notselfP = false;
             foreach (var coord in coordList)
             {
-                if(coord is PileData pile)
+                if(!notselfP && coord is PileData pile)
                 {
                     answer.Add(pile);
+                    selfP= true;
                 }
-                else
+                else if(!selfP)
                 {
+                    notselfP= true;
                     answer.AddRange(GetPileData(coord.NestedCoordData));
                 }
             }

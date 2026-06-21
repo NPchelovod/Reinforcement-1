@@ -135,7 +135,7 @@ namespace Reinforcement
                 var maxPast = g.Max(x => x.MarkPast);
 
                 // Формируем строку для группы
-                var groupInfo = $"«{minNew}...{maxNew} new/past {minPast}...{maxPast}, тип: {g.Key.TypePile}, УГО: {g.Key.UGOPastNum}, срывы »";
+                var groupInfo = $"«{minNew}...{maxNew} new/past {minPast}...{maxPast}, тип: {g.Key.TypePile}, УГО: {g.Key.UGOPastNum}, срывы ";
 
                 string promegPiles ="";
                 string zerrors = "";// ошибки в Z координатах
@@ -150,7 +150,7 @@ namespace Reinforcement
                     if(ustanNumPile && pile.MarkNew!= pileLast.MarkNew+1)
                     {
                         promegPiles = $"Разрыв нумерации {pile.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей с ID:{pile.IdValue}";
-                        groupInfo += pile.MarkNew + ", ";
+                        groupInfo += pile.MarkNew +"ID_"+ pile.IdValue + ", ";
                         break;
                     }
                     else if(pile.MarkPast != pileLast.MarkPast + 1)
