@@ -70,74 +70,51 @@ namespace Reinforcement
             X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
             Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
             Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
+            bool b = false;
 
-            var comParam = pile.LookupParameter("Комментарии");
-            if (comParam != null && comParam.HasValue)
+            (Commentary, CommentaryNum, b) = GetParameterInt(pile, "Комментарии", 0);
+            
+
+            (MarkPastString, MarkPast, MarkPastIsString) =GetParameterInt(pile, "Марка", 0);
+           
+            (UGOPast, UGOPastNum, b) = GetParameterInt(pile, NumPiles.nameYGO, 0);
+            if(string.IsNullOrEmpty(UGOPast))
             {
-                Commentary = comParam.AsString();
-                if (!string.IsNullOrEmpty(Commentary))
-                {
-                    if (!int.TryParse(comParam.AsString(), out CommentaryNum))
-                    {
-                        CommentaryNum = comParam.AsString().Length;
-                    }
-                }
-
+                (UGOPast, UGOPastNum, b) = GetParameterInt(pile, NumPiles.nameYGO2, 0);
             }
-            var markParam = pile.LookupParameter("Марка");
-            if (markParam != null && markParam.HasValue)
+
+            (ADSK_Group, ADSK_GroupNum, b) = GetParameterInt(pile, "ADSK_Группирование", 0);
+            
+        }
+        public static (string markString, int markInt, bool markIsString) GetParameterInt(Element e, string name, int answer = -1)
+        {
+            Parameter UGOParam = e.LookupParameter(name);
+            //int answer = -1;
+            string namePast = "";
+            bool markIsstring = true;
+            if (UGOParam != null && UGOParam.HasValue)
             {
-                MarkPastString = markParam.AsString();
-                if (!string.IsNullOrEmpty(MarkPastString))
+                //с уго сложно 
+                namePast = UGOParam.AsValueString();
+                if (!string.IsNullOrEmpty(namePast))
                 {
-                    if (int.TryParse(MarkPastString, out MarkPast))
+                    if (int.TryParse(namePast, out answer))
                     {
-                        MarkPastIsString = false;
+                        markIsstring=false;
                     }
                     else
                     {
                         // Извлекаем первую последовательность цифр
-                        var match = System.Text.RegularExpressions.Regex.Match(MarkPastString, @"\d+");
-                        if (match.Success && Int32.TryParse(match.Value, out MarkPast))
+                        var match = System.Text.RegularExpressions.Regex.Match(namePast, @"\d+");
+                        if (match.Success && Int32.TryParse(match.Value, out answer))
                         {
                             // MarkPast готов: "10к" → 10, "а1" → 1, "5" → 5
                         }
                     }
                 }
             }
-
-            Parameter UGOParam = pile.LookupParameter(NumPiles.nameYGO);
-            if (UGOParam != null && UGOParam.HasValue)
-            {
-                //с уго сложно 
-                UGOPast = UGOParam.AsValueString();
-                if (!string.IsNullOrEmpty(UGOPast))
-                {
-                    Match match = Regex.Match(UGOPast, @"\d+");
-                    if (match.Success && Int32.TryParse(match.Value, out UGOPastNum))
-                    {
-
-                        
-                    }
-                }
-            }
-            Parameter adskGroop = pile.LookupParameter("ADSK_Группирование");
-            if (adskGroop != null && adskGroop.HasValue)
-            {
-                //с уго сложно 
-                ADSK_Group = adskGroop.AsValueString();
-                if (!string.IsNullOrEmpty(ADSK_Group))
-                {
-                    Match match = Regex.Match(ADSK_Group, @"\d+");
-                    if (match.Success)
-                    {
-
-                        ADSK_GroupNum = int.Parse(match.Value);
-                    }
-                }
-            }
+            return (namePast, answer, markIsstring);
         }
-
         public ForgeTypeId units => NumPiles.units;
         public List<string> GetSravnDataString()
         {

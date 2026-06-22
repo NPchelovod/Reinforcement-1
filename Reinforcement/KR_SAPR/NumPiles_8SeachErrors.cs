@@ -135,13 +135,13 @@ namespace Reinforcement
                 var maxPast = g.Max(x => x.MarkPast);
 
                 // Формируем строку для группы
-                var groupInfo = $"«{minNew}...{maxNew} new/past {minPast}...{maxPast}, тип: {g.Key.TypePile}, УГО: {g.Key.UGOPastNum}, срывы ";
+                var groupInfo = $"«{minNew}...{maxNew} new/past {minPast}...{maxPast}, тип: {g.Key.TypePile}, УГО: {g.Key.UGOPastNum}";
 
                 string promegPiles ="";
                 string zerrors = "";// ошибки в Z координатах
                 
                 //поиск промежуточной сваи
-                var piles = g.ToList();
+                var piles = ustanNumPile? g.ToList().OrderBy(x=>x.MarkNew).ToList() : g.ToList().OrderBy(x=>x.MarkPast).ToList();
                 var pileLast = piles[0];
                
                 foreach(var pile in piles)
@@ -149,14 +149,14 @@ namespace Reinforcement
                     if(pile== pileLast) { continue; }
                     if(ustanNumPile && pile.MarkNew!= pileLast.MarkNew+1)
                     {
-                        promegPiles = $"Разрыв нумерации {pile.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей с ID:{pile.IdValue}";
-                        groupInfo += pile.MarkNew +"ID_"+ pile.IdValue + ", ";
+                        promegPiles = $"Разрыв нумерации {pileLast.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkNew} с ID:{pile.IdValue}";
+                        groupInfo +=", срывы "+ pile.MarkNew +"ID_"+ pile.IdValue + ", ";
                         break;
                     }
                     else if(pile.MarkPast != pileLast.MarkPast + 1)
                     {
-                        promegPiles = $"Разрыв нумерации {pile.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей с ID:{pile.IdValue}";
-                        groupInfo += pile.MarkPast+", ";
+                        promegPiles = $"Разрыв нумерации {pileLast.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkPast} с ID:{pile.IdValue}";
+                        groupInfo += ", срывы " + pile.MarkPast+", ";
                         break;
                     }
                     pileLast = pile;

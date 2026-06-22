@@ -53,16 +53,16 @@ namespace BuildPlugin
                 },
                 Dirs = new Dir[]
                 {
-                    new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
-                        new File(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\Reinforcement.addin"),
-                        new Dir(@"ENSPlugin",
-                        new DirFiles(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\bin\Debug\*.*"))),
+                    //new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
+                    //    new File(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\Reinforcement.addin"),
+                    //    new Dir(@"ENSPlugin",
+                    //    new DirFiles(@"%USERPROFILE%\source\repos\NPchelovod\Reinforcement-1\Reinforcement\bin\Debug\*.*"))),
 
                     //!!!!!!!!!!!!! это на работе выше дома!!!!!!!
-                    //new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
-                    //new File(@"%USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\Reinforcement.addin"),
-                    //    new Dir(@"ENSPlugin",
-                    //    new DirFiles(@"%USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\bin\Debug\*.*"))),
+                    new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\2024\",
+                    new File(@"%USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\Reinforcement.addin"),
+                        new Dir(@"ENSPlugin",
+                        new DirFiles(@"%USERPROFILE%\source\repos\Reinforcement-1\Reinforcement\bin\Debug\*.*"))),
 
                 },
             };

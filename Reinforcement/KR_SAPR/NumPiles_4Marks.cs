@@ -68,7 +68,7 @@ namespace Reinforcement
             }
 
 
-            int mark = 0;
+            int mark = markStart-1;
             List< PileData> allPiles = GetPileData(listCD);
 
             foreach (var pile in allPiles)

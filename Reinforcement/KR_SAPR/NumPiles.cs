@@ -24,6 +24,9 @@ namespace Reinforcement
 {
     
 
+
+
+
     [Transaction(TransactionMode.Manual)]
     public partial class NumPiles : IExternalCommand
     {
@@ -42,10 +45,12 @@ namespace Reinforcement
 
 
         public static string nameYGO = "ADSK_Типоразмер элемента узла";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
+        public static string nameYGO2 = "Обозначение сваи";//ADSK_Типоразмер элемента узла<Элементы узлов>" };
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
 
         // В классе NumPiles добавьте новые статические переменные в начало класса:
+        public int markStart = 1;//начинаем с данного числа
         public static bool adjustPilePositions = false;
         public static bool recreateAllPiles = false;
         public static double minDistanceBetweenPiles = 900;
@@ -54,7 +59,7 @@ namespace Reinforcement
         public static  double sectorStep = 1010; // шаг поиска соседей свай
         public static double sectorStepPile = 510;// округление координаты одной сваи
         public static double sectorStepZ = 10; // шаг разбивки УГО по высоте
-        public static int predelGroup = 51; // предел наполнения иначе принудительно для каждого элемента
+        public static int predelGroup = 250; // предел наполнения иначе принудительно для каждого элемента
         private static bool ustanNumPile = true;
         public static bool BoolNumPileIandex = true;
         public bool GroupPiles = false;// группиовать ли нумератор свай
@@ -64,7 +69,7 @@ namespace Reinforcement
 
 
         public static List<SortCodeEnum> sortCodeEnums = new List<SortCodeEnum>();
-        public static string sortCode = "140389"; // тип 2
+        public static string sortCode = "1403859"; // тип 2
         private static string sortCodeUGO = "123"; // тип 2
         public bool RotorPiles { get; set; } = false;
         public bool ReloadUGO => SettingsWindow.ReloadUGO;
@@ -82,7 +87,11 @@ namespace Reinforcement
                 UIDocument uidoc = RevitAPI.UiDocument;
                 Document doc = RevitAPI.Document;
                 // 1. Находим сваи
-                Seacher = HelperSeachAllElements.SeachAllElements(Piles, commandData, true);
+                Seacher = HelperSeachAllElements.SeachSelectElements(commandData);
+                if (Seacher.Count < 3)//значит мы специально не выделяли
+                {
+                    Seacher = HelperSeachAllElements.SeachAllElements(Piles, commandData, true);
+                }
 
                 if (Seacher.Count == 0)
                 {
@@ -92,7 +101,7 @@ namespace Reinforcement
 
                 // 2. Показываем окно настроек
                 SettingsWindow = new PileSettingsWindow(
-                Seacher.Count,
+                Seacher.Count, markStart,
                 sectorStep,
                 sectorStepPile, // Добавлен новый параметр
                 sectorStepZ,
@@ -109,7 +118,7 @@ namespace Reinforcement
 
                 recreateAllPiles
                 );
-
+               
                 // Устанавливаем владельца окна
                 var revitWindow = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
                 var windowWrapper = new System.Windows.Interop.WindowInteropHelper(SettingsWindow);
@@ -125,6 +134,7 @@ namespace Reinforcement
 
 
                 // 3. Получаем новые настройки из окна
+                markStart = SettingsWindow.MarkStart;
                 sectorStep = SettingsWindow.SectorStep;
                 sectorStepZ = SettingsWindow.SectorStepZ;
                 predelGroup = SettingsWindow.PredelGroup;

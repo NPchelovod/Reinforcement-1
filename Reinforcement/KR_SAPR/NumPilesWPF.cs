@@ -36,9 +36,9 @@ namespace Reinforcement
         //новая опция - повышение/понижение УГО
         public bool ReloadUGO { get; set; }
 
+        public int MarkStart = 1;
 
-
-        public PileSettingsWindow(int foundPilesCount, double currentSectorStep,
+        public PileSettingsWindow(int foundPilesCount, int markStart, double currentSectorStep,
             double currentSectorStepPile, double currentSectorStepZ, int currentPredelGroup,
             bool currentUstanNumPile, bool currentUstanUGO ,bool currentCommentCheckBox,
             bool currentDoNotChangeUGOIfExists, string currentSortCode, string currentSortCodeUGO,
@@ -47,6 +47,7 @@ namespace Reinforcement
         {
             InitializeComponent();
             FoundPilesCount = foundPilesCount;
+            MarkStart = markStart;
             SectorStep = currentSectorStep;
             SectorStepPile = currentSectorStepPile;
             SectorStepZ = currentSectorStepZ;
@@ -68,7 +69,7 @@ namespace Reinforcement
             ContinueExecution = false;
 
             // Заполняем поля текущими значениями
-            pilesCountText.Text = $"Найдено свай: {foundPilesCount}";
+            pilesCountText.Text = $"Найдено свай (на виде или были выделены): {foundPilesCount}";
             sectorStepTextBox.Text = currentSectorStep.ToString();
             sectorStepPileTextBox.Text = currentSectorStepPile.ToString();
             sectorStepZTextBox.Text = currentSectorStepZ.ToString();
@@ -179,6 +180,16 @@ namespace Reinforcement
                 "Если спадает УГО можно перезапустить"
             );
             mainStackPanel.Children.Add(ReloadUGOPanel);
+
+            // Поле для начать с
+            var startDistancePanel = CreateNumberInputPanel(
+                "Начать нумерацию с:",
+                MarkStart.ToString("F0"),
+                out markStartTextBox,
+                "Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка",
+                240
+            );
+            mainStackPanel.Children.Add(startDistancePanel);
             // Поле для минимальной дистанции
             var minDistancePanel = CreateNumberInputPanel(
                 "Минимальная дистанция между сваями (мм):",
@@ -578,6 +589,7 @@ namespace Reinforcement
 
         private CheckBox rotatePilesCheckBox;
         private CheckBox reloadUGOCheckBox;
+        private TextBox markStartTextBox;
         private TextBox minDistanceTextBox;
         private TextBox coordinateRoundingTextBox;
 
@@ -603,6 +615,8 @@ namespace Reinforcement
             if (!ValidateInteger(predelGroupTextBox.Text, "Лимит группы", out int predelGroup, 0))
                 return;
 
+            if (!ValidateNumber(markStartTextBox.Text, "Старт марки", out double markStart, 0))
+                return;
             // Валидация новых параметров
             if (!ValidateNumber(minDistanceTextBox.Text, "Минимальная дистанция", out double minDistance, 0))
                 return;
@@ -631,6 +645,7 @@ namespace Reinforcement
             RotorPiles = rotatePilesCheckBox.IsChecked ?? false;
             ReloadUGO = reloadUGOCheckBox.IsChecked ?? false;
             MinDistanceBetweenPiles = minDistance;
+            MarkStart = (int) markStart;
             CoordinateRoundingStep = roundingStep;
 
             UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;

@@ -22,7 +22,28 @@ namespace Reinforcement
 
         //здесь скрыты полные имена поисковые если мы раньше не нашли
         public static Dictionary<HashSet<string>, List<string>> newNames = new Dictionary<HashSet<string>, List<string>>();
+        public static HashSet<Element> SeachSelectElements(ExternalCommandData commandData)
+        {
+            // Получаем UIDocument (активный документ с интерфейсом)
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
+            // Получаем ID выделенных элементов
+            ICollection<ElementId> selectedIds = uidoc.Selection.GetElementIds();
 
+            // Инициализируем HashSet (если нужно)
+            var Seacher = new HashSet<Element>();
+
+            // Преобразуем ID в Element и добавляем в HashSet
+            foreach (ElementId id in selectedIds)
+            {
+                Element elem = doc.GetElement(id);
+                if (elem != null)
+                {
+                    Seacher.Add(elem);
+                }
+            }
+            return Seacher;
+        }
         public static HashSet<Element> SeachAllElements(HashSet<string> names, ExternalCommandData commandData, bool activView=false)
         {
             //if activView - ищет все сваи на активном виде
