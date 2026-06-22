@@ -133,6 +133,9 @@
     <Compile Include="KR_ExportImport\ImportExcel.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
+    <Compile Include="KR_SAPR\NumPilesWind.xaml.cs">
+      <DependentUpon>NumPilesWind.xaml</DependentUpon>
+    </Compile>
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\NumPiles_1Process.cs" />
     <Compile Include="KR_SAPR\NumPiles_2RotatePiles.cs" />
@@ -452,6 +455,10 @@
     <Page Include="KR_SAPR\CreateViewPlan\MainViewCreateViewPlan.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="KR_SAPR\NumPilesWind.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="KR_vstavka\Lestnica\StairParametersWindow.xaml">
       <SubType>Designer</SubType>

@@ -1,0 +1,267 @@
+﻿<Window x:Class="Reinforcement.PileSettingsWindow2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки нумерации и корректировки свай"
+        Width="650" Height="1200" MinWidth="600" MinHeight="700" MaxHeight="1200"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
+        SizeToContent="Manual">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Padding="0">
+        <StackPanel Margin="20,10,20,20">
+            <!-- Заголовок -->
+            <TextBlock Text="Параметры группировки и корректировки свай"
+                       FontSize="18" FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,20" TextWrapping="Wrap"/>
+
+            <!-- Информация о найденных сваях -->
+            <TextBlock x:Name="pilesCountText"
+                       Text="Найдено свай/объектов (на виде или были выделены более 3 шт): 0"
+                       FontSize="14" HorizontalAlignment="Left"
+                       Margin="0,0,0,20" FontWeight="Bold"
+                       Foreground="DarkGreen"/>
+
+
+            <!-- === Настройка поиска === -->
+            <TextBlock Text="Поиск свай и иных объектов нумерации"
+           FontSize="14" FontWeight="Bold" HorizontalAlignment="Left"
+           Margin="0,5,0,12" Foreground="DarkBlue"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Имена семейств (или выделите объекты в проекте):" Width="240"
+               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="nameFamilies" Width="330" Margin="5,0,0,0"
+             ToolTip="Имена семейств нумеровать которые будем"/>
+            </StackPanel>
+            
+            <!-- Кнопки -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+            Margin="0,20,0,10">
+                <Button x:Name="seachButton" Content="✅ Вгрузить"
+            Width="150" Height="35" Margin="10,5,10,5"
+            FontWeight="Bold" FontSize="13" IsDefault="True"
+            Click="SeachButton_Click"/>
+                <Button x:Name="cButton" Content="❌ Не работает"
+            Width="150" Height="35" Margin="10,5,10,5"
+            FontSize="13" IsCancel="True"
+            Click="f_Click"/>
+            </StackPanel>
+            <!-- === КОРРЕКТИРОВКА КООРДИНАТ === -->
+            <TextBlock Text="Корректировка координат свай, лучше на 3D виде, где все сваи видны"
+                       FontSize="14" FontWeight="Bold" HorizontalAlignment="Left"
+                       Margin="0,5,0,12" Foreground="DarkBlue"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Корректировать положения свай:" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="adjustPositionsCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Автоматически корректировать положения свай при пересечениях"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Пересоздать все сваи:" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="recreateAllPilesCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Удалить все найденные сваи и создать их заново с учетом новых координат и параметров"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Поворот свай в 0:" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="rotatePilesCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Повернуть неправильно повернутые сваи"/>
+            </StackPanel>
+
+            
+
+           
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Минимальная дистанция между сваями (мм):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="minDistanceTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Шаг округления координат (мм):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="coordinateRoundingTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Координаты свай будут округляться кратно этому числу"/>
+            </StackPanel>
+
+            <Separator Margin="0,10,0,15" Height="1" Background="LightGray"/>
+
+            <!-- === ОСНОВНЫЕ НАСТРОЙКИ === -->
+            <TextBlock Text="Основные настройки нумерации"
+                       FontSize="14" FontWeight="Bold" HorizontalAlignment="Left"
+                       Margin="0,5,0,12" Foreground="DarkBlue"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Нумеровать сваи:" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="ustanNumPileCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Установить марки (номера) для свай"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Начать нумерацию с:" Width="240"
+                VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="markStartTextBox" Width="120" Margin="5,0,0,0"
+              ToolTip="Начальный номер нумерации"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Префикс нумерации:" Width="240"
+    VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="markPrefixTextBox" Width="120" Margin="5,0,0,0"
+  ToolTip="Начальный номер нумерации"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Постфикс нумерации:" Width="240"
+    VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="markPostfixTextBox" Width="120" Margin="5,0,0,0"
+  ToolTip="Начальный номер нумерации"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Нумеровать сваи алгоритм Яндекс карт?:" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="boolNumPileIandex" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Установить номера свай по алгоритму Яндекс карт?"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Группировать сваи в нумерации (по шагу группировки в куст):" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="GroupPilesCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Группировать"/>
+            </StackPanel>
+
+            
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Установить номера сортировки в комментарий (чтобы спецификацию настроить по нему):" Width="320"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="setNumCommentCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+                          ToolTip="Если свая уже имеет маркировку (номер), не изменять его"/>
+            </StackPanel>
+
+            
+
+            <Separator Margin="0,10,0,15" Height="1" Background="LightGray"/>
+
+            <!-- === ЧИСЛОВЫЕ ПАРАМЕТРЫ === -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Шаг группировки свай в КУСТ (мм):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="sectorStepTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Расстояние для группировки свай в один куст и дальнейшая его сортировка в кусте (200-1500)"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Шаг округления рядов свай (мм):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="sectorStepPileTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="По рядам мы нумеруем, поэтому с данной погрешностью сваи будут считаться в одном ряду (450-1500)"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Шаг округления по высоте Z (мм):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="sectorStepZTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Для группировки по оси Z (УГО)"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Лимит свай в КУСТе (шт):" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="predelGroupTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Максимальное количество свай в одной группе. 0 = без лимита, 1 = без кустов"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Код сортировки свай:" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="sortCodeTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Введите код для пользовательской сортировки (например, 134)"/>
+            </StackPanel>
+
+            <!-- === ОСНОВНЫЕ НАСТРОЙКИ === -->
+            <TextBlock Text="Основные настройки УГО"
+           FontSize="14" FontWeight="Bold" HorizontalAlignment="Left"
+           Margin="0,5,0,12" Foreground="DarkBlue"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Установить УГО:" Width="320"
+               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="ustanUGOCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+              ToolTip="Установить УГО для групп свай"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Код сортировки УГО:" Width="240"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <TextBox x:Name="sortCodeUGOTextBox" Width="120" Margin="5,0,0,0"
+                         ToolTip="Введите код для пользовательской сортировки (например, 123)"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Перезагрузить УГО свай (чтобы вернуть отображение УГО):" Width="320"
+               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="reloadUGOCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+              ToolTip="Если спадает УГО можно перезапустить"/>
+            </StackPanel>
+
+
+            <Separator Margin="0,10,0,15" Height="1" Background="LightGray"/>
+
+            <!-- Подсказки -->
+            <Expander Header="📚 Подсказки по настройкам" IsExpanded="False"
+                      Margin="0,15,0,15" BorderThickness="1" BorderBrush="LightGray" Padding="5">
+                <TextBlock FontSize="11" FontStyle="Italic" TextWrapping="Wrap"
+                           Margin="5" LineHeight="16">
+                    <![CDATA[
+• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены
+• Пересоздать все сваи: удалить все найденные сваи и создать их заново с учетом новых координат и параметров (может ускорить процесс при большом количестве изменений)
+• Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)
+• Шаг округления координат: координаты свай будут округляться до ближайшего кратного значения
+• Нумеровать сваи: установит марки свай (1, 2...)
+• Установить УГО: установит графическое обозначение сваям
+• Не перенумеровывать нумерованные сваи: если свая уже имеет маркировку, не изменять ее
+• Не менять УГО если он есть: если у сваи уже установлено УГО, не изменять его
+• Шаг группировки свай в КУСТ: расстояние между соседними сваями для группировки в КУСТ и поиска соседей (чуть больше шага свай или 100 для игнора)
+• Шаг рядов свай: точность расположения свай в 1 ряд
+• Шаг по высоте Z: для группировки свай по УГО
+• Лимит свай в КУСТе: максимальное количество свай в КУСТе для нумерации в КУСТе (1 - без кустов, 0 - без лимита)
+• Код сортировки свай: пользовательский код для порядка сортировки свай (1346)
+  0 - сортировка по УГО (чтобы табл свай была не огромной, бывает полезно группировать по УГО)
+  1 - сортировка по комментарию (номер пусто, 0, 1...)
+  2 - сортировка по ADSK_группирование
+  3 - сортировка по кол-ву свай в типе
+  4 - сортировка по типу сваи
+  5 - сортировка по Y затем по X
+  6 - наоборот, сортировка по X затем по Y
+  7 - сортировка Y сверху вниз
+  8 - вместо сортировки куста к левому верхнему углу использовать центр куста
+  9 - сортировка по Z
+• Код сортировки УГО:
+  1 - сортировка по типу
+  2 - по количеству свай в типе
+  3 - по убыванию Z
+  4 - по возрастанию Z
+                    ]]>
+                </TextBlock>
+            </Expander>
+
+            <!-- Кнопки -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                        Margin="0,20,0,10">
+                <Button x:Name="okButton" Content="✅ Продолжить"
+                        Width="150" Height="35" Margin="10,5,10,5"
+                        FontWeight="Bold" FontSize="13" IsDefault="True"
+                        Click="OkButton_Click"/>
+                <Button x:Name="cancelButton" Content="❌ Отмена"
+                        Width="150" Height="35" Margin="10,5,10,5"
+                        FontSize="13" IsCancel="True"
+                        Click="CancelButton_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

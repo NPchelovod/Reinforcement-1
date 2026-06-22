@@ -276,6 +276,11 @@ namespace Reinforcement
 
             // === ЧИСЛОВЫЕ ПАРАМЕТРЫ ===
 
+            //префикс маркировки
+
+            //постфикс маркировки
+
+
             // Поле для sectorStep
             var sectorStepPanel = CreateNumberInputPanel(
                 "Шаг группировки свай в КУСТ (мм):",

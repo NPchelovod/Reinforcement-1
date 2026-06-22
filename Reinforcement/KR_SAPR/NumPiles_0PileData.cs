@@ -41,6 +41,7 @@ namespace Reinforcement
         public double Z { get; set; } = 0;
         public int NumWay { get; set; } = 0;//номер типоразмера класстера сваи
         public int MarkNew = 0;
+        public string MarkNewString = "";
         public bool BorderWays { get; set; } = false;
         public List<CoordData> NestedCoordData { get; set; } = new List<CoordData>();//вложенные
         public HashSet<CoordData> AllowedPaths { get; set; }

@@ -12,7 +12,11 @@ namespace Reinforcement
 {
     public partial class NumPiles
     {
-       List<PileDataGroup> pileDataGroup = new List<PileDataGroup>();
+        List<PileDataGroup> pileDataGroup = new List<PileDataGroup>();
+
+        public string markPrefix = "";
+        public string markPostfix = "";
+
         public Result CalculateMarks()
         {
             //нам надо собрать все сваи в группы по важности чтобы потом сортировать
@@ -76,6 +80,8 @@ namespace Reinforcement
                 if (pile.MarkNew==0)//тут и на 0 так как дубляжи реально возможны...
                 {
                     mark++;
+
+                    pile.MarkNewString = markPrefix + mark + markPostfix;
                     pile.MarkNew = mark;
                     
                 }
@@ -91,9 +97,9 @@ namespace Reinforcement
                     foreach (var pileClass in allPiles)
                     {
                         Element pile = pileClass.Pile;
-                        if (pile == null || pileClass.MarkNew == 0) {continue;}
+                        if (pile == null || pileClass.MarkNewString == "") {continue;}
                         
-                        if( SetPileMark(pile, pileClass.MarkNew.ToString(), nameMarks))
+                        if( SetPileMark(pile, pileClass.MarkNewString, nameMarks))
                         {
                             ustanMarok++;
                         }
