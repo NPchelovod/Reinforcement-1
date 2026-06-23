@@ -49,31 +49,14 @@ namespace Reinforcement
         private static string YGOPrefix = "ADSK_ЭУ_УсловноеОбозначениеСваи : УГО_";
 
 
-        // В классе NumPiles добавьте новые статические переменные в начало класса:
-        public int markStart = 1;//начинаем с данного числа
-        public static bool adjustPilePositions = false;
-        public static bool recreateAllPiles = false;
-        public static double minDistanceBetweenPiles = 900;
-        public static double coordinateRoundingStep = 25;
-
-        public static  double sectorStep = 1010; // шаг поиска соседей свай
-        public static double sectorStepPile = 510;// округление координаты одной сваи
-        public static double sectorStepZ = 10; // шаг разбивки УГО по высоте
-        public static int predelGroup = 250; // предел наполнения иначе принудительно для каждого элемента
-        private static bool ustanNumPile = true;
-        public static bool BoolNumPileIandex = true;
-        public bool GroupPiles = false;// группиовать ли нумератор свай
-        private static bool ustanUGO = false;
-        private static bool SetNumComment = false;
-        private static bool doNotChangeUGOIfExist = false;
+        
 
 
         public static List<SortCodeEnum> sortCodeEnums = new List<SortCodeEnum>();
-        public static string sortCode = "1403859"; // тип 2
-        private static string sortCodeUGO = "123"; // тип 2
-        public bool RotorPiles { get; set; } = false;
-        public bool ReloadUGO => SettingsWindow.ReloadUGO;
-        PileSettingsWindow SettingsWindow = null;
+        public static List<SortCodeEnum> sortUGOEnums = new List<SortCodeEnum>();
+
+        
+        PileSettingsWindow2 SettingsWindow = null;
 
         public HashSet<Element> Seacher = new HashSet<Element>();
         public Result Execute(
@@ -87,114 +70,27 @@ namespace Reinforcement
                 UIDocument uidoc = RevitAPI.UiDocument;
                 Document doc = RevitAPI.Document;
                 // 1. Находим сваи
-                Seacher = HelperSeachAllElements.SeachSelectElements(commandData);
-                if (Seacher.Count < 3)//значит мы специально не выделяли
-                {
-                    Seacher = HelperSeachAllElements.SeachAllElements(Piles, commandData, true);
-                }
+                
 
+                // 2. Показываем окно настроек
+                SettingsWindow = new PileSettingsWindow2(commandData );
+                bool? resultW = SettingsWindow.ShowDialog();
+
+                if(resultW!=true)
+                {
+                    return Result.Cancelled;
+                }
+                
+                Seacher = PileSettingsWindow2.Seacher;
                 if (Seacher.Count == 0)
                 {
                     TaskDialog.Show("Ошибка", "Сваи не найдены");
                     return Result.Failed;
                 }
-
-                // 2. Показываем окно настроек
-                SettingsWindow = new PileSettingsWindow(
-                Seacher.Count, markStart,
-                sectorStep,
-                sectorStepPile, // Добавлен новый параметр
-                sectorStepZ,
-                predelGroup,
-                ustanNumPile,
-                ustanUGO,
-                SetNumComment,
-                doNotChangeUGOIfExist,
-                sortCode, // Добавлен новый параметр
-                sortCodeUGO,
-                adjustPilePositions, // Новый параметр
-                minDistanceBetweenPiles, // Новый параметр
-                coordinateRoundingStep, // Новый параметр
-
-                recreateAllPiles
-                );
-               
-                // Устанавливаем владельца окна
-                var revitWindow = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-                var windowWrapper = new System.Windows.Interop.WindowInteropHelper(SettingsWindow);
-                windowWrapper.Owner = revitWindow;
-
-                bool? dialogResult = SettingsWindow.ShowDialog();
-
-                if (dialogResult != true || !SettingsWindow.ContinueExecution)
-                {
-                    return Result.Cancelled;
-                }
+                ReadData();
 
 
-
-                // 3. Получаем новые настройки из окна
-                markStart = SettingsWindow.MarkStart;
-                sectorStep = SettingsWindow.SectorStep;
-                sectorStepZ = SettingsWindow.SectorStepZ;
-                predelGroup = SettingsWindow.PredelGroup;
-                ustanNumPile = SettingsWindow.UstanNumPile;
-                BoolNumPileIandex = SettingsWindow.BoolNumPileIandex;
-                ustanUGO = SettingsWindow.UstanUGO;
-                SetNumComment = SettingsWindow.SetNumComment;
-                doNotChangeUGOIfExist = SettingsWindow.DoNotChangeUGOIfExists;
-                sectorStepPile = SettingsWindow.SectorStepPile;
-                sortCode = SettingsWindow.SortCode;
-                sortCodeUGO = SettingsWindow.SortCodeUGO;
-                GroupPiles = SettingsWindow.GroupPiles;
-                adjustPilePositions = SettingsWindow.AdjustPilePositions;
-                minDistanceBetweenPiles = SettingsWindow.MinDistanceBetweenPiles;
-                coordinateRoundingStep = SettingsWindow.CoordinateRoundingStep;
-
-                recreateAllPiles = SettingsWindow.RecreateAllPiles;
-                RotorPiles = SettingsWindow.RotorPiles;
-
-                //настраиваем список сортировки
-                sortCodeEnums.Clear();
-                foreach (char codeChar in sortCode)
-                {
-                    switch (codeChar)
-                    {
-                        case '0':
-                            sortCodeEnums.Add(SortCodeEnum.SortUGO);
-                            break;
-                        case '1':
-                            sortCodeEnums.Add(SortCodeEnum.SortNumComment);
-                            break;
-                        case '2':
-                            sortCodeEnums.Add(SortCodeEnum.SortADSKGroup);
-                            break;
-                        case '3':
-                            sortCodeEnums.Add(SortCodeEnum.SortCountPiles);
-                            break;
-                        case '4':
-                            sortCodeEnums.Add(SortCodeEnum.SortTypePile);
-                            break;
-                        case '5':
-                            sortCodeEnums.Add(SortCodeEnum.SortYthenX);
-                            break;
-                        case '6':
-                            sortCodeEnums.Add(SortCodeEnum.SortXthenY);
-                            break;
-                        case '7':
-                            sortCodeEnums.Add(SortCodeEnum.SortUpToDown);
-                            break;
-                        case '8':
-                            sortCodeEnums.Add(SortCodeEnum.SortOnCenterCust);
-                            break;
-                        case '9':
-                            sortCodeEnums.Add(SortCodeEnum.SortZ);
-                            break;
-
-                    }
-                }
-         
-
+                
 
                 // 4. Продолжаем выполнение с новыми параметрами
                 // 3. ВСЕ операции в одной транзакционной группе
@@ -204,7 +100,7 @@ namespace Reinforcement
 
                     try
                     {
-                        CorrectData();//корректировка входгных данных
+                        //CorrectData();//корректировка входгных данных
                         Result result = ProcessPiles( commandData, doc);
 
                         if (result == Result.Succeeded)
@@ -234,28 +130,100 @@ namespace Reinforcement
                 return Result.Failed;
             }
         }
+        // Свойства (без изменений)
+        public double SectorStep => PileSettingsWindow2.SectorStep;//"Шаг группировки свай в КУСТ (мм):"
+        public double SectorStepPile => PileSettingsWindow2.SectorStepPile;//"Шаг округления рядов свай (мм):"
+        public static double SectorStepZ => PileSettingsWindow2.SectorStepZ;
+        public static int PredelGroup => PileSettingsWindow2.PredelGroup;
+        public static bool UstanNumPile => PileSettingsWindow2.UstanNumPile;
+        public static bool BoolNumPileIandex => PileSettingsWindow2.BoolNumPileIandex;
+        public bool UstanUGO => SettingsWindow.UstanUGO;
+        public bool GroupPiles => SettingsWindow.GroupPiles;
+        public bool SetNumComment => SettingsWindow.SetNumComment;
 
-        public void CorrectData()
+        public static string SortCode => PileSettingsWindow2.SortCode;
+        public string SortCodeUGO => PileSettingsWindow2.SortCodeUGO;
+
+
+        public bool AdjustPilePositions => SettingsWindow.AdjustPilePositions; //"Корректировать положения свай от соседей 3*d:"
+        public bool AdjustPositionsRound => SettingsWindow.AdjustPositionsRound; //"Корректировать положения свай кратно шагу округл координат:"
+        public double MinDistanceBetweenPiles => PileSettingsWindow2.MinDistanceBetweenPiles;
+        public static double CoordinateRoundingStep => PileSettingsWindow2.CoordinateRoundingStep;
+        public bool RecreateAllPiles => SettingsWindow.RecreateAllPiles;
+        public bool RotorPiles => SettingsWindow.RotorPiles;
+        public bool ReloadUGO => SettingsWindow.ReloadUGO;
+        public int MarkStart => SettingsWindow.MarkStart;
+        public string MarkPrefix => SettingsWindow.MarkPrefix;
+        public string MarkPostfix => SettingsWindow.MarkPostfix;
+
+        public bool ContinueExecution { get; set; }
+        private void ReadData()
         {
-            _ugoTypeCache = null;
-           
-            if (sectorStepPile < 1)
+            // 3. Получаем новые настройки из окна
+
+            //настраиваем список сортировки
+            sortCodeEnums.Clear();
+            foreach (char codeChar in SortCode)
             {
-                sectorStepPile = 10;
+                switch (codeChar)
+                {
+                    case '0':
+                        sortCodeEnums.Add(SortCodeEnum.SortUGO);
+                        break;
+                    case '1':
+                        sortCodeEnums.Add(SortCodeEnum.SortNumComment);
+                        break;
+                    case '2':
+                        sortCodeEnums.Add(SortCodeEnum.SortADSKGroup);
+                        break;
+                    case '3':
+                        sortCodeEnums.Add(SortCodeEnum.SortCountPiles);
+                        break;
+                    case '4':
+                        sortCodeEnums.Add(SortCodeEnum.SortTypePile);
+                        break;
+                    case '5':
+                        sortCodeEnums.Add(SortCodeEnum.SortYthenX);
+                        break;
+                    case '6':
+                        sortCodeEnums.Add(SortCodeEnum.SortXthenY);
+                        break;
+                    case '7':
+                        sortCodeEnums.Add(SortCodeEnum.SortUpToDown);
+                        break;
+                    case '8':
+                        sortCodeEnums.Add(SortCodeEnum.SortOnCenterCust);
+                        break;
+                    case '9':
+                        sortCodeEnums.Add(SortCodeEnum.SortZ);
+                        break;
+
+                }
             }
-            if (sectorStep < 1)
-            {
-                sectorStep = 10;
-            }
-            if (sectorStepZ < 1)
-            {
-                sectorStepZ = 50;
-            }
-            if (predelGroup < 0)
-            {
-                predelGroup = 1;
-            }
+
+
         }
+        //public void CorrectData()
+        //{
+        //    _ugoTypeCache = null;
+           
+        //    if (SectorStepPile < 1)
+        //    {
+        //        SectorStepPile = 10;
+        //    }
+        //    if (SectorStep < 1)
+        //    {
+        //        SectorStep = 10;
+        //    }
+        //    if (SectorStepZ < 1)
+        //    {
+        //        SectorStepZ = 50;
+        //    }
+        //    if (predelGroup < 0)
+        //    {
+        //        predelGroup = 1;
+        //    }
+        //}
        
 
 

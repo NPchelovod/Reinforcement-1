@@ -14,8 +14,7 @@ namespace Reinforcement
     {
         List<PileDataGroup> pileDataGroup = new List<PileDataGroup>();
 
-        public string markPrefix = "";
-        public string markPostfix = "";
+       
 
         public Result CalculateMarks()
         {
@@ -30,7 +29,7 @@ namespace Reinforcement
                 //группировка
                 foreach (var pg in pileDataGroup)
                 {
-                    pg.CutPileOnGroop(NumPiles.sectorStep);
+                    pg.CutPileOnGroop(SectorStep);
                     
                 }
             }
@@ -72,7 +71,7 @@ namespace Reinforcement
             }
 
 
-            int mark = markStart-1;
+            int mark = MarkStart-1;
             List< PileData> allPiles = GetPileData(listCD);
 
             foreach (var pile in allPiles)
@@ -81,7 +80,7 @@ namespace Reinforcement
                 {
                     mark++;
 
-                    pile.MarkNewString = markPrefix + mark + markPostfix;
+                    pile.MarkNewString = MarkPrefix + mark + MarkPostfix;
                     pile.MarkNew = mark;
                     
                 }

@@ -51,8 +51,8 @@ namespace Reinforcement
             return Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public static double SectorStep = NumPiles.coordinateRoundingStep>0? NumPiles.coordinateRoundingStep : 150;//
-        public static double SectorStepZ => NumPiles.sectorStepZ;
+        public static double SectorStep = NumPiles.CoordinateRoundingStep;//
+        public static double SectorStepZ => NumPiles.SectorStepZ;
 
         public int Xs => (int) (Math.Round(X / SectorStep)* SectorStep); // сектор для кратных координат свай для сортировки, чтобы 899 и 900 были одним числом
         public int Ys => (int) (Math.Round(Y / SectorStep) * SectorStep);
@@ -375,7 +375,7 @@ namespace Reinforcement
 
 
             double distGroup = distance;
-            int maxGroup = NumPiles.predelGroup;
+            int maxGroup = NumPiles.PredelGroup;
             if (maxGroup <= 1) { return; }
 
             var points = NestedCoordData.ToList();

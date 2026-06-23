@@ -2,14 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Настройки нумерации и корректировки свай"
-        Width="650" Height="1200" MinWidth="600" MinHeight="700" MaxHeight="1200"
+        Width="650" Height="1100" MinWidth="600" MinHeight="700" MaxHeight="1300"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
         SizeToContent="Manual">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Padding="0">
         <StackPanel Margin="20,10,20,20">
             <!-- Заголовок -->
-            <TextBlock Text="Параметры группировки и корректировки свай"
+            <TextBlock Text="Параметры группировки и корректировки свай и не только"
                        FontSize="18" FontWeight="Bold"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,20" TextWrapping="Wrap"/>
@@ -52,10 +52,23 @@
                        Margin="0,5,0,12" Foreground="DarkBlue"/>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Корректировать положения свай:" Width="320"
+                <TextBlock Text="Корректировать положения свай от соседей 3*d (не раб):" Width="320"
                            VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
                 <CheckBox x:Name="adjustPositionsCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
                           ToolTip="Автоматически корректировать положения свай при пересечениях"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Корректировать положения свай кратно шагу округл координат:" Width="320"
+               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="adjustPositionsRoundCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+              ToolTip="Автоматически корректировать положения свай при пересечениях"/>
+            </StackPanel>
+            
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="- также корректировать координату Z:" Width="320"
+   VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="adjustPositionsRoundZCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
+  ToolTip="Автоматически корректировать положения свай при пересечениях"/>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -66,7 +79,7 @@
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Поворот свай в 0:" Width="320"
+                <TextBlock Text="Поворот свай в 0 (для УГО - доворот до мин угла):" Width="320"
                            VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
                 <CheckBox x:Name="rotatePilesCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
                           ToolTip="Повернуть неправильно повернутые сваи"/>
@@ -77,7 +90,7 @@
            
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Минимальная дистанция между сваями (мм):" Width="240"
+                <TextBlock Text="Минимальная дистанция между сваями (3*d)(мм):" Width="240"
                            VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
                 <TextBox x:Name="minDistanceTextBox" Width="120" Margin="5,0,0,0"
                          ToolTip="Минимальное расстояние между центрами свай. При меньшем расстоянии будет выполнена корректировка"/>

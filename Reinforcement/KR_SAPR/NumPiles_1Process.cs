@@ -34,7 +34,7 @@ namespace Reinforcement
        
         private void sosedPiles()
         {
-            double sosedDistance = Math.Max(minDistanceBetweenPiles+1, sectorStep+1);
+            double sosedDistance = Math.Max(MinDistanceBetweenPiles+1, SectorStep+1);
             
             var Piles = AllPiles.ToList();
 
@@ -66,8 +66,15 @@ namespace Reinforcement
             //если надо повернуть сваи
             if (RotorPiles)
             {
-                result = NumPilesRotate.RotatePiles(doc, Seacher);
+                result = NumPilesRotateAndMove.RotatePiles(doc, Seacher);
             }
+
+            if(AdjustPositionsRound && CoordinateRoundingStep>0)
+            {
+                result = NumPilesRotateAndMove.CorrectCoordPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
+            }
+
+
             //чтение всех свай
             ReadPiles();
 
@@ -78,26 +85,26 @@ namespace Reinforcement
             }
 
             // Корректируем координаты свай если нужно
-            if (adjustPilePositions && minDistanceBetweenPiles > 0)
+            if (AdjustPilePositions && MinDistanceBetweenPiles > 0)
             {
                 // Получаем настройки из окна
-                bool applyRounding = coordinateRoundingStep > 0;
+                bool applyRounding = CoordinateRoundingStep > 0;
                 //заново перечитываем
                 ReadPiles();
             }
 
-            if (recreateAllPiles)
+            if (RecreateAllPiles)
             {
                 //"Пересоздание свай";
                 RecreatePiles.RecreatePile(doc, AllPiles);
             }
 
-            if (ustanNumPile)
+            if (UstanNumPile)
             {
                 //устанавливаем марку
                 result= CalculateMarks();
             }
-            if(ustanUGO)
+            if(UstanUGO)
             {
                 //устанавливаем угошку
                 UstanUGOProcess();

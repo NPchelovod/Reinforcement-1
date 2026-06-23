@@ -17,7 +17,11 @@ namespace Reinforcement
     public partial class NumPiles
     {
 
-        public double minDistPiles => minDistanceBetweenPiles - 2;
+        public double minDistPiles => MinDistanceBetweenPiles - 2;
+        bool existNewMark ;
+        bool existPastMark ;
+        bool existNewUGO ;
+        bool existPastUGO ;
         public void SeachErrors()
         {
             var Piles = AllPiles.OrderBy(x=>x.MarkNew).ThenBy(x=>x.MarkPast).ToList();
@@ -28,13 +32,14 @@ namespace Reinforcement
             var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //ошибки в сваях дистанция соседней
 
+            
+
+             existNewMark = UstanNumPile && Piles.Any(x => x.MarkNew > 0);
+            existPastMark = Piles.Any(x => x.MarkPast > 0);
+             existNewUGO = Piles.Any(x => x.UGONewNum > 0) ;
+             existPastUGO = Piles.Any(x => !string.IsNullOrEmpty(x.UGOPast));
             //запись данных какие сваи какие
             errors.AddRange(SeachNumAndTypePiles());
-
-            bool existNewMark = Piles.Any(x => x.MarkNew > 0);
-            bool existPastMark = Piles.Any(x => x.MarkPast > 0);
-            bool existNewUGO = Piles.Any(x => x.UGONewNum > 0) ;
-            bool existPastUGO = Piles.Any(x => !string.IsNullOrEmpty(x.UGOPast));
             for (int i = 0; i < Piles.Count; i++)
             {
                 var Pile1 = Piles[i];
@@ -52,7 +57,7 @@ namespace Reinforcement
                 }
             }
             //дублирование или пропуск номера нумерации
-            if (ustanNumPile && existNewMark)
+            if ( existNewMark)
             {
                 Piles = AllPiles.OrderBy(x => x.MarkNew).ToList();
                 for (int i = 0; i < Piles.Count-1; i++)
@@ -141,19 +146,19 @@ namespace Reinforcement
                 string zerrors = "";// ошибки в Z координатах
                 
                 //поиск промежуточной сваи
-                var piles = ustanNumPile? g.ToList().OrderBy(x=>x.MarkNew).ToList() : g.ToList().OrderBy(x=>x.MarkPast).ToList();
+                var piles = UstanNumPile? g.ToList().OrderBy(x=>x.MarkNew).ToList() : g.ToList().OrderBy(x=>x.MarkPast).ToList();
                 var pileLast = piles[0];
                
                 foreach(var pile in piles)
                 {
                     if(pile== pileLast) { continue; }
-                    if(ustanNumPile && pile.MarkNew!= pileLast.MarkNew+1)
+                    if(existNewMark && pile.MarkNew!= pileLast.MarkNew+1)
                     {
                         promegPiles = $"Разрыв нумерации {pileLast.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkNew} с ID:{pile.IdValue}";
                         groupInfo +=", срывы "+ pile.MarkNew +"ID_"+ pile.IdValue + ", ";
                         break;
                     }
-                    else if(pile.MarkPast != pileLast.MarkPast + 1)
+                    else if(existPastMark &&pile.MarkPast != pileLast.MarkPast + 1)
                     {
                         promegPiles = $"Разрыв нумерации {pileLast.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkPast} с ID:{pile.IdValue}";
                         groupInfo += ", срывы " + pile.MarkPast+", ";
@@ -196,6 +201,12 @@ namespace Reinforcement
         {
             var errors = new List<string>(); // Список для хранения сообщений об ошибках
             //сначала находим достоверные горизонтали 
+
+            var errorsDist3dUp = new List<string>();// например сваи не 900 мм а 910 друг от друга и на одной оси
+            double errorUp = 49;// до 49 мм
+            double distanceMin = MinDistanceBetweenPiles + 1;
+            double distanceMax = MinDistanceBetweenPiles + errorUp;
+
             //и достоверные вертикали
             HashSet<int> XAxes = new HashSet<int>();
             HashSet<int> YAxes = new HashSet<int>();
@@ -205,21 +216,47 @@ namespace Reinforcement
             double errorOtSosed = 250;//до этого отклонения от сосендних вертикал и горизонтальных соседей - мы считаем за ошибку иначе наверно это так надо
             foreach (var pile in AllPiles)
             {
+                bool existX = false;
+                bool existY = false;
+                double distanceAver = 0;
+                PileData pileDataSosed=null;
                 foreach (var sosed in pile.SosedPileData)
                 {
+                    bool pair=false;
                     if(Math.Abs(sosed.X-pile.X)< errorSize)
                     {
                         XEquel.Add(sosed);
                         XEquel.Add(pile);
                         XAxes.Add((int)Math.Round((sosed.X + pile.X) / 2));
+                        existX = true;
+                        pair = true;
                     }
                     else if(Math.Abs(sosed.Y-pile.Y)< errorSize)
                     {
                         YEquel.Add(sosed);
                         YEquel.Add(pile);
                         YAxes.Add((int)Math.Round((sosed.Y + pile.Y) / 2));
+                        existY = true;
+                        pair = true;
                     }
+                    if(pair)
+                    {
+                        //пара пробуем дистанцию
+                        double d = pile.Dist(sosed);
+                        if(d> distanceMin&&d< distanceMax)
+                        {
+                            distanceAver = d;
+                            pileDataSosed = sosed;
+                        }
+                    }
+
+                    if(existY && existX) { break; }
                 }
+                if(distanceAver>0)
+                {
+                    errorsDist3dUp.Add($"Подозрительная дистанция {(int) distanceAver} между соосными сваями Num/Past {pile.MarkNew}/{pile.MarkPast}, {pileDataSosed.MarkNew}/{pileDataSosed.MarkPast}, Id{pile.IdValue}:{pileDataSosed.IdValue}");
+                }
+                
             }
             //нашли все соседи 
             foreach (var pile in AllPiles)
@@ -242,6 +279,7 @@ namespace Reinforcement
                         if(errorOtSosed> Math.Abs(x.X - pile.X))
                         {
                             readErrorX=true;
+                            break;
                         }
                     }
                     
@@ -255,6 +293,7 @@ namespace Reinforcement
                         if (errorOtSosed > Math.Abs(y.Y - pile.Y))
                         {
                             readErrorY = true;
+                            break;
                         }
                     }
                 }
@@ -267,6 +306,7 @@ namespace Reinforcement
 
 
             }
+            errors.AddRange(errorsDist3dUp);
             return errors;
         }
     }

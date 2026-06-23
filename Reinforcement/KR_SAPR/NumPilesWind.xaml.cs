@@ -7,35 +7,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Reinforcement
 {
     public partial class PileSettingsWindow2 : Window
     {
         // Свойства (без изменений)
-        public double SectorStep { get; set; }
-        public double SectorStepPile { get; set; }
-        public double SectorStepZ { get; set; }
-        public int PredelGroup { get; set; }
-        public bool UstanNumPile { get; set; }
-        public bool BoolNumPileIandex { get; set; } = true;
+        public static double SectorStep { get; set; } = 1051;//"Шаг группировки свай в КУСТ (мм):"
+        public static double SectorStepPile { get; set; } = 510;//"Шаг округления рядов свай (мм):"
+        public static double SectorStepZ { get; set; } = 10;
+        public static int PredelGroup { get; set; } = 150;
+        public static bool UstanNumPile { get; set; } = true;
+        public static bool BoolNumPileIandex { get; set; } = true;
         public bool UstanUGO { get; set; }
         public bool GroupPiles { get; set; } = true;
         public bool SetNumComment { get; set; }
-        public bool DoNotChangeUGOIfExists { get; set; }
-        public string SortCode { get; set; }
-        public string SortCodeUGO { get; set; }
-        public int FoundPilesCount { get; set; }
-        public bool ContinueExecution { get; set; }
-        public bool AdjustPilePositions { get; set; }
-        public double MinDistanceBetweenPiles { get; set; }
-        public double CoordinateRoundingStep { get; set; }
+        
+        public static string SortCode { get; set; } ="1403859";
+        public static string SortCodeUGO { get; set; } = "123";
+        
+        
+        public bool AdjustPilePositions { get; set; }//"Корректировать положения свай от соседей 3*d:"
+        public bool AdjustPositionsRound { get; set; }//"Корректировать положения свай кратно шагу округл координат:"
+        public bool AdjustPositionsRoundZ { get; set; }
+        public static double MinDistanceBetweenPiles { get; set; } = 900;
+        public static double CoordinateRoundingStep { get; set; } = 25;
         public bool RecreateAllPiles { get; set; }
         public bool RotorPiles { get; set; } = false;
         public bool ReloadUGO { get; set; }
         public int MarkStart { get; set; } = 1;
         public string MarkPrefix = "";
         public string MarkPostfix = "";
+
+        public bool ContinueExecution { get; set; }
         public ExternalCommandData CommandData { get; set; }
         public PileSettingsWindow2(ExternalCommandData commandData)
         {
@@ -44,10 +49,18 @@ namespace Reinforcement
             CommandData = commandData;
             SeachPiles();
 
-            nameFamilies.Text = String.Join( ",", FamilyPiles);
+            WriterData();
+
+
+        }
+        private void WriterData()
+        {
+            nameFamilies.Text = String.Join(",", FamilyPiles);
 
             // Заполняем поля текущими значениями
             adjustPositionsCheckBox.IsChecked = AdjustPilePositions;
+            adjustPositionsRoundCheckBox.IsChecked = AdjustPositionsRound;
+
             recreateAllPilesCheckBox.IsChecked = RecreateAllPiles;
             rotatePilesCheckBox.IsChecked = RotorPiles;
             minDistanceTextBox.Text = MinDistanceBetweenPiles.ToString();
@@ -59,35 +72,25 @@ namespace Reinforcement
             markPostfixTextBox.Text = MarkPostfix;
 
             boolNumPileIandex.IsChecked = BoolNumPileIandex;
-
-
-            sectorStepTextBox.Text = currentSectorStep.ToString();
-            sectorStepPileTextBox.Text = currentSectorStepPile.ToString();
-            sectorStepZTextBox.Text = currentSectorStepZ.ToString();
-            predelGroupTextBox.Text = currentPredelGroup.ToString();
-            sortCodeTextBox.Text = currentSortCode;
-            sortCodeUGOTextBox.Text = currentSortCodeUGO;
-
-            adjustPositionsCheckBox.IsChecked = currentAdjustPilePositions;
-            minDistanceTextBox.Text = currentMinDistanceBetweenPiles.ToString();
-            coordinateRoundingTextBox.Text = currentCoordinateRoundingStep.ToString();
-            recreateAllPilesCheckBox.IsChecked = currentRecreateAllPiles;
-
-            ustanNumPileCheckBox.IsChecked = currentUstanNumPile;
-            ustanUGOCheckBox.IsChecked = currentUstanUGO;
             GroupPilesCheckBox.IsChecked = GroupPiles;
-            setNumCommentCheckBox.IsChecked = currentCommentCheckBox;
-           
-            markStartTextBox.Text = markStart.ToString();
-            
-            reloadUGOCheckBox.IsChecked = ReloadUGO;
-            boolNumPileIandex.IsChecked = BoolNumPileIandex;
+            setNumCommentCheckBox.IsChecked = SetNumComment;
 
-            sectorStepTextBox.Focus();
-            sectorStepTextBox.SelectAll();
+
+            sectorStepTextBox.Text = SectorStep.ToString();
+            sectorStepPileTextBox.Text = SectorStepPile.ToString();
+            sectorStepZTextBox.Text = SectorStepZ.ToString();
+            predelGroupTextBox.Text = PredelGroup.ToString();
+
+
+            ustanUGOCheckBox.IsChecked = UstanUGO;
+            sortCodeTextBox.Text = SortCode.ToString();
+            
+            sortCodeUGOTextBox.Text = SortCodeUGO.ToString();
+            reloadUGOCheckBox.IsChecked = ReloadUGO;
         }
 
         public static HashSet<Element> Seacher = new HashSet<Element>();
+        public int FoundPilesCount => Seacher.Count;
         private void SeachPiles()
         {
             UIDocument uidoc = RevitAPI.UiDocument;
@@ -95,11 +98,11 @@ namespace Reinforcement
             
             // 1. Находим сваи
             Seacher = HelperSeachAllElements.SeachSelectElements(CommandData);
-            if (Seacher.Count < 3)//значит мы специально не выделяли
+            if (FoundPilesCount < 3)//значит мы специально не выделяли
             {
                 Seacher = HelperSeachAllElements.SeachAllElements(FamilyPiles , CommandData, true);
             }
-            pilesCountText.Text = $"Найдено свай/объектов (на виде или были выделены более 3 шт): {Seacher.Count} шт.";
+            pilesCountText.Text = $"Найдено свай/объектов (на виде или были выделены более 3 шт): {FoundPilesCount} шт.";
         }
         private  HashSet<string> FamilyPiles = new HashSet<string>()
         {
@@ -108,51 +111,78 @@ namespace Reinforcement
         };
         private void SeachButton_Click(object sender, RoutedEventArgs e)
         {
-            FamilyPiles = new HashSet<string>(pilesCountText.Text.Split(','));
+            FamilyPiles = new HashSet<string>(nameFamilies.Text.Split(','));
+            SeachPiles();
+            ReadData();
         }
+        private void f_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+        private void ReadData()
+        {
+            AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
+            AdjustPositionsRound = adjustPositionsRoundCheckBox.IsChecked ?? false;
+            AdjustPositionsRoundZ = adjustPositionsRoundZCheckBox.IsChecked ?? false;
+            RecreateAllPiles = recreateAllPilesCheckBox.IsChecked ?? false;
+
+            RotorPiles = rotatePilesCheckBox.IsChecked ?? false;
+            if(!ValidateNumber(minDistanceTextBox.Text, out double value, 0))
+            {
+                MinDistanceBetweenPiles = value;
+            }
+            if (!ValidateNumber(coordinateRoundingTextBox.Text, out value, 0))
+            {
+                CoordinateRoundingStep = value;
+            }
+
+            UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
+
+            if (!ValidateNumber(markStartTextBox.Text, out value, 0))
+            {
+                MarkStart = (int) value;
+            }
+
+            MarkPrefix = markPrefixTextBox.Text;
+            MarkPostfix = markPostfixTextBox.Text;
+
+            BoolNumPileIandex = boolNumPileIandex.IsChecked ?? false;
+            GroupPiles = GroupPilesCheckBox.IsChecked ?? false;
+            SetNumComment = setNumCommentCheckBox.IsChecked ?? false;
+
+
+
+            if (!ValidateNumber(sectorStepTextBox.Text, out value, 0))
+            {
+                SectorStep = value;
+            }
+            if (!ValidateNumber(sectorStepPileTextBox.Text, out value, 0))
+            {
+                SectorStepPile = value;
+            }
+            if (!ValidateNumber(sectorStepZTextBox.Text, out value, 0))
+            {
+                SectorStepZ = value;
+            }
+            if (!ValidateNumber(predelGroupTextBox.Text, out value, 0))
+            {
+                PredelGroup = (int)value;
+            }
+            SortCode = sortCodeTextBox.Text;    
+            UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
+            SortCodeUGO = sortCodeUGOTextBox.Text;
+            ReloadUGO = reloadUGOCheckBox.IsChecked ?? false;
+            CorrectData();
+            WriterData();
+        }
+
+
+
+
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!ValidateNumber(sectorStepTextBox.Text, "Шаг группировки", out double sectorStep, 0))
-                return;
-            if (!ValidateNumber(sectorStepPileTextBox.Text, "Шаг округления сваи", out double sectorStepPile, 1))
-                return;
-            if (!ValidateNumber(sectorStepZTextBox.Text, "Шаг по высоте", out double sectorStepZ, 0))
-                return;
-            if (!ValidateInteger(predelGroupTextBox.Text, "Лимит группы", out int predelGroup, 0))
-                return;
-            if (!ValidateNumber(markStartTextBox.Text, "Старт марки", out double markStart, 0))
-                return;
-            if (!ValidateNumber(minDistanceTextBox.Text, "Минимальная дистанция", out double minDistance, 0))
-                return;
-            if (!ValidateNumber(coordinateRoundingTextBox.Text, "Шаг округления координат", out double roundingStep, 0))
-                return;
-            if (!IsValidSortCode(sortCodeTextBox.Text, "свай", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
-                return;
-            if (!IsValidSortCode(sortCodeUGOTextBox.Text, "УГО", new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }))
-                return;
-
-            GroupPiles = GroupPilesCheckBox.IsChecked ?? false;
-            SectorStep = sectorStep;
-            SectorStepPile = sectorStepPile;
-            SectorStepZ = sectorStepZ;
-            PredelGroup = predelGroup;
-            SortCode = sortCodeTextBox.Text;
-            SortCodeUGO = sortCodeUGOTextBox.Text;
-
-            AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
-            RecreateAllPiles = recreateAllPilesCheckBox.IsChecked ?? false;
-            RotorPiles = rotatePilesCheckBox.IsChecked ?? false;
-            ReloadUGO = reloadUGOCheckBox.IsChecked ?? false;
-            MinDistanceBetweenPiles = minDistance;
-            MarkStart = (int)markStart;
-            CoordinateRoundingStep = roundingStep;
-
-            UstanNumPile = ustanNumPileCheckBox.IsChecked ?? false;
-            BoolNumPileIandex = boolNumPileIandex.IsChecked ?? false;
-            UstanUGO = ustanUGOCheckBox.IsChecked ?? false;
-            SetNumComment = setNumCommentCheckBox.IsChecked ?? false;
-           
+            ReadData();
 
             ContinueExecution = true;
             DialogResult = true;
@@ -165,17 +195,40 @@ namespace Reinforcement
             DialogResult = false;
             Close();
         }
-
+        public void CorrectData()
+        {
+     
+            if (SectorStepPile < 1)
+            {
+                SectorStepPile = 1;
+            }
+            if (SectorStep < 1)
+            {
+                SectorStep = 1;
+            }
+            if (SectorStepZ < 1)
+            {
+                SectorStepZ = 1;
+            }
+            if (PredelGroup < 1)
+            {
+                PredelGroup = 1;
+            }
+            if(CoordinateRoundingStep<1)
+            {
+                CoordinateRoundingStep = 1;
+            }
+        }
         // Вспомогательные методы валидации – идентичны исходным
-        private bool ValidateNumber(string text, string fieldName, out double value, double minValue = 0)
+        private bool ValidateNumber(string text, out double value, double minValue = 0)
         {
             if (!double.TryParse(text, out value) || value <= minValue)
             {
-                MessageBox.Show(
-                    minValue == 0
-                        ? $"{fieldName} должен быть положительным числом!"
-                        : $"{fieldName} должен быть числом больше {minValue}!",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show(
+                //    minValue == 0
+                //        ? $"{fieldName} должен быть положительным числом!"
+                //        : $"{fieldName} должен быть числом больше {minValue}!",
+                //    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             return true;
