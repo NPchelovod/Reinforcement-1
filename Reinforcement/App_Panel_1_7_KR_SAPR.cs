@@ -49,12 +49,12 @@ namespace Reinforcement
             var item = ribbonPanel.AddItem(data) as PulldownButton;
             Image OV1 = Properties.Resources.ES_PilesFromDwg;
             Image OV2 = Properties.Resources.ES_PilesFromDwg;
-            
-
-            App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG подложки \n\n на виде должны быть расчетная подложка DWG свай в виде точек", OV1);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Свай номера", assemblyPath, "Reinforcement.NumPiles", "На виде должны быть сваи,\n\n позволяет нумеромать сваи и выставлять УГО", OV2);
 
+            App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG подложки \n\n на виде должны быть расчетная подложка DWG свай в виде точек", OV1);
+
+            
 
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);

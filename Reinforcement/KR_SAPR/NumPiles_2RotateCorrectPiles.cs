@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-using static UIFramework.Widget.CustomControls.NativeMethods;
+using System.Windows.Documents;
+//using static UIFramework.Widget.CustomControls.NativeMethods;
 
 namespace Reinforcement
 {
@@ -83,89 +84,49 @@ namespace Reinforcement
         }
         public static ForgeTypeId units => NumPiles.units;
         public static double e = 0.00001;
-        public static int CorrectCoordPiles(Document doc, HashSet<Element> Seacher, double round, bool zCorrect=false)
+        public static int RoundCoordsPiles(Document doc, HashSet<Element> Seacher, double round,double dist3D=900, bool zCorrect=false)
         {
             if (doc == null || Seacher == null || Seacher.Count == 0)
-                return 0;
+            { return 0; }
 
-            HashSet<int> XCoords = new HashSet<int>();
-            HashSet<int>YCoords = new HashSet<int>();
-            HashSet<int> ZCoords = new HashSet<int>();
+            List<CoordCorrectData> coordsElements = GetCoordElements(Seacher);
+
+            //соседей наёдем
+            double sosedDistance = dist3D * 2;
+            GetSosedCoordElement(coordsElements, sosedDistance);
+
+            HashSet<CoordCorrectData> answerElement = RoundCoords(coordsElements, round,zCorrect);
+            if(answerElement.Count == 0) {return 0;}
+
             int numCorrect = 0;
             using (Transaction trans = new Transaction(doc, "Позиции свай коррект"))
             {
                 trans.Start();
 
                 
-                foreach (Element element in Seacher)
+                foreach (var element in answerElement)
                 {
                     if (element == null) continue;
+                    double dxi = element.X-element.pX;
+                    double dyi = element.Y - element.pY;
+                    double dzi = element.Z - element.pZ;
 
-                    // Проверяем, что элемент имеет точечное расположение (свая обычно FamilyInstance)
-                    Location loc = element.Location;
-                    if (!(loc is LocationPoint locationPoint))
-                    { continue; }
-                    XYZ tek_locate_point = locationPoint.Point;
-                    double X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
-                    double Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
-                    double Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
 
-                    double newX = Math.Round(X / round) * round;
-                    double newY = Math.Round(Y / round) * round;
-                    double newZ = Math.Round(Z / round) * round; // Добавляем обработку Z
-                                                                 // Вычисляем сдвиг в единицах Revit (внутренних)
-
-                    if(!XCoords.Contains((int)newX))
-                    {
-                        double newX1 = Math.Floor(X / round) * round;
-                        double newX2 = Math.Ceiling(X / round) * round;
-                        if(XCoords.Contains((int)newX1))
-                        {
-                            newX= newX1;
-                        }
-                        else if(XCoords.Contains((int) newX2))
-                        {
-                            newX = newX2;
-                        }
-                    }
-                    if (!YCoords.Contains((int)newY))
-                    {
-                        double newY1 = Math.Floor(Y / round) * round;
-                        double newY2 = Math.Ceiling(Y / round) * round;
-                        if (YCoords.Contains((int)newY1))
-                        {
-                            newY = newY1;
-                        }
-                        else if (YCoords.Contains((int)newY2))
-                        {
-                            newY = newY2;
-                        }
-                    }
-                    if (!ZCoords.Contains((int)newZ))
-                    {
-                        double newZ1 = Math.Floor(Z / round) * round;
-                        double newZ2 = Math.Ceiling(Z / round) * round;
-                        if (XCoords.Contains((int)newZ1))
-                        {
-                            newZ = newZ1;
-                        }
-                        else if (XCoords.Contains((int)newZ2))
-                        {
-                            newZ = newZ2;
-                        }
-                    }
-
-                    double dx = UnitUtils.ConvertToInternalUnits(newX - X, units);
-                    double dy = UnitUtils.ConvertToInternalUnits(newY - Y, units);
-                    double dz = UnitUtils.ConvertToInternalUnits(newZ - Z, units);
+                    double dx = UnitUtils.ConvertToInternalUnits(dxi, units);
+                    double dy = UnitUtils.ConvertToInternalUnits(dyi, units);
+                    double dz = zCorrect? UnitUtils.ConvertToInternalUnits(dzi, units):0;
                     if (Math.Abs(dx) > e || Math.Abs(dy) > e || zCorrect&& Math.Abs(dz) > e)
                     {
                         // Создаём вектор сдвига
-                        XYZ moveVector = new XYZ(dx, dy, zCorrect? dz:0);
+                        XYZ moveVector = new XYZ(dx, dy, dz);
 
                         // Перемещаем элемент
                         try
                         {
+                            Location loc = element.Element.Location;
+                            if (!(loc is LocationPoint locationPoint))
+                            { continue; }
+
                             locationPoint.Move(moveVector);
                             numCorrect++;
                         }
@@ -176,14 +137,100 @@ namespace Reinforcement
                         }
                        
                     }
-                    XCoords.Add((int)newX);
-                    YCoords.Add((int)newY);
-                    ZCoords.Add((int)newZ);
+                   
                 }
                 trans.Commit();
             }
             return numCorrect;
         }
+
+        public static HashSet<CoordCorrectData> RoundCoords(List<CoordCorrectData> coordCorrectDatas, double round, bool zCorrect = false)
+        {
+            HashSet<int> XCoords = new HashSet<int>();
+            HashSet<int> YCoords = new HashSet<int>();
+            HashSet<int> ZCoords = new HashSet<int>();
+            int numCorrect = 0;
+            var listCorrectPiles = new HashSet<CoordCorrectData>();
+
+            //округление координат до целого однопроходный алгоритм, можно сделать с учетом соседей
+
+            foreach (var element in coordCorrectDatas)
+            {
+                
+                double X = element.X; // a ConvertToInternalUnits переводит наоборот из метров в футы
+                double Y = element.Y;
+                double Z = element.Z;
+
+                double newX = Math.Round(X / round) * round;
+                double newY = Math.Round(Y / round) * round;
+                double newZ = Math.Round(Z / round) * round; // Добавляем обработку Z
+                                                                // Вычисляем сдвиг в единицах Revit (внутренних)
+
+                if (!XCoords.Contains((int)newX))
+                {
+                    double newX1 = Math.Floor(X / round) * round;
+                    double newX2 = Math.Ceiling(X / round) * round;
+                    if (XCoords.Contains((int)newX1))
+                    {
+                        newX = newX1;
+                    }
+                    else if (XCoords.Contains((int)newX2))
+                    {
+                        newX = newX2;
+                    }
+                }
+                if (!YCoords.Contains((int)newY))
+                {
+                    double newY1 = Math.Floor(Y / round) * round;
+                    double newY2 = Math.Ceiling(Y / round) * round;
+                    if (YCoords.Contains((int)newY1))
+                    {
+                        newY = newY1;
+                    }
+                    else if (YCoords.Contains((int)newY2))
+                    {
+                        newY = newY2;
+                    }
+                }
+                if (!ZCoords.Contains((int)newZ))
+                {
+                    double newZ1 = Math.Floor(Z / round) * round;
+                    double newZ2 = Math.Ceiling(Z / round) * round;
+                    if (XCoords.Contains((int)newZ1))
+                    {
+                        newZ = newZ1;
+                    }
+                    else if (XCoords.Contains((int)newZ2))
+                    {
+                        newZ = newZ2;
+                    }
+                }
+
+                double dx =newX - X;
+                double dy = newY - Y;
+                double dz = newZ - Z;
+                if (Math.Abs(dx) > e || Math.Abs(dy) > e || zCorrect && Math.Abs(dz) > e)
+                {
+                    // Создаём вектор сдвига
+                    element.X = newX;
+                    element.Y = newY;
+                    if (zCorrect)
+                    {
+                        element.Z = newZ;
+                    }
+                    numCorrect++;
+                    listCorrectPiles.Add(element);
+
+                }
+                XCoords.Add((int)newX);
+                YCoords.Add((int)newY);
+                ZCoords.Add((int)newZ);
+            }
+            return listCorrectPiles;
+
+
+        }
+
         public static List<CoordCorrectData> GetCoordElements(HashSet<Element> Seacher)=> Seacher.Select(x=>(CoordCorrectData) new CoordElement(x)).ToList();
 
 
@@ -193,7 +240,7 @@ namespace Reinforcement
 
             var coordElements = GetCoordElements(Seacher);
 
-            int numCorrect = CorrectCoordMinDistPiles( minDist, Seacher, coordElements);
+            int numCorrect = CorrectCoordMinDist( minDist, Seacher, coordElements);
 
             numCorrect = 0;
             //теперь в транзакции заменяем сваи
@@ -232,7 +279,7 @@ namespace Reinforcement
             }
             return numCorrect;
         }
-        public static int CorrectCoordMinDistPiles(double minDist, HashSet<Element> Seacher=null, List<CoordCorrectData> coordElements=null)
+        public static int CorrectCoordMinDist(double minDist, HashSet<Element> Seacher=null, List<CoordCorrectData> coordElements=null)
         {
             //берём все координаты и переводим в интерфейс
 

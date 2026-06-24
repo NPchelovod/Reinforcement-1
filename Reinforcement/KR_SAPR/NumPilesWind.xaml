@@ -52,16 +52,16 @@
                        Margin="0,5,0,12" Foreground="DarkBlue"/>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Корректировать положения свай от соседей 3*d (не раб):" Width="320"
+                <TextBlock Text="Корректировать положения свай от соседей 3*d:" Width="320"
                            VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
                 <CheckBox x:Name="adjustPositionsCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
-                          ToolTip="Автоматически корректировать положения свай при пересечениях"/>
+                          ToolTip="Автоматически корректировать положения свай от соседней сваи"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock Text="Корректировать положения свай кратно шагу округл координат:" Width="320"
                VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
                 <CheckBox x:Name="adjustPositionsRoundCheckBox" VerticalAlignment="Center" Margin="5,0,0,0"
-              ToolTip="Автоматически корректировать положения свай при пересечениях"/>
+              ToolTip="Автоматически корректировать положения свай кратно координатам кратным шагу округления"/>
             </StackPanel>
             
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -231,6 +231,7 @@
                 <TextBlock FontSize="11" FontStyle="Italic" TextWrapping="Wrap"
                            Margin="5" LineHeight="16">
                     <![CDATA[
+• Если выключена галка нумеровать сваи (и другие галки действия: поворот свай и тд) - будет просто диагностика свай   
 • Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены
 • Пересоздать все сваи: удалить все найденные сваи и создать их заново с учетом новых координат и параметров (может ускорить процесс при большом количестве изменений)
 • Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)

@@ -66,7 +66,7 @@ namespace Reinforcement
                 int numCorrect3D = 0;
                 if (AdjustPositionsRound && CoordinateRoundingStep > 0)
                 {
-                    numCorrectKrat = NumPilesRotateAndMove.CorrectCoordPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
+                    numCorrectKrat = NumPilesRotateAndMove.RoundCoordsPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
                     if (!AdjustPilePositions) { break; }
                 }
                 // Корректируем координаты свай 3d если нужно
