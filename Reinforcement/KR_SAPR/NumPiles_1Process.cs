@@ -34,24 +34,11 @@ namespace Reinforcement
        
         private void sosedPiles()
         {
-            double sosedDistance = Math.Max(MinDistanceBetweenPiles+1, SectorStep+1);
+
             
-            var Piles = AllPiles.ToList();
-
-            for (int i = 0; i < Piles.Count; i++)
-            {
-                var pile1 = Piles[i];
-
-                for (int j = i + 1; j < Piles.Count; j++)
-                {
-                    var pile2 = Piles[j];
-                    if(pile1.Dist(pile2)> sosedDistance) { continue; }
-                    {
-                        pile1.SosedPileData.Add(pile2);
-                        pile2.SosedPileData.Add(pile1);
-                    }
-                }
-            }
+            double sosedDistance = Math.Max(MinDistanceBetweenPiles+1, SectorStep+1);
+            NumPilesRotateAndMove.GetSosedCoordElement(AllPiles.Cast<CoordCorrectData>().ToList(), sosedDistance);
+            
         }
 
 
@@ -69,11 +56,31 @@ namespace Reinforcement
                 result = NumPilesRotateAndMove.RotatePiles(doc, Seacher);
             }
 
-            if(AdjustPositionsRound && CoordinateRoundingStep>0)
-            {
-                result = NumPilesRotateAndMove.CorrectCoordPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
-            }
 
+            int atempt = 5;//максимум попыток
+            int a = 0;
+            while (a < atempt)
+            {
+                a++;
+                int numCorrectKrat = 0;
+                int numCorrect3D = 0;
+                if (AdjustPositionsRound && CoordinateRoundingStep > 0)
+                {
+                    numCorrectKrat = NumPilesRotateAndMove.CorrectCoordPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
+                    if (!AdjustPilePositions) { break; }
+                }
+                // Корректируем координаты свай 3d если нужно
+                if (AdjustPilePositions && MinDistanceBetweenPiles > 0)
+                {
+                    numCorrect3D = NumPilesRotateAndMove.CorrectCoord3D(doc, MinDistanceBetweenPiles, Seacher);
+                    if(!AdjustPositionsRound)
+                    {
+                        break;
+                    }
+                }
+                if (numCorrectKrat == 0 && numCorrect3D == 0) { break; }
+
+            }
 
             //чтение всех свай
             ReadPiles();
@@ -84,14 +91,7 @@ namespace Reinforcement
                 SetComment();
             }
 
-            // Корректируем координаты свай если нужно
-            if (AdjustPilePositions && MinDistanceBetweenPiles > 0)
-            {
-                // Получаем настройки из окна
-                bool applyRounding = CoordinateRoundingStep > 0;
-                //заново перечитываем
-                ReadPiles();
-            }
+          
 
             if (RecreateAllPiles)
             {

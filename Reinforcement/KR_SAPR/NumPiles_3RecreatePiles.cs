@@ -27,7 +27,7 @@ namespace Reinforcement
                     recreateTrans.Start();
                     foreach (var pile in PileDatas)
                     {
-                        Element ePile = pile.Pile;
+                        Element ePile = pile.Element;
                         if (ePile == null) { continue; }
                         var locationPoint = ePile.Location as LocationPoint;
                         if (locationPoint == null) continue;
@@ -58,7 +58,7 @@ namespace Reinforcement
                             newPoint, symbol, level,
                             Autodesk.Revit.DB.Structure.StructuralType.Footing);
 
-                        pile.Pile = newPile;
+                        pile.Element = newPile;
                         doc.Delete(ePile.Id);
 
 

@@ -36,6 +36,7 @@ namespace Reinforcement
     {
         double X { get; set; }
         double Y { get; set; }
+        double Z { get; set; }
     }
     public interface CoordSector
     {
@@ -43,7 +44,7 @@ namespace Reinforcement
         int Ys { get; }
         int Zs { get; }
     }
-    public interface CoordData : Coord, CoordSector
+    public interface CoordData : Coord, CoordSector, CoordCorrectData
     {
         int netrogat { get; set; } // для сортировки
         int NumWay { get; set; } // число которое показывает порядок, 1 - первые элементы значит идут до вторых и тд
@@ -51,6 +52,8 @@ namespace Reinforcement
         CoordData Father { get; set; } // отец
         List<CoordData> NestedCoordData { get; set; } // вложенные
         HashSet<CoordData> AllowedPaths { get; set; } //разрешенные пути
+
+        
         double Dist(CoordData b);
 
         //именная сортировка типы свай и тд
@@ -62,11 +65,25 @@ namespace Reinforcement
         void CutPileOnGroop(double distance);
 
     }
+    public interface CoordCorrectData: Coord
+    {
+        //соседи
+        Element Element { get; set; }
+        HashSet<CoordCorrectData> Neighbours { get; set; }
+        //начальные 
+        double pX { get; set; }
+        double pY { get; set; }
+        double pZ { get; set; }
+
+        double Dist(CoordCorrectData b);
+
+    }
+
     //public interface SortData : CoordData  // для сортировки надо
     //{
     //    int netrogat { get; set; }
 
-        
+
 
     //    //List<string> 
     //    //int SortVal(PileEnum pileEnum);//некая сортировочная величина например колличество и тд

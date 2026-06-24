@@ -52,7 +52,7 @@ namespace Reinforcement
                     trans1.Start();
                     foreach(var pile in listPilesChangeUGO)
                     {
-                        bool ustan = SetUGOValue(Document, pile.Pile, 0, pile.UGONew);
+                        bool ustan = SetUGOValue(Document, pile.Element, 0, pile.UGONew);
                     }
 
                     trans1.Commit();

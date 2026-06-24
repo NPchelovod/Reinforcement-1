@@ -42,11 +42,13 @@ namespace Reinforcement
 
         public bool ContinueExecution { get; set; }
         public ExternalCommandData CommandData { get; set; }
-        public PileSettingsWindow2(ExternalCommandData commandData)
+        NumPiles NumPiles;
+        public PileSettingsWindow2(ExternalCommandData commandData, NumPiles numPiles)
         {
             InitializeComponent();
 
             CommandData = commandData;
+            NumPiles = numPiles;
             SeachPiles();
 
             WriterData();

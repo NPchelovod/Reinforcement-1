@@ -95,7 +95,7 @@ namespace Reinforcement
                     trans2.Start();
                     foreach (var pileClass in allPiles)
                     {
-                        Element pile = pileClass.Pile;
+                        Element pile = pileClass.Element;
                         if (pile == null || pileClass.MarkNewString == "") {continue;}
                         
                         if( SetPileMark(pile, pileClass.MarkNewString, nameMarks))

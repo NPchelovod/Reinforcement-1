@@ -5,20 +5,72 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Autodesk.Revit.DB;
+using Newtonsoft.Json.Linq;
 
 namespace Reinforcement
 {
-   
-    
+
+    public class CoordElement : CoordCorrectData
+    {
+        private static ForgeTypeId units = UnitTypeId.Millimeters;
+        public double X { get; set; } = 0;
+        public double Y { get; set; } = 0;
+        public double Z { get; set; } = 0;
+        public double pX { get; set; } = 0;
+        public double pY { get; set; } = 0;
+        public double pZ { get; set; } = 0;
+
+        public Element Element { get; set; }
+        public long IdValue = 0;
+        public HashSet<CoordCorrectData> Neighbours { get; set; } = new HashSet<CoordCorrectData>();
+        public CoordElement(Element element) 
+        {
+            Element = element;
+            ElementId elementId = element.Id;
+            IdValue = elementId.Value;
+
+            LocationPoint tek_locate = element.Location as LocationPoint; // текущая локация вентканала
+            if (tek_locate != null)
+            {
+                XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
+                if (tek_locate_point != null)
+                {
+                    X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
+                    Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
+                    Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
+                    pX = X;
+                    pY = Y; pZ = Z;
+                }
+            }
+        }
+        public string Name = "";// на всякий случай
+        public CoordElement(double x, double y, double z, string name)
+        {
+            X = x; Y = y; Z = z;
+            pX = X;
+            pY = Y; pZ = Z;
+            Name = name;
+        }
+
+        public void SetCoordElement()
+        {
+
+        }
+        public double Dist(CoordCorrectData b)
+        {
+            double dx = X - b.X, dy = Y - b.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+    }
     public class PileData : CoordData
     {
         public int netrogat { get; set; } = 0;
-        public Element Pile { get; set; } = null;
+        public Element Element { get; set; } = null;
 
         // Реализация интерфейса
         //прошлые данные
         public CoordData Father { get; set; } = null;//отец
-        public string TypePile => Pile.Name;
+        public string TypePile => Element.Name;
         public string Commentary = "";
         public int CommentaryNum = -1;
         public string ADSK_Group = "";
@@ -45,12 +97,20 @@ namespace Reinforcement
         public bool BorderWays { get; set; } = false;
         public List<CoordData> NestedCoordData { get; set; } = new List<CoordData>();//вложенные
         public HashSet<CoordData> AllowedPaths { get; set; }
+        public HashSet<CoordCorrectData> Neighbours { get; set; } = new HashSet<CoordCorrectData>();//сосдени
+        public double pX { get; set; }
+        public double pY { get; set; }
+        public double pZ { get; set; }
         public double Dist(CoordData b)
         {
             double dx = X - b.X, dy = Y - b.Y;
             return Math.Sqrt(dx * dx + dy * dy);
         }
-
+        public double Dist(CoordCorrectData b)
+        {
+            double dx = X - b.X, dy = Y - b.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
         public static double SectorStep = NumPiles.CoordinateRoundingStep;//
         public static double SectorStepZ => NumPiles.SectorStepZ;
 
@@ -60,17 +120,23 @@ namespace Reinforcement
         public long IdValue = 0;
         public PileData(Element pile)
         {
-            Pile = pile;
+            Element = pile;
 
-            ElementId elementId = Pile.Id;
+            ElementId elementId = Element.Id;
             IdValue = elementId.Value;
 
             LocationPoint tek_locate = pile.Location as LocationPoint; // текущая локация вентканала
-            XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
-
-            X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
-            Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
-            Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
+            if (tek_locate != null)
+            {
+                XYZ tek_locate_point = tek_locate.Point; // текущая координата расположения
+                if (tek_locate_point != null)
+                {
+                    X = UnitUtils.ConvertFromInternalUnits(tek_locate_point.X, units); // a ConvertToInternalUnits переводит наоборот из метров в футы
+                    Y = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Y, units);
+                    Z = UnitUtils.ConvertFromInternalUnits(tek_locate_point.Z, units);
+                    pX = X;pY= Y;pZ = Z;
+                }
+            }
             bool b = false;
 
             (Commentary, CommentaryNum, b) = GetParameterInt(pile, "Комментарии", 0);
@@ -161,12 +227,13 @@ namespace Reinforcement
         public void CutPileOnGroop(double distance) { }
         //public PileDataGroup PileDataGroop = null;
 
-        public HashSet<PileData> SosedPileData { get; set; } = new HashSet<PileData>();
+        //public HashSet<PileData> SosedPileData { get; set; } = new HashSet<PileData>();
 
     }
 
     public class PileDataGroup: CoordData
     {
+        public Element Element { get; set; } = null;
         public int netrogat { get; set; } = 0;
         public int NumWay { get { return NestedCoordData.Count > 0 ? NestedCoordData.First().NumWay : 0; } set { foreach (var n in NestedCoordData) { n.NumWay = value; } } }
 
@@ -177,7 +244,11 @@ namespace Reinforcement
 
         public List<CoordData> NestedCoordData { get; set; } = new List<CoordData>(); // вложенные
         public HashSet<CoordData> AllowedPaths { get; set; } //разрешенные пути
-
+        public HashSet<CoordCorrectData> Neighbours { get; set; }
+        //начальные 
+        public double pX { get { return X; } set {  } }
+        public  double pY { get { return Y; } set { } }
+        public double pZ { get { return Z; } set { } }
 
         public List<string> SravnList = new List<string>();
 
@@ -280,7 +351,13 @@ namespace Reinforcement
         public int Zs { get { CalcSectorData(); return (int)zsg; } }
         public double X { get { return Xs; } set { xsg = value; calcSectors = false; } }
         public double Y { get { return Ys; } set { ysg = value; calcSectors = false; } }
+        public double Z { get { return Zs; } set { zsg = value; calcSectors = false; } }
         public double Dist(CoordData b)
+        {
+            double dx = X - b.X, dy = Y - b.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+        public double Dist(CoordCorrectData b)
         {
             double dx = X - b.X, dy = Y - b.Y;
             return Math.Sqrt(dx * dx + dy * dy);

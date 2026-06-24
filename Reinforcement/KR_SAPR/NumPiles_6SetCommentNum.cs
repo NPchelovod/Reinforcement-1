@@ -69,7 +69,7 @@ namespace Reinforcement
                     trans2.Start();
                     foreach (var pileClass in AllPiles)
                     {
-                        Element pile = pileClass.Pile;
+                        Element pile = pileClass.Element;
                         if (pile == null) { continue; }
 
                         SetPileMark(pile, pileClass.Commentary, paramCom);

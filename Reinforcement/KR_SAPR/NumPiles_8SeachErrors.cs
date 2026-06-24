@@ -155,13 +155,13 @@ namespace Reinforcement
                     if(existNewMark && pile.MarkNew!= pileLast.MarkNew+1)
                     {
                         promegPiles = $"Разрыв нумерации {pileLast.MarkNew} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkNew} с ID:{pile.IdValue}";
-                        groupInfo +=", срывы "+ pile.MarkNew +"ID_"+ pile.IdValue + ", ";
+                        groupInfo +=", срывы "+ pile.MarkNew + " Id:" + pile.IdValue + ", ";
                         break;
                     }
                     else if(existPastMark &&pile.MarkPast != pileLast.MarkPast + 1)
                     {
                         promegPiles = $"Разрыв нумерации {pileLast.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkPast} с ID:{pile.IdValue}";
-                        groupInfo += ", срывы " + pile.MarkPast+", ";
+                        groupInfo += ", срывы " + pile.MarkPast+" Id:"+pile.IdValue+", ";
                         break;
                     }
                     pileLast = pile;
@@ -210,8 +210,8 @@ namespace Reinforcement
             //и достоверные вертикали
             HashSet<int> XAxes = new HashSet<int>();
             HashSet<int> YAxes = new HashSet<int>();
-            HashSet<PileData> XEquel = new HashSet<PileData>();
-            HashSet<PileData> YEquel = new HashSet<PileData>();
+            HashSet<CoordCorrectData> XEquel = new HashSet<CoordCorrectData>();
+            HashSet<CoordCorrectData> YEquel = new HashSet<CoordCorrectData>();
             double errorSize = 1;//1 мм для горизонтов и вертикала
             double errorOtSosed = 250;//до этого отклонения от сосендних вертикал и горизонтальных соседей - мы считаем за ошибку иначе наверно это так надо
             foreach (var pile in AllPiles)
@@ -219,8 +219,8 @@ namespace Reinforcement
                 bool existX = false;
                 bool existY = false;
                 double distanceAver = 0;
-                PileData pileDataSosed=null;
-                foreach (var sosed in pile.SosedPileData)
+                CoordCorrectData pileDataSosed =null;
+                foreach (var sosed in pile.Neighbours)
                 {
                     bool pair=false;
                     if(Math.Abs(sosed.X-pile.X)< errorSize)
@@ -252,16 +252,16 @@ namespace Reinforcement
 
                     if(existY && existX) { break; }
                 }
-                if(distanceAver>0)
+                if(distanceAver>0 && pileDataSosed is PileData pileData)
                 {
-                    errorsDist3dUp.Add($"Подозрительная дистанция {(int) distanceAver} между соосными сваями Num/Past {pile.MarkNew}/{pile.MarkPast}, {pileDataSosed.MarkNew}/{pileDataSosed.MarkPast}, Id{pile.IdValue}:{pileDataSosed.IdValue}");
+                    errorsDist3dUp.Add($"Подозрительная дистанция {(int) distanceAver} между соосными сваями Num/Past {pile.MarkNew}/{pile.MarkPast}, {pileData.MarkNew}/{pileData.MarkPast}, Id{pile.IdValue}:{pileData.IdValue}");
                 }
                 
             }
             //нашли все соседи 
             foreach (var pile in AllPiles)
             {
-                if (pile.SosedPileData.Count == 0) { continue; }
+                if (pile.Neighbours.Count == 0) { continue; }
                 //соседи есть, сама не параллельная им по одной из линий
                 bool osX = XEquel.Contains(pile);
                 bool osY = YEquel.Contains(pile);
@@ -272,7 +272,7 @@ namespace Reinforcement
                 bool readErrorY = false;
                 if(!osX && !XAxes.Contains((int)pile.X))
                 {
-                    var sosX = pile.SosedPileData.Where(x => XEquel.Contains(x));
+                    var sosX = pile.Neighbours.Where(x => XEquel.Contains(x));
                     
                     foreach(var x in sosX)
                     {
@@ -287,7 +287,7 @@ namespace Reinforcement
 
                 if (!osY && !YAxes.Contains((int)pile.Y))
                 {
-                    var sosY = pile.SosedPileData.Where(x => YEquel.Contains(x));
+                    var sosY = pile.Neighbours.Where(x => YEquel.Contains(x));
                     foreach (var y in sosY)
                     {
                         if (errorOtSosed > Math.Abs(y.Y - pile.Y))

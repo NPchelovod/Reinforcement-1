@@ -73,7 +73,7 @@ namespace Reinforcement
                 
 
                 // 2. Показываем окно настроек
-                SettingsWindow = new PileSettingsWindow2(commandData );
+                SettingsWindow = new PileSettingsWindow2(commandData, this);
                 bool? resultW = SettingsWindow.ShowDialog();
 
                 if(resultW!=true)

@@ -59,7 +59,7 @@ namespace Reinforcement
                     trans1.Start();
                     foreach (var pile in AllPiles)
                     {
-                        bool ustan = SetUGOValue(Document, pile.Pile, pile.UGONewNum);
+                        bool ustan = SetUGOValue(Document, pile.Element, pile.UGONewNum);
                     }
 
                     trans1.Commit();

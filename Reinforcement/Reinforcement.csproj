@@ -138,7 +138,7 @@
     </Compile>
     <Compile Include="KR_SAPR\NumPilesWPF.cs" />
     <Compile Include="KR_SAPR\NumPiles_1Process.cs" />
-    <Compile Include="KR_SAPR\NumPiles_2RotatePiles.cs" />
+    <Compile Include="KR_SAPR\NumPiles_2RotateCorrectPiles.cs" />
     <Compile Include="KR_SAPR\NumPiles_0PileData.cs" />
     <Compile Include="KR_SAPR\NumPiles_3RecreatePiles.cs" />
     <Compile Include="KR_SAPR\NumPiles_4Marks.cs" />
