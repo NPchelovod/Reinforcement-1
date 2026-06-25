@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using static UIFramework.Widget.CustomControls.NativeMethods;
+//using static UIFramework.Widget.CustomControls.NativeMethods;
 //using static UIFramework.Widget.CustomControls.NativeMethods;
 
 namespace Reinforcement
@@ -183,7 +183,7 @@ namespace Reinforcement
 
                 if (correctKratCoord && kratCoord>0)
                 {
-                    HashSet<CoordCorrectData> answerElement = RoundCoords(coordsElements, kratCoord, false);
+                    HashSet<CoordCorrectData> answerElement = RoundCoords(coordsElements, kratCoord, false, correctMinDist, dist3D);
                     ChangedElements.UnionWith(answerElement);
                     numCorrect += answerElement.Count();
                     if (!correctMinDist)
@@ -251,7 +251,7 @@ namespace Reinforcement
             return numCorrect;
         }
 
-        public static HashSet<CoordCorrectData> RoundCoords(List<CoordCorrectData> coordCorrectDatas, double round, bool zCorrect = false)
+        public static HashSet<CoordCorrectData> RoundCoords(List<CoordCorrectData> coordCorrectDatas, double round, bool zCorrect = false, bool correct3d=false, double distance3dMin=900)
         {
             HashSet<int> XCoords = new HashSet<int>();
             HashSet<int> YCoords = new HashSet<int>();
@@ -277,26 +277,60 @@ namespace Reinforcement
                 {
                     double newX1 = Math.Floor(X / round) * round;
                     double newX2 = Math.Ceiling(X / round) * round;
+                    bool contains = false;
                     if (XCoords.Contains((int)newX1))
                     {
                         newX = newX1;
+                        contains= true;
                     }
                     else if (XCoords.Contains((int)newX2))
                     {
                         newX = newX2;
+                        contains = true;
+                    }
+                    //должны соседей проверить с новыми нашими координатами чтобы было всё по уму
+                    if(!contains && correct3d)
+                    {
+                        double d1 = element.Neighbours.Select(x=>Math.Sqrt((x.X- newX1)* (x.X - newX1) + (newY - x.Y)* (newY - x.Y))).Min();
+                        double d2 = element.Neighbours.Select(x => Math.Sqrt((x.X - newX2) * (x.X - newX2) + (newY - x.Y) * (newY - x.Y))).Min();
+                        if(d1< distance3dMin-1 && d2>d1)
+                        {
+                            newX = newX2;
+                        }
+                        else if(d2< distance3dMin - 1 && d1 > d2)
+                        {
+                            newX = newX1;
+                        }
                     }
                 }
                 if (!YCoords.Contains((int)newY))
                 {
                     double newY1 = Math.Floor(Y / round) * round;
                     double newY2 = Math.Ceiling(Y / round) * round;
+                    bool contains = false;
                     if (YCoords.Contains((int)newY1))
                     {
                         newY = newY1;
+                        contains = true;
                     }
                     else if (YCoords.Contains((int)newY2))
                     {
                         newY = newY2;
+                        contains = true;
+                    }
+                    //должны соседей проверить с новыми нашими координатами
+                    if (!contains && correct3d)
+                    {
+                        double d1 = element.Neighbours.Select(x => Math.Sqrt((x.X - newX) * (x.X - newX) + (newY1 - x.Y)* (newY1 - x.Y))).Min();
+                        double d2 = element.Neighbours.Select(x => Math.Sqrt((x.X - newX) * (x.X - newX) + (newY2 - x.Y) * (newY2 - x.Y))).Min();
+                        if (d1 < distance3dMin - 1 && d2 > d1)
+                        {
+                            newY = newY2;
+                        }
+                        else if (d2 < distance3dMin - 1 && d1 > d2)
+                        {
+                            newY = newY1;
+                        }
                     }
                 }
                 if (!ZCoords.Contains((int)newZ))

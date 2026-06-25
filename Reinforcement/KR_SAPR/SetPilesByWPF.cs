@@ -9,6 +9,7 @@ namespace Reinforcement
     {
         public bool AdjustPilePositions { get; set; }
         public double RoundingStep { get; set; }
+        public bool CorrectDistance3DPiles { get; set; }
         public double MinDistanceBetweenPiles { get; set; }
         public bool ContinueExecution { get; set; }
 
@@ -24,6 +25,7 @@ namespace Reinforcement
 
             // Заполняем поля текущими значениями
             adjustPositionsCheckBox.IsChecked = currentAdjustPilePositions;
+            correctDistance3DPilesCheckBox.IsChecked = CorrectDistance3DPiles;
             roundingStepTextBox.Text = currentRoundingStep.ToString("F0");
             minDistanceTextBox.Text = currentMinDistanceBetweenPiles.ToString("F0");
         }
@@ -72,10 +74,21 @@ namespace Reinforcement
                 IsChecked = AdjustPilePositions,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(5, 0, 0, 0),
-                ToolTip = "Автоматически корректировать положения свай при пересечениях"
+                ToolTip = "Округлять координаты свай кратно"
             };
+            correctDistance3DPilesCheckBox = new CheckBox
+            {
+                IsChecked = CorrectDistance3DPiles,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                ToolTip = "Корректировать дистанцию между сваями"
+            };
+
+
+
             adjustPositionsPanel.Children.Add(adjustPositionsLabel);
             adjustPositionsPanel.Children.Add(adjustPositionsCheckBox);
+            adjustPositionsPanel.Children.Add(correctDistance3DPilesCheckBox);
             mainStackPanel.Children.Add(adjustPositionsPanel);
 
 
@@ -112,7 +125,8 @@ namespace Reinforcement
             var hintsText = new TextBlock
             {
                 Text = "Подсказки:\n" +
-                       "• Корректировать положения свай: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены\n" +
+                "• Округлять координаты свай кратно: если включено округляет координаты до кратного по шагу округления\n" +
+                       "• Корректировать положения свай друг от друга: если включено, сваи, расположенные ближе минимальной дистанции, будут автоматически смещены\n" +
                        "• Шаг округления координат: координаты из DWG будут округляться до ближайшего кратного значения\n" +
                        "• Минимальная дистанция между сваями: расстояние, меньше которого считается пересечением (рекомендуется 900 мм для стандартных свай)",
                 FontSize = 10,
@@ -205,6 +219,7 @@ namespace Reinforcement
         }
 
         private CheckBox adjustPositionsCheckBox;
+        private CheckBox correctDistance3DPilesCheckBox;
         private TextBox roundingStepTextBox;
         private TextBox minDistanceTextBox;
 
@@ -218,6 +233,7 @@ namespace Reinforcement
                 return;
 
             AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
+            CorrectDistance3DPiles = correctDistance3DPilesCheckBox.IsChecked ?? false;
             RoundingStep = roundingStep;
             MinDistanceBetweenPiles = minDistance;
 

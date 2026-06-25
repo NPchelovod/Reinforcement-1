@@ -168,12 +168,13 @@ namespace Reinforcement
                     roundingStep,
                     minDistanceBetweenPiles
                 );
-
+                bool CorrectDistance3DPiles;
                 if (settingsWindow.ShowDialog() == true && settingsWindow.ContinueExecution)
                 {
                     adjustPilePositions = settingsWindow.AdjustPilePositions;
                     roundingStep = settingsWindow.RoundingStep;
                     minDistanceBetweenPiles = settingsWindow.MinDistanceBetweenPiles;
+                    CorrectDistance3DPiles = settingsWindow.CorrectDistance3DPiles;
                 }
                 else
                 {
@@ -214,7 +215,7 @@ namespace Reinforcement
                 //теперь создаем
 
                 var CoordCorrectDataList = HashNewPileDict.Select(x => (CoordCorrectData) new CoordElement(x.Value.x, x.Value.y, z, "")).ToList();
-                NumPilesRotateAndMove.RoundCoordAndMinDist(adjustPilePositions, adjustPilePositions, minDistanceBetweenPiles, roundingStep, CoordCorrectDataList);
+                NumPilesRotateAndMove.RoundCoordAndMinDist(CorrectDistance3DPiles, adjustPilePositions, minDistanceBetweenPiles, roundingStep, CoordCorrectDataList);
 
 
 
