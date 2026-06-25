@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using static UIFramework.Widget.CustomControls.NativeMethods;
 //using static UIFramework.Widget.CustomControls.NativeMethods;
 
 namespace Reinforcement
@@ -84,10 +85,13 @@ namespace Reinforcement
         }
         public static ForgeTypeId units => NumPiles.units;
         public static double e = 0.00001;
-        public static int RoundCoordsPiles(Document doc, HashSet<Element> Seacher, double round,double dist3D=900, bool zCorrect=false)
+
+
+        public static HashSet<CoordCorrectData> RoundCoordsSosed(Document doc, HashSet<Element> Seacher, double round,double dist3D=900, bool zCorrect=false)
         {
+            var scorrectCoords = new HashSet<CoordCorrectData>();
             if (doc == null || Seacher == null || Seacher.Count == 0)
-            { return 0; }
+            { return new HashSet<CoordCorrectData>(); }
 
             List<CoordCorrectData> coordsElements = GetCoordElements(Seacher);
 
@@ -96,7 +100,7 @@ namespace Reinforcement
             GetSosedCoordElement(coordsElements, sosedDistance);
 
             HashSet<CoordCorrectData> answerElement = RoundCoords(coordsElements, round,zCorrect);
-            if(answerElement.Count == 0) {return 0;}
+            if(answerElement.Count == 0) {return scorrectCoords; }
 
             int numCorrect = 0;
             using (Transaction trans = new Transaction(doc, "Позиции свай коррект"))
@@ -129,6 +133,7 @@ namespace Reinforcement
 
                             locationPoint.Move(moveVector);
                             numCorrect++;
+                            scorrectCoords.Add(element);
                         }
                         catch (Exception ex)
                         {
@@ -138,6 +143,108 @@ namespace Reinforcement
                        
                     }
                    
+                }
+                trans.Commit();
+            }
+            return scorrectCoords;
+        }
+
+
+        public static HashSet<CoordCorrectData> RoundCoordAndMinDist(bool correctMinDist, bool correctKratCoord, double dist3D, double kratCoord, List<CoordCorrectData> coordCorrectDatas=null, HashSet<Element> Seacher = null)
+        {
+            //алгоритм решающий задачу и минимальной дистанции и округления координат
+            if(!correctMinDist && !correctKratCoord) { return null; }
+            int atempt = 6;//максимум попыток
+            int a = 0;
+            List<CoordCorrectData> coordsElements = coordCorrectDatas==null? GetCoordElements(Seacher): coordCorrectDatas;
+            if(coordsElements==null) { return new HashSet<CoordCorrectData>(); }
+
+            //соседей наёдем
+            double sosedDistance = dist3D * 2;
+            GetSosedCoordElement(coordsElements, sosedDistance);
+
+
+            HashSet<CoordCorrectData> ChangedElements = new HashSet<CoordCorrectData>();
+            while (a < atempt)
+            {
+                a++;
+                int numCorrect = 0;
+
+                if (correctMinDist && dist3D > 0)
+                {
+                    HashSet<CoordCorrectData> answerElement = CorrectCoordMinDist(dist3D, null, coordsElements);
+                    ChangedElements.UnionWith(answerElement);
+                    numCorrect += answerElement.Count();
+                    if (!correctKratCoord)
+                    {
+                        break;
+                    }
+                }
+
+                if (correctKratCoord && kratCoord>0)
+                {
+                    HashSet<CoordCorrectData> answerElement = RoundCoords(coordsElements, kratCoord, false);
+                    ChangedElements.UnionWith(answerElement);
+                    numCorrect += answerElement.Count();
+                    if (!correctMinDist)
+                    {
+                        break;
+                    }
+                }
+
+               
+
+                
+                if (numCorrect == 0) { break; }
+
+            }
+            return ChangedElements;
+        }
+        //установка координат 
+        public static int SetNewCoords(Document doc, HashSet<CoordCorrectData> coordCorrectDatas, bool zCorrect=false)
+        {
+            if(coordCorrectDatas == null) {  return 0; }
+            int numCorrect = 0;
+            using (Transaction trans = new Transaction(doc, "Позиции свай коррект"))
+            {
+                trans.Start();
+
+
+                foreach (var element in coordCorrectDatas)
+                {
+                    if (element == null) continue;
+                    double dxi = element.X - element.pX;
+                    double dyi = element.Y - element.pY;
+                    double dzi = element.Z - element.pZ;
+
+
+                    double dx = UnitUtils.ConvertToInternalUnits(dxi, units);
+                    double dy = UnitUtils.ConvertToInternalUnits(dyi, units);
+                    double dz = zCorrect ? UnitUtils.ConvertToInternalUnits(dzi, units) : 0;
+                    if (Math.Abs(dx) > e || Math.Abs(dy) > e || zCorrect && Math.Abs(dz) > e)
+                    {
+                        // Создаём вектор сдвига
+                        XYZ moveVector = new XYZ(dx, dy, dz);
+
+                        // Перемещаем элемент
+                        try
+                        {
+                            Location loc = element.Element.Location;
+                            if (!(loc is LocationPoint locationPoint))
+                            { continue; }
+
+                            locationPoint.Move(moveVector);
+                            numCorrect++;
+                            //scorrectCoords.Add(element);
+                        }
+                        catch (Exception ex)
+                        {
+                            //TaskDialog.Show("Ошибка", $"Не удалось переместить элемент {element.Id}: {ex.Message}");
+                            continue;
+                        }
+
+                    }
+
                 }
                 trans.Commit();
             }
@@ -231,7 +338,7 @@ namespace Reinforcement
 
         }
 
-        public static List<CoordCorrectData> GetCoordElements(HashSet<Element> Seacher)=> Seacher.Select(x=>(CoordCorrectData) new CoordElement(x)).ToList();
+        public static List<CoordCorrectData> GetCoordElements(HashSet<Element> Seacher)=> Seacher==null? new List<CoordCorrectData>(): Seacher.Select(x=>(CoordCorrectData) new CoordElement(x)).ToList();
 
 
         public static int CorrectCoord3D(Document doc, double minDist, HashSet<Element> Seacher)
@@ -240,7 +347,7 @@ namespace Reinforcement
 
             var coordElements = GetCoordElements(Seacher);
 
-            int numCorrect = CorrectCoordMinDist( minDist, Seacher, coordElements);
+            int numCorrect = CorrectCoordMinDist( minDist, Seacher, coordElements).Count();
 
             numCorrect = 0;
             //теперь в транзакции заменяем сваи
@@ -279,15 +386,15 @@ namespace Reinforcement
             }
             return numCorrect;
         }
-        public static int CorrectCoordMinDist(double minDist, HashSet<Element> Seacher=null, List<CoordCorrectData> coordElements=null)
+        public static HashSet<CoordCorrectData> CorrectCoordMinDist(double minDist, HashSet<Element> Seacher=null, List<CoordCorrectData> coordElements=null)
         {
             //берём все координаты и переводим в интерфейс
-
+            var answer = new HashSet<CoordCorrectData>();
             double sosedDistance = 1.8 * minDist;
             double correctDistance = Math.Min(minDist, 0.5 * sosedDistance);
             if (coordElements == null)
             {
-                if (Seacher == null) { return 0; }
+                if (Seacher == null) { return answer; }
                 coordElements = GetCoordElements(Seacher);
             }
             GetSosedCoordElement(coordElements, sosedDistance);
@@ -299,12 +406,13 @@ namespace Reinforcement
             while (i < maxAtempt)
             {
                 i++;
-                (int countElement, double distanceMaxCorrect) = OneCorrectMinDistPiles(coordElements, minDist);
-                if (countElement == 0)
+                (var changesElement, double distanceMaxCorrect) = OneCorrectMinDistPiles(coordElements, minDist);
+                answer.UnionWith(changesElement);
+                if (changesElement.Count==0)
                 {
                     break;
                 }
-                elementsChange += countElement;
+                elementsChange += changesElement.Count;
                 sumDistanceCorrect += distanceMaxCorrect;
                 if(correctDistance< sumDistanceCorrect)
                 {
@@ -313,7 +421,7 @@ namespace Reinforcement
                 }
             }
 
-            return elementsChange;
+            return answer;
         }
         public static void GetSosedCoordElement(List<CoordCorrectData> coordElements, double sosedDistance)
         {
@@ -333,16 +441,19 @@ namespace Reinforcement
                 }
             }
         }
-        private static (int countElement, double distanceMaxCorrect) OneCorrectMinDistPiles(List<CoordCorrectData> coordElements, double minDist)
+        private static (HashSet<CoordCorrectData>, double distanceMaxCorrect) OneCorrectMinDistPiles(List<CoordCorrectData> coordElements, double minDist)
         {
             //однапроходная корректировка свай
-
+            var answer = new HashSet<CoordCorrectData>();
             //сначала ищем главные сваи, затем второстепенны корректируем??
             //нет сначала ищем "неверные" сваи
             //coordElements.ForEach(x => { x.pX = x.X; x.pY = x.Y; x.pZ = x.Z; });
             int attempt = 10;// до 10 попыток скорректировать
             double e = 0.001;
-            HashSet<CoordCorrectData> UnCorrectPiles = new HashSet<CoordCorrectData>();
+
+            Dictionary<CoordCorrectData, int> keyValuePairs = new Dictionary<CoordCorrectData, int>();
+
+            //HashSet<CoordCorrectData> UnCorrectPiles = new HashSet<CoordCorrectData>();
             (int countElement, double distanceMaxCorrect) = (0, 0);
             foreach (var coordElement in coordElements)
             {
@@ -350,15 +461,18 @@ namespace Reinforcement
                 {
                     if(sosed.Dist(coordElement) < minDist)
                     {
-                        UnCorrectPiles.Add(coordElement);
-                        UnCorrectPiles.Add(sosed);
+                        keyValuePairs.TryGetValue(coordElement, out int numIntersect1);
+                        keyValuePairs.TryGetValue(sosed, out int numIntersect2);
+                        keyValuePairs[coordElement]= numIntersect1+1;
+                        keyValuePairs[sosed] = numIntersect2 + 1;
+
                     }
                 }
             }
-            if (UnCorrectPiles.Count == 0) { return (countElement, distanceMaxCorrect); }
+            if (keyValuePairs.Count == 0) { return (answer, distanceMaxCorrect); }
 
-            //сортируем по минимальному соседу того надежней двигать
-            var UnCorrectList= UnCorrectPiles.OrderBy(x=>x.Neighbours.Count).ToList();
+            //сортируем по по кол-ву ошибок у сваи - если она всем не нравится она будет первее, затем минимальному соседу того надежней двигать
+            var UnCorrectList= keyValuePairs.OrderByDescending(x=>x.Value).ThenBy(x=>x.Key.Neighbours.Count).Select(x=>x.Key).ToList();
 
             HashSet<CoordCorrectData> PastCorrectData = new HashSet<CoordCorrectData>();
             foreach (var coordElement in UnCorrectList)
@@ -395,12 +509,13 @@ namespace Reinforcement
                 {
                     countElement++;
                     distanceMaxCorrect = Math.Max(itogCorrect, distanceMaxCorrect);
+                    answer.Add(coordElement);
                 }
                 
 
             }
 
-            return (countElement, distanceMaxCorrect);
+            return (answer, distanceMaxCorrect);
         }
         /// <summary>
         /// Удлиняет линию от второй точки в направлении первой ко второй.

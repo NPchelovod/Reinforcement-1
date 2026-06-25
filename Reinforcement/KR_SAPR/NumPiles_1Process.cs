@@ -57,30 +57,37 @@ namespace Reinforcement
             }
 
 
-            int atempt = 5;//максимум попыток
-            int a = 0;
-            while (a < atempt)
+            if (AdjustPilePositions|| AdjustPositionsRound)
             {
-                a++;
-                int numCorrectKrat = 0;
-                int numCorrect3D = 0;
-                if (AdjustPositionsRound && CoordinateRoundingStep > 0)
-                {
-                    numCorrectKrat = NumPilesRotateAndMove.RoundCoordsPiles(doc, Seacher, CoordinateRoundingStep, SettingsWindow.AdjustPositionsRoundZ);
-                    if (!AdjustPilePositions) { break; }
-                }
-                // Корректируем координаты свай 3d если нужно
-                if (AdjustPilePositions && MinDistanceBetweenPiles > 0)
-                {
-                    numCorrect3D = NumPilesRotateAndMove.CorrectCoord3D(doc, MinDistanceBetweenPiles, Seacher);
-                    if(!AdjustPositionsRound)
-                    {
-                        break;
-                    }
-                }
-                if (numCorrectKrat == 0 && numCorrect3D == 0) { break; }
-
+                //корректировка координат
+                var CoorectElements = NumPilesRotateAndMove.RoundCoordAndMinDist(AdjustPilePositions, AdjustPositionsRound, MinDistanceBetweenPiles, CoordinateRoundingStep, null, Seacher);
+                int setCorrectElements = NumPilesRotateAndMove.SetNewCoords(doc, CoorectElements);
             }
+
+            //int atempt = 5;//максимум попыток
+            //int a = 0;
+            //while (a < atempt)
+            //{
+            //    a++;
+            //    int numCorrectKrat = 0;
+            //    int numCorrect3D = 0;
+            //    if (AdjustPositionsRound && CoordinateRoundingStep > 0)
+            //    {
+            //        numCorrectKrat = NumPilesRotateAndMove.RoundCoordsSosed(doc, Seacher, CoordinateRoundingStep, MinDistanceBetweenPiles, SettingsWindow.AdjustPositionsRoundZ).Count();
+            //        if (!AdjustPilePositions) { break; }
+            //    }
+            //    // Корректируем координаты свай 3d если нужно
+            //    if (AdjustPilePositions && MinDistanceBetweenPiles > 0)
+            //    {
+            //        numCorrect3D = NumPilesRotateAndMove.CorrectCoord3D(doc, MinDistanceBetweenPiles, Seacher);
+            //        if(!AdjustPositionsRound)
+            //        {
+            //            break;
+            //        }
+            //    }
+            //    if (numCorrectKrat == 0 && numCorrect3D == 0) { break; }
+
+            //}
 
             //чтение всех свай
             ReadPiles();

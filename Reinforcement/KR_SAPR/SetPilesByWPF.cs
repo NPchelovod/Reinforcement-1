@@ -61,7 +61,7 @@ namespace Reinforcement
             };
             var adjustPositionsLabel = new TextBlock
             {
-                Text = "Корректировать положения свай:",
+                Text = "Корректировать положения свай друг от друга:",
                 FontSize = 12,
                 Width = 220,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -77,6 +77,11 @@ namespace Reinforcement
             adjustPositionsPanel.Children.Add(adjustPositionsLabel);
             adjustPositionsPanel.Children.Add(adjustPositionsCheckBox);
             mainStackPanel.Children.Add(adjustPositionsPanel);
+
+
+
+
+
 
             // Разделитель
             var separator = new Separator

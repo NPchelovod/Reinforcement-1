@@ -158,7 +158,7 @@ namespace Reinforcement
                         groupInfo +=", срывы "+ pile.MarkNew + " Id:" + pile.IdValue + ", ";
                         break;
                     }
-                    else if(existPastMark &&pile.MarkPast != pileLast.MarkPast + 1)
+                    else if(!existNewMark && existPastMark && pile.MarkPast != pileLast.MarkPast + 1)
                     {
                         promegPiles = $"Разрыв нумерации {pileLast.MarkPast} с УГО_{g.Key.UGOPastNum} и типом {g.Key.TypePile}, сваей {pile.MarkPast} с ID:{pile.IdValue}";
                         groupInfo += ", срывы " + pile.MarkPast+" Id:"+pile.IdValue+", ";

@@ -180,68 +180,45 @@ namespace Reinforcement
                     return Result.Cancelled;
                 }
 
-
-
                 bool applyRounding = false;
 
+
+                if (roundingStep < 1) { roundingStep = 1; }
+
+                if (minDistanceBetweenPiles < 1) { minDistanceBetweenPiles=1; }
+
+
                 // чтобы убрать дубликаты свай
-                var HashNewPileDict = new Dictionary<(int x, int y), (double x, double y)>();
+                var HashNewPileDict = new Dictionary<(int SectorX, int SectorY), (double x, double y)>();
+
+
+
                 foreach (XYZ point in geomList)
                 {
                     double xd = UnitUtils.ConvertFromInternalUnits(point.X, units);
                     double yd = UnitUtils.ConvertFromInternalUnits(point.Y, units);
 
-                    if (applyRounding||roundingStep > 0.01)
-                    {
-                        applyRounding=true;
-                        xd = Math.Round(xd / roundingStep) * roundingStep; // округляем мм
-                        yd = Math.Round(yd / roundingStep) * roundingStep;
-                    }
-                    else
-                    {
-                        //просто округлим на всякий случай до 0?
-                    }
+                    int SectorX = (int) (Math.Round(xd / roundingStep) * roundingStep);
+                    int SectorY=(int) (Math.Round(yd / roundingStep) * roundingStep);
 
-                    int x = (int)xd; // a ConvertToInternalUnits переводит наоборот из метров в футы
-                    int y = (int)yd;
-                    HashNewPileDict[(x,y)]= (xd, yd);
+
+                    HashNewPileDict[(SectorX, SectorY)]= (xd, yd);
                 }
+
+                //теперь создаём личь
+
                 //координата Z = 
                 var Z = geomList.FirstOrDefault().Z; // а эта в футах
+                double z = UnitUtils.ConvertFromInternalUnits(Z, units);//уже в мм
 
-                var HashPileDataCorrect = new HashSet<PileDataCorrect>();
-                foreach (var coordData in HashNewPileDict)
-                {
-                    HashPileDataCorrect.Add(new PileDataCorrect(
-                        coordData.Value.x,
-                        coordData.Value.y,
-                        coordData.Key.x,
-                        coordData.Key.y,
-                        Z
-                    ));
-                }
+                //теперь создаем
 
-
-                
-                //хотел чтоб этот метод покоординатно двигал
-                if (adjustPilePositions)
-                {
-                    var HashIPileCorrect = new HashSet<IPileCorrect>(HashPileDataCorrect) .ToHashSet();                // новый HashSet<PileDataCorrect>
-                    
-
-                     HashIPileCorrect = MethodDepthPile(HashIPileCorrect, minDistanceBetweenPiles, roundingStep, applyRounding);
-                   
-                    HashPileDataCorrect = new HashSet<IPileCorrect>(HashIPileCorrect)
-                    .OfType<PileDataCorrect>()  // обратно в PileDataCorrect
-                    .ToHashSet();                // новый HashSet<PileDataCorrect>
-                }
-
-
-                var listPileDataIntersect = HashPileDataCorrect.Where(x => x.intersect).ToList();
+                var CoordCorrectDataList = HashNewPileDict.Select(x => (CoordCorrectData) new CoordElement(x.Value.x, x.Value.y, z, "")).ToList();
+                NumPilesRotateAndMove.RoundCoordAndMinDist(adjustPilePositions, adjustPilePositions, minDistanceBetweenPiles, roundingStep, CoordCorrectDataList);
 
 
 
-                //var listNewPile = HashNewPileDict.Values.ToList();
+                //var listNewPile = HashNewPileDToLiict.Values.ToList();
                 try //ловим ошибку
                 {
                     using (Transaction t = new Transaction(doc, "Создание свай по DWG"))
@@ -253,11 +230,11 @@ namespace Reinforcement
                             pile.Activate();
                             doc.Regenerate();
                         }
-                        foreach (var pileDataCorrect in HashPileDataCorrect)
+                        foreach (var pileDataCorrect in CoordCorrectDataList)
                         {
                             // Правильный перевод из мм в внутренние единицы Revit (футы)
-                            double x = UnitUtils.ConvertToInternalUnits(pileDataCorrect.itogX, units);
-                            double y = UnitUtils.ConvertToInternalUnits(pileDataCorrect.itogY, units);
+                            double x = UnitUtils.ConvertToInternalUnits(pileDataCorrect.X, units);
+                            double y = UnitUtils.ConvertToInternalUnits(pileDataCorrect.Y, units);
 
                             var point = new XYZ(x, y, Z);
 
@@ -276,28 +253,28 @@ namespace Reinforcement
                 
                 //проверка пересечений 
                 
-                if (listPileDataIntersect.Count > 0)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("=== АУДИТ СВАЙ ===");
-                    sb.AppendLine($"\nНайдено пересечений: {listPileDataIntersect.Count}");
-                    sb.AppendLine("Координаты свай x,y пересекающих минимальную дистанцию:");
+                //if (listPileDataIntersect.Count > 0)
+                //{
+                //    StringBuilder sb = new StringBuilder();
+                //    sb.AppendLine("=== АУДИТ СВАЙ ===");
+                //    sb.AppendLine($"\nНайдено пересечений: {listPileDataIntersect.Count}");
+                //    sb.AppendLine("Координаты свай x,y пересекающих минимальную дистанцию:");
 
-                    int i = 0;
-                    int iterMax = 12;
-                    foreach (var pileDataCorrect in listPileDataIntersect)
-                    {
-                        i++;
-                        if (i > iterMax)
-                        {
-                            sb.AppendLine($"... и еще {listPileDataIntersect.Count - iterMax} пересечений");
-                            break;
-                        }
-                        sb.AppendLine($"(x,y) = ({Math.Round(pileDataCorrect.itogX)}, {Math.Round(pileDataCorrect.itogY)}) - пересечение {pileDataCorrect.intersectDist:F0} мм");
-                    }
+                //    int i = 0;
+                //    int iterMax = 12;
+                //    foreach (var pileDataCorrect in listPileDataIntersect)
+                //    {
+                //        i++;
+                //        if (i > iterMax)
+                //        {
+                //            sb.AppendLine($"... и еще {listPileDataIntersect.Count - iterMax} пересечений");
+                //            break;
+                //        }
+                //        sb.AppendLine($"(x,y) = ({Math.Round(pileDataCorrect.itogX)}, {Math.Round(pileDataCorrect.itogY)}) - пересечение {pileDataCorrect.intersectDist:F0} мм");
+                //    }
 
-                    TaskDialog.Show("АУДИТ СВАЙ", sb.ToString());
-                }
+                //    TaskDialog.Show("АУДИТ СВАЙ", sb.ToString());
+                //}
 
                 return Result.Succeeded;
             }

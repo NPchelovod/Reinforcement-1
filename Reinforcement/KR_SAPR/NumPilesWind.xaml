@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Настройки нумерации и корректировки свай"
-        Width="650" Height="1100" MinWidth="600" MinHeight="700" MaxHeight="1300"
+        Width="650" Height="900" MinWidth="600" MinHeight="700" MaxHeight="950"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
         SizeToContent="Manual">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
@@ -33,7 +33,21 @@
                 <TextBox x:Name="nameFamilies" Width="330" Margin="5,0,0,0"
              ToolTip="Имена семейств нумеровать которые будем"/>
             </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Или взять семейство с выделенного объекта (1шт выдели до этого):" Width="320"
+               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="getOneFamilyName" VerticalAlignment="Center" Margin="5,0,0,0"
+              ToolTip="До открытия окна выделите 1 объект, его семейство найдет программа"/>
+            </StackPanel>
             
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text=" - тогда взять имя самого семейства, а не типа:" Width="320"
+   VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                <CheckBox x:Name="getFamilyNotType" VerticalAlignment="Center" Margin="5,0,0,0"
+  ToolTip="тогда будет искать имя всего семейства, всех свай а не одного типа"/>
+            </StackPanel>
+
             <!-- Кнопки -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
             Margin="0,20,0,10">

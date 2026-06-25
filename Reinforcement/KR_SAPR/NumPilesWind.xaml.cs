@@ -14,6 +14,10 @@ namespace Reinforcement
     public partial class PileSettingsWindow2 : Window
     {
         // Свойства (без изменений)
+
+        public bool GetOneFamilyName = false;
+
+        public bool GetFamilyNotType=true;
         public static double SectorStep { get; set; } = 1051;//"Шаг группировки свай в КУСТ (мм):"
         public static double SectorStepPile { get; set; } = 510;//"Шаг округления рядов свай (мм):"
         public static double SectorStepZ { get; set; } = 10;
@@ -58,11 +62,11 @@ namespace Reinforcement
         private void WriterData()
         {
             nameFamilies.Text = String.Join(",", FamilyPiles);
-
+            getFamilyNotType.IsChecked = GetFamilyNotType;
             // Заполняем поля текущими значениями
             adjustPositionsCheckBox.IsChecked = AdjustPilePositions;
             adjustPositionsRoundCheckBox.IsChecked = AdjustPositionsRound;
-
+            getOneFamilyName.IsChecked =GetOneFamilyName;
             recreateAllPilesCheckBox.IsChecked = RecreateAllPiles;
             rotatePilesCheckBox.IsChecked = RotorPiles;
             minDistanceTextBox.Text = MinDistanceBetweenPiles.ToString();
@@ -97,25 +101,45 @@ namespace Reinforcement
         {
             UIDocument uidoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
-            
+
+            Seacher = HelperSeachAllElements.SeachSelectElements(CommandData);//выбранные обьекты смотрим сколько выбрали
+
             // 1. Находим сваи
-            Seacher = HelperSeachAllElements.SeachSelectElements(CommandData);
-            if (FoundPilesCount < 3)//значит мы специально не выделяли
+
+            if (GetOneFamilyName && FoundPilesCount>0)
+            {
+                //по выделенному обьекту все обьекты находит
+                Seacher = HelperSeachAllElements.SeachSelectElementOneToAll(CommandData, GetFamilyNotType);
+                if (HelperSeachAllElements.familiesNames.Count > 0)
+                {
+                    FamilyPiles = HelperSeachAllElements.familiesNames;
+                    WriterData();
+                }
+            }
+            else if (FoundPilesCount < 3)//значит мы специально не выделяли
             {
                 Seacher = HelperSeachAllElements.SeachAllElements(FamilyPiles , CommandData, true);
             }
-            pilesCountText.Text = $"Найдено свай/объектов (на виде или были выделены более 3 шт): {FoundPilesCount} шт.";
+            else
+            {
+                //мы первым шагом их смтрим
+                //Seacher = HelperSeachAllElements.SeachSelectElements(CommandData);
+            }
+
+             pilesCountText.Text = $"Найдено свай/объектов (на виде или были выделены более 3 шт): {FoundPilesCount} шт.";
         }
         private  HashSet<string> FamilyPiles = new HashSet<string>()
         {
             //"ЕС_Буронабивная свая",  "ЕС_Буронабивная Свая"
             "ADSK_Свая_", "ЕС_Буронабивная, ЕС_Свая", "Свая", "свая"
         };
+
         private void SeachButton_Click(object sender, RoutedEventArgs e)
         {
             FamilyPiles = new HashSet<string>(nameFamilies.Text.Split(','));
-            SeachPiles();
             ReadData();
+            SeachPiles();
+            
         }
         private void f_Click(object sender, RoutedEventArgs e)
         {
@@ -123,6 +147,9 @@ namespace Reinforcement
         }
         private void ReadData()
         {
+
+            GetOneFamilyName = getOneFamilyName.IsChecked ?? false;
+            GetFamilyNotType = getFamilyNotType.IsChecked ?? false;
             AdjustPilePositions = adjustPositionsCheckBox.IsChecked ?? false;
             AdjustPositionsRound = adjustPositionsRoundCheckBox.IsChecked ?? false;
             AdjustPositionsRoundZ = adjustPositionsRoundZCheckBox.IsChecked ?? false;

@@ -44,6 +44,48 @@ namespace Reinforcement
             }
             return Seacher;
         }
+
+        public static HashSet<string> familiesNames = new HashSet<string>();
+        public static HashSet<Element> SeachSelectElementOneToAll(ExternalCommandData commandData, bool getFamilyNotType)
+        {
+            //по одному обьекту найти все на виде
+
+            // Получаем UIDocument (активный документ с интерфейсом)
+            UIDocument uidoc = RevitAPI.UiDocument;
+            Document doc = RevitAPI.Document;
+            // Получаем ID выделенных элементов
+            ICollection<ElementId> selectedIds = uidoc.Selection.GetElementIds();
+
+            Element Seacher = null;
+            var Seachers = new HashSet<Element>();
+            foreach (ElementId id in selectedIds)
+            {
+                Element elem = doc.GetElement(id);
+                if (elem != null)
+                {
+                    Seacher=elem;
+                    break;
+                }
+            }
+            if(Seacher!=null)
+            {
+                string nameFamily = Seacher.Name;
+                if (getFamilyNotType)
+                {
+                    if (Seacher is FamilyInstance inst && inst.Symbol != null)
+                    {
+                        nameFamily = inst.Symbol.Family.Name;   // тоже имя семейства
+                    }
+                }
+                familiesNames =new  HashSet<string> { nameFamily };
+                
+                Seachers = SeachAllElements(familiesNames, commandData, true);
+            }
+            return Seachers;
+        }
+
+
+
         public static HashSet<Element> SeachAllElements(HashSet<string> names, ExternalCommandData commandData, bool activView=false)
         {
             //if activView - ищет все сваи на активном виде
