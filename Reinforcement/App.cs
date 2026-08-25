@@ -217,6 +217,10 @@ namespace Reinforcement
             RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
             RegisterZakladkaUpdater.Register();
 
+            RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+
+            RegisterAutoFillUpdater.Register();
+           // AutoFillNoteUpdater.RegisterUpdater();
             return Result.Succeeded;
         }
 

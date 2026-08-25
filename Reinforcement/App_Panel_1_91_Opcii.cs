@@ -41,6 +41,10 @@ namespace Reinforcement
             //Image OV2 = Properties.Resources.toska2;
             Image OV3 = Properties.Resources.Properties;
             //предполагается тест и так далее
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Настройки", assemblyPath, "Reinforcement.SettingsAllEx", "Настройки плагина", OV1);
+
+
             App_Helper_Button.AddButtonToPullDownButton(item, "Маск", assemblyPath, "Reinforcement.PropertiesMask", "не работает\nдля маскировки", OV1);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Время чудес", assemblyPath, "Reinforcement.Toska_2", "?", OV3);
             App_Helper_Button.AddButtonToPullDownButton(item, "Сброс", assemblyPath, "Reinforcement.PropertiesSbros", "сброс СПДС и тп введенных семейств, если вы вводили когда они не были найдены", OV1);

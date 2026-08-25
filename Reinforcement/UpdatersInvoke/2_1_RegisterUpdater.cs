@@ -18,7 +18,7 @@ using Reinforcement;
 namespace Updaters
 {
     [Transaction(TransactionMode.Manual)]
-
+    //регистратор двух 1 и 2 изменения
     public static class RegisterUpdater
     {
         public static AddInId addInId { get; set; }
@@ -71,7 +71,7 @@ namespace Updaters
                 var classFilter = new ElementClassFilter(typeof(FamilyInstance));
 
                 var combinedFilter = new LogicalAndFilter(categoryFilter, classFilter);
-                UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeElementAddition());
+                //UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeElementAddition());
                 UpdaterRegistry.AddTrigger(updaterId, categoryFilter, Element.GetChangeTypeAny());
             }
             else

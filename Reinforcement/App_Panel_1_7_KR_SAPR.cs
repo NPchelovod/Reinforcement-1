@@ -54,8 +54,11 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG подложки \n\n на виде должны быть расчетная подложка DWG свай в виде точек", OV1);
 
-            
+            App_Helper_Button.AddButtonToPullDownButton(item, "Оси в 2D", assemblyPath, "Reinforcement.Grid3To2D",
+                "Перевод осей в 2Д", OV1);
 
+            App_Helper_Button.AddButtonToPullDownButton(item, "Осей размеры", assemblyPath, "Reinforcement.GridSizes",
+                 "Размеры между осями", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

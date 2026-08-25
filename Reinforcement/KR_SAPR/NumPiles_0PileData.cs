@@ -311,28 +311,52 @@ namespace Reinforcement
                 zsg = Zs;
                 return;
             }
-
-
             CoordData coordData = null;
-            if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortOnCenterCust))// значит сортируем по центру
+            if (NestedCoordData.Count == 1)
+            {
+                coordData = NestedCoordData[0];
+               
+            }
+
+            else  if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortOnCenterCust))// значит сортируем по центру
             {
                 xsg = NestedCoordData.Select(x => x.Xs).Sum() / NestedCoordData.Count();
                 ysg = NestedCoordData.Select(x => x.Ys).Sum() / NestedCoordData.Count();
             }
             else if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortUpToDown))
             {
-                coordData = NestedCoordData
-                .OrderBy(x => x.Xs)        // сортируем по X (по возрастанию — от левого к правому)
-                .ThenByDescending(x => x.Ys) // затем по Y (по убыванию — от верхнего к нижнему)
-                .First();                   // берём первый элемент
+                if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortXthenY))
+                {
+                    coordData = NestedCoordData
+                    .OrderBy(x => x.Xs)        // сортируем по X (по возрастанию — от левого к правому)
+                    .ThenByDescending(x => x.Ys) // затем по Y (по убыванию — от верхнего к нижнему)
+                    .First();                   // берём первый элемент
+                }
+                else
+                {
+                    coordData = NestedCoordData
+                    .OrderByDescending(x => x.Ys)        // сортируем по X (по возрастанию — от левого к правому)
+                    .ThenBy(x => x.Xs) // затем по Y (по убыванию — от верхнего к нижнему)
+                    .First();
+                }
 
             }
             else
             {
-                coordData = NestedCoordData
+                if (NumPiles.sortCodeEnums.Contains(SortCodeEnum.SortXthenY))
+                {
+                    coordData = NestedCoordData
                 .OrderBy(x => x.Xs)        // сортируем по X (по возрастанию — от левого к правому)
                 .ThenBy(x => x.Ys)       // затем по Y (по возрастанию — от нижнего к верхнему)
                 .First();                   // берём первый элемент
+                }
+                else
+                {
+                    coordData = NestedCoordData
+                .OrderBy(x => x.Ys)        // сортируем по X (по возрастанию — от левого к правому)
+                .ThenBy(x => x.Xs)       // затем по Y (по возрастанию — от нижнего к верхнему)
+                .First();                   // берём первый элемент
+                }
 
             }
             if (coordData != null)

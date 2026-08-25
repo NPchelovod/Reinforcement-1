@@ -14,16 +14,18 @@ namespace Updaters
 {
     public class AutoHoleFloorPoint : IUpdater
     {
+        
         public void Execute(UpdaterData data)
         {
             // получает измененные элементы и решает что делать с измененными элементами
             Document doc = data.GetDocument();
             var ids = data.GetModifiedElementIds().ToList();
             ids.AddRange(data.GetAddedElementIds().ToList()); // все измененные id
-
+            string username = doc.Application.Username;
             foreach (var id in ids)
             {
                 var element = doc.GetElement(id);
+                
                 
                 
                 if (element.Name.Contains("Кубик_Стена_Прям") || element.Name.Contains("Отверстие в стене"))
