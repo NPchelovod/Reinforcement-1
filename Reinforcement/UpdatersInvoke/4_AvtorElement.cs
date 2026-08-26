@@ -151,62 +151,84 @@ namespace Reinforcement
     {
         public void Execute(UpdaterData data)
         {
+            // Делегируем главному диспетчеру (если так задумано)
             AnyChange.Execute(data); // передаём главному методу распределения
         }
 
-        //автор элемента записывается при создании
-        public static bool regWriterAvtor=true;
-        public static bool regWriterAvtorPrim = false;
-
-        public static bool regWriterSoAvtor = true;
-
-        public static bool longAvtors=true;
-
+        // === Конфигурация ===
+        public static bool regWriterAvtor = true;       // записывать автора
+        public static bool regWriterAvtorPrim = false;  // использовать запасной параметр примечания
+        public static bool regWriterSoAvtor = true;     // записывать соавтора
+        public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
         public static string NamePrimeh = "ADSK_Примечание";
-        public static string time;
-        public static string username;
-        public static string userDate;
 
+        // === Временные данные ===
         private static DateTime _lastExecutionTime = DateTime.MinValue;
-        private static readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
+        private static readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200);
+        private static bool _isUpdating = false; // флаг защиты от рекурсии
 
-        
-       
+        // === Текущие значения (пересчитываются при каждом реальном выполнении) ===
+        private static string _username;
+        private static string _userDate;
 
+
+
+
+        /// <summary>
+        /// Основной метод, вызываемый диспетчером для обработки добавленных/изменённых элементов.
+        /// </summary>
         public static void AvtorUpdater(UpdaterData data)
         {
-            if (!regWriterAvtor) { return; }
+            if (!regWriterAvtor) return;
+
+            // Проверка временного интервала сразу, до каких-либо действий
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastExecutionTime < _minimumInterval)
+                return;
+
+            // Защита от рекурсивного вызова
+            if (_isUpdating) return;
 
             Document doc = data.GetDocument();
-            DateTime now = DateTime.Now;
-            time = now.ToString("dd.MM.yy.HH");
+            _username = doc.Application.Username;
+            _userDate = $"{_username}_{DateTime.Now:dd.MM.yy.HH}";
 
-            username = doc.Application.Username;
-            userDate = username + "_" + time;
-
-            var addedIds = data.GetAddedElementIds();// — элементы, которые были добавлены в модель;
+            // Получаем списки элементов
+            var addedIds = data.GetAddedElementIds();
             var modifiedIds = data.GetModifiedElementIds();
-            //ExecuteNew(data, doc);// обработка добавленных
 
-            now = DateTime.UtcNow;
-            if (now - _lastExecutionTime < _minimumInterval)
+            // Устанавливаем флаг выполнения
+            _isUpdating = true;
+            try
             {
-                return; // прошло слишком мало времени — игнорируем
+                // Обрабатываем добавленные (автор при создании)
+                if (addedIds.Count > 0)
+                {
+                    ProcessElements(doc, addedIds, isNewElement: true);
+                }
+
+                // Обрабатываем изменённые (автор и соавтор)
+                if (modifiedIds.Count > 0)
+                {
+                    ProcessElements(doc, modifiedIds, isNewElement: false);
+                }
+
+                // Обновляем время последнего выполнения
+                _lastExecutionTime = DateTime.UtcNow;
             }
-
-
-            ExecuteChange(data, doc, addedIds); // обработка изменённых
-            if (regWriterSoAvtor)
+            finally
             {
-                ExecuteChange(data, doc, modifiedIds); // обработка изменённых
+                _isUpdating = false;
             }
         }
-        
 
 
+        /// <summary>
+        /// Безопасная установка значения параметра (только если оно изменилось).
+        /// </summary>
         public static bool SetParam(Parameter param, string value)
         {
             if(param == null) { return false; }
@@ -224,109 +246,77 @@ namespace Reinforcement
             return true;
         }
 
-        //public HashSet<ElementId> pastIds=new HashSet<ElementId>();//от рекурсии
-        private static void ExecuteChange(UpdaterData data, Document doc, ICollection<ElementId> modifiedIds)
+        /// <summary>
+        /// Обработка списка элементов: запись автора (при необходимости) и соавтора.
+        /// </summary>
+        private static void ProcessElements(Document doc, ICollection<ElementId> ids, bool isNewElement)
         {
-
-            
-            if ( !modifiedIds.Any()) { return; }
-            
-            // Имя текущего пользователя Revit
-            //string username = doc.Application.Username;
-
-            //var pastId2= new HashSet<ElementId>();
-
-            foreach (var id in modifiedIds)
+            foreach (var id in ids)
             {
                 Element element = doc.GetElement(id);
-                if (element == null)// || pastIds.Contains(id))
-                    continue;
+                if (element == null) continue;
 
-                //pastId2.Add(id);
-                // Ищем параметр по имени
+                // 1. Параметр для автора (или запасной)
+                Parameter authorParam = element.LookupParameter(NameAvtor);
+                if (authorParam == null && regWriterAvtorPrim)
+                    authorParam = element.LookupParameter(NamePrimeh);
 
-                //записываем автора и соавтора
-                Parameter noteParam = element.LookupParameter(NameAvtor);
-                if (noteParam == null && regWriterAvtorPrim)
+                if (authorParam == null) continue; // нет нужного параметра – пропускаем
+
+                string authorValue = authorParam.AsString();
+
+                // Для нового элемента записываем автора, если поле пустое
+                if (string.IsNullOrEmpty(authorValue))//isNewElement
                 {
-                    noteParam = element.LookupParameter(NamePrimeh);
+                    SetParam(authorParam, _userDate);
+                    authorValue = _userDate; // обновляем локальное значение для дальнейшего использования
                 }
-                if (noteParam == null) { continue; }
-                
 
-                string value = noteParam.AsString();
-                if (string.IsNullOrEmpty(value))
+                // 2. Параметр соавтора
+                Parameter coAuthorParam = element.LookupParameter(NameSoAvtor);
+                if (coAuthorParam != null)
                 {
-                    //записываем автора
-                    SetParam(noteParam, userDate);
-                }
-                //автора всегда записываем в соавторы
-
-                Parameter noteParam2 = element.LookupParameter(NameSoAvtor);
-                if (noteParam2 != null)
-                {
-                    string pastValue = noteParam2.AsString();
-                            
-                    //записываем соавтора
-                    string newValue = nameNew(pastValue);
-
-                    SetParam(noteParam2, newValue);
-                    //иначе записываем в соавторы
+                    // Если параметр соавтора существует, обновляем его
+                    string pastCoAuthors = coAuthorParam.AsString();
+                    string newCoAuthors = BuildNewCoAuthors(pastCoAuthors);
+                    SetParam(coAuthorParam, newCoAuthors);
                 }
                 else
                 {
-                    string newValue = nameNew(value);
-                    //записываем в авторы в придачу
-                    SetParam(noteParam, newValue);
-                    //иначе записываем в соавторы
-
+                    // Если параметра соавтора нет, записываем в тот же параметр автора (по вашей логике)
+                    // Убедитесь, что это действительно нужно! Возможно, лучше просто пропустить.
+                    string newValue = BuildNewCoAuthors(authorValue);
+                    SetParam(authorParam, newValue);
                 }
-                    
-                
             }
-            //pastIds = pastId2;
-
-            DateTime now = DateTime.UtcNow;
-            _lastExecutionTime = now;
         }
 
-        private static string nameNew(string pastValue)
+        /// <summary>
+        /// Формирует новую строку соавторов на основе предыдущей.
+        /// </summary>
+        private static string BuildNewCoAuthors(string pastValue)
         {
-            string newValue = "";
+            // Если хранение нескольких авторов отключено, или строка пустая/слишком длинная – просто заменяем
+            if (!longAvtors || string.IsNullOrEmpty(pastValue) || pastValue.Length > 170)
+                return _userDate;
 
-            
+            // Разбиваем на отдельные записи
+            var entries = pastValue
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToList();
 
-            if (!longAvtors|| string.IsNullOrEmpty(pastValue) || pastValue.Length > 160)
-            {
-                newValue = userDate;
-            }
-            else if (pastValue.Contains(username))
-            {
-                //newValue = pastValue;// userDate;
-                // Разбиваем pastValue на отдельные записи, убираем лишние пробелы
-                // Разбиваем строку на отдельные записи, убираем пустые и лишние пробелы
-                var entries = pastValue
-                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s => s.Trim())
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .ToList();
+            // Удаляем все записи, начинающиеся с "username_"
+            string prefix = _username + "_";
+            entries.RemoveAll(e => e.StartsWith(prefix));
 
-                // Удаляем ВСЕ записи, начинающиеся с "username_"
-                string prefix = username + "_";
-                entries.RemoveAll(e => e.StartsWith(prefix));
+            // Вставляем актуальную запись в начало
+            entries.Insert(0, _userDate);
 
-                // Вставляем актуальную запись (userDate) в начало списка
-                entries.Insert(0, userDate);
-
-                // Собираем строку обратно
-                newValue = string.Join(", ", entries);
-            }
-            else
-            {
-                newValue = userDate+ ", "+pastValue;
-            }
-            return newValue;
+            return string.Join(", ", entries);
         }
+
 
 
 
