@@ -52,7 +52,8 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Переоп", assemblyPath, "Reinforcement.PropertiesPereop", "Нажмите на эту кнопку, а затем на любую СПДС кнопку, введите типоразмер семейства своего\n для переопределения кнопки", OV3);
 
-
+            App_Helper_Button.AddButtonToPullDownButton(item, "ФОП", assemblyPath, "Reinforcement.FopAdd", "Нажмите на эту кнопку, чтобы добавить ЕС_Автор", OV3);
+            App_Helper_Button.AddButtonToPullDownButton(item, "ФОП_Users", assemblyPath, "Reinforcement.FopAddUsers", "Пользовательский набор добавить в параметры", OV3);
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

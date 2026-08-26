@@ -17,7 +17,63 @@ namespace Reinforcement
     {
         // Используем тот же AddInId, что и в вашем приложении
         public static AddInId addInId { get; set; }
-        
+
+        public static readonly HashSet<BuiltInCategory> BuiltInCategorys = new HashSet<BuiltInCategory>()
+        { BuiltInCategory.OST_Walls              ,    // Стены
+                BuiltInCategory.OST_Floors       ,          // Перекрытия
+                BuiltInCategory.OST_Ceilings     ,          // Потолки
+                BuiltInCategory.OST_StructuralColumns ,     // Несущие колонны
+                BuiltInCategory.OST_StructuralFraming ,     // Несущий каркас (балки)
+                BuiltInCategory.OST_GenericModel      ,     // Обобщенные модели
+                BuiltInCategory.OST_GenericAnnotation ,     // Типовые аннотации
+                BuiltInCategory.OST_Views             ,     // Виды
+                BuiltInCategory.OST_Grids               ,   // Оси
+                BuiltInCategory.OST_Doors                ,  // Двери
+                BuiltInCategory.OST_Windows               , // Окна
+                BuiltInCategory.OST_Lines                 , // Линии
+                BuiltInCategory.OST_TextNotes              ,// Текстовые примечания
+                BuiltInCategory.OST_Stairs                 ,// Лестницы
+                BuiltInCategory.OST_DetailComponents,// например узлы или область маскировки
+                BuiltInCategory.OST_Dimensions,
+                BuiltInCategory.OST_SpotCoordinates,//координаты
+                // === ВАШИ НОВЫЕ КАТЕГОРИИ (ИНЖЕНЕРИЯ) ===
+                BuiltInCategory.OST_PipeCurves     ,        // Трубы
+                BuiltInCategory.OST_MechanicalEquipment,     // Оборудование (ОВ/ВК/Технология)
+                BuiltInCategory.OST_DuctTerminal       ,    // Воздухораспределители (решетки)
+
+                // === АНАЛОГИЧНЫЕ MEP-КАТЕГОРИИ (НЕОБХОДИМЫЕ ДЛЯ КОМПЛЕКТА) ===
+                // 1. Вентиляция
+                BuiltInCategory.OST_DuctCurves ,            // Воздуховоды
+                BuiltInCategory.OST_DuctFitting  ,          // Фитинги воздуховодов (отводы, тройники)
+                BuiltInCategory.OST_DuctAccessory  ,        // Арматура воздуховодов (дроссели, клапаны)
+                BuiltInCategory.OST_FlexDuctCurves  ,       // Гибкие воздуховоды
+
+                // 2. Трубопроводы и сантехника
+                BuiltInCategory.OST_PipeFitting     ,       // Фитинги трубопроводов
+                BuiltInCategory.OST_PipeAccessory    ,      // Арматура трубопроводов (краны, вентили)
+                BuiltInCategory.OST_FlexPipeCurves  ,       // Гибкие трубы
+                BuiltInCategory.OST_PlumbingFixtures  ,     // Сантехнические приборы
+
+                BuiltInCategory.OST_PipeTags,
+
+                // 3. Электрика и слаботочка
+                BuiltInCategory.OST_ElectricalEquipment  ,   // Электрооборудование (щиты)
+                BuiltInCategory.OST_ElectricalFixtures  ,    // Электроустановочные изделия (розетки)
+                BuiltInCategory.OST_LightingFixtures    ,    // Осветительные приборы (светильники)
+                BuiltInCategory.OST_CableTray         ,      // Кабельные лотки
+                BuiltInCategory.OST_Conduit           ,      // Короба / Трубы для кабеля
+                BuiltInCategory.OST_DataDevices        ,     // Сетевые устройства (слаботочка)
+                // добавьте другие нужные категории
+
+                BuiltInCategory.OST_IOSDetailGroups,
+                BuiltInCategory.OST_TitleBlocks,
+
+                BuiltInCategory.OST_Toposolid,
+                BuiltInCategory.OST_StairsRailing,
+                BuiltInCategory.OST_ShaftOpening,
+                BuiltInCategory.OST_RoomSeparationLines,
+
+        };
         public static void Register(bool forceReregister = false)
         {
             var updater = new AutoFillNoteUpdater();
@@ -29,66 +85,8 @@ namespace Reinforcement
 
                 //ElementClassFilter allElementsFilter = new ElementClassFilter(typeof(Element));
 
-                var categoryIds = new HashSet<ElementId>
-                {
-                // === ВАШ ИСХОДНЫЙ СПИСОК (АРХИТЕКТУРА И КОНСТРУКЦИИ) ===
-                new ElementId(BuiltInCategory.OST_Walls),                  // Стены
-                new ElementId(BuiltInCategory.OST_Floors),                 // Перекрытия
-                new ElementId(BuiltInCategory.OST_Ceilings),               // Потолки
-                new ElementId(BuiltInCategory.OST_StructuralColumns),      // Несущие колонны
-                new ElementId(BuiltInCategory.OST_StructuralFraming),      // Несущий каркас (балки)
-                new ElementId(BuiltInCategory.OST_GenericModel),           // Обобщенные модели
-                new ElementId(BuiltInCategory.OST_GenericAnnotation),      // Типовые аннотации
-                new ElementId(BuiltInCategory.OST_Views),                  // Виды
-                new ElementId(BuiltInCategory.OST_Grids),                  // Оси
-                new ElementId(BuiltInCategory.OST_Doors),                  // Двери
-                new ElementId(BuiltInCategory.OST_Windows),                // Окна
-                new ElementId(BuiltInCategory.OST_Lines),                  // Линии
-                new ElementId(BuiltInCategory.OST_TextNotes),              // Текстовые примечания
-                new ElementId(BuiltInCategory.OST_Stairs),                 // Лестницы
-                new ElementId(BuiltInCategory.OST_DetailComponents),// например узлы или область маскировки
-                new ElementId(BuiltInCategory.OST_Dimensions),
-                new ElementId(BuiltInCategory.OST_SpotCoordinates),//координаты
-                // === ВАШИ НОВЫЕ КАТЕГОРИИ (ИНЖЕНЕРИЯ) ===
-                new ElementId(BuiltInCategory.OST_PipeCurves),             // Трубы
-                new ElementId(BuiltInCategory.OST_MechanicalEquipment),     // Оборудование (ОВ/ВК/Технология)
-                new ElementId(BuiltInCategory.OST_DuctTerminal),           // Воздухораспределители (решетки)
-
-                // === АНАЛОГИЧНЫЕ MEP-КАТЕГОРИИ (НЕОБХОДИМЫЕ ДЛЯ КОМПЛЕКТА) ===
-                // 1. Вентиляция
-                new ElementId(BuiltInCategory.OST_DuctCurves),             // Воздуховоды
-                new ElementId(BuiltInCategory.OST_DuctFitting),            // Фитинги воздуховодов (отводы, тройники)
-                new ElementId(BuiltInCategory.OST_DuctAccessory),          // Арматура воздуховодов (дроссели, клапаны)
-                new ElementId(BuiltInCategory.OST_FlexDuctCurves),         // Гибкие воздуховоды
-
-                // 2. Трубопроводы и сантехника
-                new ElementId(BuiltInCategory.OST_PipeFitting),            // Фитинги трубопроводов
-                new ElementId(BuiltInCategory.OST_PipeAccessory),          // Арматура трубопроводов (краны, вентили)
-                new ElementId(BuiltInCategory.OST_FlexPipeCurves),         // Гибкие трубы
-                new ElementId(BuiltInCategory.OST_PlumbingFixtures),       // Сантехнические приборы
-
-                new ElementId(BuiltInCategory.OST_PipeTags),
-
-                // 3. Электрика и слаботочка
-                new ElementId(BuiltInCategory.OST_ElectricalEquipment),     // Электрооборудование (щиты)
-                new ElementId(BuiltInCategory.OST_ElectricalFixtures),      // Электроустановочные изделия (розетки)
-                new ElementId(BuiltInCategory.OST_LightingFixtures),        // Осветительные приборы (светильники)
-                new ElementId(BuiltInCategory.OST_CableTray),               // Кабельные лотки
-                new ElementId(BuiltInCategory.OST_Conduit),                 // Короба / Трубы для кабеля
-                new ElementId(BuiltInCategory.OST_DataDevices),             // Сетевые устройства (слаботочка)
-                // добавьте другие нужные категории
-
-                new ElementId(BuiltInCategory.OST_IOSDetailGroups),
-                new ElementId(BuiltInCategory.OST_TitleBlocks),
-
-                new ElementId(BuiltInCategory.OST_Toposolid),
-                new ElementId(BuiltInCategory.OST_StairsRailing),
-                new ElementId(BuiltInCategory.OST_ShaftOpening),
-                new ElementId(BuiltInCategory.OST_RoomSeparationLines),
-
-
-                }
-            ;
+                var categoryIds = BuiltInCategorys.Select(x=> new ElementId(x)).ToList();
+               
 
                 //categoryIds = new List<ElementId>();
                 //foreach (BuiltInCategory bic in Enum.GetValues(typeof(BuiltInCategory)))

@@ -127,6 +127,11 @@
     <Compile Include="App_Panel_3_2_OV_utilit.cs" />
     <Compile Include="DecorViewPlan\3_Grid3To2D.cs" />
     <Compile Include="DecorViewPlan\4_GridSizes.cs" />
+    <Compile Include="FOP_Add\FopAdd.cs" />
+    <Compile Include="FOP_Add\FopAddUsers.cs" />
+    <Compile Include="FOP_Add\WPF_FOP.xaml.cs">
+      <DependentUpon>WPF_FOP.xaml</DependentUpon>
+    </Compile>
     <Compile Include="KR_ExportImport\ExcelImportWindow.xaml.cs">
       <DependentUpon>ExcelImportWindow.xaml</DependentUpon>
     </Compile>
@@ -449,6 +454,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FOP_Add\WPF_FOP.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

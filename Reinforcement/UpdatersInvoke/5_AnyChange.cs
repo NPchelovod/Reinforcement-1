@@ -14,6 +14,7 @@ namespace Reinforcement
         public static bool AllUpdater = true;
         public static void Execute(UpdaterData data)
         {
+
             if (!AllUpdater) { return; }
             //сюда приходят от всех изменений элементы
 
