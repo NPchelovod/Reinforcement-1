@@ -149,6 +149,11 @@ namespace Reinforcement
     }
     public class AutoFillNoteUpdater : IUpdater
     {
+        public void Execute(UpdaterData data)
+        {
+            AnyChange.Execute(data); // передаём главному методу распределения
+        }
+
         //автор элемента записывается при создании
         public static bool regWriterAvtor=true;
         public static bool regWriterAvtorPrim = false;
@@ -164,84 +169,63 @@ namespace Reinforcement
         public static string time;
         public static string username;
         public static string userDate;
-        public void Execute(UpdaterData data)
+
+        private static DateTime _lastExecutionTime = DateTime.MinValue;
+        private static readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
+
+        
+       
+
+        public static void AvtorUpdater(UpdaterData data)
         {
             if (!regWriterAvtor) { return; }
 
             Document doc = data.GetDocument();
             DateTime now = DateTime.Now;
             time = now.ToString("dd.MM.yy.HH");
-           
+
             username = doc.Application.Username;
             userDate = username + "_" + time;
 
             var addedIds = data.GetAddedElementIds();// — элементы, которые были добавлены в модель;
             var modifiedIds = data.GetModifiedElementIds();
             //ExecuteNew(data, doc);// обработка добавленных
+
+            now = DateTime.UtcNow;
+            if (now - _lastExecutionTime < _minimumInterval)
+            {
+                return; // прошло слишком мало времени — игнорируем
+            }
+
+
             ExecuteChange(data, doc, addedIds); // обработка изменённых
             if (regWriterSoAvtor)
             {
                 ExecuteChange(data, doc, modifiedIds); // обработка изменённых
             }
-            
         }
-
-        //обработка новых элементов
-        //private void ExecuteNew(UpdaterData data, Document doc)
-        //{
-            
-        //    var addedIds = data.GetAddedElementIds();// — элементы, которые были добавлены в модель;
-        //    if (!addedIds.Any())
-        //        return;
-
-        //    // Имя текущего пользователя Revit
-           
-
-        //    foreach (var id in addedIds)
-        //    {
-        //        Element element = doc.GetElement(id);
-        //        if (element == null)
-        //            continue;
-
-        //        // Ищем параметр по имени
-
-        //        Parameter noteParam = element.LookupParameter(NameAvtor);
-        //        if (noteParam == null && regWriterAvtorPrim)
-        //        {
-        //            noteParam = element.LookupParameter(NamePrimeh);
-        //        }
-        //        if (noteParam == null || noteParam.IsReadOnly)
-        //            continue;
-
-        //        // Заполняем параметр
-        //        SetParam(noteParam, userDate);
-                
-        //        Parameter noteParam2 = element.LookupParameter(NameSoAvtor);
-        //        if (noteParam2 != null)
-        //        {
-                    
-        //            //записываем соавтора
-                    
-        //            SetParam(noteParam2, userDate);
-                    
-        //        }
-
-        //    }
-        //}
+        
 
 
-        public bool SetParam(Parameter param, string value)
+        public static bool SetParam(Parameter param, string value)
         {
             if(param == null) { return false; }
             string pastValue = param.AsString();
 
             if(!string.IsNullOrEmpty(pastValue) && pastValue == value) {  return false; }
-            param.Set(value);
+            try
+            {
+                param.Set(value);
+            }
+            catch
+            {
+                return false;
+            }
             return true;
         }
 
-        public HashSet<ElementId> pastIds=new HashSet<ElementId>();//от рекурсии
-        private void ExecuteChange(UpdaterData data, Document doc, ICollection<ElementId> modifiedIds)
+        //public HashSet<ElementId> pastIds=new HashSet<ElementId>();//от рекурсии
+        private static void ExecuteChange(UpdaterData data, Document doc, ICollection<ElementId> modifiedIds)
         {
 
             
@@ -302,10 +286,11 @@ namespace Reinforcement
             }
             //pastIds = pastId2;
 
-
+            DateTime now = DateTime.UtcNow;
+            _lastExecutionTime = now;
         }
 
-        private string nameNew(string pastValue)
+        private static string nameNew(string pastValue)
         {
             string newValue = "";
 

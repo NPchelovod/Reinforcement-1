@@ -14,7 +14,8 @@ namespace Updaters
 {
     public class AutoHoleFloorPoint : IUpdater
     {
-        
+        private DateTime _lastExecutionTime = DateTime.MinValue;
+        private readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
         public void Execute(UpdaterData data)
         {
             // получает измененные элементы и решает что делать с измененными элементами

@@ -82,6 +82,7 @@ namespace Updaters
                 {
                     shouldProcess = !pastElements.TryGetValue(id, out var date)
                                  || (now - date).TotalSeconds >= updateTime;
+
                 }
 
                 if (!shouldProcess) 
@@ -111,7 +112,8 @@ namespace Updaters
         private static List<string> nameWidths = new List<string> { "ЕС_Ширина полки", "Ширина полки" };
         
         private static Dictionary<ElementId, DateTime> pastElements = new Dictionary<ElementId, DateTime>();
-
+        private DateTime _lastExecutionTime = DateTime.MinValue;
+        private readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
         private bool shrift(Document doc,Element element, ElementId elementId)
         {
             try
@@ -120,8 +122,18 @@ namespace Updaters
 
                 if (!name.Contains("Выноска") && !name.Contains("выноска")) { return false; }
                 
+                now = DateTime.UtcNow;
+           
+
                 lock (pastElements) // ✅ Короткий lock 
                 {
+                    //if (pastElements.TryGetValue(elementId, out var pd))
+                    //{
+                    //    if (now - pd < _minimumInterval)
+                    //    {
+                    //        return false;
+                    //    }
+                    //}
                     pastElements[elementId] = now;
                 }
 

@@ -343,6 +343,7 @@
     <Compile Include="OV_Construct\Utilit_3_5Vinosky_ov_type_size.cs" />
     <Compile Include="OV_Construct\Utilit_3_7Create_List_of_plans.cs" />
     <Compile Include="UpdatersInvoke\3_ZacladRegisterUpdater.cs" />
+    <Compile Include="UpdatersInvoke\5_AnyChange.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />

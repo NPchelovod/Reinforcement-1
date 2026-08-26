@@ -23,6 +23,9 @@ namespace Reinforcement
             AutoFillNoteUpdater.regWriterAvtor= chkFillAuthor.IsChecked == true;
 
             AutoFillNoteUpdater.regWriterAvtorPrim = chkFillAuthorADSK.IsChecked == true;
+
+            AnyChange.AllUpdater=chkUpdater.IsChecked == true;
+
             DialogResult = true;
             Close();
         }
