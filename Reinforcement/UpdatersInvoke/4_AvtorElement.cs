@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
 using Updaters;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
@@ -159,6 +160,9 @@ namespace Reinforcement
         public static bool regWriterSoAvtor = true;     // записывать соавтора
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
+
+        public static bool correctGroup = true;
+
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
         public static string NamePrimeh = "ADSK_Примечание";
@@ -243,17 +247,54 @@ namespace Reinforcement
             }
             return true;
         }
+        private static bool IsGroupCurrentlyEdited(Document doc, Group group)
+        {
+            UIDocument uidoc = RevitAPI.UiDocument;
+            if (uidoc == null) return false;
+            Document activeDoc = uidoc.Document;
+            // В режиме редактирования группы активный документ – временный, типа GroupDocument
 
+            return activeDoc.GetType() == typeof(Document) && activeDoc.IsModifiable; // э
+        }
         /// <summary>
         /// Обработка списка элементов: запись автора (при необходимости) и соавтора.
         /// </summary>
+        /// 
         private static void ProcessElements(Document doc, ICollection<ElementId> ids, bool isNewElement)
         {
             foreach (var id in ids)
             {
                 Element element = doc.GetElement(id);
                 if (element == null) continue;
+                // Проверка: если элемент входит в группу и группа не в режиме редактирования – пропускаем
+                if (!correctGroup)
+                {
+                    
+                    ElementId groupId = element.GroupId;
+                   
+                    if (groupId != ElementId.InvalidElementId)
+                    {
+                        bool isFamily = doc.IsFamilyDocument; // true, если открыто семейство (.rfa)
+                        bool isProject = !isFamily;          // проект (.rvt)
+                        
+                        Group group = doc.GetElement(groupId) as Group;
+                        var activeView = RevitAPI.UiDocument.Document.ActiveView.ViewType;
+                        // Точно режим редактирования группы
+                        
+                       
+                        if (group != null )
+                        {
+                            
+                            //Group editedGroup = doc.GetElement(activeView.GroupId) as Group;
+                                // editedGroup — группа, которая сейчас редактируется
+                            
 
+                            continue; // Группа не редактируется
+                            
+
+                        }
+                    }
+                  }
                 // 1. Параметр для автора (или запасной)
                 Parameter authorParam = element.LookupParameter(NameAvtor);
                 if (authorParam == null && regWriterAvtorPrim)
@@ -288,6 +329,7 @@ namespace Reinforcement
                 }
             }
         }
+        
 
         /// <summary>
         /// Формирует новую строку соавторов на основе предыдущей.

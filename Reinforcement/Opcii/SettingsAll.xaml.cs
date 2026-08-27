@@ -7,11 +7,18 @@ namespace Reinforcement
         public SettingsWindow()
         {
             InitializeComponent();
-
+            Initial();
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
 
+        private void Initial()
+        {
+            chkFillAuthor.IsChecked = AutoFillNoteUpdater.regWriterAvtor;
+            //chkFillAuthorADSK.IsChecked = AutoFillNoteUpdater.regWriterAvtorPrim;
+            chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
+            AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
+        }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             // Сохраняем значения
@@ -22,7 +29,10 @@ namespace Reinforcement
 
             AutoFillNoteUpdater.regWriterAvtor= chkFillAuthor.IsChecked == true;
 
-            AutoFillNoteUpdater.regWriterAvtorPrim = chkFillAuthorADSK.IsChecked == true;
+            //AutoFillNoteUpdater.regWriterAvtorPrim = chkFillAuthorADSK.IsChecked == true;
+
+            AutoFillNoteUpdater.correctGroup= chk_GroupPass.IsChecked != true;
+
 
             AnyChange.AllUpdater=chkUpdater.IsChecked == true;
 

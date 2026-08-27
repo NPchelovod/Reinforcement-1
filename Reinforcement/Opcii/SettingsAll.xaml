@@ -15,14 +15,14 @@
                       IsChecked="True"
                       Margin="0,5,0,5"/>
 
-            <CheckBox x:Name="chkFillAuthorADSK"
-           Content="Заполнять автора (ADSK_Примечание)"
+            <CheckBox x:Name="chk_GroupPass"
+           Content="Обходить группы при заполнении автора"
            IsChecked="False"
            Margin="0,5,0,5"/>
             
             <CheckBox x:Name="chkUpdater"
-            Content="Апдейтеры включены (выноски, авторы...)"
-            IsChecked="False"
+            Content="Все Апдейтеры включены (выноски, авторы...)"
+            IsChecked="True"
             Margin="0,5,0,5"/>
 
             <!-- Другие булевы настройки можно добавить аналогично -->
