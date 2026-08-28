@@ -36,6 +36,13 @@ namespace Reinforcement
 
             AnyChange.AllUpdater=chkUpdater.IsChecked == true;
 
+
+            if (AnyChange.AllUpdater && rePodpiska.IsChecked == true)
+            {
+                AnyChange.PodpiskaAll();//переподписываеся
+            }
+
+
             DialogResult = true;
             Close();
         }

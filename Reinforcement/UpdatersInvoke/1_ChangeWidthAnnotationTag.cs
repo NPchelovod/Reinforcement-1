@@ -60,6 +60,8 @@ namespace Updaters
         private DateTime now;
         public void Execute(UpdaterData data)
         {
+            if (!AnyChange.AllUpdater) { return; }
+
             Document doc = data.GetDocument();
             //var ids = data.GetModifiedElementIds();
             var ids = data.GetModifiedElementIds().ToList(); // ✅ Материализовать!

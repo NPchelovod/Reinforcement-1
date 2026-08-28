@@ -42,8 +42,8 @@ namespace Reinforcement
     {
 
 
-        public static UIControlledApplication Application { get; private set; }
-
+        public static UIControlledApplication Application { get; private set; }=null;
+       // public static UIApplication _uiApplication => RevitAPI.UiApp
         public static class PanelVisibility
         {
             /*
@@ -86,11 +86,14 @@ namespace Reinforcement
     public Result OnStartup(UIControlledApplication app)
         {
             Application = app; // Сохраняем app в статическое свойство
+            app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
+            
             //Create tab
             string tabName = "ЕС BIM";
             app.CreateRibbonTab(tabName);
+            // Подписываемся на событие инициализации
+           
 
-            
             // сюда вписываешь новую панель и вообще все панели здесь в списке, список это порядок панелей, отображение панелей на конкретной конфигурации задача конфигуратора, в него иди и там настраивай
             var panelNames = new List<string>
             {
@@ -210,16 +213,7 @@ namespace Reinforcement
 
 
 
-            //8. Updaterы
-            RegisterUpdater.addInId = app.ActiveAddInId;
-            RegisterUpdater.Register();
-
-            RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
-            RegisterZakladkaUpdater.Register();
-
-            RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
-
-            RegisterAutoFillUpdater.Register();
+            AnyChange.PodpiskaAll();// подписка на все
            // AutoFillNoteUpdater.RegisterUpdater();
             return Result.Succeeded;
         }
@@ -235,6 +229,26 @@ namespace Reinforcement
         {
             return Result.Succeeded;
         }
+        private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
+        {
+            // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
+            var app = sender as Autodesk.Revit.ApplicationServices.Application;
+            if (app != null)
+            {
+                // Получаем UIApplication
+                UIApplication uiApp = new UIApplication(app);
+                // Теперь можно работать с uiApp
+                // Например, сохранить в статическое свойство
+                RevitAPI.Initialize(uiApp);
+                //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
+            }
+        }
+        public static bool IsGroupEditModeActive { get; private set; }
+        //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)
+        //{
+        //    // e.Active указывает, вошли (true) или вышли (false) из режима
+        //    IsGroupEditModeActive = e.Active;
+        //}
     }
 }
 

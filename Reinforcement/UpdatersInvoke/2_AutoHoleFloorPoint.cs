@@ -18,6 +18,7 @@ namespace Updaters
         private readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
         public void Execute(UpdaterData data)
         {
+            if (!AnyChange.AllUpdater) { return; }
             // получает измененные элементы и решает что делать с измененными элементами
             Document doc = data.GetDocument();
             var ids = data.GetModifiedElementIds().ToList();

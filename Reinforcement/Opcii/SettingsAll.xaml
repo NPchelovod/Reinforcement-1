@@ -25,6 +25,11 @@
             IsChecked="True"
             Margin="0,5,0,5"/>
 
+            <CheckBox x:Name="rePodpiska"
+        Content="System переподписаться (при вылете подписки Updater)"
+        IsChecked="False"
+            Margin="0,5,0,5"/>
+
             <!-- Другие булевы настройки можно добавить аналогично -->
             <!--
             <CheckBox x:Name="chkSomeOtherOption"

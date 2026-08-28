@@ -18,6 +18,7 @@ namespace Reinforcement
            ref string message,
            ElementSet elements)
         {
+            RevitAPI.Initialize(commandData);
             var SettingsWindow = new SettingsWindow();
             bool? resultW = SettingsWindow.ShowDialog();
             if (resultW != true)

@@ -10,6 +10,7 @@ namespace Reinforcement
     /// </summary>
     public static class RevitAPI
     {
+        
         private static UIApplication _uiApplication;
 
         /// <summary>
@@ -52,7 +53,10 @@ namespace Reinforcement
 
             _uiApplication = commandData.Application;
         }
-
+        public static void Initialize(UIApplication uIApplication)
+        {
+            _uiApplication = uIApplication;
+        }
         /// <summary>
         /// Перевод из внутренних единиц Revit (футы) в миллиметры.
         /// </summary>

@@ -6,6 +6,7 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using Reinforcement;
 namespace Updaters
 {
     [Transaction(TransactionMode.Manual)]
@@ -60,6 +61,8 @@ namespace Updaters
         List<string> Soglass = new List<string>() { "Согласовано АР", "Согласовано ИОС", "Согласовано КР" };
         public void Execute(UpdaterData data)
         {
+            if (!AnyChange.AllUpdater) { return; }
+
             Document doc = data.GetDocument();
             // Все элементы, которые были изменены (включая перемещённые)
             ICollection<ElementId> modifiedIds = data.GetModifiedElementIds();

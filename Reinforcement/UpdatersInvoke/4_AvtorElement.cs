@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Markup;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -74,6 +75,16 @@ namespace Reinforcement
                 BuiltInCategory.OST_ShaftOpening,
                 BuiltInCategory.OST_RoomSeparationLines,
 
+                BuiltInCategory.OST_StructConnections, //гидрошпонка
+                BuiltInCategory.OST_RvtLinks, //связанные файлоы
+                BuiltInCategory.OST_StructuralFoundation, //сваи и тп
+                BuiltInCategory.OST_Sheets,
+                BuiltInCategory.OST_Cameras,
+                BuiltInCategory.OST_Materials,
+                BuiltInCategory.OST_ProjectBasePoint,
+                BuiltInCategory.OST_SharedBasePoint,
+                 
+
         };
         public static void Register(bool forceReregister = false)
         {
@@ -87,8 +98,15 @@ namespace Reinforcement
                 //ElementClassFilter allElementsFilter = new ElementClassFilter(typeof(Element));
 
                 var categoryIds = BuiltInCategorys.Select(x=> new ElementId(x)).ToList();
-               
 
+                //метод второй для всех категорий
+
+                var allCategories = Enum.GetValues(typeof(BuiltInCategory)).Cast<BuiltInCategory>();
+                if(allCategories.Count()> categoryIds.Count)
+                {
+                    //очень много категорий так нельзя
+                   // categoryIds = allCategories.Select(x => new ElementId(x)).ToList();
+                }
                 //categoryIds = new List<ElementId>();
                 //foreach (BuiltInCategory bic in Enum.GetValues(typeof(BuiltInCategory)))
                 //{
@@ -96,21 +114,21 @@ namespace Reinforcement
                 //    if (bic == BuiltInCategory.INVALID || bic == BuiltInCategory.OST_IOSModelGroups)
                 //        continue;
 
-                //    try
-                //    {
-                //        categoryIds.Add(new ElementId(bic));
-                //    }
-                //    catch
-                //    {
-                //        // Некоторые категории могут быть недопустимы для ElementId — просто пропускаем
-                //    }
-                //}
+                    //    try
+                    //    {
+                    //        categoryIds.Add(new ElementId(bic));
+                    //    }
+                    //    catch
+                    //    {
+                    //        // Некоторые категории могут быть недопустимы для ElementId — просто пропускаем
+                    //    }
+                    //}
 
 
-                // Фильтр: все элементы (или только нужные категории)
-                //ElementClassFilter classFilter = new ElementClassFilter(typeof(Element));
+                    // Фильтр: все элементы (или только нужные категории)
+                    //ElementClassFilter classFilter = new ElementClassFilter(typeof(Element));
 
-                ElementMulticategoryFilter classFilter = new ElementMulticategoryFilter(categoryIds.ToList());
+                ElementMulticategoryFilter classFilter = new ElementMulticategoryFilter(categoryIds);
 
 
                 //ElementClassFilter classFilter = new ElementClassFilter(typeof(FamilyInstance));
@@ -161,7 +179,7 @@ namespace Reinforcement
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
 
-        public static bool correctGroup = true;
+        public static bool correctGroup = false;
 
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
@@ -204,7 +222,7 @@ namespace Reinforcement
 
             // Устанавливаем флаг выполнения
             _isUpdating = true;
-            try
+            //try
             {
                 // Обрабатываем добавленные (автор при создании)
                 if (addedIds.Count > 0)
@@ -221,7 +239,7 @@ namespace Reinforcement
                 // Обновляем время последнего выполнения
                 _lastExecutionTime = DateTime.UtcNow;
             }
-            finally
+            //finally
             {
                 _isUpdating = false;
             }
@@ -256,49 +274,69 @@ namespace Reinforcement
 
             return activeDoc.GetType() == typeof(Document) && activeDoc.IsModifiable; // э
         }
+        public static bool IsInGroupEditMode(Document doc)
+        {
+         
+            View activeView = doc.ActiveView;
+            // Если у активного вида есть GroupId, значит мы находимся в режиме редактирования группы
+            return activeView.GroupId != ElementId.InvalidElementId;
+        }
         /// <summary>
         /// Обработка списка элементов: запись автора (при необходимости) и соавтора.
         /// </summary>
         /// 
         private static void ProcessElements(Document doc, ICollection<ElementId> ids, bool isNewElement)
         {
+            
+            //View activeView = doc.ActiveView;
+            //при открывании проекта активного вида может не быть
+            //bool isGroupEditMode = false;
+            //if (activeView != null)
+            //{
+            //    ElementId editingGroupId = activeView.GroupId;
+            //    // Режим редактирования группы активен, если у активного вида есть GroupId
+            //    isGroupEditMode = activeView.GroupId != ElementId.InvalidElementId;
+            //}
+
             foreach (var id in ids)
             {
                 Element element = doc.GetElement(id);
                 if (element == null) continue;
                 // Проверка: если элемент входит в группу и группа не в режиме редактирования – пропускаем
-                if (!correctGroup)
+
+                ElementId groupId = element.GroupId;
+                if (groupId != ElementId.InvalidElementId)
                 {
-                    
-                    ElementId groupId = element.GroupId;
+                    // Проверяем, связан ли активный вид со сборкой
+                    //ElementId assemblyId = activeView.AssemblyInstanceId;
+                    //if (assemblyId != ElementId.InvalidElementId) не работает
+                    //{
+                    //    // Мы, вероятно, находимся в режиме редактирования сборки assemblyId
+                    //    // Дополнительно можно проверить, что изменяемые элементы принадлежат этой сборке
                    
-                    if (groupId != ElementId.InvalidElementId)
+                   
+                    //    if (element.AssemblyInstanceId == assemblyId)
+                    //    {
+                    //        // Элемент из редактируемой сборки
+
+                    //        int cd = 0;
+                    //    }
+                    //    int c = 0;
+                    //}
+                    
+                
+                    ////не знаю костыль работат только галка correctGroup)
+                    //var ui = RevitAPI.UiApplication.ActiveUIDocument;//Возможно, в активном документе есть свойство, указывающее на активную сборку.
+                    if (!correctGroup)
                     {
-                        bool isFamily = doc.IsFamilyDocument; // true, если открыто семейство (.rfa)
-                        bool isProject = !isFamily;          // проект (.rvt)
-                        
-                        Group group = doc.GetElement(groupId) as Group;
-                        var activeView = RevitAPI.UiDocument.Document.ActiveView.ViewType;
-                        // Точно режим редактирования группы
-                        
-                       
-                        if (group != null )
-                        {
-                            
-                            //Group editedGroup = doc.GetElement(activeView.GroupId) as Group;
-                                // editedGroup — группа, которая сейчас редактируется
-                            
-
-                            continue; // Группа не редактируется
-                            
-
-                        }
+                        continue;
                     }
-                  }
+                }
+
                 // 1. Параметр для автора (или запасной)
                 Parameter authorParam = element.LookupParameter(NameAvtor);
-                if (authorParam == null && regWriterAvtorPrim)
-                    authorParam = element.LookupParameter(NamePrimeh);
+                //if (authorParam == null && regWriterAvtorPrim)
+                //    authorParam = element.LookupParameter(NamePrimeh);
 
                 if (authorParam == null) continue; // нет нужного параметра – пропускаем
 
