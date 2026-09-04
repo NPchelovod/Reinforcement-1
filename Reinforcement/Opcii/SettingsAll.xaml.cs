@@ -23,8 +23,8 @@ namespace Reinforcement
             AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
 
             var buildDate = App.TargetLatestTime;
-            var version = App.Version;
-            txtPluginVersion.Text = $"Плагин от: {buildDate:dd.MM.yyyy HH:mm}  (v{version}_170826)";
+            var version = App.VersionString; 
+            txtPluginVersion.Text = $"Плагин от: {buildDate:yy.MM.dd.HH}({version})";
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {

@@ -3,20 +3,21 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using System.Windows.Forms;
-using AW = Autodesk.Windows;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
+using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Updaters;
-using System.Diagnostics;
-using System.Linq;
+using AW = Autodesk.Windows;
 //using Autodesk.Windows;
 
 //using System.Windows.Controls;
@@ -256,47 +257,75 @@ namespace Reinforcement
         //    IsGroupEditModeActive = e.Active;
         //}
 
-
         public static void StartUpdateENS()
         {
-            string updaterSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS";
-            string tempUpdaterDir = Path.Combine(Path.GetTempPath(), "ENS_Updater");
-            Directory.CreateDirectory(tempUpdaterDir);
-
-            // Копируем UpdaterENS целиком во временную папку
-            CopyDirectory(updaterSourceDir, tempUpdaterDir);
-            string tempUpdaterExe = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
-            if (!File.Exists(tempUpdaterExe))
-                return;
-
-            RemoveZoneIdentifiersRecursively(tempUpdaterDir);
-
-            // Папка с новыми файлами плагина
-            string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ENSPlagin";
-            // Папка, куда будет устанавливаться обновление
-            string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            // Папка для резервных копий заменяемых файлов
-            string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ФайлыАвтообновления";
-
-            int pid = Process.GetCurrentProcess().Id;
-
-            Process.Start(new ProcessStartInfo
+            try
             {
-                FileName = tempUpdaterExe,
-                Arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\"",
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true
-            });
+                string updaterSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS";
+                string tempUpdaterDir = Path.Combine(Path.GetTempPath(), "ENS_Updater");
+                Directory.CreateDirectory(tempUpdaterDir);
 
+                // Копируем UpdaterENS целиком во временную папку
+                CopyDirectory(updaterSourceDir, tempUpdaterDir);
+                string tempUpdaterExe = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
+                if (!File.Exists(tempUpdaterExe))
+                {
+                    TaskDialog.Show("Ошибка обновления", "Не найден исполняемый файл обновления.");
+                    return;
+                }
 
-            //string targetDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // текущая папка плагина
+                RemoveZoneIdentifiersRecursively(tempUpdaterDir);
 
-            // Получаем дату самого свежего файла в текущей папке плагина
-            TargetLatestTime = GetLatestFileTime(targetPluginDir);
+                // Папка с новыми файлами плагина
+                string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ENSPlagin";
+                if (!Directory.Exists(sourcePluginDir))
+                {
+                    TaskDialog.Show("Ошибка обновления", "Папка с обновлением не найдена.");
+                    return;
+                }
 
-            // Версия сборки (необязательно)
-            Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                // Папка, куда будет устанавливаться обновление (текущая папка плагина)
+                string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                // Папка для резервных копий заменяемых файлов
+                string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ФайлыАвтообновления";
+                Directory.CreateDirectory(backupDir); // на всякий случай
+
+                int pid = Process.GetCurrentProcess().Id;
+
+                // Формируем аргументы: pid, source, target, backup, logFile
+                string logFile = Path.Combine(backupDir, "update_log.txt");
+                string arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\" \"{logFile}\"";
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = tempUpdaterExe,
+                    Arguments = arguments,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true,
+                    UseShellExecute = false // для надёжности
+                });
+
+                // Вычисляем дату самого свежего файла в текущей папке плагина (необязательно)
+                TargetLatestTime = GetLatestFileTime(targetPluginDir);
+
+                // Версия сборки
+                Version = Assembly.GetExecutingAssembly().GetName().Version;
+                VersionString = Assembly.GetExecutingAssembly()
+                    .GetCustomAttribute<AssemblyFileVersionAttribute>()
+                    ?.Version;
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка запуска обновления", ex.Message);
+            }
         }
+        
+
+        public static DateTime TargetLatestTime = DateTime.MinValue;
+        public static Version Version = null;
+        public static string VersionString = null;
+
         // Рекурсивное копирование директории с учётом дат изменения
         private static void CopyDirectory(string sourceDir, string targetDir)
         {
@@ -335,7 +364,7 @@ namespace Reinforcement
                 throw new ArgumentException("fullPath is not inside basePath");
         }
 
-        // Рекурсивное удаление альтернативного потока Zone.Identifier
+        // Рекурсивное удаление альтернативного потока Zone.Identifier чтобы не показывать предупреждение «Этот файл получен из другой зоны»;
         private static void RemoveZoneIdentifiersRecursively(string directory)
         {
             foreach (var filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
@@ -366,8 +395,7 @@ namespace Reinforcement
                 // Игнорируем ошибки, файл может не иметь этого потока
             }
         }
-        public static DateTime TargetLatestTime = DateTime.MinValue;
-        public static Version Version =null;
+       
 
         public static DateTime GetLatestFileTime(string directoryPath)
         {
@@ -385,7 +413,7 @@ namespace Reinforcement
                 return DateTime.MinValue;
 
             // Максимальная дата последнего изменения
-            return files.Max(f => f.CreationTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
+            return files.Max(f => f.LastWriteTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
         }
     }
 }
