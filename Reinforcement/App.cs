@@ -259,41 +259,35 @@ namespace Reinforcement
 
         public static void StartUpdateENS()
         {
-            // Путь к исходной папке, где лежит UpdaterENS.exe
-            string sourceUpdaterDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\UpdaterENS";
-            string sourceExePath = Path.Combine(sourceUpdaterDir, "UpdaterENS.exe");
-
-            // Создаём временную папку (фиксированное имя, чтобы не плодить мусор)
+            string updaterSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS";
             string tempUpdaterDir = Path.Combine(Path.GetTempPath(), "ENS_Updater");
             Directory.CreateDirectory(tempUpdaterDir);
 
-            // Копируем все файлы и подпапки из исходной директории во временную
-            CopyDirectory(sourceUpdaterDir, tempUpdaterDir);
-
-            // Путь к скопированному exe
-            string tempExePath = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
-            if (!File.Exists(tempExePath))
-            {
-                // Ошибка: exe не скопировался
+            // Копируем UpdaterENS целиком во временную папку
+            CopyDirectory(updaterSourceDir, tempUpdaterDir);
+            string tempUpdaterExe = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
+            if (!File.Exists(tempUpdaterExe))
                 return;
-            }
 
-            // Удаляем Zone.Identifier со всех скопированных файлов, чтобы снять блокировку
             RemoveZoneIdentifiersRecursively(tempUpdaterDir);
 
-            // Аргументы для Updater'а
-            string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\ENSPlagin"; // откуда брать новые файлы плагина
-            string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // куда обновлять
+            // Папка с новыми файлами плагина
+            string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ENSPlagin";
+            // Папка, куда будет устанавливаться обновление
+            string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            // Папка для резервных копий заменяемых файлов
+            string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ФайлыАвтообновления";
+
             int pid = Process.GetCurrentProcess().Id;
 
-            // Запускаем Updater из временной папки
             Process.Start(new ProcessStartInfo
             {
-                FileName = tempExePath,
-                Arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\"",
+                FileName = tempUpdaterExe,
+                Arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\"",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true
             });
+
 
             //string targetDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // текущая папка плагина
 
