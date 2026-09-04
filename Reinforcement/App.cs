@@ -259,31 +259,119 @@ namespace Reinforcement
 
         public static void StartUpdateENS()
         {
-            // Путь к Updater.exe (можно хранить в ресурсах или в папке плагина)
-            //string updaterPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UpdaterENS.exe");
-            string updaterPath = Path.Combine("Y:\\Revit\\_ЕС BIM_Плагин\\3_Автообновление\\UpdaterENS", "UpdaterENS.exe");
-            // Аргументы
-            string sourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\ENSPlagin"; // откуда копировать новые файлы
-            string targetDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // текущая папка плагина
+            // Путь к исходной папке, где лежит UpdaterENS.exe
+            string sourceUpdaterDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\UpdaterENS";
+            string sourceExePath = Path.Combine(sourceUpdaterDir, "UpdaterENS.exe");
+
+            // Создаём временную папку (фиксированное имя, чтобы не плодить мусор)
+            string tempUpdaterDir = Path.Combine(Path.GetTempPath(), "ENS_Updater");
+            Directory.CreateDirectory(tempUpdaterDir);
+
+            // Копируем все файлы и подпапки из исходной директории во временную
+            CopyDirectory(sourceUpdaterDir, tempUpdaterDir);
+
+            // Путь к скопированному exe
+            string tempExePath = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
+            if (!File.Exists(tempExePath))
+            {
+                // Ошибка: exe не скопировался
+                return;
+            }
+
+            // Удаляем Zone.Identifier со всех скопированных файлов, чтобы снять блокировку
+            RemoveZoneIdentifiersRecursively(tempUpdaterDir);
+
+            // Аргументы для Updater'а
+            string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\ENSPlagin"; // откуда брать новые файлы плагина
+            string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // куда обновлять
             int pid = Process.GetCurrentProcess().Id;
 
-            // Запускаем процесс
+            // Запускаем Updater из временной папки
             Process.Start(new ProcessStartInfo
             {
-                FileName = updaterPath,
-                Arguments = $"\"{pid}\" \"{sourceDir}\" \"{targetDir}\"",
+                FileName = tempExePath,
+                Arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\"",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true
             });
 
+            //string targetDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // текущая папка плагина
 
             // Получаем дату самого свежего файла в текущей папке плагина
-            TargetLatestTime = GetLatestFileTime(targetDir);
+            TargetLatestTime = GetLatestFileTime(targetPluginDir);
 
             // Версия сборки (необязательно)
             Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         }
+        // Рекурсивное копирование директории с учётом дат изменения
+        private static void CopyDirectory(string sourceDir, string targetDir)
+        {
+            if (!Directory.Exists(sourceDir))
+                return;
 
+            Directory.CreateDirectory(targetDir);
+
+            foreach (var filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string relativePath = GetRelativePath(sourceDir, filePath);
+                string targetFilePath = Path.Combine(targetDir, relativePath);
+                string targetFileDir = Path.GetDirectoryName(targetFilePath);
+                Directory.CreateDirectory(targetFileDir);
+
+                // Копируем, если файл отсутствует или источник новее
+                if (!File.Exists(targetFilePath) ||
+                    File.GetLastWriteTimeUtc(filePath) > File.GetLastWriteTimeUtc(targetFilePath))
+                {
+                    File.Copy(filePath, targetFilePath, overwrite: true);
+                }
+            }
+        }
+        // Вычисление относительного пути (для .NET Framework 4.8)
+        private static string GetRelativePath(string basePath, string fullPath)
+        {
+            basePath = Path.GetFullPath(basePath);
+            fullPath = Path.GetFullPath(fullPath);
+
+            if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                basePath += Path.DirectorySeparatorChar;
+
+            if (fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+                return fullPath.Substring(basePath.Length);
+            else
+                throw new ArgumentException("fullPath is not inside basePath");
+        }
+
+        // Рекурсивное удаление альтернативного потока Zone.Identifier
+        private static void RemoveZoneIdentifiersRecursively(string directory)
+        {
+            foreach (var filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    string zonePath = filePath + ":Zone.Identifier";
+                    if (File.Exists(zonePath))
+                        File.Delete(zonePath);
+                }
+                catch
+                {
+                    // Игнорируем ошибки удаления
+                }
+            }
+        }
+
+        private static void RemoveZoneIdentifier(string filePath)
+        {
+            string zoneIdentifierPath = filePath + ":Zone.Identifier";
+            try
+            {
+                if (File.Exists(zoneIdentifierPath))
+                    File.Delete(zoneIdentifierPath);
+            }
+            catch
+            {
+                // Игнорируем ошибки, файл может не иметь этого потока
+            }
+        }
         public static DateTime TargetLatestTime = DateTime.MinValue;
         public static Version Version =null;
 
