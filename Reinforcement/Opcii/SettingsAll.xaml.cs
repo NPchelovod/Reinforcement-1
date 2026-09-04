@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 
 namespace Reinforcement
 {
@@ -7,17 +8,23 @@ namespace Reinforcement
         public SettingsWindow()
         {
             InitializeComponent();
-            Initial();
+
+            this.Loaded += SettingsWindow_Loaded;
+            //Initial();
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
 
-        private void Initial()
+        private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             chkFillAuthor.IsChecked = AutoFillNoteUpdater.regWriterAvtor;
             //chkFillAuthorADSK.IsChecked = AutoFillNoteUpdater.regWriterAvtorPrim;
             chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
             AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
+
+            var buildDate = App.TargetLatestTime;
+            var version = App.Version;
+            txtPluginVersion.Text = $"Плагин от: {buildDate:dd.MM.yyyy HH:mm}  (v{version}_1655)";
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {

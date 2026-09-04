@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Updaters;
 using System.Diagnostics;
+using System.Linq;
 //using Autodesk.Windows;
 
 //using System.Windows.Controls;
@@ -214,7 +215,12 @@ namespace Reinforcement
 
 
             AnyChange.PodpiskaAll();// подписка на все
-           // AutoFillNoteUpdater.RegisterUpdater();
+                                    // AutoFillNoteUpdater.RegisterUpdater();
+
+            
+            //для автообновления
+            StartUpdateENS();
+
             return Result.Succeeded;
         }
 
@@ -249,6 +255,56 @@ namespace Reinforcement
         //    // e.Active указывает, вошли (true) или вышли (false) из режима
         //    IsGroupEditModeActive = e.Active;
         //}
+
+
+        public static void StartUpdateENS()
+        {
+            // Путь к Updater.exe (можно хранить в ресурсах или в папке плагина)
+            //string updaterPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UpdaterENS.exe");
+            string updaterPath = Path.Combine("Y:\\Revit\\_ЕС BIM_Плагин\\3_Автообновление\\UpdaterENS", "UpdaterENS.exe");
+            // Аргументы
+            string sourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Автообновление\ENSPlagin"; // откуда копировать новые файлы
+            string targetDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); // текущая папка плагина
+            int pid = Process.GetCurrentProcess().Id;
+
+            // Запускаем процесс
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = updaterPath,
+                Arguments = $"\"{pid}\" \"{sourceDir}\" \"{targetDir}\"",
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true
+            });
+
+
+            // Получаем дату самого свежего файла в текущей папке плагина
+            TargetLatestTime = GetLatestFileTime(targetDir);
+
+            // Версия сборки (необязательно)
+            Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        }
+
+        public static DateTime TargetLatestTime = DateTime.MinValue;
+        public static Version Version =null;
+
+        public static DateTime GetLatestFileTime(string directoryPath)
+        {
+            //получение даты создания
+            if (!Directory.Exists(directoryPath))
+                return DateTime.MinValue;
+
+            var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
+                                 .Select(f => new FileInfo(f))
+                                 .Where(f => f.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+                                             f.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
+                                 .ToList();
+
+            if (files.Count == 0)
+                return DateTime.MinValue;
+
+            // Максимальная дата последнего изменения
+            return files.Max(f => f.CreationTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
+        }
     }
 }
 
