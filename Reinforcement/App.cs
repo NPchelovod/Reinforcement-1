@@ -277,7 +277,7 @@ namespace Reinforcement
                 RemoveZoneIdentifiersRecursively(tempUpdaterDir);
 
                 // Папка с новыми файлами плагина
-                string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ENSPlagin";
+                string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин";
                 if (!Directory.Exists(sourcePluginDir))
                 {
                     TaskDialog.Show("Ошибка обновления", "Папка с обновлением не найдена.");
@@ -288,7 +288,7 @@ namespace Reinforcement
                 string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
                 // Папка для резервных копий заменяемых файлов
-                string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ФайлыАвтообновления";
+                string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
                 Directory.CreateDirectory(backupDir); // на всякий случай
 
                 int pid = Process.GetCurrentProcess().Id;
