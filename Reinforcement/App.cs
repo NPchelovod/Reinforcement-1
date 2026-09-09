@@ -292,9 +292,9 @@ namespace Reinforcement
                 Directory.CreateDirectory(backupDir); // на всякий случай
 
                 int pid = Process.GetCurrentProcess().Id;
-
+                string userName = Environment.UserName;
                 // Формируем аргументы: pid, source, target, backup, logFile
-                string logFile = Path.Combine(backupDir, "update_log.txt");
+                string logFile = Path.Combine(backupDir, $"{userName}_log.txt");
                 string arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\" \"{logFile}\"";
 
                 Process.Start(new ProcessStartInfo
@@ -403,17 +403,29 @@ namespace Reinforcement
             if (!Directory.Exists(directoryPath))
                 return DateTime.MinValue;
 
-            var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
-                                 .Select(f => new FileInfo(f))
-                                 .Where(f => f.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-                                             f.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
-                                 .ToList();
+            //var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
+            //                     .Select(f => new FileInfo(f))
+            //                     .Where(f => f.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+            //                                 f.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
+            //                     .ToList();
+            var extensions = new[] { ".dll", ".exe" };
+            //var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
+            //.Where(p => Path.GetExtension(p).Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+            //    Path.GetExtension(p).Equals(".exe", StringComparison.OrdinalIgnoreCase));
+            //искать только в текущей директории (без вложенных папок),
+            var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.TopDirectoryOnly)
+    .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase));
 
-            if (files.Count == 0)
+            if (!paths.Any())
                 return DateTime.MinValue;
 
-            // Максимальная дата последнего изменения
-            return files.Max(f => f.LastWriteTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
+            return paths.Max(p => File.GetLastWriteTimeUtc(p));
+
+            //if (files.Count == 0)
+            //    return DateTime.MinValue;
+
+            //// Максимальная дата последнего изменения
+            //return files.Max(f => f.LastWriteTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
         }
     }
 }

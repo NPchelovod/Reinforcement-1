@@ -83,8 +83,9 @@ namespace Reinforcement
                 BuiltInCategory.OST_Materials,
                 BuiltInCategory.OST_ProjectBasePoint,
                 BuiltInCategory.OST_SharedBasePoint,
-                 
 
+                BuiltInCategory.OST_Viewports, // видовые экраны
+             BuiltInCategory.OST_Levels
         };
         public static void Register(bool forceReregister = false)
         {
@@ -183,7 +184,7 @@ namespace Reinforcement
 
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
-        public static string NamePrimeh = "ADSK_Примечание";
+        //public static string NamePrimeh = "ADSK_Примечание";
 
         // === Временные данные ===
         private static DateTime _lastExecutionTime = DateTime.MinValue;

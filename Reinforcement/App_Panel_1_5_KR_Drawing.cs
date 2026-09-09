@@ -21,7 +21,7 @@ namespace Reinforcement
         {
             //4. PanelDrawing
             //Create buttons for changing colors of elements on the active view
-            RibbonItemData reinfColors = App_Helper_Button.CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ReinforcementColors", Properties.Resources.ES_RColors,
+            RibbonItemData reinfColors = App_Helper_Button.CreateButtonData("Цвета арматуры", "Цвета арматуры", "Reinforcement.ActivateFiltersByName", Properties.Resources.ES_RColors,
                "Применение фильтров для цвета арматуры", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);
             RibbonItemData openColors = App_Helper_Button.CreateButtonData("Цвета отверстий", "Цвета отверстий", "Reinforcement.OpeningsColors", Properties.Resources.ES_OpColors,
                "Применение фильтров для цвета отверстий", "Команда не срабатывает при уже назначенных цветовых фильтров на вид", panelDrawing);

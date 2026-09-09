@@ -24,7 +24,7 @@ namespace Reinforcement
 
             var buildDate = App.TargetLatestTime;
             var version = App.VersionString; 
-            txtPluginVersion.Text = $"Плагин от: {buildDate:yy.MM.dd.HH}V({version})";
+            txtPluginVersion.Text = $"Плагин от: {buildDate:yyyy.MM.dd.HH:mm}V({version})";
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
