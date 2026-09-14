@@ -12,6 +12,8 @@ namespace UpdaterENS
     {
         // Флаг, определяющий, нужно ли создавать резервные копии файлов.
         public static bool rezervCopy = false;
+        // Максимальное число строк, которое хранится в лог-файле
+        private const int MaxLogLines = 100;
 
         // Аргументы: pid, sourceDir, targetDir, [backupDir], [logFile], [--backup]
         static void Main(string[] args)
@@ -34,7 +36,13 @@ namespace UpdaterENS
             string sourceDir = args[1];
             string targetDir = args[2];
             string backupDir = args[3];
-            string logFile = args.Length > 4 && args[4] != "--backup" ? args[4] : null;
+            // logFile — первый аргумент после 4-го, который не является флагом
+            string logFile = args.Skip(4)
+                                 .FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
+
+
+            // Один раз при старте — обрезаем старый лог, если он слишком большой
+            TrimLogIfNeeded(logFile);
 
             Log(logFile, $"Update started at {DateTime.Now}. Waiting for process {pid} to exit...");
             Log(logFile, $"Backup enabled: {rezervCopy}");
@@ -287,6 +295,30 @@ namespace UpdaterENS
                     File.AppendAllText(logFile, $"{DateTime.Now}: {message}\n");
                 }
                 catch { /* игнорируем ошибки логирования */ }
+            }
+        }
+        /// <summary>
+        /// Обрезает лог-файл, оставляя только последние MaxLogLines строк.
+        /// Вызывается один раз при старте программы.
+        /// </summary>
+        static void TrimLogIfNeeded(string logFile)
+        {
+            if (string.IsNullOrEmpty(logFile) || !File.Exists(logFile))
+                return;
+
+            try
+            {
+                var lines = File.ReadAllLines(logFile);
+                if (lines.Length > MaxLogLines)
+                {
+                    var lastLines = lines.Skip(lines.Length - MaxLogLines);
+                    File.WriteAllLines(logFile, lastLines);
+                    Console.WriteLine($"Log trimmed to last {MaxLogLines} lines.");
+                }
+            }
+            catch
+            {
+                /* игнорируем ошибки */
             }
         }
     }

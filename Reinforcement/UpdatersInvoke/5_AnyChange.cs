@@ -22,6 +22,7 @@ namespace Reinforcement
             //сюда приходят от всех изменений элементы
             try
             {
+                App_Apdater.LookUsers.Update();
                 //меняем автора элемента
                 AutoFillNoteUpdater.AvtorUpdater(data);
             }

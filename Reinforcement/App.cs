@@ -3,6 +3,7 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -218,10 +219,16 @@ namespace Reinforcement
             AnyChange.PodpiskaAll();// подписка на все
                                     // AutoFillNoteUpdater.RegisterUpdater();
 
-            
-            //для автообновления
-            StartUpdateENS();
 
+            //для автообновления
+            App_Apdater.StartUpdateENS();
+            // Подписка на событие закрытия Revit
+            app.ApplicationClosing += OnRevitClosing;
+            //app.ControlledApplication.DocumentClosed
+            //app.ControlledApplication.ApplicationClosing += (sender, args) =>
+            //{
+            //    lookUsers.ForceFlush();
+            //};
             return Result.Succeeded;
         }
 
@@ -250,183 +257,21 @@ namespace Reinforcement
                 //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
             }
         }
-        public static bool IsGroupEditModeActive { get; private set; }
+        private void OnRevitClosing(object sender, ApplicationClosingEventArgs e)
+        {
+            //статистику записываем при закрытии 
+            // Здесь сохраняем статистику
+            //закрытие приложения
+            App_Apdater.LookUsers.ForceFlush();
+            //LookUsers.Instance.ForceFlush();
+        }
         //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)
         //{
         //    // e.Active указывает, вошли (true) или вышли (false) из режима
         //    IsGroupEditModeActive = e.Active;
         //}
 
-        public static void StartUpdateENS()
-        {
-            try
-            {
-                string updaterSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS";
-                string tempUpdaterDir = Path.Combine(Path.GetTempPath(), "ENS_Updater");
-                Directory.CreateDirectory(tempUpdaterDir);
 
-                // Копируем UpdaterENS целиком во временную папку
-                CopyDirectory(updaterSourceDir, tempUpdaterDir);
-                string tempUpdaterExe = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
-                if (!File.Exists(tempUpdaterExe))
-                {
-                    TaskDialog.Show("Ошибка обновления", "Не найден исполняемый файл обновления.");
-                    return;
-                }
-
-                RemoveZoneIdentifiersRecursively(tempUpdaterDir);
-
-                // Папка с новыми файлами плагина
-                string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин";
-                if (!Directory.Exists(sourcePluginDir))
-                {
-                    TaskDialog.Show("Ошибка обновления", "Папка с обновлением не найдена.");
-                    return;
-                }
-
-                // Папка, куда будет устанавливаться обновление (текущая папка плагина)
-                string targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-                // Папка для резервных копий заменяемых файлов
-                string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
-                Directory.CreateDirectory(backupDir); // на всякий случай
-
-                int pid = Process.GetCurrentProcess().Id;
-                string userName = Environment.UserName;
-                // Формируем аргументы: pid, source, target, backup, logFile
-                string logFile = Path.Combine(backupDir, $"{userName}_log.txt");
-                string arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\" \"{logFile}\"";
-
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = tempUpdaterExe,
-                    Arguments = arguments,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    UseShellExecute = false // для надёжности
-                });
-
-                // Вычисляем дату самого свежего файла в текущей папке плагина (необязательно)
-                TargetLatestTime = GetLatestFileTime(targetPluginDir);
-
-                // Версия сборки
-                Version = Assembly.GetExecutingAssembly().GetName().Version;
-                VersionString = Assembly.GetExecutingAssembly()
-                    .GetCustomAttribute<AssemblyFileVersionAttribute>()
-                    ?.Version;
-            }
-            catch (Exception ex)
-            {
-                TaskDialog.Show("Ошибка запуска обновления", ex.Message);
-            }
-        }
-        
-
-        public static DateTime TargetLatestTime = DateTime.MinValue;
-        public static Version Version = null;
-        public static string VersionString = null;
-
-        // Рекурсивное копирование директории с учётом дат изменения
-        private static void CopyDirectory(string sourceDir, string targetDir)
-        {
-            if (!Directory.Exists(sourceDir))
-                return;
-
-            Directory.CreateDirectory(targetDir);
-
-            foreach (var filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
-            {
-                string relativePath = GetRelativePath(sourceDir, filePath);
-                string targetFilePath = Path.Combine(targetDir, relativePath);
-                string targetFileDir = Path.GetDirectoryName(targetFilePath);
-                Directory.CreateDirectory(targetFileDir);
-
-                // Копируем, если файл отсутствует или источник новее
-                if (!File.Exists(targetFilePath) ||
-                    File.GetLastWriteTimeUtc(filePath) > File.GetLastWriteTimeUtc(targetFilePath))
-                {
-                    File.Copy(filePath, targetFilePath, overwrite: true);
-                }
-            }
-        }
-        // Вычисление относительного пути (для .NET Framework 4.8)
-        private static string GetRelativePath(string basePath, string fullPath)
-        {
-            basePath = Path.GetFullPath(basePath);
-            fullPath = Path.GetFullPath(fullPath);
-
-            if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-                basePath += Path.DirectorySeparatorChar;
-
-            if (fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
-                return fullPath.Substring(basePath.Length);
-            else
-                throw new ArgumentException("fullPath is not inside basePath");
-        }
-
-        // Рекурсивное удаление альтернативного потока Zone.Identifier чтобы не показывать предупреждение «Этот файл получен из другой зоны»;
-        private static void RemoveZoneIdentifiersRecursively(string directory)
-        {
-            foreach (var filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    string zonePath = filePath + ":Zone.Identifier";
-                    if (File.Exists(zonePath))
-                        File.Delete(zonePath);
-                }
-                catch
-                {
-                    // Игнорируем ошибки удаления
-                }
-            }
-        }
-
-        private static void RemoveZoneIdentifier(string filePath)
-        {
-            string zoneIdentifierPath = filePath + ":Zone.Identifier";
-            try
-            {
-                if (File.Exists(zoneIdentifierPath))
-                    File.Delete(zoneIdentifierPath);
-            }
-            catch
-            {
-                // Игнорируем ошибки, файл может не иметь этого потока
-            }
-        }
-       
-
-        public static DateTime GetLatestFileTime(string directoryPath)
-        {
-            //получение даты создания
-            if (!Directory.Exists(directoryPath))
-                return DateTime.MinValue;
-
-            //var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
-            //                     .Select(f => new FileInfo(f))
-            //                     .Where(f => f.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-            //                                 f.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
-            //                     .ToList();
-            var extensions = new[] { ".dll", ".exe" };
-            //var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
-            //.Where(p => Path.GetExtension(p).Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-            //    Path.GetExtension(p).Equals(".exe", StringComparison.OrdinalIgnoreCase));
-            //искать только в текущей директории (без вложенных папок),
-            var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.TopDirectoryOnly)
-    .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase));
-
-            if (!paths.Any())
-                return DateTime.MinValue;
-
-            return paths.Max(p => File.GetLastWriteTimeUtc(p));
-
-            //if (files.Count == 0)
-            //    return DateTime.MinValue;
-
-            //// Максимальная дата последнего изменения
-            //return files.Max(f => f.LastWriteTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
-        }
     }
 }
 

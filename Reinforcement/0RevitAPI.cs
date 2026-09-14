@@ -48,6 +48,8 @@ namespace Reinforcement
         /// <param name="commandData">Данные внешней команды</param>
         public static void Initialize(ExternalCommandData commandData)
         {
+
+            App_Apdater.LookUsers.Update(commandData);
             if (commandData == null)
                 throw new ArgumentNullException(nameof(commandData));
 
