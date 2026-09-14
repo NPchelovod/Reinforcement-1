@@ -56,13 +56,25 @@ namespace Reinforcement
         {
             try
             {
+                // Папка, куда будет устанавливаться обновление (текущая папка плагина)
+                targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                tempFolder = Path.GetTempPath();
+                userPKName = $"{Environment.UserName}_{Environment.MachineName}";
+
                 CalcOtherProp();
 
 
-                tempFolder = Path.GetTempPath();
-                userPKName = $"{Environment.UserName}_{Environment.MachineName}";
+                
                 string tempUpdaterDir = Path.Combine(tempFolder, "ENS_Updater");
                 Directory.CreateDirectory(tempUpdaterDir);
+
+                
+                if (IsUpdaterRunning())
+                {
+                    // Для диагностики можно оставить лог, но TaskDialog не показываем —
+                    // пользователя это не касается.
+                    return;
+                }
 
                 // Копируем UpdaterENS целиком во временную папку
                 CopyDirectory(updaterSourceDir, tempUpdaterDir);
@@ -83,8 +95,7 @@ namespace Reinforcement
                     return;
                 }
 
-                // Папка, куда будет устанавливаться обновление (текущая папка плагина)
-                targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                
 
                 // Папка для резервных копий заменяемых файлов
                 string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
@@ -112,9 +123,24 @@ namespace Reinforcement
                 TaskDialog.Show("Ошибка запуска обновления", ex.Message);
             }
         }
+        private static bool IsUpdaterRunning()
+        {
+            try
+            {
+                var procs = Process.GetProcessesByName("UpdaterENS");
+                bool running = procs.Length > 0;
+                foreach (var p in procs) p.Dispose();
+                return running;
+            }
+            catch
+            {
+                // Если не смогли узнать — считаем, что не запущен (лучше попробовать,
+                // чем вообще не обновляться; второй уровень защиты — мьютекс в самом апдейтере).
+                return false;
+            }
+        }
 
 
-        
 
         // Рекурсивное копирование директории с учётом дат изменения
         private static void CopyDirectory(string sourceDir, string targetDir)

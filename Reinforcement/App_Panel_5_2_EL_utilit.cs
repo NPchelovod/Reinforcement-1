@@ -8,7 +8,7 @@ namespace Reinforcement
         public static void EL_utilit(RibbonPanel panel, string tabName)
         {
             App_Helper_Button.CreateButton("Свет", "Расстановка\n светильников", "Reinforcement.EL_panel_Light_without_boxes", Properties.Resources.EL_svetilnic,
-                 "Позволяет заменить кубики КУ1301 на светильники и рубильники",
+                 "Позволяет заменить кубики КУ1301 на светильники и патроны",
                  "Для работы плагина нужно иметь в проекте кубики",
                 panel);
 
