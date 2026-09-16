@@ -22,8 +22,8 @@ namespace Reinforcement
             chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
             AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
 
-            var buildDate = App_Apdater.TargetLatestTime;
-            var version = App_Apdater.VersionString; 
+            var buildDate = App_Apdater_1.TargetLatestTime;
+            var version = App_Apdater_1.VersionString; 
             txtPluginVersion.Text = $"Плагин от: {buildDate:yyyy.MM.dd.HH:mm}V({version})";
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)

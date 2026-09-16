@@ -153,7 +153,8 @@
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="App_Apdater.cs" />
+    <Compile Include="App_Apdater_1.cs" />
+    <Compile Include="App_Apdater_2 LookUsers.cs" />
     <Compile Include="App_Panel_1_81_KR_Export.cs" />
     <Compile Include="App_Panel_1_92_Toska.cs" />
     <Compile Include="App_Panel_3_2_OV_utilit.cs" />

@@ -221,7 +221,7 @@ namespace Reinforcement
 
 
             //дл€ автообновлени€
-            App_Apdater.StartUpdateENS();
+            App_Apdater_1.StartUpdateENS();
             // ѕодписка на событие закрыти€ Revit
             app.ApplicationClosing += OnRevitClosing;
             //app.ControlledApplication.DocumentClosed
@@ -262,7 +262,7 @@ namespace Reinforcement
             //статистику записываем при закрытии 
             // «десь сохран€ем статистику
             //закрытие приложени€
-            App_Apdater.LookUsers.ForceFlush();
+            App_Apdater_1.LookUsers.ForceFlush();
             //LookUsers.Instance.ForceFlush();
         }
         //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)

@@ -19,12 +19,12 @@ public class FbRoot
     public string LoginTitle { get; set; }
 
     [JsonPropertyName("ExportDatas")]
-    public List<FbJob> Jobs { get; set; } = new();
+    public List<FbJob> Jobs { get; set; } = new List<FbJob> { };
 }
 
 public class FbJob
 {
-    public List<FbModel> Models { get; set; } = new();
+    public List<FbModel> Models { get; set; } = new List<FbModel>();
     public string Name { get; set; }
     public bool IsChecked { get; set; }
     public string JobId { get; set; }
@@ -43,7 +43,7 @@ public class FbModel
     public bool IsExport { get; set; }
     public bool IfcUpload { get; set; }
     public bool IsExpanded { get; set; }
-    public List<FbView> Views { get; set; } = new();
+    public List<FbView> Views { get; set; } = new List<FbView> { };
     public string Path { get; set; }
     public string SaveRvtFile { get; set; }
     public string SaveNwcFolder { get; set; }

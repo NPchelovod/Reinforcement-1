@@ -49,7 +49,7 @@ namespace Reinforcement
         public static void Initialize(ExternalCommandData commandData)
         {
 
-            App_Apdater.LookUsers.Update(commandData);
+            App_Apdater_1.LookUsers.Update(commandData);
             if (commandData == null)
                 throw new ArgumentNullException(nameof(commandData));
 
