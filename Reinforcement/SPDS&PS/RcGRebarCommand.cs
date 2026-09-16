@@ -34,7 +34,7 @@ namespace Reinforcement
 
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
+                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach, Type_Name);
             }
             catch (Exception)
             {
@@ -43,10 +43,13 @@ namespace Reinforcement
             return Result.Succeeded;
         }
         public static HashSet<string> list_Name = new HashSet<string>
-{
-    "ЕС_А-11_Г-стержень"
-};
-       
+        {
+            "ЕС_А-11_Г-стержень"
+        };
+        public static HashSet<string> Type_Name = new HashSet<string>
+        {
+            "А500С"
+        };
 
     }
     }

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Security.Cryptography.X509Certificates;
 
 namespace UpdaterENS
 {
@@ -82,6 +83,10 @@ namespace UpdaterENS
             string logFile = args.Skip(4)
                                  .FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
 
+            // Установка сертификата — только если ещё не установлен.
+            // Источник — та самая папка из установочного набора.
+            const string certSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Установка\Certs";
+            EnsureCertificate(certSourceDir, logFile);
 
             // Один раз при старте — обрезаем старый лог, если он слишком большой
             TrimLogIfNeeded(logFile);
@@ -495,6 +500,164 @@ namespace UpdaterENS
             {
                 /* игнорируем ошибки */
             }
+        }
+
+
+
+        /// <summary>
+        /// Проверяет, установлен ли уже сертификат с заданным CN в доверенных.
+        /// </summary>
+        private static bool IsCertTrusted(string subjectCn)
+        {
+            try
+            {
+                using (var store = new X509Store(StoreName.TrustedPublisher, StoreLocation.CurrentUser))
+                {
+                    store.Open(OpenFlags.ReadOnly);
+                    foreach (var cert in store.Certificates)
+                    {
+                        if (cert.Subject.IndexOf($"CN={subjectCn}", StringComparison.OrdinalIgnoreCase) >= 0)
+                            return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+        /// <summary>
+        /// Копирует папку с сертификатами (из сетевого источника в C:\Certs), если её ещё нет.
+        /// </summary>
+        private static bool CopyCertFolder(string sourceDir, string targetDir, string logFile)
+        {
+            try
+            {
+                if (!Directory.Exists(sourceDir))
+                {
+                    Log(logFile, $"Cert source dir not found: {sourceDir}");
+                    return false;
+                }
+
+                if (!Directory.Exists(targetDir))
+                {
+                    Directory.CreateDirectory(targetDir);
+                    Log(logFile, $"Created: {targetDir}");
+                }
+
+                foreach (var srcFile in Directory.GetFiles(sourceDir))
+                {
+                    string fileName = Path.GetFileName(srcFile);
+                    string destFile = Path.Combine(targetDir, fileName);
+
+                    // .pfx содержит закрытый ключ — не тянем его на клиента без необходимости
+                    if (fileName.EndsWith(".pfx", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log(logFile, $"Skipped (private key): {fileName}");
+                        continue;
+                    }
+
+                    if (!File.Exists(destFile))
+                    {
+                        File.Copy(srcFile, destFile, overwrite: false);
+                        Log(logFile, $"Copied: {fileName}");
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log(logFile, $"Copy error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Запускает certutil с указанными аргументами и логирует результат.
+        /// </summary>
+        private static int RunCertutil(string arguments, string logFile)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "certutil.exe",
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using (var p = Process.Start(psi))
+                {
+                    string stdout = p.StandardOutput.ReadToEnd();
+                    string stderr = p.StandardError.ReadToEnd();
+
+                    if (!p.WaitForExit(30000))
+                    {
+                        try { p.Kill(); } catch { }
+                        Log(logFile, $"certutil timed out: {arguments}");
+                        return -1;
+                    }
+
+                    Log(logFile, $"certutil (exit={p.ExitCode}): {arguments}");
+                    if (!string.IsNullOrWhiteSpace(stdout))
+                        Log(logFile, $"  out: {stdout.Trim()}");
+                    if (!string.IsNullOrWhiteSpace(stderr))
+                        Log(logFile, $"  err: {stderr.Trim()}");
+
+                    return p.ExitCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(logFile, $"certutil launch error: {ex.Message}");
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Полная установка: проверка -> копирование -> certutil в оба хранилища.
+        /// </summary>
+        private static void EnsureCertificate(string certSourceDir, string logFile)
+        {
+            const string targetDir = @"C:\Certs";
+            const string certSubjectCn = "MyRevitPlugin";
+            const string cerFileName = "MyRevitPlugin.cer";
+
+            if (IsCertTrusted(certSubjectCn))
+            {
+                Log(logFile, $"Certificate '{certSubjectCn}' already trusted. Skipping.");
+                return;
+            }
+
+            Log(logFile, $"Certificate '{certSubjectCn}' not found. Installing...");
+
+            if (!CopyCertFolder(certSourceDir, targetDir, logFile))
+            {
+                Log(logFile, "Certificate installation aborted: copy failed.");
+                return;
+            }
+
+            string cerPath = Path.Combine(targetDir, cerFileName);
+            if (!File.Exists(cerPath))
+            {
+                Log(logFile, $"CER file not found: {cerPath}");
+                return;
+            }
+
+            // --- Вариант A: user-level (без UAC) ---
+            int rc1 = RunCertutil($"-user -addstore -f \"Root\" \"{cerPath}\"", logFile);
+            int rc2 = RunCertutil($"-user -addstore -f \"TrustedPublisher\" \"{cerPath}\"", logFile);
+
+            if (rc1 != 0 || rc2 != 0)
+            {
+                Log(logFile, "WARNING: certutil reported errors. Revit may still prompt.");
+            }
+
+            if (IsCertTrusted(certSubjectCn))
+                Log(logFile, "Certificate installed and verified.");
+            else
+                Log(logFile, "Certificate installation could not be verified.");
         }
     }
 }

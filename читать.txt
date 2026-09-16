@@ -1,0 +1,38 @@
+пароль от ключаKeyReinforcement :kerulen
+
+Шаг 1. Создать самоподписанный сертификат
+
+$cert = New-SelfSignedCertificate `
+    -Type CodeSigningCert `
+    -Subject "CN=Reinforcement" `
+    -CertStoreLocation "Cert:\CurrentUser\My" `
+    -KeyUsage DigitalSignature `
+    -FriendlyName "My Revit Plugin Code Signing" `
+    -NotAfter (Get-Date).AddYears(5)
+
+Шаг 2. Экспортировать сертификат в .pfx с паролем
+
+$password = ConvertTo-SecureString -String "kerulen" -Force -AsPlainText
+Export-PfxCertificate `
+    -Cert $cert `
+    -FilePath "C:\Certs\MyRevitPlugin.pfx" `
+    -Password $password
+
+
+signtool sign /fd SHA256 /f "C:\Certs\MyRevitPlugin.pfx" /p "kerulen" /tr "http://timestamp.digicert.com" /td SHA256 "C:\Users\KVinogradov\source\repos\Reinforcement-1\Reinforcement\bin\Debug\Reinforcement.dll"
+
+Шаг 3. Подписать DLL вручную (проверка)
+
+signtool verify /pa /v "C:\Users\KVinogradov\source\repos\Reinforcement-1\Reinforcement\bin\Debug\Reinforcement.dll"
+
+Шаг 4. Добавить сертификат в «Доверенные издатели»
+Чтобы окно безопасности Revit перестало появляться на вашем компьютере, импортируйте .cer в хранилище «Доверенные издатели»:
+
+certutil -addstore "TrustedPublisher" "C:\Certs\MyRevitPlugin.cer"
+
+
+
+
+Шаг 5. Автоматизировать подпись при сборке
+
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe" sign /fd SHA256 /f "C:\Certs\MyRevitPlugin.pfx" /p "kerulen" /tr "http://timestamp.digicert.com" /td SHA256 "$(TargetPath)"
