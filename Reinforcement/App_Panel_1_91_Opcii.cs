@@ -42,7 +42,7 @@ namespace Reinforcement
             Image OV3 = Properties.Resources.Properties;
             //предполагается тест и так далее
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Настройки", assemblyPath, "Reinforcement.SettingsAllEx", "Настройки плагина", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Настройки", assemblyPath, "Reinforcement.SettingsAllEx", $"Настройки плагина\n {SettingsWindow.GetDatePluginText}", OV1);
 
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Маск", assemblyPath, "Reinforcement.PropertiesMask", "не работает\nдля маскировки", OV1);

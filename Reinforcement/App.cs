@@ -91,6 +91,9 @@ namespace Reinforcement
             Application = app; // Сохраняем app в статическое свойство
             app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
             
+            //для автообновления
+            App_Apdater_1.StartUpdateENS();
+
             //Create tab
             string tabName = "ЕС BIM";
             app.CreateRibbonTab(tabName);
@@ -220,8 +223,7 @@ namespace Reinforcement
                                     // AutoFillNoteUpdater.RegisterUpdater();
 
 
-            //для автообновления
-            App_Apdater_1.StartUpdateENS();
+            
             // Подписка на событие закрытия Revit
             app.ApplicationClosing += OnRevitClosing;
             //app.ControlledApplication.DocumentClosed

@@ -39,6 +39,8 @@ namespace Reinforcement
         public static string targetPluginDir;// текущая папка плагина)
 
         public static DateTime InitialTimePlugin;
+
+
         public static void CalcOtherProp()
         {
             InitialTimePlugin = DateTime.Now;
@@ -234,6 +236,8 @@ namespace Reinforcement
 
             if (!paths.Any())
                 return DateTime.MinValue;
+
+            
 
             return paths.Max(p => File.GetLastWriteTimeUtc(p));
 

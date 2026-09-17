@@ -14,17 +14,17 @@ namespace Reinforcement
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
-
+        public static string GetDatePluginText => $"Плагин от: {App_Apdater_1.TargetLatestTime.ToLocalTime():d MMM yyyy, HH:mm}";
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             chkFillAuthor.IsChecked = AutoFillNoteUpdater.regWriterAvtor;
             //chkFillAuthorADSK.IsChecked = AutoFillNoteUpdater.regWriterAvtorPrim;
             chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
             AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
-
-            var buildDate = App_Apdater_1.TargetLatestTime;
+           
+            var buildDate = App_Apdater_1.TargetLatestTime.ToLocalTime(); //локальное время
             var version = App_Apdater_1.VersionString; 
-            txtPluginVersion.Text = $"Плагин от: {buildDate:yyyy.MM.dd.HH:mm}V({version})";
+            txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
