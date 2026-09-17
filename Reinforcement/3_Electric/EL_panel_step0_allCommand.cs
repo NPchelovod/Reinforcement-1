@@ -247,6 +247,7 @@ namespace Reinforcement
                             }
                             catch (Exception ex)
                             {
+                                //App_Apdater_1.LookUsers.LogError(ex);
                                 TaskDialog.Show("Ошибка создания",
                                     $"Не удалось создать элемент: {ex.Message}\nЭлемент: {cubic.Id}");
                             }
@@ -257,6 +258,8 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Критическая ошибка", $"Произошла ошибка: {ex.Message}");
                 return false;
             }
@@ -328,6 +331,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 // Логируем ошибку, но не прерываем выполнение
                 TaskDialog.Show("Ошибка ориентации", ex.Message);
             }
@@ -419,6 +423,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Ошибка поиска", $"Не удалось найти поверхность: {ex.Message}");
                 return null;
             }

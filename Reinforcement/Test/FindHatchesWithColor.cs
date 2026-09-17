@@ -57,6 +57,7 @@ namespace Reinforcement
                                     }
                                     catch (Autodesk.Revit.Exceptions.InvalidOperationException ex)
                                     {
+                                        App_Apdater_1.LookUsers.LogError(ex);
                                         TaskDialog.Show("Ошибка", "Цвет грани недоступен: " + ex.Message);
                                     }
                                 }

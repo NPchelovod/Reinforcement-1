@@ -116,6 +116,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
+                        App_Apdater_1.LookUsers.LogError(ex);
                         transGroup.RollBack();
                         message = $"Ошибка: {ex.Message}\n{ex.StackTrace}";
                         TaskDialog.Show("Критическая ошибка", message);
@@ -125,6 +126,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 message = $"Ошибка: {ex.Message}\n{ex.StackTrace}";
                 TaskDialog.Show("Критическая ошибка", message);
                 return Result.Failed;

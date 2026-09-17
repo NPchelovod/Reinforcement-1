@@ -164,6 +164,7 @@ namespace Reinforcement
 
                     catch (Exception ex)
                     {
+                        App_Apdater_1.LookUsers.LogError(ex);
                         t.RollBack();
                         TaskDialog.Show("Ошибка удаления плана", ex.Message);
                     }
@@ -199,6 +200,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Ошибка", "Не удалось изменить параметры вида: " + ex.Message);
             }
             // 1. Скрываем ВСЕ элементы на виде
@@ -259,6 +261,7 @@ namespace Reinforcement
 
             catch (Exception ex) 
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 bool pr = true;
             }
 

@@ -2,6 +2,7 @@
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using System;
@@ -231,6 +232,12 @@ namespace Reinforcement
             //{
             //    lookUsers.ForceFlush();
             //};
+
+            // ѕодписываемс€ на событи€ сохранени€ моделей
+            var controlledApp = app.ControlledApplication;
+            controlledApp.DocumentSaved += OnDocumentSaved;
+            controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;
+
             return Result.Succeeded;
         }
 
@@ -241,8 +248,18 @@ namespace Reinforcement
 
 
 
-        public Result OnShutdown(UIControlledApplication a)
+        public Result OnShutdown(UIControlledApplication application)
         {
+            // ќтписываемс€ от событий, чтобы избежать утечек пам€ти
+            var controlledApp = application.ControlledApplication;
+            //controlledApp.DocumentSaving -= OnDocumentSaving;
+            controlledApp.DocumentSaved -= OnDocumentSaved;
+            //controlledApp.DocumentSynchronizingWithCentral -= OnDocumentSynchronizing;
+            controlledApp.DocumentSynchronizedWithCentral -= OnDocumentSynchronized;
+
+            //Ќо есть и практический смысл. OnShutdown вызываетс€, когда Revit закрываетс€ штатно. Ёто последний момент, когда ваш код ещЄ может что-то сделать
+            App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
+
             return Result.Succeeded;
         }
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
@@ -264,9 +281,22 @@ namespace Reinforcement
             //статистику записываем при закрытии 
             // «десь сохран€ем статистику
             //закрытие приложени€
-            App_Apdater_1.LookUsers.ForceFlush();
+            //аналогично  Result OnShutdown
+            //App_Apdater_1.LookUsers.ForceFlush(true);
             //LookUsers.Instance.ForceFlush();
         }
+
+        private void OnDocumentSaved(object sender, DocumentSavedEventArgs e)
+        {
+            // Ётот код выполнитс€ после сохранени€.
+            App_Apdater_1.LookUsers.Update("OnDocumentSaved");
+        }
+        private void OnDocumentSynchronized(object sender, DocumentSynchronizedWithCentralEventArgs e)
+        {
+            // Ётот код выполнитс€ после синхронизации.
+            App_Apdater_1.LookUsers.Update("OnDocumentSynchronized");
+        }
+
         //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)
         //{
         //    // e.Active указывает, вошли (true) или вышли (false) из режима

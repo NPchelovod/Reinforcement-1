@@ -171,6 +171,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 Debug.WriteLine($"Ошибка при создании BitmapImage: {ex.Message}");
                 return null;
             }

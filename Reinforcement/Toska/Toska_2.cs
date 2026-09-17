@@ -30,7 +30,9 @@ namespace Reinforcement
                 return Result.Succeeded;
             }
             catch (System.Exception ex)
+
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 message = $"Ошибка: {ex.Message}";
                 return Result.Failed;
             }

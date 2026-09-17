@@ -502,6 +502,8 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+
+                App_Apdater_1.LookUsers.LogError(ex);
                 //Код в случае ошибки
                 form.MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;

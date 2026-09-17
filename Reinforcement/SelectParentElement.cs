@@ -63,6 +63,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 MessageBox.Show("Чет пошло не так!" + ex.Message);
                 return Result.Failed;
             }

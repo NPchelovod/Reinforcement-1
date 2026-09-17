@@ -247,6 +247,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
+                    App_Apdater_1.LookUsers.LogError(ex);
                     //Код в случае ошибки
                     MessageBox.Show("Всё не так, ребята!\n" + ex.Message);
                     return Result.Failed;

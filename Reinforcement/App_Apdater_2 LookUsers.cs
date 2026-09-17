@@ -36,7 +36,7 @@ namespace Reinforcement
 
         //private static bool first=false;
         private static int _inUpdate;
-        public void Update(ExternalCommandData commandData = null, string explicitCommandName = null)
+        public void Update( string explicitCommandName = null)
         {
             // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
             if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
@@ -63,6 +63,9 @@ namespace Reinforcement
 
         private void ProcessWriter(string explicitCommandName)
         {
+            // обновляем текущий день если сессия многодневная
+            DateDay = DateTime.Now.Date;
+
             string key = explicitCommandName ?? GetCallerName();
             if (string.IsNullOrEmpty(key))
                 return;
@@ -111,24 +114,31 @@ namespace Reinforcement
         /// <summary>
         /// Принудительно сохранить (например, при закрытии Revit).
         /// </summary>
-        public void ForceFlush()
+        public void ForceFlush(bool closeRevit)
         {
             try
             {
                 lock (_lock)
                 {
-                    //при закрытии окна статистика 
-                    DateTimesCloseAndOpenRevit.Add((
-                     new DateTime(DateOpenRevit.Year, DateOpenRevit.Month, DateOpenRevit.Day,
-                                  DateOpenRevit.Hour, DateOpenRevit.Minute, DateOpenRevit.Second),
-                     new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day,
-                                  DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second)
-                    ));
+                    if (closeRevit)
+                    { //при закрытии окна статистика 
+                        DateTimesCloseAndOpenRevit.Add((
+                         new DateTime(DateOpenRevit.Year, DateOpenRevit.Month, DateOpenRevit.Day,
+                                      DateOpenRevit.Hour, DateOpenRevit.Minute, DateOpenRevit.Second),
+                         new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day,
+                                      DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second)
+                        ));
+                    }
 
-                    FlushInternal(true);
+                    FlushInternal(closeRevit);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+                Debug.WriteLine($"ForceFlush failed: {ex.Message}");
+
+            }
         }
         // ==== Внутренняя логика ====
 
@@ -220,6 +230,7 @@ namespace Reinforcement
                 {
                     DateTimesCloseAndOpenRevit.UnionWith(past.DateTimesCloseAndOpenRevit);
                 }
+                
             }
 
             // 3. Пишем результат
@@ -230,6 +241,7 @@ namespace Reinforcement
                 DictUse.Clear();
                 DocsDateUse.Clear();
                 DocsUse.Clear();
+                DateTimesCloseAndOpenRevit.Clear();   // ← добавить, чтобы повторный флаш не дал дубликатов
             }
         }
 
@@ -288,11 +300,13 @@ namespace Reinforcement
                     // Файла ещё нет — просто переносим.
                     File.Move(tmp, filePath);
                 }
-
+                // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
+                FlushErrorsToLog();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LogError(ex);
                 return false;
             }
         }
@@ -303,6 +317,108 @@ namespace Reinforcement
         public static string filePath => Path.Combine(statistics, nameAdd);
         private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2);
 
+        /// <summary>
+        /// Ошибки, накопленные за сессию. Попадут в JSON при следующем WriteFile.
+        /// </summary>
+        private List<string> Errors { get; set; } = new List<string>();
+        private const int MaxErrors = 50; // чтобы файл не разрастался
+        private static int _inLogError;
+        private static readonly object _errorsLock = new object();
+        public void LogError(Exception ex)
+        {
+            //при возникновении ошибок
+            if (ex == null) return;
+            if (Interlocked.CompareExchange(ref _inLogError, 1, 0) != 0)
+                return;
+            try
+            {
+                lock (_errorsLock)
+                {
+                    Errors.Add($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {ex.GetType().Name}: {ex.Message}");
 
+                    // Если ошибок стало слишком много — оставляем только последние MaxErrors
+                    if (Errors.Count > MaxErrors)
+                        Errors.RemoveRange(0, Errors.Count - MaxErrors);
+                }
+            }
+            catch
+            {
+                // если и тут упало — молчим, лог не должен ломать работу
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _inLogError, 0);
+            }
+        }
+
+        public static string errorLogPath =>
+        Path.Combine(statistics, $"{Environment.UserName}_{Environment.MachineName}.errors.log");
+        private const int MaxLogLines = 200;
+        /// <summary>
+        /// Дописывает Errors в .errors.log с fallback на %TEMP%, если основная папка недоступна.
+        /// После успешной записи очищает Errors.
+        /// </summary>
+        private void FlushErrorsToLog()
+        {
+            List<string> toWrite;
+
+            lock (_errorsLock)
+            {
+                if (Errors.Count == 0) return;
+                toWrite = new List<string>(Errors);
+            }
+
+            bool written = TryAppendLines(errorLogPath, toWrite);
+
+            if (!written)
+            {
+                // Fallback — только если основная запись не удалась
+                written = TryAppendLines(
+                    Path.Combine(Path.GetTempPath(), "LookUsers.errors.log"),
+                    toWrite);
+            }
+
+            if (written)
+            {
+                // Очищаем только если действительно записали куда-то
+                lock (_errorsLock)
+                {
+                    Errors.Clear();
+                }
+            }
+            // если оба провалились — оставляем Errors, попробуем при следующем WriteFile
+        }
+        /// <summary>
+        /// Дописывает строки в файл, обрезая его до последних MaxLogLines.
+        /// Возвращает true при успехе.
+        /// </summary>
+        private static bool TryAppendLines(string path, List<string> lines)
+        {
+            if (lines == null || lines.Count == 0) return true;
+
+            try
+            {
+                string dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                var existing = File.Exists(path)
+                    ? new List<string>(File.ReadAllLines(path))
+                    : new List<string>();
+
+                existing.AddRange(lines);
+
+                if (existing.Count > MaxLogLines)
+                    existing.RemoveRange(0, existing.Count - MaxLogLines);
+
+                File.WriteAllLines(path, existing);
+                return true;
+            }
+            catch
+            {
+                //так
+                return false;
+            }
+        }
     }
 }

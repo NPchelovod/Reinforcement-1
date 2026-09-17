@@ -239,6 +239,7 @@ namespace Reinforcement
                         }
                         catch (Exception ex)
                         {
+                            
                             //TaskDialog.Show("Ошибка", $"Не удалось переместить элемент {element.Id}: {ex.Message}");
                             continue;
                         }

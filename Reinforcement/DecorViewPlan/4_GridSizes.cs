@@ -153,7 +153,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-
+                App_Apdater_1.LookUsers.LogError(ex);
             }
         }
     }

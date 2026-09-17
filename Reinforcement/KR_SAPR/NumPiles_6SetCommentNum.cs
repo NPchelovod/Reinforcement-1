@@ -80,6 +80,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
+                    App_Apdater_1.LookUsers.LogError(ex);
                     trans2.RollBack();
                     TaskDialog.Show("Ошибка транзакции", $"Ошибка при установке марок: {ex.Message}");
 

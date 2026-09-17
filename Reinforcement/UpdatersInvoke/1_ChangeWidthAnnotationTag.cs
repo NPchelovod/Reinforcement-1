@@ -188,7 +188,11 @@ namespace Updaters
                 }
 
             }
-            catch  { return false; }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+                return false; 
+            }
             return true;
         }
 

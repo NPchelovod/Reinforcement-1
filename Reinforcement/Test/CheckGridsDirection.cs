@@ -30,29 +30,34 @@ namespace Reinforcement
             Selection sel = uidoc.Selection;
 
             FilteredElementCollector collection = new FilteredElementCollector(doc);
-
-            var gridIds = collection.OfClass(typeof(Grid))
+            try //ловим ошибку
+            {
+                var gridIds = collection.OfClass(typeof(Grid))
                 .Cast<Grid>()
                 .Select(x => x.Id);
-            if (gridIds.Count() == 0)
-            {
-                return Result.Failed;
+                if (gridIds.Count() == 0)
+                {
+                    return Result.Failed;
+                }
+
+                string text = "";
+
+                foreach (var gridId in gridIds)
+                {
+                    Grid grid = doc.GetElement(gridId) as Grid;
+                    string name = grid.Name;
+                    Line curve = (Line)grid.Curve;
+                    string direction = curve.Direction.ToString();
+                    text = string.Concat(text, name, " - ", direction, "\n");
+                }
+
+
+                MessageBox.Show(text);
             }
-
-            string text = "";
-
-            foreach (var gridId in gridIds)
+            catch (Exception ex)
             {
-                Grid grid = doc.GetElement(gridId) as Grid;
-                string name = grid.Name;
-                Line curve = (Line)grid.Curve;
-                string direction = curve.Direction.ToString();
-                text = string.Concat(text, name," - ", direction, "\n");
+                App_Apdater_1.LookUsers.LogError(ex);
             }
-
-
-            MessageBox.Show(text);
-
             return Result.Succeeded;
         }
     }

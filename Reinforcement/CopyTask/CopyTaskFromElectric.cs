@@ -233,6 +233,7 @@ namespace Reinforcement
                         }
                         catch (Exception ex)
                         {
+                            App_Apdater_1.LookUsers.LogError(ex);
                             // Более конкретная обработка исключений
                             Debug.WriteLine($"Ошибка при удалении элементов: {ex.Message}");
                             // Можно добавить дополнительную обработку или логирование
@@ -256,6 +257,8 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Ошибка", $"Произошла ошибка: {ex.Message}");
                 return Result.Failed;
             }
@@ -338,6 +341,7 @@ namespace Reinforcement
                                     }
                                     catch (Exception ex)
                                     {
+                                        App_Apdater_1.LookUsers.LogError(ex);
                                         TaskDialog.Show("Ошибка копирования",
                                             $"Не удалось скопировать линии в вид {copiedView.Name}: {ex.Message}");
                                     }
@@ -405,6 +409,7 @@ namespace Reinforcement
                         }
                         catch (Exception ex)
                         {
+                            App_Apdater_1.LookUsers.LogError(ex);
                             TaskDialog.Show("Ошибка копирования вида",
                                 $"Не удалось скопировать вид {linkedView.Name}: {ex.Message}");
                         }
@@ -568,6 +573,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
+                    App_Apdater_1.LookUsers.LogError(ex);
                     TaskDialog.Show("Предупреждение",
                         $"Не удалось скопировать все параметры вида: {ex.Message}");
                 }
@@ -576,6 +582,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Критическая ошибка",
                     $"Ошибка создания плана для уровня {targetLevel.Name}: {ex}");
                 return null;
@@ -612,6 +619,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 TaskDialog.Show("Ошибка создания чертежа", ex.Message);
                 return null;
             }
@@ -645,7 +653,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                
+                App_Apdater_1.LookUsers.LogError(ex);
             }
         }
     }

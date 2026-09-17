@@ -39,8 +39,10 @@ namespace Reinforcement
             {
                 Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
+
                 return Result.Failed;
             }
             return Result.Succeeded;

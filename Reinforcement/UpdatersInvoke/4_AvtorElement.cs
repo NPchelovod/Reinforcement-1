@@ -260,8 +260,9 @@ namespace Reinforcement
             {
                 param.Set(value);
             }
-            catch
+            catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 return false;
             }
             return true;

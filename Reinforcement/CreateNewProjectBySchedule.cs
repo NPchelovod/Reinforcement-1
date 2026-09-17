@@ -77,6 +77,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 // В случае ошибки выводим сообщение
                 TaskDialog.Show("Ошибка", "Не удалось создать или открыть новый файл: " + ex.Message);
                 return Result.Failed;

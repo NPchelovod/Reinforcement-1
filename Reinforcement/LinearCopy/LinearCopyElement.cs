@@ -81,6 +81,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 MessageBox.Show("Не создано ни одного элемента!" + ex.Message);
                 return Result.Failed;
             }

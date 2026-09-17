@@ -61,6 +61,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
+                        App_Apdater_1.LookUsers.LogError(ex);
                         TaskDialog.Show("Ошибка удаления", $"Не удалось удалить элементы: {ex.Message}");
                     }
                 }
@@ -110,6 +111,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
+                        App_Apdater_1.LookUsers.LogError(ex);
                         TaskDialog.Show("Ошибка удаления", $"Не удалось удалить элементы: {ex.Message}");
                     }
                 }

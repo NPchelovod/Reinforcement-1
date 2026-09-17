@@ -45,8 +45,9 @@ namespace Reinforcement
                 if (selectedCubes.Count == 0)
                     return Result.Cancelled;
             }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+            catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 return Result.Cancelled;
             }
 

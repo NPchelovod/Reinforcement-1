@@ -584,8 +584,11 @@ namespace UpdaterENS
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+
                 };
+                psi.StandardOutputEncoding = System.Text.Encoding.GetEncoding(866);
+                psi.StandardErrorEncoding = System.Text.Encoding.GetEncoding(866);
 
                 using (var p = Process.Start(psi))
                 {

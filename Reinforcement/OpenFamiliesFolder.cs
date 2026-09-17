@@ -36,6 +36,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 // В случае ошибки выводим сообщение
                 MessageBox.Show("Не удалось открыть папку: " + ex.Message);
                 return Result.Failed;

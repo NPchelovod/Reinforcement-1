@@ -141,6 +141,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
+                App_Apdater_1.LookUsers.LogError(ex);
                 //Код в случае ошибки
                 return Result.Failed;
             }
