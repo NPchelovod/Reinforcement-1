@@ -59,18 +59,65 @@ namespace Reinforcement
             }
         }
         /// <summary>
-        /// Возвращает первую строку стека в виде "Type.Method at File.cs:line N".
-        /// Если стека нет — null.
+        /// Возвращает первое «своё» место ошибки (из namespace Reinforcement).
+        /// Если такого нет — возвращает первый кадр стека, как раньше.
         /// </summary>
         private static string ExtractFirstFrame(string stack)
         {
             if (string.IsNullOrEmpty(stack)) return "no stack";
-            int nl = stack.IndexOf('\n');
-            string first = (nl >= 0 ? stack.Substring(0, nl) : stack).Trim();
-            // Убираем "at " в начале — так читабельнее
-            if (first.StartsWith("at ")) first = first.Substring(3);
-            return first;
+
+            var lines = stack.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            string firstUserWithLine = null;
+            string firstUser = null;
+            string firstAny = null;
+
+            const string userPrefix = "Reinforcement.";
+
+            foreach (var raw in lines)
+            {
+                string line = raw.Trim();
+
+                // В русской локали префикс "в ", в английской — "at ".
+                // Учитываем оба, иначе весь стек теряется.
+                if (line.StartsWith("at "))
+                    line = line.Substring(3);
+                else if (line.StartsWith("в "))
+                    line = line.Substring(2);
+                else
+                    continue;
+
+                if (firstAny == null) firstAny = line;
+
+                if (!line.StartsWith(userPrefix, StringComparison.Ordinal))
+                    continue;
+
+                bool hasLineInfo =
+                    line.IndexOf(":line ", StringComparison.Ordinal) >= 0 ||
+                    line.IndexOf(" in ", StringComparison.Ordinal) >= 0 ||
+                    line.IndexOf(" в ", StringComparison.Ordinal) >= 0; // русский вариант
+
+                if (hasLineInfo && firstUserWithLine == null)
+                    firstUserWithLine = line;
+                if (firstUser == null)
+                    firstUser = line;
+            }
+
+            return firstUserWithLine ?? firstUser ?? firstAny ?? "no stack";
         }
+        /// <summary>
+        /// Возвращает первую строку стека в виде "Type.Method at File.cs:line N".
+        /// Если стека нет — null.
+        /// </summary>
+        //private static string ExtractFirstFrame(string stack)
+        //{
+        //    if (string.IsNullOrEmpty(stack)) return "no stack";
+        //    int nl = stack.IndexOf('\n');
+        //    string first = (nl >= 0 ? stack.Substring(0, nl) : stack).Trim();
+        //    // Убираем "at " в начале — так читабельнее
+        //    if (first.StartsWith("at ")) first = first.Substring(3);
+        //    return first;
+        //}
         private static string GetCommandName(Exception ex)
         {
             if (ex == null) return null;

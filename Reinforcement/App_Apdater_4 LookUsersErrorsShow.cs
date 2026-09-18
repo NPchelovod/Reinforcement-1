@@ -22,10 +22,26 @@ namespace Reinforcement
         /// </summary>
         private static bool ShowErrorDialog(string text)
         {
+            // Если Revit/WPF уже выключаются — никаких окон.
+            if (App.IsShuttingDown)   // подставьте свой путь
+                return false;
+
             bool disable = false;
+
+            
 
             try
             {
+                var app = System.Windows.Application.Current;
+
+                // НЕ создаём новый Application — иначе процесс не завершится.
+                if (app == null)
+                {
+                    // WPF-инфраструктуры нет — идём сразу в нативный TaskDialog
+                    ShowNativeFallback(text);
+                    return false;
+                }
+
                 Action show = () =>
                 {
                     try
@@ -43,46 +59,45 @@ namespace Reinforcement
                     }
                     catch
                     {
-                        // Fallback: нативный TaskDialog
-                        try
-                        {
-                            new Autodesk.Revit.UI.TaskDialog("Ошибка Revit (админ-режим)")
-                            {
-                                MainInstruction = "Зафиксирована ошибка",
-                                MainContent = text,
-                                CommonButtons = Autodesk.Revit.UI.TaskDialogCommonButtons.Ok
-                            }.Show();
-                        }
-                        catch
-                        {
-                            try
-                            {
-                                System.Windows.MessageBox.Show(
-                                    text, "Ошибка Revit",
-                                    System.Windows.MessageBoxButton.OK,
-                                    System.Windows.MessageBoxImage.Error);
-                            }
-                            catch { }
-                        }
+                        ShowNativeFallback(text);
                     }
                 };
 
-                // Уходим в UI-поток Revit
-                var app = System.Windows.Application.Current;
-                if (app == null)
-                    app = new System.Windows.Application();
-
                 if (app.Dispatcher.CheckAccess())
                     show();
-                else
+                else if (!app.Dispatcher.HasShutdownStarted && !app.Dispatcher.HasShutdownFinished)
                     app.Dispatcher.Invoke(show);
+                // иначе — молча выходим, окно не покажем
             }
             catch
             {
-                // Молча — не даём LogError самому упасть
+                // Молча
             }
 
             return disable;
+        }
+        private static void ShowNativeFallback(string text)
+        {
+            try
+            {
+                new Autodesk.Revit.UI.TaskDialog("Ошибка Revit (админ-режим)")
+                {
+                    MainInstruction = "Зафиксирована ошибка",
+                    MainContent = text,
+                    CommonButtons = Autodesk.Revit.UI.TaskDialogCommonButtons.Ok
+                }.Show();
+            }
+            catch
+            {
+                try
+                {
+                    System.Windows.MessageBox.Show(
+                        text, "Ошибка Revit",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
+                catch { }
+            }
         }
         /// <summary>
         /// Троттлинг: возвращает true, если с момента последнего показа

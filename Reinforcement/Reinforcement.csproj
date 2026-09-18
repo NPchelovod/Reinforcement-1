@@ -22,7 +22,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -32,7 +32,8 @@
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2024\Revit.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -43,6 +44,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Build|AnyCPU'">
     <OutputPath>bin\Build\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -166,6 +170,7 @@
     <Compile Include="3_Electric\2_5_CubicSlabRectangle.cs" />
     <Compile Include="3_Electric\2_6_CubicWallCircle.cs" />
     <Compile Include="3_Electric\2_7_CubicWallRectangle.cs" />
+    <Compile Include="Administrator\2_Adm_GenError.cs" />
     <Compile Include="App_Apdater_1.cs" />
     <Compile Include="App_Apdater_2 LookUsers.cs" />
     <Compile Include="App_Apdater_3 LookUsersErrors.cs" />

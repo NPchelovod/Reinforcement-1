@@ -27,6 +27,11 @@ namespace Reinforcement
                  "нннн",
                  "аааа",
                 panel);
+
+            App_Helper_Button.CreateButton("Error", "Генератор\n ошибок", "Reinforcement.Adm_GenError", OV1,
+                 "нннн",
+                 "аааа",
+                panel);
         }
 
 

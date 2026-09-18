@@ -266,6 +266,7 @@ namespace Reinforcement
             //Ќо есть и практический смысл. OnShutdown вызываетс€, когда Revit закрываетс€ штатно. Ёто последний момент, когда ваш код ещЄ может что-то сделать
             App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
 
+            IsShuttingDown = true;//закрылс€
             return Result.Succeeded;
         }
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
@@ -308,7 +309,7 @@ namespace Reinforcement
         //    // e.Active указывает, вошли (true) или вышли (false) из режима
         //    IsGroupEditModeActive = e.Active;
         //}
-
+        public static volatile bool IsShuttingDown = false;
 
     }
 }
