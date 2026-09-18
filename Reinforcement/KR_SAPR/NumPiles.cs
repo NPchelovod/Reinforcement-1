@@ -74,6 +74,8 @@ namespace Reinforcement
 
                 // 2. Показываем окно настроек
                 SettingsWindow = new PileSettingsWindow2(commandData, this);
+                var helper = new System.Windows.Interop.WindowInteropHelper(SettingsWindow);
+                helper.Owner = RevitAPI.UiApplication.MainWindowHandle;
                 bool? resultW = SettingsWindow.ShowDialog();
 
                 if(resultW!=true)

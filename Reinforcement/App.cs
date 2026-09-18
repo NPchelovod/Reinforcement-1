@@ -32,6 +32,7 @@ namespace Reinforcement
     {
         Конфигурация,
         СПДС,
+        Разработчик,
         СхематичноеАрмирование,
         ДетальноеАрмирование,
         Оформление,
@@ -118,6 +119,7 @@ namespace Reinforcement
                 "АР панель",
                 "ОВ панель",
                 "ЭЛ панель",
+                "Разработчик",
                 "Опции",
                 "Сюрприз"
             };
@@ -181,6 +183,10 @@ namespace Reinforcement
 
                     case "ЭЛ панель":
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
+                        break;
+
+                    case "Разработчик":
+                        App_Panel_7_2_AdminPanel.Admin_utilit(panel, tabName);
                         break;
 
                     case "Опции":

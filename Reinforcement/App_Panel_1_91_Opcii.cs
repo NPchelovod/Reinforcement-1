@@ -56,8 +56,17 @@ namespace Reinforcement
 
 
             App_Helper_Button.AddButtonToPullDownButton(item, "ФОП_Users", assemblyPath, "Reinforcement.FopAddUsers", "Пользовательский набор добавить в параметры", OV3);
+
+
+            //App_Helper_Button.AddButtonToPullDownButton(item, "Разраб", assemblyPath, "Reinforcement.Statist", $"Кнопка Разработчика\n {SettingsWindow.GetDatePluginText}", OV1);
+
+
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);
+
+
+
+
             item.LargeImage = imageSource;
         }
 

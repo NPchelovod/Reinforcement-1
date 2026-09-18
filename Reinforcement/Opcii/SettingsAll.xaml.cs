@@ -25,6 +25,9 @@ namespace Reinforcement
             var buildDate = App_Apdater_1.TargetLatestTime.ToLocalTime(); //локальное время
             var version = App_Apdater_1.VersionString; 
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
+
+            logErrorsShow.IsChecked = LookUsers.LookErrorsAdmin;
+            
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
@@ -42,6 +45,10 @@ namespace Reinforcement
 
 
             AnyChange.AllUpdater=chkUpdater.IsChecked == true;
+
+
+            LookUsers.LookErrorsAdmin= logErrorsShow.IsChecked == true;
+
 
 
             if (AnyChange.AllUpdater && rePodpiska.IsChecked == true)

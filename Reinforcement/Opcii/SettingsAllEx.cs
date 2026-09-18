@@ -20,6 +20,8 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             var SettingsWindow = new SettingsWindow();
+            var helper = new System.Windows.Interop.WindowInteropHelper(SettingsWindow);
+            helper.Owner = RevitAPI.UiApplication.MainWindowHandle;
             bool? resultW = SettingsWindow.ShowDialog();
             if (resultW != true)
             {

@@ -37,6 +37,11 @@
         IsChecked="False"
             Margin="0,5,0,5"/>
 
+            <CheckBox x:Name="logErrorsShow"
+            Content="Показывать возникающие ошибки (вылет при первом error)"
+            IsChecked="False"
+                Margin="0,5,0,5"/>
+
             <!-- Другие булевы настройки можно добавить аналогично -->
             <!--
             <CheckBox x:Name="chkSomeOtherOption"
