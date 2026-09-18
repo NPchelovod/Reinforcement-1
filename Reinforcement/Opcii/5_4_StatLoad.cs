@@ -14,6 +14,7 @@ namespace Reinforcement
         public List<LookUsers> LookUsersList { get; set; } = new List<LookUsers>();
         public bool ServerOnly { get; set; }=true;
         public  int DaysBack { get; set; } = 100;
+        public int DaysFreshBack { get; set; } = 0;
         //public StatLoad(string folderPath = null) 
         //{
         //    //загрузка файлов статистики всех пользователей
@@ -21,10 +22,12 @@ namespace Reinforcement
         //    GetFilesProgress();
         //    GetStatistics();
         //}
-        public StatLoad(bool serverOnly = true, int daysBack =100, string folderPath = null)
+        public StatLoad(bool serverOnly = true, int daysBack =100,int daysFreshBack=0, string folderPath = null)
         {
             ServerOnly = serverOnly;
             DaysBack = daysBack;
+            DaysFreshBack = daysFreshBack;
+
             LoadFiles(folderPath);
             GetFilesProgress();
             GetStatistics();
@@ -96,11 +99,12 @@ namespace Reinforcement
                 {
                     //DateTime dateTime = fileDatas.Key;
                     DateTime dateTime = fileDatas.Key.Date; // ← приводим к дате без времени и Kind-зависимости
-                    if((DateTimeNow- dateTime).TotalDays>DaysBack)
+                    double dayPast = (DateTimeNow - dateTime).TotalDays;
+                    if (dayPast > DaysBack || DaysFreshBack>0.1&& DaysFreshBack > dayPast)
                     {
                         continue;
                     }
-
+                    
                     foreach (var fileData in fileDatas.Value)
                     {
                         string folderProject = fileData.Key;

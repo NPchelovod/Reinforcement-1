@@ -49,6 +49,19 @@
                  Text="100"
                  PreviewTextInput="DaysBackBox_PreviewTextInput"
                  LostFocus="DaysBackBox_LostFocus"/>
+                
+                
+                <TextBlock Text="Исключить свежих N дней:" Margin="0,0,0,4"/>
+
+                <TextBox x:Name="DaysFreshBackBox"
+                 Width="100"
+                 HorizontalAlignment="Left"
+                 Margin="0,0,0,12"
+                 Text="0"
+                 PreviewTextInput="DaysBackBox_PreviewTextInput"
+                 LostFocus="DaysOutBackBox_LostFocus"/>
+
+
                 <TextBlock Text="Вид статистики:" Margin="0,0,0,4"/>
                 <ComboBox x:Name="ReportKindCombo"
                       Width="300"
@@ -100,24 +113,28 @@
                 Orientation="Horizontal"
                 HorizontalAlignment="Right">
             <Button Content="Вгрузить статистику"
-                Width="140" Height="26" Margin="0,0,8,0"
+                Width="120" Height="26" Margin="0,0,8,0"
                 IsDefault="True"
                 Click="LoadStat_Click"/>
 
             <Button Content="Показать текст"
-                Width="120" Height="26" Margin="0,0,8,0"
+                Width="100" Height="26" Margin="0,0,8,0"
                 Click="ShowTextStat_Click"/>
 
             <Button Content="Показать статистику"
-                Width="140" Height="26" Margin="0,0,8,0"
+                Width="120" Height="26" Margin="0,0,8,0"
                 Click="GetStatistics_Click"/>
 
-            <Button Content="Сохранить"
-                Width="100" Height="26" Margin="0,0,8,0"
-                Click="SaveButton_Click"/>
+            <Button Content="Сохранить CSV Текст"
+                Width="125" Height="26" Margin="0,0,8,0"
+                Click="SaveButtonCSV_Click"/>
+            
+            <Button Content="Сохранить FB Json"
+            Width="125" Height="26" Margin="0,0,8,0"
+            Click="SaveButtonFB_Click"/>
 
             <Button Content="Отмена"
-                Width="100" Height="26"
+                Width="80" Height="26"
                 IsCancel="True"
                 Click="CancelButton_Click"/>
         </StackPanel>

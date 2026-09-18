@@ -1,12 +1,28 @@
 ﻿using System;
+using System.Data;
+using System.IO;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using Microsoft.Win32;
 namespace Reinforcement
 {
+    public class StringSortElement
+    {
+        public double ValSort1 = 0; //возможные сортировочные значения
+        public double ValSort2 = 0;
+        public double ValSort3 = 0;
+
+        public string NameValSort1 = "A"; public string NameValSort2 = "B"; public string NameValSort3 = "C";
+
+        public string Text = "";// основной текст
+
+    }
+
     public partial class StatistWindow : Window
     {
         public StatistWindow()
@@ -27,18 +43,54 @@ namespace Reinforcement
         
 
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private void SaveButtonCSV_Click(object sender, RoutedEventArgs e)
         {
+            if (stringSortElements == null || stringSortElements.Count == 0)
+                return;
+
+            var dlg = new SaveFileDialog
+            {
+                Filter = "CSV|*.csv",
+                FileName = $"stats_{DateTime.Now:yyyyMMdd_HHmm}.csv"
+            };
+
+            if (dlg.ShowDialog() != true)
+                return;
+
             try
             {
-                // Здесь сохраняем значения из полей.
-                // Например:
-                // Properties.Settings.Default.UserName = UserNameBox.Text;
-                // Properties.Settings.Default.EnableBackup = EnableBackupCheck.IsChecked == true;
-                // Properties.Settings.Default.Save();
+                var sb = new StringBuilder();
 
-                DialogResult = true;
-                Close();
+                // Заголовок — берём имена полей из первого элемента
+                // (если имена одинаковые для всех, этого достаточно)
+                var first = stringSortElements[0];
+                sb.AppendLine(string.Join(";",
+                    first.NameValSort1,
+                    first.NameValSort2,
+                    first.NameValSort3,
+                    "Text"));
+
+                foreach (var el in stringSortElements)
+                {
+                    // Text оборачиваем в кавычки, экранируем внутренние кавычки и заменяем ; на ,
+                    string safeText = el.Text
+                        .Replace("\"", "\"\"")    // экранируем кавычки по стандарту CSV
+                        .Replace(";", ",");       // меняем ; на , чтобы не ломать разделители
+
+                    // Если есть переносы строк — оборачиваем в кавычки
+                    if (safeText.Contains("\n"))
+                        safeText = $"\"{safeText}\"";
+
+                    sb.AppendLine(string.Join(";",
+                        el.ValSort1.ToString(CultureInfo.InvariantCulture),
+                        el.ValSort2.ToString(CultureInfo.InvariantCulture),
+                        el.ValSort3.ToString(CultureInfo.InvariantCulture),
+                        safeText));
+                }
+
+                File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+                MessageBox.Show(this, "Готово.", "Экспорт",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (System.Exception ex)
             {
@@ -46,7 +98,19 @@ namespace Reinforcement
                                 MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void SaveButtonFB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //надо открыть окно для FB
+            }
+            catch (System.Exception ex)
+            {
 
+            
+            }
+
+         }
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
@@ -94,7 +158,7 @@ namespace Reinforcement
             // GetFilesProgress(serverModel: ServerOnlyCheck.IsChecked == true);
 
             // Создаём StatLoad и кладём в него данные
-            StatLoad = new StatLoad(ServerOnlyCheck.IsChecked == true,DaysBack);        // ← добавлено);
+            StatLoad = new StatLoad(ServerOnlyCheck.IsChecked == true,DaysBack, DaysFreshBack);        // ← добавлено);
             //StatLoad = new StatLoad
             //{
             //    // FileDataDict = DictFileDataLook,   // ← ваши поля
@@ -181,6 +245,7 @@ namespace Reinforcement
                 ReportTextBox.Text = "Ошибка формирования текста:\r\n" + ex;
             }
         }
+        public static List<StringSortElement> stringSortElements { get; set; } = new List<StringSortElement>();
         private static string BuildTextReport(StatLoad load, TextReportKind kind)
         {
             var sb = new StringBuilder();
@@ -210,13 +275,79 @@ namespace Reinforcement
 
                 case TextReportKind.ByUsers:
                     {
-                        sb.AppendLine("=== ПО ПОЛЬЗОВАТЕЛЯМ ===");
+
+                        // 1. Сначала собираем все элементы в список
+                        stringSortElements = new List<StringSortElement>();
+
                         foreach (var user in load.LookUsersList)
                         {
-                            sb.AppendLine($"Пользователь: {user.UserName}");
-                            sb.AppendLine($"  Дней: {user.DocsDateUse.Count}");
-                            sb.AppendLine($"  Файлов: {user.DocsDateUse.Values.Sum(d => d.Count)}");
-                            sb.AppendLine();
+                            //дата максимальной продуктивности
+                            // Топ-3 дат с наибольшей суммой посещений
+                            // Топ-3 дат
+                            var top3Dates = user.DocsDateUse
+                                .Select(kvp => new { Date = kvp.Key, Sum = kvp.Value.Sum(v => v.Value) })
+                                .OrderByDescending(x => x.Sum)
+                                .Take(3)
+                                .ToList();
+
+                           
+
+                            //самые используемые дома
+                            var top3Houses = user.DocsDateUse
+                            .SelectMany(kvp => kvp.Value)
+                            .GroupBy(x => x.Key)
+                            .Select(g => new { Address = g.Key, TotalVisits = g.Sum(x => x.Value) })
+                            .OrderByDescending(x => x.TotalVisits)
+                            .Take(3)
+                            .ToList();
+                            int totalFiles = user.DocsDateUse.Values.Sum(d => d.Count);
+                            int totalClicks = user.DocsDateUse.Values.Sum(d => d.Values.Sum());
+
+                            var element = new StringSortElement
+                            {
+                                ValSort1 = totalClicks, // по этому полю будем сортировать
+                                Text = $"Пользователь: {user.UserName}\n" +
+               $"  Дней: {user.DocsDateUse.Count}\n" +
+               $"  Файлов: {totalFiles}\n" +
+               $"  Кликов: {totalClicks}\n" +
+               "  Целевые объекты:\n"
+                            };
+
+                            if (top3Houses.Count == 0)
+                            {
+                                element.Text += "    (нет данных)\n";
+                            }
+                            else
+                            {
+                                foreach (var h in top3Houses)
+                                {
+                                    element.Text += $"    {h.Address} — {h.TotalVisits} посещений\n";
+                                }
+                            }
+
+                            element.Text += "  Продуктивные дни:\n";
+                            if (top3Dates.Count == 0)
+                            {
+                                element.Text += "    (нет данных)\n";
+                            }
+                            else
+                            {
+                                foreach (var d in top3Dates)
+                                {
+                                    string dateWrite = DateRus(d.Date);
+                                    element.Text += $"    {dateWrite} — {d.Sum} посещений\n";
+                                }
+                            }
+
+                            stringSortElements.Add(element);
+                        }
+                        // 2. Сортируем по кликам (по убыванию)
+                        sb.AppendLine("=== ПО ПОЛЬЗОВАТЕЛЯМ ===");
+                        stringSortElements.Sort((a, b) => b.ValSort1.CompareTo(a.ValSort1));
+                        foreach (var el in stringSortElements)
+                        {
+                            sb.Append(el.Text); // уже содержит переносы строк
+                            sb.AppendLine();    // дополнительная пустая строка между пользователями
                         }
                         break;
                     }
@@ -263,7 +394,11 @@ namespace Reinforcement
 
             return sb.ToString();
         }
-
+        public static string DateRus(DateTime date)
+        {
+            return date.ToString("dd MMM, ddd, yyyy", new CultureInfo("ru-RU"));
+        }
+        
         private static string Trunc(string s, int n)
             => string.IsNullOrEmpty(s) ? "" : (s.Length <= n ? s : s.Substring(0, n - 1) + "…");
 
@@ -276,6 +411,17 @@ namespace Reinforcement
                 return 0; // 0 = без ограничения по дате
             }
         }
+        private int DaysFreshBack
+        {
+            get
+            {
+                if (int.TryParse(DaysFreshBackBox.Text, out int n) && n > 0)
+                    return n;
+                return 0; // 0 = без ограничения по дате
+            }
+        }
+
+
         private void DaysBackBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             e.Handled = !e.Text.All(char.IsDigit);
@@ -285,6 +431,13 @@ namespace Reinforcement
         {
             if (!int.TryParse(DaysBackBox.Text, out int n) || n < 1)
                 DaysBackBox.Text = "30";
+            else if (n > 3650)
+                DaysBackBox.Text = "3650";
+        }
+        private void DaysOutBackBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(DaysBackBox.Text, out int n) || n < 1)
+                DaysBackBox.Text = "0";
             else if (n > 3650)
                 DaysBackBox.Text = "3650";
         }
