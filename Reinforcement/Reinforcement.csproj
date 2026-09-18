@@ -22,7 +22,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
+     <DebugType>portable</DebugType>   <!-- или full -->
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -33,7 +33,8 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
+	  <DebugType>portable</DebugType>
+	  <!-- или full -->
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -45,7 +46,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Build|AnyCPU'">
     <OutputPath>bin\Build\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
+	  <DebugType>portable</DebugType>
+	  <!-- или full -->
     <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup>

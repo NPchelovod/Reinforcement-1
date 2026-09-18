@@ -22,7 +22,10 @@ namespace Reinforcement
 
             // Включаем админ-режим на время теста — окно покажется.
             LookUsers.LookErrorsAdmin = true;
-
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            System.Diagnostics.Debug.WriteLine($"Location: {asm.Location}");
+            System.Diagnostics.Debug.WriteLine($"IsDynamic: {asm.IsDynamic}");
+            System.Diagnostics.Debug.WriteLine($"CodeBase: {asm.CodeBase}");
             try
             {
                 // Меняем цифру на 1..5, чтобы выбрать нужный сценарий.

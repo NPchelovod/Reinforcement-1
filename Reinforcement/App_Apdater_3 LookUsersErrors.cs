@@ -20,7 +20,213 @@ namespace Reinforcement
         private static readonly object _errorsLock = new object();
 
         public static volatile bool LookErrorsAdmin = false; // можно будет отлаживать ошибку и ловить
+        public void LogError2(Exception ex)//медленный он не находит строк номера
+        {
+            if (ex == null) return;
+            if (Interlocked.CompareExchange(ref _inLogError, 1, 0) != 0) return;
 
+            
+
+            try
+            {
+                // === 1. Пытаемся получить "своё" место ошибки с номером строки ===
+                string place = ExtractPlace(ex, out string fullStack);
+
+                string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {place} | {ex.GetType().Name}: {ex.Message}";
+
+                // === 2. Пишем в накопительный список (уйдёт в .errors.log) ===
+                lock (_errorsLock)
+                {
+                    Errors.Add(line);
+                    if (Errors.Count > MaxErrors)
+                        Errors.RemoveRange(0, Errors.Count - MaxErrors);
+                }
+
+                // === 3. Показываем окно, если включён админ-режим ===
+                if (LookErrorsAdmin && ShouldShowDialog(line))
+                {
+                    bool disable = ShowErrorDialog(fullStack);
+                    if (disable)
+                        LookErrorsAdmin = false;
+                }
+            }
+            catch { }
+            finally
+            {
+                Interlocked.Exchange(ref _inLogError, 0);
+            }
+        }
+        /// <summary>
+        /// Возвращает компактное место ошибки: "Type.Method at File.cs:line N".
+        /// Через fullStack отдаёт полный стек со всей информацией (для окна).
+        /// Пробует несколько источников — от точного к грубому.
+        /// </summary>
+        private static string ExtractPlace(Exception ex, out string fullStack)
+        {
+           
+            fullStack = null;
+
+            // --- Попытка 1: StackTrace с fNeedFileInfo:true ---
+            // Даёт номера строк, если PDB подгружен (запуск из-под VS,
+            // загрузка сборки с диска). Для Assembly.Load(byte[]) вернёт null/0.
+            try
+            {
+                var st = new StackTrace(ex, fNeedFileInfo: true);
+                var frames = st.GetFrames();
+
+                if (frames != null && frames.Length > 0)
+                {
+                    string firstUserWithLine = null;
+                    string firstUser = null;
+                    string firstAny = null;
+
+                    var sb = new StringBuilder();
+
+                    foreach (var frame in frames)
+                    {
+                        var method = frame.GetMethod();
+                        if (method == null) continue;
+
+                        string typeName = method.DeclaringType?.FullName ?? "?";
+                        string methodName = method.Name;
+
+                        string file = frame.GetFileName();
+                        int lineNum = frame.GetFileLineNumber();
+
+                        bool isUser = typeName.StartsWith("Reinforcement.", StringComparison.Ordinal);
+                        bool hasLine = !string.IsNullOrEmpty(file) && lineNum > 0;
+
+                        string lineEntry;
+                        if (hasLine)
+                        {
+                            lineEntry = $"{typeName}.{methodName} at {Path.GetFileName(file)}:line {lineNum}";
+                        }
+                        else
+                        {
+                            lineEntry = $"{typeName}.{methodName}";
+                        }
+
+                        // Полный стек — для окна
+                        sb.AppendLine("  " + lineEntry);
+
+                        if (firstAny == null) firstAny = lineEntry;
+
+                        if (isUser)
+                        {
+                            if (firstUser == null) firstUser = lineEntry;
+                            if (hasLine && firstUserWithLine == null)
+                                firstUserWithLine = lineEntry;
+                        }
+                    }
+
+                    fullStack = sb.ToString();
+
+                    // Приоритет: свой кадр с номером строки → свой кадр → любой кадр
+                    string best = firstUserWithLine ?? firstUser ?? firstAny;
+                    if (!string.IsNullOrEmpty(best))
+                        return best;
+                }
+            }
+            catch { /* StackTrace может упасть в экзотических случаях */ }
+
+            // --- Попытка 2: парсим ex.StackTrace как текст ---
+            // Именно этот путь работает, если первая попытка не дала номеров,
+            // но ex.StackTrace уже содержит "at File.cs:line N".
+            string parsed = ExtractPlaceFromString(ex.StackTrace, out string parsedStack);
+            if (!string.IsNullOrEmpty(parsedStack))
+                fullStack = parsedStack;
+
+            return parsed ?? "no stack";
+        }
+        /// <summary>
+        /// Разбирает сырой стек как строку. Поддерживает русский и английский форматы.
+        /// Возвращает компактное "Type.Method at File.cs:line N" и полный стек через out.
+        /// </summary>
+        private static string ExtractPlaceFromString(string stack, out string fullStack)
+        {
+            fullStack = null;
+            if (string.IsNullOrEmpty(stack)) return null;
+
+            var rawLines = stack.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            string firstUserWithLine = null;
+            string firstUser = null;
+            string firstAny = null;
+
+            const string userPrefix = "Reinforcement.";
+            var sb = new StringBuilder();
+
+            foreach (var raw in rawLines)
+            {
+                string line = raw.Trim();
+                if (line.Length == 0) continue;
+
+                // Отрезаем префикс: "at " (en) или "в " (ru)
+                if (line.StartsWith("at ", StringComparison.Ordinal))
+                    line = line.Substring(3);
+                else if (line.StartsWith("в ", StringComparison.Ordinal))
+                    line = line.Substring(2);
+                else
+                    continue;
+
+                line = line.Trim();
+                if (line.Length == 0) continue;
+
+                // Ищем ":line N" (en) и ":строка N" (ru)
+                bool hasLineInfo = false;
+                string compact = line;
+
+                int idx = line.IndexOf(":line ", StringComparison.Ordinal);
+                if (idx < 0)
+                    idx = line.IndexOf(":строка ", StringComparison.Ordinal);
+
+                if (idx >= 0)
+                {
+                    // Извлекаем имя файла и номер строки
+                    int inIdx = line.LastIndexOf(" in ", StringComparison.Ordinal);
+                    if (inIdx < 0)
+                        inIdx = line.LastIndexOf(" в ", StringComparison.Ordinal);
+
+                    string beforeLine = line.Substring(0, idx);
+                    string numStr = line.Substring(idx + (line[idx + 1] == 'l' ? 6 : 8)).Trim();
+
+                    string method = inIdx >= 0 ? beforeLine.Substring(0, inIdx).Trim() : beforeLine.Trim();
+
+                    int fileStart = inIdx >= 0
+                        ? inIdx + (line.Substring(inIdx).StartsWith(" in ") ? 4 : 3)
+                        : 0;
+
+                    string filePath = inIdx >= 0
+                        ? line.Substring(fileStart, idx - fileStart).Trim()
+                        : "";
+
+                    string fileName = "";
+                    try { fileName = Path.GetFileName(filePath); }
+                    catch { fileName = filePath; }
+
+                    if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(numStr))
+                    {
+                        compact = $"{method} at {fileName}:line {numStr}";
+                        hasLineInfo = true;
+                    }
+                }
+
+                sb.AppendLine("  " + compact);
+
+                if (firstAny == null) firstAny = compact;
+
+                if (line.StartsWith(userPrefix, StringComparison.Ordinal) ||
+                    compact.StartsWith(userPrefix, StringComparison.Ordinal))
+                {
+                    if (firstUser == null) firstUser = compact;
+                    if (hasLineInfo && firstUserWithLine == null)
+                        firstUserWithLine = compact;
+                }
+            }
+
+            fullStack = sb.ToString();
+            return firstUserWithLine ?? firstUser ?? firstAny;
+        }
         public void LogError(Exception ex)
         {
             if (ex == null) return;
@@ -58,10 +264,7 @@ namespace Reinforcement
                 Interlocked.Exchange(ref _inLogError, 0);
             }
         }
-        /// <summary>
-        /// Возвращает первое «своё» место ошибки (из namespace Reinforcement).
-        /// Если такого нет — возвращает первый кадр стека, как раньше.
-        /// </summary>
+        
         private static string ExtractFirstFrame(string stack)
         {
             if (string.IsNullOrEmpty(stack)) return "no stack";
