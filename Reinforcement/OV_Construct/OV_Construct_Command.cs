@@ -60,7 +60,10 @@ namespace Reinforcement
             {
                 output_json();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+            }
 
             return Result.Succeeded;
 

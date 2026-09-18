@@ -91,9 +91,11 @@ namespace Reinforcement
                             {
                                 doc.Delete(view.Id);
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                App_Apdater_1.LookUsers.LogError(ex);
+                            }
                         }
-
                         t.Commit();
                     }
                 }
@@ -200,7 +202,10 @@ namespace Reinforcement
                 var param = view.get_Parameter(new Guid("f3ce110c-806b-4581-82fa-17fe5fd900b2"));
                 param?.Set(value);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+            }
         }
         // Поиск ближайшего уровня (допуск 500 мм)
         private static Level FindClosestLevel(Document doc, double sourceElevation)

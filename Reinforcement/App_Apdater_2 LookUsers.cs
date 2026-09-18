@@ -187,7 +187,7 @@ namespace Reinforcement
 
 
             // 1. Читаем прошлый файл
-            var past = ReadFile();
+            var past = ReadFileAndControlDate();// ReadFile();
 
 
             // Создаём НОВЫЕ словари, не трогая this.DictUse/DocsDateUse
@@ -239,18 +239,18 @@ namespace Reinforcement
                 }
             }
 
-            if (closeRevit)
-            {
-                //только при закрытии ревита заполняем
-                var cutoff = DateDay.AddDays(-dayMaxPast);
-                foreach (var s in past.DateTimesCloseAndOpenRevit)
-                {
-                    if (s.open >= cutoff)
-                        DateTimesCloseAndOpenRevit.Add(s);
-                }
+            //if (closeRevit) из-за этого затирало ведь может перезаписать
+            //{
+            //    //только при закрытии ревита заполняем
+            //    var cutoff = DateDay.AddDays(-dayMaxPast);
+            //    foreach (var s in past.DateTimesCloseAndOpenRevit)
+            //    {
+            //        if (s.open >= cutoff)
+            //            DateTimesCloseAndOpenRevit.Add(s);
+            //    }
 
-            }
-
+            //}
+            DateTimesCloseAndOpenRevit.UnionWith(past.DateTimesCloseAndOpenRevit);
             // 3. Пишем результат
             if (WriteFile())
             {
@@ -270,7 +270,9 @@ namespace Reinforcement
             }
         }
 
-        private static int dayMaxPast = 100;
+        private static int dayMaxPast = 120;
+        private static double kSave = 0.5;
+        private static int dayMaxSavePastHistory = (int)Math.Round(dayMaxPast* kSave);// сохраняем половину истории только
         private static int maxInt = 100000;
         private LookUsers ReadFile()
         {
@@ -292,6 +294,78 @@ namespace Reinforcement
                 return new LookUsers();
             }
         }
+        private LookUsers ReadFileAndControlDate()
+        {
+            //если есть дата старше N дней то надо нам сохранить в архим данный класс
+            LookUsers file = ReadFile();
+            //ротационный архив по периодам
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    return file;
+                }
+                long sizeBytes = new FileInfo(filePath).Length;
+                // Аварийный случай: не читаем, просто архивируем как есть и начинаем заново
+                if (sizeBytes > maxFileSizeBytes)
+                {
+                    //ArchiveRawFile(sizeBytes, reason: "hard-size");
+                    return new LookUsers();
+                }
+
+                //ищем хоть одну дату старую
+                var oldDate = file.DocsDateUse.Keys
+                    .Where(x => (PassDate - x).TotalDays > dayMaxPast)
+                    .OrderBy(x => x)
+                    .FirstOrDefault();
+
+                if (oldDate == default(DateTime))
+                {
+                    return file;
+                }
+
+                //иначе сохраняем статистику в прошлое состояние
+                if (!Directory.Exists(folderStatisticsHistory))
+                    Directory.CreateDirectory(folderStatisticsHistory);
+
+                string fileNameHistory = $"{Environment.UserName}_{Environment.MachineName}_" +
+                                 $"{oldDate.Year}_{oldDate.Month}_{oldDate.Day}To" +
+                                 $"{DateDay.Year}_{DateDay.Month}_{DateDay.Day}.json";
+                //копируем 
+                // Третий параметр (overwrite) = true — перезапишет файл, если он уже есть
+                File.Copy(filePath, filePathHistory, overwrite: true);
+                if (File.Exists(filePathHistory))
+                {
+                    // Здесь можно дополнительно очистить старые даты из активной статистики
+                    var cutoffDate = PassDate.AddDays(-dayMaxSavePastHistory);
+                    var keysToRemove = file.DocsDateUse.Keys.Where(k => k < cutoffDate).ToList();
+                    foreach (var k in keysToRemove)
+                    {
+                        file.DocsDateUse.Remove(k);
+                    }
+                    file.DateTimesCloseAndOpenRevit = file.DateTimesCloseAndOpenRevit
+                    .Where(x => x.open > cutoffDate)
+                    .ToHashSet();
+
+                    //также вычищаем старые клики так то или нет?
+                    file.DictUse = DecayDict(file.DictUse, kSave);
+                    //return new LookUsers();
+                }
+            }
+            catch(Exception ex) 
+            {
+                LogError(ex);
+            }
+
+            return file;
+
+        }
+
+        // Мягкий порог — триггер архивации и обрезки
+        private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
+                                                                  // Жёсткий порог — на такой файл лучше даже не замахиваться парсером
+        private const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ
+
         public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -342,14 +416,44 @@ namespace Reinforcement
         }
 
         public static string folderStatistics = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\_statistics";
+        //запись  архива
+        public static string folderStatisticsHistory = Path.Combine(folderStatistics, "Архив");
+
         //запись ошибок
-        public static string folderErrors = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\_statistics\Errors";
+        public static string folderErrors = Path.Combine(folderStatistics, "Errors"); 
 
         public static string fileName => $"{Environment.UserName}_{Environment.MachineName}.json";
 
         public static string filePath => Path.Combine(folderStatistics, fileName);
+
+        public static string fileNameHistory;
+        public static string filePathHistory=> Path.Combine(folderStatisticsHistory, fileNameHistory);
+
         private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2);
 
-        
+        /// <summary>
+        /// Уменьшает счётчик в kSave раз. Если результат &lt; 1 — возвращает 0.
+        /// </summary>
+        private static int Decay(int count, double factor)
+        {
+            if (count <= 0) return 0;
+            double result = count * factor;
+            if (result < 1.0) return 0;                       // «клик = 0»
+            return (int)Math.Round(result, MidpointRounding.AwayFromZero);
+        }
+        /// <summary>
+        /// Применяет Decay ко всему словарю, выкидывая обнулившиеся ключи.
+        /// </summary>
+        private static Dictionary<string, int> DecayDict(Dictionary<string, int> src, double factor)
+        {
+            var result = new Dictionary<string, int>(src.Count);
+            foreach (var kv in src)
+            {
+                int v = Decay(kv.Value, factor);
+                if (v > 0)
+                    result[kv.Key] = v;
+            }
+            return result;
+        }
     }
 }

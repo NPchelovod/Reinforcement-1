@@ -950,7 +950,10 @@ namespace Reinforcement
                 if (ygoParam.Set(ygoIndex))
                     return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+            }
 
             // Пробуем установить целым числом (индекс-1, начиная с 0)
             try
@@ -958,7 +961,10 @@ namespace Reinforcement
                 if (ygoParam.Set(ygoIndex - 1))
                     return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+            }
 
             // Пробуем установить строкой
             string possibleName = YGOPrefix + ygoIndex;
@@ -969,8 +975,11 @@ namespace Reinforcement
                 if (ygoParam.Set(possibleName))
                     return true;
             }
-            catch { }
-            
+            catch (Exception ex)
+            {
+                App_Apdater_1.LookUsers.LogError(ex);
+            }
+
 
             return false;
         }

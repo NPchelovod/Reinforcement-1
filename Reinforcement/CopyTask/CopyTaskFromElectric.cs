@@ -161,7 +161,7 @@ namespace Reinforcement
                             {
                                 doc.Delete(view.Id);
                             }
-                            catch { }
+                            catch (Exception ex) { App_Apdater_1.LookUsers.LogError(ex); }
                         }
 
                         t.Commit();

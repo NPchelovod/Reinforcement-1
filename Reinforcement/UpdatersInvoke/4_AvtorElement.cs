@@ -341,7 +341,10 @@ namespace Reinforcement
                 //    authorParam = element.LookupParameter(NamePrimeh);
 
                 if (authorParam == null) continue; // нет нужного параметра – пропускаем
-
+                if (authorParam.IsReadOnly)
+                {
+                    continue;
+                }    
                 string authorValue = authorParam.AsString();
 
                 // Для нового элемента записываем автора, если поле пустое
