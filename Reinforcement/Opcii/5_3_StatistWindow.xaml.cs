@@ -284,8 +284,8 @@ namespace Reinforcement
                             //дата максимальной продуктивности
                             // Топ-3 дат с наибольшей суммой посещений
                             // Топ-3 дат
-                            var top3Dates = user.DocsDateUse
-                                .Select(kvp => new { Date = kvp.Key, Sum = kvp.Value.Sum(v => v.Value) })
+                            var top3Dates = user.DictDateDocStats
+                                .Select(kvp => new { Date = kvp.Key, Sum = kvp.Value.Sum(v => v.Value.TotalOps) })
                                 .OrderByDescending(x => x.Sum)
                                 .Take(3)
                                 .ToList();
@@ -293,21 +293,21 @@ namespace Reinforcement
                            
 
                             //самые используемые дома
-                            var top3Houses = user.DocsDateUse
+                            var top3Houses = user.DictDateDocStats
                             .SelectMany(kvp => kvp.Value)
                             .GroupBy(x => x.Key)
-                            .Select(g => new { Address = g.Key, TotalVisits = g.Sum(x => x.Value) })
+                            .Select(g => new { Address = g.Key, TotalVisits = g.Sum(x => x.Value.TotalOps) })
                             .OrderByDescending(x => x.TotalVisits)
                             .Take(3)
                             .ToList();
-                            int totalFiles = user.DocsDateUse.Values.Sum(d => d.Count);
-                            int totalClicks = user.DocsDateUse.Values.Sum(d => d.Values.Sum());
+                            int totalFiles = user.DictDateDocStats.Values.Sum(d => d.Count);
+                            int totalClicks = user.DictDateDocStats.Values.Sum(d => d.Values.Select(x=>x.TotalOps).Sum());
 
                             var element = new StringSortElement
                             {
                                 ValSort1 = totalClicks, // по этому полю будем сортировать
                                 Text = $"Пользователь: {user.UserName}\n" +
-               $"  Дней: {user.DocsDateUse.Count}\n" +
+               $"  Дней: {user.DictDateDocStats.Count}\n" +
                $"  Файлов: {totalFiles}\n" +
                $"  Кликов: {totalClicks}\n" +
                "  Целевые объекты:\n"

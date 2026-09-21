@@ -6,6 +6,7 @@ using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -241,6 +242,10 @@ namespace Reinforcement
 
             // Подписываемся на события сохранения моделей
             var controlledApp = app.ControlledApplication;
+
+            controlledApp.DocumentSaving += OnDocumentSaving;
+            controlledApp.DocumentSynchronizingWithCentral += OnDocumentSynchronizing;
+
             controlledApp.DocumentSaved += OnDocumentSaved;
             controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;
 
@@ -264,6 +269,7 @@ namespace Reinforcement
             controlledApp.DocumentSynchronizedWithCentral -= OnDocumentSynchronized;
 
             //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
+            App_Apdater_1.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
             App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
 
             IsShuttingDown = true;//закрылся
@@ -293,15 +299,68 @@ namespace Reinforcement
             //LookUsers.Instance.ForceFlush();
         }
 
+
+        
+        private void OnDocumentSaving(object sender, DocumentSavingEventArgs args)
+        {
+            // Срабатывает, когда Revit собирается сохранить существующий документ
+            Document doc = args.Document;
+            if (doc == null) return;
+            string docPath = doc.PathName;
+            // Запоминаем время начала синхронизации
+            _syncStartTimes[doc] = DateTime.Now;
+            // Здесь вы можете добавить свою логику статистики
+            // Например, вызвать метод для записи информации о сохранении
+            // UpdateStatistics(docPath, "Save");
+        }
+
+        private void OnDocumentSynchronizing(object sender, DocumentSynchronizingWithCentralEventArgs args)
+        {
+            // Срабатывает, когда Revit собирается синхронизировать документ с центральной моделью
+            Document doc = args.Document;
+            if (doc == null) return;
+
+            string docPath = doc.PathName;
+            // Запоминаем время начала синхронизации
+            _syncStartTimes[doc] = DateTime.Now;
+            // Здесь ваша логика статистики
+            // UpdateStatistics(docPath, "Synchronize");
+        }
         private void OnDocumentSaved(object sender, DocumentSavedEventArgs e)
         {
+            Document doc = e.Document;
+            if (doc == null) return;
             // Этот код выполнится после сохранения.
-            App_Apdater_1.LookUsers.Update("OnDocumentSaved");
+            // Пытаемся получить время старта
+            if (_syncStartTimes.TryRemove(doc, out DateTime startTime))
+            {
+                TimeSpan duration = DateTime.Now - startTime;
+                secondSaveModel = duration.TotalSeconds;
+            }
+            else
+            {
+                secondSaveModel = 0;
+            }
+            App_Apdater_1.LookUsers.Update("OnDocumentSaved", EDocStatsOptions.Save);
         }
         private void OnDocumentSynchronized(object sender, DocumentSynchronizedWithCentralEventArgs e)
         {
             // Этот код выполнится после синхронизации.
-            App_Apdater_1.LookUsers.Update("OnDocumentSynchronized");
+            Document doc = e.Document;
+            if (doc == null) return;
+
+            // Пытаемся получить время старта
+            if (_syncStartTimes.TryRemove(doc, out DateTime startTime))
+            {
+                TimeSpan duration = DateTime.Now - startTime;
+                secondSaveModel = duration.TotalSeconds;
+            }
+            else
+            {
+                secondSaveModel = 0;
+            }
+
+            App_Apdater_1.LookUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
         }
 
         //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)
@@ -310,7 +369,9 @@ namespace Reinforcement
         //    IsGroupEditModeActive = e.Active;
         //}
         public static volatile bool IsShuttingDown = false;
-
+        // Словарь: документ -> время начала синхронизации
+        private static readonly ConcurrentDictionary<Document, DateTime> _syncStartTimes = new ConcurrentDictionary<Document, DateTime>();
+        public static double secondSaveModel = 0;
     }
 }
 

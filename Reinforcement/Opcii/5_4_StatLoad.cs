@@ -95,7 +95,7 @@ namespace Reinforcement
                     userName = "Unidentified" + anuser; anuser++;
                 }
                 //мы должны собрать статистику
-                foreach (var fileDatas in lj.DocsDateUse)
+                foreach (var fileDatas in lj.DictDateDocStats)
                 {
                     //DateTime dateTime = fileDatas.Key;
                     DateTime dateTime = fileDatas.Key.Date; // ← приводим к дате без времени и Kind-зависимости
@@ -113,7 +113,7 @@ namespace Reinforcement
                         {
                             continue;
                         }
-                        int useInt = fileData.Value;
+                        int useInt = fileData.Value.TotalOps;
 
                         if(!DictFileDataLook.TryGetValue(folderProject, out var data))
                         {

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,32 +16,35 @@ using Autodesk.Revit.UI;
 
 namespace Reinforcement
 {
-
+    
     public partial class LookUsers
     {
 
         public string UserName { get; set; }
         //просмотр характеристик пользователя и их обновление и сохранение 
         // ==== Данные ====
-        public Dictionary<string, int> DictUse { get; set; } = new Dictionary<string, int>();
+        // ВАЖНО: инициализируем, иначе первый Update упадёт на NRE
+        public Dictionary<DateTime, Dictionary<string, DocStats>> DictDateDocStats { get; set; }
+            = new Dictionary<DateTime, Dictionary<string, DocStats>>();
+        /// <summary>Статистика по времени записи JSON (для оценки необходимости async).</summary>
+        public WritePerfStats WriteStats { get; set; } = new WritePerfStats();
+
         public DateTime PassDate { get; set; } = DateTime.Now;
-
         public DateTime DateDay { get; set; } = DateTime.Now.Date;//дата текущего дня
-        public DateTime DateOpenRevit { get; set; } = DateTime.Now;//дата открытия ревита шмевита
-        //public Dictionary<string, int> DocsUse { get; set; } = new Dictionary<string, int>();
 
+        // ==== Legacy (только чтение) ==== временно до удаления у всех пользователей
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<DateTime, Dictionary<string, int>> DocsDateUse { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<DateTime, Dictionary<string, int>> DictDateUse { get; set; }
 
-        //статистика по датам использования 
-        public Dictionary<DateTime, Dictionary<string, int>> DocsDateUse { get; set; } = new Dictionary<DateTime, Dictionary<string, int>>();
-
-        public HashSet<(DateTime open, DateTime close)>  DateTimesCloseAndOpenRevit { get; set; } = new HashSet<(DateTime open, DateTime close)>();
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int> DictUse { get; set; }
 
         // Защита от гонок в рамках одной сессии
         private static readonly object _lock = new object();
-
-        //private static bool first=false;
         private static int _inUpdate;
-        public void Update( string explicitCommandName = null)
+        public void Update( string explicitCommandName = null, EDocStatsOptions commandType = 0)
         {
             // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
             if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
@@ -48,10 +53,10 @@ namespace Reinforcement
             {
                 lock (_lock)
                 {
-                    ProcessWriter(explicitCommandName); 
+                    ProcessWriter(explicitCommandName, commandType); 
                 }
 
-                TryFlush();
+                TryFlush(commandType);
             }
             catch
             {
@@ -64,22 +69,26 @@ namespace Reinforcement
         }
 
 
-        private void ProcessWriter(string explicitCommandName)
+        private void ProcessWriter(string explicitCommandName, EDocStatsOptions commandType)
         {
             
-
             string key = explicitCommandName ?? GetCallerName();
             if (string.IsNullOrEmpty(key))
+            {
                 return;
+            }
             DateDay = DateTime.Now.Date;   // ← добавить
-
-            DictUse.TryGetValue(key, out var value);
-            DictUse[key] = value + 1;
 
             UIDocument uiDoc = RevitAPI.UiDocument;
             if (uiDoc == null) { return; }
-              
-                Document doc = uiDoc.Document;
+            Autodesk.Revit.DB.View activeView = uiDoc.ActiveView;
+            string viewName = "None";
+            if (activeView != null && !string.IsNullOrEmpty(activeView.Name))
+            {
+                viewName = activeView.Name;
+            }
+
+            Document doc = uiDoc.Document;
             if (doc == null) { return; }
 
             string nameDoc = doc.PathName;
@@ -98,19 +107,62 @@ namespace Reinforcement
             {
                 return;
             }
-            
-            //DocsUse.TryGetValue(nameDoc, out value);
-            //DocsUse[nameDoc] = value + 1;//можно сделать по времени чтобы было или как иначе??
-            
-            //теперь статистика по дням
 
-            if(!DocsDateUse.TryGetValue(DateDay, out var dictUse))
+
+            //команды кликов
+            if(!DictDateDocStats.TryGetValue(DateDay, out var docStats))
             {
-                dictUse = new Dictionary<string, int>();
-                DocsDateUse[DateDay] = dictUse;
+                docStats = new Dictionary<string, DocStats>();
+                DictDateDocStats[DateDay]= docStats;
             }
-            dictUse.TryGetValue(nameDoc, out value);
-            dictUse[nameDoc]= value + 1;
+            if (!docStats.TryGetValue(nameDoc, out var docStat))
+            {
+                docStat = new DocStats();
+                docStats[nameDoc]= docStat;
+
+                //заполняем даты открытия данной модели
+                docStat.FirstSeen= DateTime.Now;
+            }
+            //всегда может оказаться последним сеансом
+            docStat.LastSeen = DateTime.Now;
+            docStat.TotalOps += 1;                                   // ← общий счётчик действий
+            
+            docStat.CommandHits.TryGetValue(key, out var cmdHits);
+            docStat.CommandHits[key]= cmdHits+1;
+
+            //добавка активного вида для статистики оч полезно знать сколько времени надо для создания вида и тд
+            if(!docStat.ActiveViews.TryGetValue(viewName, out var viewData))
+            {
+                docStat.ActiveViews[viewName] = (DateTime.Now, DateTime.Now, 1);
+            }
+            else
+            {
+                docStat.ActiveViews[viewName] = (viewData.FirstSeen, DateTime.Now, viewData.TotalOps + 1);
+            }
+
+
+            if (commandType != 0)
+            {
+                switch (commandType)
+                {
+                    case (EDocStatsOptions.Save):
+                        docStat.SaveCount++;
+                        docStat.TotalSaveSeconds = App.secondSaveModel;
+                        docStat.LastSave = DateTime.Now;
+                        break;
+                    case (EDocStatsOptions.Sync):
+                        docStat.SyncCount++;
+                        docStat.TotalSaveSeconds = App.secondSaveModel;
+                        docStat.LastSync = DateTime.Now;
+                        break;
+                    case (EDocStatsOptions.CloseRevit):
+                        docStat.CloseRevit=true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
 
         }
 
@@ -123,17 +175,8 @@ namespace Reinforcement
             {
                 lock (_lock)
                 {
-                    if (closeRevit)
-                    { //при закрытии окна статистика 
-                        DateTimesCloseAndOpenRevit.Add((
-                         new DateTime(DateOpenRevit.Year, DateOpenRevit.Month, DateOpenRevit.Day,
-                                      DateOpenRevit.Hour, DateOpenRevit.Minute, DateOpenRevit.Second),
-                         new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day,
-                                      DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second)
-                        ));
-                    }
 
-                    FlushInternal(closeRevit);
+                    FlushInternal();
                 }
             }
             catch (Exception ex)
@@ -162,7 +205,7 @@ namespace Reinforcement
             return $"{typeName}.{methodName}";
         }
 
-        private void TryFlush()
+        private void TryFlush(EDocStatsOptions commandType)
         {
             lock (_lock)
             {
@@ -175,7 +218,7 @@ namespace Reinforcement
             }
         }
 
-        public void FlushInternal(bool closeRevit=false)
+        public void FlushInternal()
         {
             PassDate = DateTime.Now;
 
@@ -189,85 +232,76 @@ namespace Reinforcement
             // 1. Читаем прошлый файл
             var past = ReadFileAndControlDate();// ReadFile();
 
+            //прошлый словарь данных
+            var pastDict = past.DictDateDocStats
+                       ?? new Dictionary<DateTime, Dictionary<string, DocStats>>();
+            // 2. Снимок текущего состояния — на случай неудачной записи
+            var backup = DeepCloneDict(DictDateDocStats);
 
-            // Создаём НОВЫЕ словари, не трогая this.DictUse/DocsDateUse
-            var mergedDictUse = new Dictionary<string, int>(DictUse);
-            var mergedDocsDateUse = new Dictionary<DateTime, Dictionary<string, int>>();
-            foreach (var kv in DocsDateUse)
+            var backupPerf = WriteStats.Clone();
+            //складываем с нашим словарем
+            // 3. Складываем прошлое в текущее
+            foreach (var dateEntry in pastDict)
             {
-                mergedDocsDateUse[kv.Key] = new Dictionary<string, int>(kv.Value);
-            }
+                var dateKey = dateEntry.Key;
 
-
-            // 2. Складываем счётчики
-            foreach (var kv in past.DictUse)
-            {
-                DictUse.TryGetValue(kv.Key, out var value);
-                DictUse[kv.Key] = value + kv.Value;
-            }
-            //foreach (var kv in past.DocsUse)
-            //{
-            //    DocsUse.TryGetValue(kv.Key, out var value);
-            //    DocsUse[kv.Key] = value + kv.Value;
-            //}
-
-            foreach (var kv in past.DocsDateUse)
-            {
-                var dateKey = kv.Key;
-                var innerSource = kv.Value; // Dictionary<string, int> из прошлого
-
-                if(dayMaxPast<(DateDay-kv.Key).TotalDays)
-                {
+                // отсекаем слишком старые даты
+                if ((DateDay - dateKey).TotalDays > dayMaxPast)
                     continue;
-                }
 
-                if (!DocsDateUse.TryGetValue(dateKey, out var innerTarget))
+                if (!DictDateDocStats.TryGetValue(dateKey, out var targetDocs))
                 {
-                    // Ключа нет — копируем весь внутренний словарь (чтобы не менять оригинал при будущих модификациях)
-                    DocsDateUse[dateKey] = new Dictionary<string, int>(innerSource);
+                    // копируем через Clone, чтобы не тащить ссылки из past
+                    var copy = new Dictionary<string, DocStats>(dateEntry.Value.Count);
+                    foreach (var dk in dateEntry.Value)
+                        copy[dk.Key] = dk.Value.Clone();
+                    DictDateDocStats[dateKey] = copy;
                 }
                 else
                 {
-                    // Ключ есть — суммируем значения по внутренним ключам
-                    foreach (var innerKv in innerSource)
+                    foreach (var dk in dateEntry.Value)
                     {
-                        if (innerTarget.ContainsKey(innerKv.Key))
-                            innerTarget[innerKv.Key] += innerKv.Value;
+                        if (!targetDocs.TryGetValue(dk.Key, out var target))
+                            targetDocs[dk.Key] = dk.Value.Clone();
                         else
-                            innerTarget[innerKv.Key] = innerKv.Value;
+                            target.Merge(dk.Value);
                     }
                 }
             }
-
-            //if (closeRevit) из-за этого затирало ведь может перезаписать
-            //{
-            //    //только при закрытии ревита заполняем
-            //    var cutoff = DateDay.AddDays(-dayMaxPast);
-            //    foreach (var s in past.DateTimesCloseAndOpenRevit)
-            //    {
-            //        if (s.open >= cutoff)
-            //            DateTimesCloseAndOpenRevit.Add(s);
-            //    }
-
-            //}
-            DateTimesCloseAndOpenRevit.UnionWith(past.DateTimesCloseAndOpenRevit);
+            // при слиянии past с текущим — после основного merge
+            if (past.WriteStats != null)
+                WriteStats.Merge(past.WriteStats);
             // 3. Пишем результат
             if (WriteFile())
             {
-                // Обнуляем накопленное, чтобы не записать повторно
-                //DictUse.Clear();
-                DictUse.Clear();
-                DocsDateUse.Clear();
-                //DocsUse.Clear();
-                DateTimesCloseAndOpenRevit.Clear();   // ← добавить, чтобы повторный флаш не дал дубликатов
+                // Успешно — обнуляем накопленное, чтобы не записать повторно
+                DictDateDocStats = new Dictionary<DateTime, Dictionary<string, DocStats>>();
             }
             else
             {
                 //поидее надо откатить прошлые файлы!!!! Так как 
-                DictUse = mergedDictUse;
-                DocsDateUse = mergedDocsDateUse;
+                //нет окатывать не надо у нас же независимые классы
+                // Неудача — откатываемся к состоянию до слияния
+                DictDateDocStats = backup;
+                WriteStats = backupPerf;
                 LogError(new Exception("WriteFile failed, state rolled back"));
             }
+        }
+        /// <summary>Глубокая копия словаря со всеми DocStats (для отката).</summary>
+        private static Dictionary<DateTime, Dictionary<string, DocStats>> DeepCloneDict(
+            Dictionary<DateTime, Dictionary<string, DocStats>> src)
+        {
+            var result = new Dictionary<DateTime, Dictionary<string, DocStats>>();
+            if (src == null) return result;
+
+            foreach (var dateEntry in src)
+            {
+                var inner = new Dictionary<string, DocStats>(dateEntry.Value.Count);
+                foreach (var dk in dateEntry.Value)
+                    inner[dk.Key] = dk.Value.Clone();
+                result[dateEntry.Key] = inner;
+            }
+            return result;
         }
 
         private static int dayMaxPast = 120;
@@ -286,6 +320,8 @@ namespace Reinforcement
                     return new LookUsers();
 
                 var data = JsonSerializer.Deserialize<LookUsers>(json, Options);
+                // 👇 вот здесь
+                data.MigrateLegacyData();
                 return data ?? new LookUsers();
             }
             catch (Exception ex)
@@ -312,9 +348,10 @@ namespace Reinforcement
                     //ArchiveRawFile(sizeBytes, reason: "hard-size");
                     return new LookUsers();
                 }
-
+                if (file.DictDateDocStats == null)
+                    file.DictDateDocStats = new Dictionary<DateTime, Dictionary<string, DocStats>>();
                 //ищем хоть одну дату старую
-                var oldDate = file.DocsDateUse.Keys
+                var oldDate = file.DictDateDocStats.Keys
                     .Where(x => (PassDate - x).TotalDays > dayMaxPast)
                     .OrderBy(x => x)
                     .FirstOrDefault();
@@ -328,31 +365,31 @@ namespace Reinforcement
                 if (!Directory.Exists(folderStatisticsHistory))
                     Directory.CreateDirectory(folderStatisticsHistory);
 
-                string fileNameHistory = $"{Environment.UserName}_{Environment.MachineName}_" +
-                                 $"{oldDate.Year}_{oldDate.Month}_{oldDate.Day}To" +
-                                 $"{DateDay.Year}_{DateDay.Month}_{DateDay.Day}.json";
-                //копируем 
-                // Третий параметр (overwrite) = true — перезапишет файл, если он уже есть
-                File.Copy(filePath, filePathHistory, overwrite: true);
-                if (File.Exists(filePathHistory))
-                {
-                    // Здесь можно дополнительно очистить старые даты из активной статистики
-                    var cutoffDate = PassDate.AddDays(-dayMaxSavePastHistory);
-                    var keysToRemove = file.DocsDateUse.Keys.Where(k => k < cutoffDate).ToList();
-                    foreach (var k in keysToRemove)
-                    {
-                        file.DocsDateUse.Remove(k);
-                    }
-                    file.DateTimesCloseAndOpenRevit = file.DateTimesCloseAndOpenRevit
-                    .Where(x => x.open > cutoffDate)
-                    .ToHashSet();
+                string historyPath = Path.Combine(
+                folderStatisticsHistory,
+                $"{Environment.UserName}_{Environment.MachineName}_" +
+                $"{oldDate.Year}_{oldDate.Month}_{oldDate.Day}To" +
+                $"{DateDay.Year}_{DateDay.Month}_{DateDay.Day}.json");
 
-                    //также вычищаем старые клики так то или нет?
-                    file.DictUse = DecayDict(file.DictUse, kSave);
-                    //return new LookUsers();
+                File.Copy(filePath, historyPath, overwrite: true);
+                if (File.Exists(historyPath))
+                {
+                    // Обрезаем активный файл: удаляем даты старше dayMaxSavePastHistory
+                    var cutoffDate = PassDate.AddDays(-dayMaxSavePastHistory);
+                    var keysToRemove = file.DictDateDocStats.Keys
+                        .Where(k => k < cutoffDate)
+                        .ToList();
+
+                    foreach (var k in keysToRemove)
+                        file.DictDateDocStats.Remove(k);
+
+                    // Decay для CommandHits в оставшихся днях
+                    foreach (var dateEntry in file.DictDateDocStats)
+                        foreach (var docStat in dateEntry.Value.Values)
+                            DecayCommandHits(docStat.CommandHits, kSave);
                 }
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 LogError(ex);
             }
@@ -360,7 +397,26 @@ namespace Reinforcement
             return file;
 
         }
+        // ==== Decay (адаптирован под CommandHits) ====
+        private static int Decay(int count, double factor)
+        {
+            if (count <= 0) return 0;
+            double result = count * factor;
+            if (result < 1.0) return 0;
+            return (int)Math.Round(result, MidpointRounding.AwayFromZero);
+        }
 
+        private static void DecayCommandHits(Dictionary<string, int> src, double factor)
+        {
+            if (src == null) return;
+            var keys = src.Keys.ToList();
+            foreach (var k in keys)
+            {
+                int v = Decay(src[k], factor);
+                if (v > 0) src[k] = v;
+                else src.Remove(k);
+            }
+        }
         // Мягкий порог — триггер архивации и обрезки
         private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
                                                                   // Жёсткий порог — на такой файл лучше даже не замахиваться парсером
@@ -378,13 +434,20 @@ namespace Reinforcement
             {
                 if (!Directory.Exists(folderStatistics))
                     Directory.CreateDirectory(folderStatistics);
+                // Убеждаемся, что поле есть (после десериализации старых файлов могло быть null)
+                if (WriteStats == null) WriteStats = new WritePerfStats();
+                // --- 1. Замер сериализации ---
+                var swSerialize = Stopwatch.StartNew();
 
                 string json = JsonSerializer.Serialize(this, Options);
-
+                swSerialize.Stop();
                 // Пишем во временный файл рядом с целевым (в той же папке —
                 // это важно: File.Replace/File.Move работают атомарно только
                 // в пределах одного тома)
                 string tmp = filePath + ".tmp";
+                // --- 2. Замер I/O ---
+                var swIo = Stopwatch.StartNew();
+
                 File.WriteAllText(tmp, json);
 
                 if (File.Exists(filePath))
@@ -400,6 +463,14 @@ namespace Reinforcement
                     // Файла ещё нет — просто переносим.
                     File.Move(tmp, filePath);
                 }
+                swIo.Stop();
+
+                // --- 3. Записываем метрики в объект ---
+                // ВАЖНО: эти цифры попадут в JSON только при СЛЕДУЮЩЕЙ записи,
+                // потому что текущий json уже сериализован выше. Это нормально —
+                // одна итерация задержки не критична.
+                WriteStats.Add(swSerialize.Elapsed.TotalMilliseconds,
+                               swIo.Elapsed.TotalMilliseconds);
 
                 // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
                 FlushErrorsToLog();
@@ -428,32 +499,118 @@ namespace Reinforcement
 
         public static string fileNameHistory;
         public static string filePathHistory=> Path.Combine(folderStatisticsHistory, fileNameHistory);
-
+        //2 часа — разумное значение. Некоторые системы берут 15 минут, некоторые — 4 часа. Но полностью убирать периодический флаш почти никто не делает.
         private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2);
+        //Единственная причина убрать флаш — если запись на сеть реально тормозит Revit. Но тогда правильнее сделать запись асинхронной, а не редкой.
 
         /// <summary>
-        /// Уменьшает счётчик в kSave раз. Если результат &lt; 1 — возвращает 0.
+        /// Однократная миграция старых JSON-файлов (DocsDateUse/DictDateUse/DictUse)
+        /// в новый формат DictDateDocStats. Безопасно вызывать повторно.
         /// </summary>
-        private static int Decay(int count, double factor)
+        private void MigrateLegacyData()
         {
-            if (count <= 0) return 0;
-            double result = count * factor;
-            if (result < 1.0) return 0;                       // «клик = 0»
-            return (int)Math.Round(result, MidpointRounding.AwayFromZero);
-        }
-        /// <summary>
-        /// Применяет Decay ко всему словарю, выкидывая обнулившиеся ключи.
-        /// </summary>
-        private static Dictionary<string, int> DecayDict(Dictionary<string, int> src, double factor)
-        {
-            var result = new Dictionary<string, int>(src.Count);
-            foreach (var kv in src)
+            if (DictDateDocStats == null)
+                DictDateDocStats = new Dictionary<DateTime, Dictionary<string, DocStats>>();
+
+            // --- 1. DocsDateUse: { день -> { путь -> int } } -> DictDateDocStats ---
+            if (DocsDateUse != null && DocsDateUse.Count > 0)
             {
-                int v = Decay(kv.Value, factor);
-                if (v > 0)
-                    result[kv.Key] = v;
+                foreach (var dateEntry in DocsDateUse)
+                {
+                    var date = dateEntry.Key.Date; // нормализуем до дня
+                    if (!DictDateDocStats.TryGetValue(date, out var docStats))
+                    {
+                        docStats = new Dictionary<string, DocStats>();
+                        DictDateDocStats[date] = docStats;
+                    }
+
+                    foreach (var docEntry in dateEntry.Value)
+                    {
+                        string path = docEntry.Key;
+                        int count = docEntry.Value;
+                        if (count <= 0) continue;
+
+                        if (!docStats.TryGetValue(path, out var stat))
+                        {
+                            stat = new DocStats();
+                            docStats[path] = stat;
+                        }
+
+                        stat.TotalOps += count;
+
+                        // сохраняем распределение, но без разбивки по командам —
+                        // кладём всё в один legacy-ключ
+                        stat.CommandHits.TryGetValue("legacy", out var lh);
+                        stat.CommandHits["legacy"] = lh + count;
+
+                        // FirstSeen/LastSeen приближённо = дата дня
+                        if (stat.FirstSeen == default || date < stat.FirstSeen)
+                            stat.FirstSeen = date;
+                        if (stat.LastSeen < date)
+                            stat.LastSeen = date;
+                    }
+                }
             }
-            return result;
+
+            // --- 2. DictDateUse: старый словарь по командам с разбивкой по дням ---
+            if (DictDateUse != null && DictDateUse.Count > 0)
+            {
+                foreach (var dateEntry in DictDateUse)
+                {
+                    var date = dateEntry.Key.Date;
+                    if (!DictDateDocStats.TryGetValue(date, out var docStats))
+                    {
+                        docStats = new Dictionary<string, DocStats>();
+                        DictDateDocStats[date] = docStats;
+                    }
+
+                    // команды без привязки к документу кладём в спец-ключ
+                    const string unknownDoc = "<no-document>";
+                    if (!docStats.TryGetValue(unknownDoc, out var stat))
+                    {
+                        stat = new DocStats();
+                        docStats[unknownDoc] = stat;
+                    }
+
+                    foreach (var cmdEntry in dateEntry.Value)
+                    {
+                        stat.CommandHits.TryGetValue(cmdEntry.Key, out var v);
+                        stat.CommandHits[cmdEntry.Key] = v + cmdEntry.Value;
+                        stat.TotalOps += cmdEntry.Value;
+                    }
+                }
+            }
+
+            // --- 3. DictUse: глобальный счётчик по командам без даты ---
+            // Кладём в «сегодня» с пометкой legacy, чтобы не потерять.
+            if (DictUse != null && DictUse.Count > 0)
+            {
+                var today = DateTime.Now.Date;
+                if (!DictDateDocStats.TryGetValue(today, out var docStats))
+                {
+                    docStats = new Dictionary<string, DocStats>();
+                    DictDateDocStats[today] = docStats;
+                }
+
+                const string unknownDoc = "<no-document>";
+                if (!docStats.TryGetValue(unknownDoc, out var stat))
+                {
+                    stat = new DocStats { FirstSeen = DateTime.Now, LastSeen = DateTime.Now };
+                    docStats[unknownDoc] = stat;
+                }
+
+                foreach (var cmdEntry in DictUse)
+                {
+                    stat.CommandHits.TryGetValue(cmdEntry.Key, out var v);
+                    stat.CommandHits[cmdEntry.Key] = v + cmdEntry.Value;
+                    stat.TotalOps += cmdEntry.Value;
+                }
+            }
+
+            // После миграции старые поля не нужны — при записи они не попадут в JSON
+            DocsDateUse = null;
+            DictDateUse = null;
+            DictUse = null;
         }
     }
 }
