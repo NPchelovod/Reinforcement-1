@@ -63,6 +63,7 @@ namespace Updaters
             if (!AnyChange.AllUpdater) { return; }
 
             Document doc = data.GetDocument();
+            if (doc == null) { return; }
             //var ids = data.GetModifiedElementIds();
             var ids = data.GetModifiedElementIds().ToList(); // ✅ Материализовать!
 
@@ -94,6 +95,10 @@ namespace Updaters
 
                 var element = doc.GetElement(id);
 
+                if( element == null )
+                {
+                    continue;
+                }
                 // два раза чтобы не входила сама в себя рекурсией
 
                 if (shrift(doc, element, id))
@@ -138,8 +143,10 @@ namespace Updaters
                     //}
                     pastElements[elementId] = now;
                 }
+                var paramTop = element.LookupParameter("Текст верх");
+                if (paramTop == null) {return false;}
 
-                string firstText = element.LookupParameter("Текст верх").AsString();
+                string firstText = paramTop.AsString();
                 string secondText = element.LookupParameter("Текст низ").AsString();
                 var text = firstText.Count() > secondText.Count() ? firstText : secondText;
                 if (!IsFontInstalled("ISOCPEUR"))

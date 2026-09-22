@@ -173,12 +173,14 @@
     <Compile Include="3_Electric\2_5_CubicSlabRectangle.cs" />
     <Compile Include="3_Electric\2_6_CubicWallCircle.cs" />
     <Compile Include="3_Electric\2_7_CubicWallRectangle.cs" />
-    <Compile Include="Administrator\2_Adm_GenError.cs" />
+    <Compile Include="Administrator\1_Adm_GenError.cs" />
+    <Compile Include="Administrator\4_FailureBuffer.cs" />
+    <Compile Include="Administrator\2_LookUsers_3_Writers.cs" />
     <Compile Include="App_Apdater_1.cs" />
-    <Compile Include="App_Apdater_2 LookUsers.cs" />
-    <Compile Include="App_Apdater_3 LookUsersErrors.cs" />
-    <Compile Include="App_Apdater_4 LookUsersErrorsShow.cs" />
-    <Compile Include="App_Apdater_5_DocStats.cs" />
+    <Compile Include="Administrator\2_LookUsers_1.cs" />
+    <Compile Include="Administrator\2_LookUsers_5_Errors.cs" />
+    <Compile Include="Administrator\2_LookUsers_6_ErrorsShow.cs" />
+    <Compile Include="Administrator\2_LookUsers_7_DocStats.cs" />
     <Compile Include="App_Panel_1_81_KR_Export.cs" />
     <Compile Include="App_Panel_1_92_Toska.cs" />
     <Compile Include="App_Panel_3_2_OV_utilit.cs" />
@@ -197,6 +199,7 @@
     <Compile Include="KR_ExportImport\ExcellLoadData.cs" />
     <Compile Include="KR_ExportImport\ExportImport.cs" />
     <Compile Include="KR_ExportImport\ImportExcel.cs" />
+    <Compile Include="KR_SAPR\5_SeachDublicateOnView.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWind.xaml.cs">

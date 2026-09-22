@@ -59,6 +59,9 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Осей размеры", assemblyPath, "Reinforcement.GridSizes",
                  "Размеры между осями", OV1);
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Дубликаты", assemblyPath, "Reinforcement.SeachDublicateOnView",
+                 "Поиск дубликатов на активном виде", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

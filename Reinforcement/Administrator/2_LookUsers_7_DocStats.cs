@@ -24,11 +24,14 @@ namespace Reinforcement
     }
     public class DocStats
     {
+        
         public int TotalOps { get; set; }
         public int SaveCount { get; set; }
         public int SyncCount { get; set; }
-        public double TotalSyncSeconds { get; set; }
-        public double TotalSaveSeconds { get; set; }
+        public double LastSyncSeconds { get; set; }
+        public double LastSaveSeconds { get; set; }
+
+        public double TotalWorkSeconds { get; set; }
         public double MaxSyncSeconds { get; set; }
         public DateTime FirstSeen { get; set; }
         public DateTime LastSeen { get; set; }
@@ -36,10 +39,16 @@ namespace Reinforcement
         public DateTime LastSave { get; set; }
 
         public DateTime LastSync { get; set; }
+
+        public string Guid { get; set; }//гуид документа
+
+        public string Name { get; set; }//имя документа
+
+        public int Warnings { get; set; }
         public Dictionary<string, int> CommandHits { get; set; } = new Dictionary<string, int>();
 
         //активные виды список действий, полезно чтобы знать сколько надо время потратить на то или иное
-        public Dictionary<string, (DateTime FirstSeen, DateTime LastSeen, int TotalOps)> ActiveViews { get; set; } = new Dictionary<string, (DateTime FirstSeen, DateTime LastSeen, int TotalOps)>();
+        public Dictionary<string, ViewStat> ActiveViews { get; set; } = new Dictionary<string, ViewStat>();
 
 
         public bool CloseRevit { get; set; } = false;//на этом документе ревит был закрыт
@@ -51,8 +60,9 @@ namespace Reinforcement
             TotalOps += other.TotalOps;
             SaveCount += other.SaveCount;
             SyncCount += other.SyncCount;
-            TotalSyncSeconds += other.TotalSyncSeconds;
-            TotalSaveSeconds += other.TotalSaveSeconds;
+            LastSyncSeconds += other.LastSyncSeconds;
+            LastSaveSeconds += other.LastSaveSeconds;
+            TotalWorkSeconds += other.TotalWorkSeconds;
 
             if (other.MaxSyncSeconds > MaxSyncSeconds)
                 MaxSyncSeconds = other.MaxSyncSeconds;
@@ -70,6 +80,11 @@ namespace Reinforcement
             if (other.LastSync > LastSync)
                 LastSync = other.LastSync;
 
+            if(string.IsNullOrEmpty(Guid))
+            {
+                Guid = other.Guid;
+            }
+            
             foreach (var kv in other.CommandHits)
             {
                 CommandHits.TryGetValue(kv.Key, out var v);
@@ -77,31 +92,107 @@ namespace Reinforcement
             }
             foreach (var kv in other.ActiveViews)
             {
-                ActiveViews[kv.Key] = kv.Value;
+                if (ActiveViews.TryGetValue(kv.Key, out var existing))
+                    existing.Merge(kv.Value);
+                else
+                    ActiveViews[kv.Key] = kv.Value.Clone();
             }
         }
 
         /// <summary>Полная копия (нужна для откатов).</summary>
         public DocStats Clone()
         {
+            var viewsCopy = new Dictionary<string, ViewStat>(ActiveViews.Count);
+            foreach (var kv in ActiveViews)
+                viewsCopy[kv.Key] = kv.Value.Clone();
+
             return new DocStats
             {
                 TotalOps = TotalOps,
                 SaveCount = SaveCount,
                 SyncCount = SyncCount,
-                TotalSyncSeconds = TotalSyncSeconds,
-                TotalSaveSeconds = TotalSaveSeconds,
+                LastSyncSeconds = LastSyncSeconds,
+                LastSaveSeconds = LastSaveSeconds,
+                TotalWorkSeconds = TotalWorkSeconds,
                 MaxSyncSeconds = MaxSyncSeconds,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen,
                 LastSave = LastSave,
                 LastSync = LastSync,
-
+                Guid= Guid,
+                Name = Name,
                 CommandHits = new Dictionary<string, int>(CommandHits),
-                ActiveViews = new Dictionary<string, (DateTime FirstSeen, DateTime LastSeen, int TotalOps)>(ActiveViews)
+                ActiveViews = viewsCopy,
+                Warnings= Warnings
             };
         }
     }
+
+    public class ViewStat
+    {
+        public string NameView { get; set; }
+        public int ViewId { get; set; }
+        public string NameSheet { get; set; }//имя листа
+        public string NumSheet {  get; set; }
+        public DateTime FirstSeen { get; set; }
+        public DateTime LastSeen { get; set; }
+
+        public DateTime DateInSheet { get; set; }//дата размещения на листе впервые
+
+        public int TotalOps { get; set; }
+
+        public double TotalWorkSeconds { get; set; }
+
+        public void Merge(ViewStat other)
+        {
+            if (other == null) return;
+            TotalOps += other.TotalOps;
+
+            if (FirstSeen == default || (other.FirstSeen != default && other.FirstSeen < FirstSeen))
+                FirstSeen = other.FirstSeen;
+            if (other.LastSeen > LastSeen)
+                LastSeen = other.LastSeen;
+
+            if (DateInSheet != DateTime.MinValue && DateInSheet < other.DateInSheet)
+            {
+
+            }
+            else { DateInSheet = other.DateInSheet; }
+
+            TotalWorkSeconds += other.TotalWorkSeconds;
+            // обновляем имя листа, если у нас его ещё нет, а там есть
+            if (string.IsNullOrEmpty(NameSheet) || NameSheet == "None")
+                NameSheet = other.NameSheet;
+            if (string.IsNullOrEmpty(NumSheet) || NumSheet == "None")
+                NumSheet = other.NumSheet;
+
+            if (string.IsNullOrEmpty(NameView))
+                NameView = other.NameView;
+
+            if(ViewId<1)
+            {
+                ViewId = other.ViewId;
+            }
+
+        }
+
+        public ViewStat Clone()
+        {
+            return new ViewStat
+            {
+                NameView = NameView,
+                NameSheet = NameSheet,
+                NumSheet = NumSheet,
+                FirstSeen = FirstSeen,
+                LastSeen = LastSeen,
+                DateInSheet = DateInSheet,
+                TotalOps = TotalOps,
+                TotalWorkSeconds = TotalWorkSeconds,
+                ViewId= ViewId  ,
+            };
+        }
+    }
+
     public class WritePerfStats
     {
 //        Медиана totalMs > 200 мс — стоит задуматься.

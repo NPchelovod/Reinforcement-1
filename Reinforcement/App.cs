@@ -16,6 +16,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -248,7 +249,9 @@ namespace Reinforcement
 
             controlledApp.DocumentSaved += OnDocumentSaved;
             controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;
-
+            // Подписываемся на событие через ControlledApplication
+            app.ControlledApplication.FailuresProcessing +=
+                new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
             return Result.Succeeded;
         }
 
@@ -267,10 +270,20 @@ namespace Reinforcement
             controlledApp.DocumentSaved -= OnDocumentSaved;
             //controlledApp.DocumentSynchronizingWithCentral -= OnDocumentSynchronizing;
             controlledApp.DocumentSynchronizedWithCentral -= OnDocumentSynchronized;
-
+            // Отписываемся (хорошая практика)
+            application.ControlledApplication.FailuresProcessing -=
+                new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
             //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
             App_Apdater_1.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
             App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
+
+            // Пытаемся сохранить накопленные ошибки самого revit
+            try
+            {
+                if (FailureBuffer.HasData)
+                    FailureBuffer.Flush();
+            }
+            catch { /* уже нечего терять */ }
 
             IsShuttingDown = true;//закрылся
             return Result.Succeeded;
@@ -363,6 +376,67 @@ namespace Reinforcement
             App_Apdater_1.LookUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
         }
 
+
+        private void OnFailuresProcessing(object sender, FailuresProcessingEventArgs e)
+        {
+            FailuresAccessor fa = e.GetFailuresAccessor();
+            IList<FailureMessageAccessor> failList = fa.GetFailureMessages();
+
+            if (failList.Count == 0)
+            {
+                e.SetProcessingResult(FailureProcessingResult.Continue);
+                return;
+            }
+
+            // Путь документа — один раз на событие
+            string docPath = null;
+            try
+            {
+                Document doc = fa.GetDocument();
+                if (doc != null)
+                {
+                    var central = doc.GetWorksharingCentralModelPath();
+                    docPath = central != null
+                        ? ModelPathUtils.ConvertModelPathToUserVisiblePath(central)
+                        : doc.PathName;
+                }
+            }
+            catch { /* не критично */ }
+
+            string user = Environment.UserName;
+            DateTime now = DateTime.Now;
+
+            foreach (FailureMessageAccessor failure in failList)
+            {
+                try
+                {
+                    var rec = new FailureRecord
+                    {
+                        Time = now,
+                        UserName = user,
+                        DocPath = docPath,
+                        Description = failure.GetDescriptionText(),
+                        Severity = failure.GetSeverity().ToString(),
+                        DefinitionId = failure.GetFailureDefinitionId()?.Guid ?? Guid.Empty
+                    };
+
+                    ICollection<ElementId> ids = failure.GetFailingElementIds();
+                    if (ids != null)
+                    {
+                        foreach (var id in ids)
+                            rec.FailingElementIds.Add(id.IntegerValue);
+                    }
+
+                    FailureBuffer.Add(rec);
+                }
+                catch
+                {
+                    // ошибка статистики не должна ломать транзакцию
+                }
+            }
+
+            e.SetProcessingResult(FailureProcessingResult.Continue);
+        }
         //private void OnGroupEditModeChanged(object sender, GroupEditModeChangedEventArgs e)
         //{
         //    // e.Active указывает, вошли (true) или вышли (false) из режима
