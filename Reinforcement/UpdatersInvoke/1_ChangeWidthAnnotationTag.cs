@@ -197,7 +197,7 @@ namespace Updaters
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
                 return false; 
             }
             return true;

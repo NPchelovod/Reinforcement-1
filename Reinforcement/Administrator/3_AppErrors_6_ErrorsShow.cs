@@ -10,7 +10,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Reinforcement
 {
-    public partial class LookUsers
+    public partial class AppErrors
     {
         private static DateTime _lastDialogShown = DateTime.MinValue;
         private static readonly object _dialogLock = new object();

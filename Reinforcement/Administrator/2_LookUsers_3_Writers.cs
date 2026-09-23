@@ -30,8 +30,7 @@ namespace Reinforcement
         //запись  архива
         public static string folderStatisticsHistory = Path.Combine(folderStatistics, "Архив");
 
-        //запись ошибок
-        public static string folderErrors = Path.Combine(folderStatistics, "Errors");
+        
 
         public static string fileName => $"{Environment.UserName}_{Environment.MachineName}.json";
 
@@ -60,7 +59,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 Debug.WriteLine($"ForceFlush failed: {ex.Message}");
 
             }
@@ -86,7 +85,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 MarkStorageUnavailable();
-                LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 Debug.WriteLine($"FlushInternalLock failed: {ex.Message}");
             }
             finally
@@ -167,7 +166,7 @@ namespace Reinforcement
                 // Неудача — откатываемся к состоянию до слияния
                 DictDateDocStats = backup;
                 WriteStats = backupPerf;
-                LogError(new Exception("WriteFile failed, state rolled back"));
+                App_Apdater_1.AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
             }
         }
 
@@ -194,7 +193,7 @@ namespace Reinforcement
         /// раз в 5 минут даём «один шанс» (вернём true, чтобы следующая запись попробовала).
         /// Если запись снова упадёт — MarkStorageUnavailable отодвинет окно.
         /// </summary>
-        private static bool IsStorageAvailable()
+        public static bool IsStorageAvailable()
         {
             if (_storageAvailable)
                 return true;
@@ -248,7 +247,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 return new LookUsers();
             }
         }
@@ -327,14 +326,14 @@ namespace Reinforcement
 
                 File.Copy(filePath, historyPath, overwrite: true);
                 try { File.Delete(filePath); }
-                catch (Exception ex) { LogError(ex); }
+                catch (Exception ex) { App_Apdater_1.AppErrors.LogError(ex); }
 
                 return File.Exists(historyPath);
             }
             catch (Exception ex)
             {
                 MarkStorageUnavailable();
-                LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 return false;
             }
         }
@@ -391,7 +390,7 @@ namespace Reinforcement
                                swIo.Elapsed.TotalMilliseconds);
 
                 // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
-                FlushErrorsToLog();
+                App_Apdater_1.AppErrors?.FlushErrorsToLog();
 
                 return true;
             }
@@ -399,8 +398,8 @@ namespace Reinforcement
             {
                 // Любая IO-ошибка → диск считается недоступным до следующей проверки
                 MarkStorageUnavailable();
-                LogError(ex);
-                FlushErrorsToLog();
+                App_Apdater_1.AppErrors?.LogError(ex);
+                App_Apdater_1.AppErrors?.FlushErrorsToLog();
                 return false;
             }
         }

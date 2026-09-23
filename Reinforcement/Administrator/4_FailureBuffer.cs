@@ -25,7 +25,7 @@ namespace Reinforcement
         private static readonly List<FailureRecord> _records = new List<FailureRecord>();
         private static bool _dirty;
 
-        public static string FolderPath = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\_statistics\Failures";
+        public static string FolderPath = Path.Combine(LookUsers.folderStatistics, "Failures"); 
 
         public static void Add(FailureRecord record)
         {
@@ -48,6 +48,7 @@ namespace Reinforcement
         /// </summary>
         public static bool Flush()
         {
+            if (!LookUsers.IsStorageAvailable()) { return false; }
             List<FailureRecord> snapshot;
             lock (_lock)
             {

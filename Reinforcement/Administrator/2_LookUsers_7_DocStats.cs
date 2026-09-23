@@ -28,6 +28,9 @@ namespace Reinforcement
         public int TotalOps { get; set; }
         public int SaveCount { get; set; }
         public int SyncCount { get; set; }
+
+        public int CountActiveDoc {  get; set; }//смена активного документа и снова возврат к нему
+
         public double LastSyncSeconds { get; set; }
         public double LastSaveSeconds { get; set; }
 
@@ -84,7 +87,7 @@ namespace Reinforcement
             {
                 Guid = other.Guid;
             }
-            
+            CountActiveDoc += other.CountActiveDoc;
             foreach (var kv in other.CommandHits)
             {
                 CommandHits.TryGetValue(kv.Key, out var v);
@@ -123,7 +126,8 @@ namespace Reinforcement
                 Name = Name,
                 CommandHits = new Dictionary<string, int>(CommandHits),
                 ActiveViews = viewsCopy,
-                Warnings= Warnings
+                Warnings= Warnings,
+                CountActiveDoc= CountActiveDoc,
             };
         }
     }
@@ -141,6 +145,7 @@ namespace Reinforcement
 
         public int TotalOps { get; set; }
 
+        public int CountActiveView { get; set; }//смена активного документа и снова возврат к нему
         public double TotalWorkSeconds { get; set; }
 
         public void Merge(ViewStat other)
@@ -173,6 +178,7 @@ namespace Reinforcement
             {
                 ViewId = other.ViewId;
             }
+            CountActiveView += other.CountActiveView;
 
         }
 
@@ -189,6 +195,7 @@ namespace Reinforcement
                 TotalOps = TotalOps,
                 TotalWorkSeconds = TotalWorkSeconds,
                 ViewId= ViewId  ,
+                CountActiveView= CountActiveView,
             };
         }
     }

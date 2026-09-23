@@ -26,7 +26,7 @@ namespace Reinforcement
             var version = App_Apdater_1.VersionString; 
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
 
-            logErrorsShow.IsChecked = LookUsers.LookErrorsAdmin;
+            logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
             
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -47,7 +47,7 @@ namespace Reinforcement
             AnyChange.AllUpdater=chkUpdater.IsChecked == true;
 
 
-            LookUsers.LookErrorsAdmin= logErrorsShow.IsChecked == true;
+            AppErrors.LookErrorsAdmin= logErrorsShow.IsChecked == true;
 
 
 

@@ -30,7 +30,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
                 return Result.Failed;
             }
             return Result.Succeeded;

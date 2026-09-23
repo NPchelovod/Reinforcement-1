@@ -72,7 +72,7 @@ namespace Reinforcement
                     }
                     catch (System.Exception ex)
                     {
-                        App_Apdater_1.LookUsers.LogError(ex);
+                       App_Apdater_1.AppErrors.LogError(ex);
                         // Выводим ошибку для конкретной ячейки
                         TaskDialog.Show("Ошибка", $"Ошибка при изменении стиля ячейки [Row: {row}, Column: {column}]\n{ex.Message}");
                     }

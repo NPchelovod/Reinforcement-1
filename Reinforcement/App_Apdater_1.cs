@@ -54,6 +54,8 @@ namespace Reinforcement
                 ?.Version;
         }
         public static LookUsers LookUsers = new LookUsers();
+
+        public static AppErrors AppErrors = new AppErrors();
         public static void StartUpdateENS()
         {
             try
@@ -122,7 +124,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка запуска обновления", ex.Message);
             }
         }

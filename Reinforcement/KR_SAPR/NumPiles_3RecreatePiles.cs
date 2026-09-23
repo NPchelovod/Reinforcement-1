@@ -67,7 +67,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                    App_Apdater_1.LookUsers.LogError(ex);
+                   App_Apdater_1.AppErrors.LogError(ex);
                     recreateTrans.RollBack();
                     TaskDialog.Show("Ошибка", $"Ошибка обработки свай: {ex.Message}");
                     return Result.Failed;

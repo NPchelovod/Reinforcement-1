@@ -178,8 +178,8 @@
     <Compile Include="Administrator\2_LookUsers_3_Writers.cs" />
     <Compile Include="App_Apdater_1.cs" />
     <Compile Include="Administrator\2_LookUsers_1.cs" />
-    <Compile Include="Administrator\2_LookUsers_5_Errors.cs" />
-    <Compile Include="Administrator\2_LookUsers_6_ErrorsShow.cs" />
+    <Compile Include="Administrator\3_AppErrors_5_Errors.cs" />
+    <Compile Include="Administrator\3_AppErrors_6_ErrorsShow.cs" />
     <Compile Include="Administrator\2_LookUsers_7_DocStats.cs" />
     <Compile Include="App_Panel_1_81_KR_Export.cs" />
     <Compile Include="App_Panel_1_92_Toska.cs" />

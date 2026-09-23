@@ -93,7 +93,7 @@ namespace Reinforcement
                             }
                             catch (Exception ex)
                             {
-                                App_Apdater_1.LookUsers.LogError(ex);
+                               App_Apdater_1.AppErrors.LogError(ex);
                             }
                         }
                         t.Commit();
@@ -168,7 +168,7 @@ namespace Reinforcement
                             }
                             catch (Exception ex)
                             {
-                                App_Apdater_1.LookUsers.LogError(ex);
+                               App_Apdater_1.AppErrors.LogError(ex);
                                 TaskDialog.Show("Ошибка", $"Не удалось скопировать линии: {ex.Message}");
                             }
                         }
@@ -186,7 +186,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка", $"Произошла ошибка: {ex.Message}");
                 return false;
             }
@@ -204,7 +204,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
             }
         }
         // Поиск ближайшего уровня (допуск 500 мм)
@@ -322,7 +322,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка создания плана", ex.Message);
                 return null;
             }

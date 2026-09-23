@@ -68,7 +68,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+               App_Apdater_1.AppErrors.LogError(ex);
                 message = $"Ошибка: {ex.Message}";
                 return null; // Возвращаем null при исключении
             }

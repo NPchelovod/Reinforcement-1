@@ -134,7 +134,7 @@ namespace Reinforcement
                 //заполняем даты открытия данной модели
                 docStat.FirstSeen = DateTime.Now;
                 docStat.LastSeen = DateTime.Now;
-
+               
                 docStat.Name = System.IO.Path.GetFileNameWithoutExtension(nameDoc);
                 ProjectInfo info = doc.ProjectInformation;
 
@@ -224,13 +224,18 @@ namespace Reinforcement
             {
                 viewData.TotalOps++;
 
-                if (pastViewStat == viewData)
-                {
-                    double stepTime = (DateTime.Now - pastViewStat.LastSeen).TotalSeconds;
-                    viewData.TotalWorkSeconds += stepTime;
-                }
+               
 
                 viewData.LastSeen = DateTime.Now;
+            }
+            if (pastViewStat == viewData)
+            {
+                double stepTime = (DateTime.Now - pastViewStat.LastSeen).TotalSeconds;
+                viewData.TotalWorkSeconds += stepTime;
+            }
+            else
+            {
+                viewData.CountActiveView++;//переход в активный вид
             }
 
             pastViewStat = viewData;
@@ -298,6 +303,10 @@ namespace Reinforcement
             {
                 stepTime = (DateTime.Now - docStat.LastSeen).TotalSeconds;
                 docStat.TotalWorkSeconds += stepTime;
+            }
+            else
+            {
+                docStat.CountActiveDoc++;
             }
 
             pastDocStat = docStat;

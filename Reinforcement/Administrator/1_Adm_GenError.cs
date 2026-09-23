@@ -21,7 +21,7 @@ namespace Reinforcement
             RevitAPI.Initialize(commandData);
 
             // Включаем админ-режим на время теста — окно покажется.
-            LookUsers.LookErrorsAdmin = true;
+            AppErrors.LookErrorsAdmin = true;
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             System.Diagnostics.Debug.WriteLine($"Location: {asm.Location}");
             System.Diagnostics.Debug.WriteLine($"IsDynamic: {asm.IsDynamic}");
@@ -34,7 +34,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.LookUsers.LogError(ex);
+                App_Apdater_1.AppErrors.LogError(ex);
                 message = $"Adm_GenError: {ex.GetType().Name}: {ex.Message}";
                 return Result.Failed;
             }
