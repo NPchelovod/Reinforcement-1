@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Controls;
 using System.Diagnostics;
+using System.Threading;
 //using System.Windows;
 
 namespace Updaters
@@ -23,6 +24,9 @@ namespace Updaters
         public static double GetCharacterWidth(Document doc, string text, Single H_size = 3.5f)
         {
             double width = 0;
+            if (string.IsNullOrEmpty(text))
+            { return width; }
+            
             Font font = new Font("ISOCPEUR", H_size, FontStyle.Regular);
 
 
@@ -58,55 +62,72 @@ namespace Updaters
             }
         }
         private DateTime now;
+        // Защита от гонок в рамках одной сессии
+        private static int _inUpdate;
         public void Execute(UpdaterData data)
         {
             if (!AnyChange.AllUpdater) { return; }
-
-            Document doc = data.GetDocument();
-            if (doc == null) { return; }
-            //var ids = data.GetModifiedElementIds();
-            var ids = data.GetModifiedElementIds().ToList(); // ✅ Материализовать!
-
-            //bool functProxod = false;
-            //var pastElements2 = new HashSet<Element>();
-            if (pastElements.Count > 1000)
+            try
             {
-                lock (pastElements) { pastElements.Clear(); }
+                // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
+                if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
+                    return;
+
+                Document doc = data.GetDocument();
+                if (doc == null) { return; }
+                //var ids = data.GetModifiedElementIds();
+                var ids = data.GetModifiedElementIds().ToList(); // ✅ Материализовать!
+
+                //bool functProxod = false;
+                //var pastElements2 = new HashSet<Element>();
+                if (pastElements.Count > 1000)
+                {
+                    lock (pastElements) { pastElements.Clear(); }
+                }
+
+                now = DateTime.UtcNow; // ✅ Фиксируем время СНАРУЖИ
+
+                foreach (var id in ids)
+                {
+
+
+                    bool shouldProcess;
+                    lock (pastElements) // ✅ Короткий lock только для проверки
+                    {
+                        shouldProcess = !pastElements.TryGetValue(id, out var date)
+                                     || (now - date) > ThrottleWindow;
+
+                    }
+
+                    if (!shouldProcess)
+                    {
+                        continue;
+                    }
+                    pastElements[id] =now;
+
+                    var element = doc.GetElement(id);
+
+                    if (element == null)
+                    {
+                        continue;
+                    }
+                    // два раза чтобы не входила сама в себя рекурсией
+
+                    if (shrift(doc, element, id))
+                    {
+                        //два раза не надо лезть туда
+                        continue;
+                    } // корректировка выносок
+
+                }
             }
-
-            now = DateTime.UtcNow; // ✅ Фиксируем время СНАРУЖИ
-
-            foreach (var id in ids)
+            catch (Exception ex)
             {
-                
-
-                bool shouldProcess;
-                lock (pastElements) // ✅ Короткий lock только для проверки
-                {
-                    shouldProcess = !pastElements.TryGetValue(id, out var date)
-                                 || (now - date).TotalSeconds >= updateTime;
-
-                }
-
-                if (!shouldProcess) 
-                { 
-                    continue; 
-                }
-
-                var element = doc.GetElement(id);
-
-                if( element == null )
-                {
-                    continue;
-                }
-                // два раза чтобы не входила сама в себя рекурсией
-
-                if (shrift(doc, element, id))
-                {
-                    //два раза не надо лезть туда
-                    continue;
-                } // корректировка выносок
-
+                App_Apdater_1.AppErrors.LogError(ex);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _inUpdate, 0);
             }
             
             
@@ -114,7 +135,7 @@ namespace Updaters
 
         }
 
-        private static double updateTime = 1.1;
+        private static readonly TimeSpan ThrottleWindow = TimeSpan.FromMilliseconds(300);
 
         private static List<string> nameWidths = new List<string> { "ЕС_Ширина полки", "Ширина полки" };
         
@@ -132,23 +153,24 @@ namespace Updaters
                 now = DateTime.UtcNow;
            
 
-                lock (pastElements) // ✅ Короткий lock 
-                {
-                    //if (pastElements.TryGetValue(elementId, out var pd))
-                    //{
-                    //    if (now - pd < _minimumInterval)
-                    //    {
-                    //        return false;
-                    //    }
-                    //}
-                    pastElements[elementId] = now;
-                }
+                //lock (pastElements) // ✅ Короткий lock 
+                //{
+                //    //if (pastElements.TryGetValue(elementId, out var pd))
+                //    //{
+                //    //    if (now - pd < _minimumInterval)
+                //    //    {
+                //    //        return false;
+                //    //    }
+                //    //}
+                //    pastElements[elementId] = now;
+                //}
                 var paramTop = element.LookupParameter("Текст верх");
                 if (paramTop == null) {return false;}
 
+
                 string firstText = paramTop.AsString();
                 string secondText = element.LookupParameter("Текст низ").AsString();
-                var text = firstText.Count() > secondText.Count() ? firstText : secondText;
+               
                 if (!IsFontInstalled("ISOCPEUR"))
                 {
                     TransparentNotificationWindow.ShowNotification("Не удалось найти шрифт ISOCPEUR\nАвтоудлинение выноски не сработало", RevitAPI.UiDocument, 3);

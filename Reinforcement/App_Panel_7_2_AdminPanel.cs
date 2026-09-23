@@ -32,6 +32,10 @@ namespace Reinforcement
                  "нннн",
                  "аааа",
                 panel);
+            App_Helper_Button.CreateButton("FlushOut", "Выгруз\n статистики", "Reinforcement.FlushOut", OV1,
+                 "выгружение статистики и ошибок сейчач",
+                 "аааа",
+                panel);
         }
 
 

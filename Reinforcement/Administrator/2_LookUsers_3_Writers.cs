@@ -55,7 +55,9 @@ namespace Reinforcement
         {
             try
             {
+                
                 FlushInternalLock();
+                
             }
             catch (Exception ex)
             {

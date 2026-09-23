@@ -43,12 +43,13 @@ namespace Reinforcement
 
         public DateTime LastSync { get; set; }
 
-        public string Guid { get; set; }//гуид документа
-
+        public string Guid { get; set; }//гуид документа при первом создании но если шаблон то его дубль
+        public string CreationGUID { get; set; }//гуид документа опять может совпадать но вдруг не совпадает
         public string Name { get; set; }//имя документа
 
         public int Warnings { get; set; }
         public Dictionary<string, int> CommandHits { get; set; } = new Dictionary<string, int>();
+        public Dictionary<int, (int cliks, double time)> CommandHitsHours { get; set; } = new Dictionary<int, (int cliks, double time)>();// словарь кликов по часам: час и количество кликов
 
         //активные виды список действий, полезно чтобы знать сколько надо время потратить на то или иное
         public Dictionary<string, ViewStat> ActiveViews { get; set; } = new Dictionary<string, ViewStat>();
@@ -87,11 +88,23 @@ namespace Reinforcement
             {
                 Guid = other.Guid;
             }
+
+            if (string.IsNullOrEmpty(CreationGUID))
+            {
+                CreationGUID = other.CreationGUID;
+            }
+
             CountActiveDoc += other.CountActiveDoc;
             foreach (var kv in other.CommandHits)
             {
                 CommandHits.TryGetValue(kv.Key, out var v);
                 CommandHits[kv.Key] = v + kv.Value;
+            }
+
+            foreach (var kv in other.CommandHitsHours)
+            {
+                CommandHitsHours.TryGetValue(kv.Key, out var v);
+                CommandHitsHours[kv.Key] = (v.cliks + kv.Value.cliks, v.time + kv.Value.time);
             }
             foreach (var kv in other.ActiveViews)
             {
@@ -123,8 +136,10 @@ namespace Reinforcement
                 LastSave = LastSave,
                 LastSync = LastSync,
                 Guid= Guid,
+                CreationGUID= CreationGUID,
                 Name = Name,
                 CommandHits = new Dictionary<string, int>(CommandHits),
+                CommandHitsHours =new Dictionary<int, (int cliks, double time)> (CommandHitsHours),
                 ActiveViews = viewsCopy,
                 Warnings= Warnings,
                 CountActiveDoc= CountActiveDoc,

@@ -39,11 +39,14 @@ namespace Reinforcement
         public DateTime DateDay { get; set; } = DateTime.Now.Date;//дата текущего дня
 
        
-        
 
         // Защита от гонок в рамках одной сессии
         private static readonly object _lock = new object();
         private static int _inUpdate;
+
+        public DateTime Now = DateTime.Now;//для быстрого доступа к дате
+        
+        int _hour = 0;
         public void Update(string explicitCommandName = null, EDocStatsOptions commandType = 0)
         {
             bool acquired = false;
@@ -56,15 +59,17 @@ namespace Reinforcement
                 acquired = true;
                 lock (_lock)
                 {
+                    Now = DateTime.Now;//от этой даты всё и считаем чтобы было надежно
+                    //hourAligned = new DateTime(Now.Year, Now.Month, Now.Day, Now.Hour, 0, 0);//кратно часу дата
+                    _hour = Now.Hour;
                     if (ProcessWriter(explicitCommandName, commandType))
                     {
-                        if (DateTime.Now - PassDate > FlushInterval)
+                        if (Now - PassDate > FlushInterval)
                         {
                             FlushInternalLock();
                         }
                     }
                 }
-
 
             }
             catch
@@ -89,13 +94,28 @@ namespace Reinforcement
             {
                 return false;
             }
-           
+            // ==== THROTTLE ====
+            if (ShouldThrottle(key))//защита от дублей
+                return false;
+            // ==== /THROTTLE ====
+
+
+            if (commandType == EDocStatsOptions.CloseRevit)
+            {
+                //так как документ к тому времени бывает == null;
+                if(pastDocStat!=null)
+                {
+                    pastDocStat.CloseRevit = true;
+                    pastDocStat.LastSeen = DateTime.Now;
+                }
+            }
+
             UIDocument uiDoc = RevitAPI.UiDocument;
             if (uiDoc == null) { return false; }
             Document doc = uiDoc.Document;
             if (doc == null) { return false; }
 
-            DateDay = DateTime.Now.Date;   // ← добавить
+            DateDay = Now.Date;   // ← добавить
 
 
             string nameDoc = doc.PathName;
@@ -112,13 +132,15 @@ namespace Reinforcement
             }
             if (string.IsNullOrEmpty(nameDoc))
             {
-                return false;
+                //значит документ не сохранен просто возвращаем его имя
+                nameDoc = doc.Title;
+                if (string.IsNullOrEmpty(nameDoc))
+                {
+                    return false;
+                }
             }
 
-            // ==== THROTTLE ====
-            if (ShouldThrottle(key, nameDoc, commandType))//защита от дублей
-                return false;
-            // ==== /THROTTLE ====
+            
 
             //команды кликов
             if (!DictDateDocStats.TryGetValue(DateDay, out var docStats))
@@ -132,19 +154,26 @@ namespace Reinforcement
                 docStats[nameDoc] = docStat;
 
                 //заполняем даты открытия данной модели
-                docStat.FirstSeen = DateTime.Now;
-                docStat.LastSeen = DateTime.Now;
+                docStat.FirstSeen = Now;
+                docStat.LastSeen = Now;
                
                 docStat.Name = System.IO.Path.GetFileNameWithoutExtension(nameDoc);
                 ProjectInfo info = doc.ProjectInformation;
 
                 if (info != null)
                 {
-                    string documentGuid = info.UniqueId; // Уникальный GUID проекта
+                    string documentGuid = info.UniqueId; // Уникальный GUID проекта совпадает если шаблон один
+
                     if(!string.IsNullOrEmpty(documentGuid))
                     {
                         docStat.Guid= documentGuid;
                     }
+                }
+                // Получаем 
+                string creationGUID=doc.CreationGUID.ToString();
+                if (!string.IsNullOrEmpty(creationGUID))
+                {
+                    docStat.CreationGUID= creationGUID;
                 }
 
                 int warnings = doc.GetWarnings().Count();//ошибок в документе
@@ -156,36 +185,25 @@ namespace Reinforcement
 
             return true;
         }
-        private static readonly object _throttleLock = new object();
+       
         private static string _lastThrottleKey;
         private static DateTime _lastThrottleTime = DateTime.MinValue;
         private static readonly TimeSpan ThrottleWindow = TimeSpan.FromMilliseconds(300);
 
+       
         /// <summary>
         /// true — повтор в пределах окна, обработку надо пропустить.
         /// Save/Sync/CloseRevit не глушим — они редкие и важные.
         /// </summary>
-        private static bool ShouldThrottle(string commandKey, string docPath,
-                                           EDocStatsOptions commandType)
+        private  bool ShouldThrottle(string key)
         {
-            if (commandType == EDocStatsOptions.Save
-                || commandType == EDocStatsOptions.Sync
-                || commandType == EDocStatsOptions.CloseRevit)
-                return false;
-
-            string key = $"{commandKey}|{docPath}|{(int)commandType}";
-
-            lock (_throttleLock)
-            {
-                var now = DateTime.Now;
-                if (key == _lastThrottleKey && (now - _lastThrottleTime) < ThrottleWindow)
-                    return true;
-
-                _lastThrottleKey = key;
-                _lastThrottleTime = now;
-                return false;
-            }
+           
+            bool isThrottled = (key == _lastThrottleKey) && ((Now - _lastThrottleTime) < ThrottleWindow);
+            _lastThrottleKey = key;
+            _lastThrottleTime = Now;
+            return isThrottled;
         }
+       
 
         private ViewStat pastViewStat = null;
         private void ProcessWriterViewStat(DocStats docStat)
@@ -214,23 +232,18 @@ namespace Reinforcement
                 {
                     NameView = viewName,
                     ViewId=ViewId,
-                    FirstSeen = DateTime.Now,
-                    LastSeen = DateTime.Now,
-                    TotalOps = 1
+                    FirstSeen = Now,
+                    LastSeen = Now,
+                    
                 };
                 docStat.ActiveViews[viewName] = viewData;
             }
-            else
-            {
-                viewData.TotalOps++;
+            
+            viewData.TotalOps++;
 
-               
-
-                viewData.LastSeen = DateTime.Now;
-            }
             if (pastViewStat == viewData)
             {
-                double stepTime = (DateTime.Now - pastViewStat.LastSeen).TotalSeconds;
+                double stepTime = (Now - pastViewStat.LastSeen).TotalSeconds;
                 viewData.TotalWorkSeconds += stepTime;
             }
             else
@@ -238,6 +251,7 @@ namespace Reinforcement
                 viewData.CountActiveView++;//переход в активный вид
             }
 
+            viewData.LastSeen = Now;
             pastViewStat = viewData;
 
             //попытка найти активный лист
@@ -286,9 +300,8 @@ namespace Reinforcement
 
                 if (!string.IsNullOrEmpty(sheetName) && sheetName != None)
                 {
-                    viewData.DateInSheet = DateTime.Now;//первое размещение на листе
+                    viewData.DateInSheet = Now;//первое размещение на листе
                 }
-
             }
 
         }
@@ -301,7 +314,7 @@ namespace Reinforcement
             double stepTime = 0;//прибавка времени
             if (pastDocStat == docStat)
             {
-                stepTime = (DateTime.Now - docStat.LastSeen).TotalSeconds;
+                stepTime = (Now - docStat.LastSeen).TotalSeconds;
                 docStat.TotalWorkSeconds += stepTime;
             }
             else
@@ -312,11 +325,16 @@ namespace Reinforcement
             pastDocStat = docStat;
 
             //всегда может оказаться последним сеансом
-            docStat.LastSeen = DateTime.Now;
+            docStat.LastSeen = Now;
             docStat.TotalOps++;                                   // ← общий счётчик действий
 
             docStat.CommandHits.TryGetValue(key, out var cmdHits);
             docStat.CommandHits[key] = cmdHits + 1;
+
+            docStat.CommandHitsHours.TryGetValue(_hour, out var cmdHitsH);
+            docStat.CommandHitsHours[_hour] = (cmdHitsH.cliks + 1, cmdHitsH.time+ stepTime);//почасовая характеристика для оценки
+           
+
             if (commandType != 0)
             {
                 switch (commandType)

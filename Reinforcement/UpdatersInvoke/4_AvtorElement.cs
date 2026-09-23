@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -192,39 +193,48 @@ namespace Reinforcement
         private static bool _isUpdating = false; // флаг защиты от рекурсии
 
         // === Текущие значения (пересчитываются при каждом реальном выполнении) ===
-        private static string _username;
+        
         private static string _userDate;
 
-
-
-
+        public static string UserName = "";
         /// <summary>
         /// Основной метод, вызываемый диспетчером для обработки добавленных/изменённых элементов.
         /// </summary>
+        private static int _inUpdate;
         public static void AvtorUpdater(UpdaterData data)
         {
             if (!regWriterAvtor) return;
-
-            // Проверка временного интервала сразу, до каких-либо действий
-            DateTime now = DateTime.UtcNow;
-            if (now - _lastExecutionTime < _minimumInterval)
-                return;
-
-            // Защита от рекурсивного вызова
-            if (_isUpdating) return;
-
-            Document doc = data.GetDocument();
-            _username = doc.Application.Username;
-            _userDate = $"{_username}_{DateTime.Now:dd.MM.yy.HH}";
-
-            // Получаем списки элементов
-            var addedIds = data.GetAddedElementIds();
-            var modifiedIds = data.GetModifiedElementIds();
-
-            // Устанавливаем флаг выполнения
-            _isUpdating = true;
-            //try
+            try
             {
+                // Защита от рекурсивного вызова
+                // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
+                if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
+                {
+                    return;
+                }
+
+                // Проверка временного интервала сразу, до каких-либо действий
+                DateTime now = DateTime.UtcNow;
+                if (now - _lastExecutionTime < _minimumInterval)
+                    return;
+
+                Document doc = data.GetDocument();
+                if (doc == null)
+                { 
+                    return;
+                }
+                if (string.IsNullOrEmpty(UserName))
+                {
+                    UserName = doc.Application.Username;
+                }
+                _userDate = $"{UserName}_{now:dd.MM.yy.HH}";
+
+                // Получаем списки элементов
+                var addedIds = data.GetAddedElementIds();
+                var modifiedIds = data.GetModifiedElementIds();
+
+           
+            
                 // Обрабатываем добавленные (автор при создании)
                 if (addedIds.Count > 0)
                 {
@@ -240,9 +250,13 @@ namespace Reinforcement
                 // Обновляем время последнего выполнения
                 _lastExecutionTime = DateTime.UtcNow;
             }
-            //finally
+            catch(Exception ex) 
             {
-                _isUpdating = false;
+                App_Apdater_1.AppErrors.LogError(ex);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _inUpdate, 0);
             }
         }
 
@@ -391,7 +405,7 @@ namespace Reinforcement
                 .ToList();
 
             // Удаляем все записи, начинающиеся с "username_"
-            string prefix = _username + "_";
+            string prefix = UserName + "_";
             entries.RemoveAll(e => e.StartsWith(prefix));
 
             // Вставляем актуальную запись в начало
