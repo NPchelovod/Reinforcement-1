@@ -36,7 +36,7 @@ namespace Reinforcement
 
         public static string filePath => Path.Combine(folderStatistics, fileName);
         //2 часа — разумное значение. Некоторые системы берут 15 минут, некоторые — 4 часа. Но полностью убирать периодический флаш почти никто не делает.
-        private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2);
+        private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2.5);
 
         public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {

@@ -149,6 +149,7 @@ namespace Reinforcement
 
     public class ViewStat
     {
+        //может тут тоже добавить почасовое?
         public string NameView { get; set; }
         public int ViewId { get; set; }
         public string NameSheet { get; set; }//имя листа
@@ -162,6 +163,7 @@ namespace Reinforcement
 
         public int CountActiveView { get; set; }//смена активного документа и снова возврат к нему
         public double TotalWorkSeconds { get; set; }
+        public Dictionary<int, (int cliks, double time)> CommandHitsHours { get; set; } = new Dictionary<int, (int cliks, double time)>();// словарь кликов по часам: час и количество кликов
 
         public void Merge(ViewStat other)
         {
@@ -194,7 +196,11 @@ namespace Reinforcement
                 ViewId = other.ViewId;
             }
             CountActiveView += other.CountActiveView;
-
+            foreach (var kv in other.CommandHitsHours)
+            {
+                CommandHitsHours.TryGetValue(kv.Key, out var v);
+                CommandHitsHours[kv.Key] = (v.cliks + kv.Value.cliks, v.time + kv.Value.time);
+            }
         }
 
         public ViewStat Clone()
@@ -211,6 +217,7 @@ namespace Reinforcement
                 TotalWorkSeconds = TotalWorkSeconds,
                 ViewId= ViewId  ,
                 CountActiveView= CountActiveView,
+                CommandHitsHours = new Dictionary<int, (int cliks, double time)>(CommandHitsHours),
             };
         }
     }

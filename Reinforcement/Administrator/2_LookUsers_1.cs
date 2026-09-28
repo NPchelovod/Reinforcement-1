@@ -240,16 +240,19 @@ namespace Reinforcement
             }
             
             viewData.TotalOps++;
-
+            double stepTime = 0;
             if (pastViewStat == viewData)
             {
-                double stepTime = (Now - pastViewStat.LastSeen).TotalSeconds;
+                stepTime = (Now - pastViewStat.LastSeen).TotalSeconds;
                 viewData.TotalWorkSeconds += stepTime;
+                
             }
             else
             {
                 viewData.CountActiveView++;//переход в активный вид
             }
+            viewData.CommandHitsHours.TryGetValue(_hour, out var cmdHitsH);
+            viewData.CommandHitsHours[_hour] = (cmdHitsH.cliks + 1, cmdHitsH.time + stepTime);//почасовая характеристика для оценки
 
             viewData.LastSeen = Now;
             pastViewStat = viewData;
