@@ -86,7 +86,8 @@ namespace Reinforcement
                 BuiltInCategory.OST_SharedBasePoint,
 
                 BuiltInCategory.OST_Viewports, // видовые экраны
-             BuiltInCategory.OST_Levels
+             BuiltInCategory.OST_Levels,
+             BuiltInCategory.OST_RevisionClouds //чудо облачко
         };
         public static void Register(bool forceReregister = false)
         {

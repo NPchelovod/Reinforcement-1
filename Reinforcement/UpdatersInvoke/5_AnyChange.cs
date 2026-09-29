@@ -22,7 +22,7 @@ namespace Reinforcement
             //сюда приходят от всех изменений элементы
             try
             {
-                App_Apdater_1.LookUsers.Update("AnyChange.Execute");
+                App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
                 //меняем автора элемента
                 AutoFillNoteUpdater.AvtorUpdater(data);
             }

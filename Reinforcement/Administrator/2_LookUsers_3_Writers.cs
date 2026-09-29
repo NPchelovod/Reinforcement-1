@@ -102,7 +102,7 @@ namespace Reinforcement
 
         private void FlushInternal()
         {
-            PassDate = DateTime.Now;
+            PassDateWrite = DateTime.Now;
 
             // обновляем текущий день если сессия многодневная
             //DateDay = DateTime.Now.Date;

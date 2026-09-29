@@ -18,6 +18,7 @@ namespace Reinforcement
     public enum EDocStatsOptions
     {
         None = 0,
+        Invoker=1,// от событий апдейтера
         Save,
         Sync,
         CloseRevit,
@@ -154,6 +155,7 @@ namespace Reinforcement
         public int ViewId { get; set; }
         public string NameSheet { get; set; }//имя листа
         public string NumSheet {  get; set; }
+        public int IdSheet { get; set; }
         public DateTime FirstSeen { get; set; }
         public DateTime LastSeen { get; set; }
 
@@ -186,7 +188,10 @@ namespace Reinforcement
             if (string.IsNullOrEmpty(NameSheet) || NameSheet == "None")
                 NameSheet = other.NameSheet;
             if (string.IsNullOrEmpty(NumSheet) || NumSheet == "None")
+            {
                 NumSheet = other.NumSheet;
+                IdSheet = other.IdSheet;
+            }
 
             if (string.IsNullOrEmpty(NameView))
                 NameView = other.NameView;
@@ -210,6 +215,7 @@ namespace Reinforcement
                 NameView = NameView,
                 NameSheet = NameSheet,
                 NumSheet = NumSheet,
+                IdSheet = IdSheet,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen,
                 DateInSheet = DateInSheet,

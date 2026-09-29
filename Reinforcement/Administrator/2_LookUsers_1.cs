@@ -35,7 +35,7 @@ namespace Reinforcement
         /// <summary>Статистика по времени записи JSON (для оценки необходимости async).</summary>
         public WritePerfStats WriteStats { get; set; } = new WritePerfStats();
 
-        public DateTime PassDate { get; set; } = DateTime.Now;
+        public DateTime PassDateWrite { get; set; } = DateTime.Now;//прошлая дата записи
         public DateTime DateDay { get; set; } = DateTime.Now.Date;//дата текущего дня
 
        
@@ -64,7 +64,7 @@ namespace Reinforcement
                     _hour = Now.Hour;
                     if (ProcessWriter(explicitCommandName, commandType))
                     {
-                        if (Now - PassDate > FlushInterval)
+                        if (Now - PassDateWrite > FlushInterval)
                         {
                             FlushInternalLock();
                         }
@@ -89,7 +89,7 @@ namespace Reinforcement
         private bool ProcessWriter(string explicitCommandName, EDocStatsOptions commandType)
         {
 
-            string key = explicitCommandName ?? GetCallerName();
+            string key = explicitCommandName ?? GetCallerName(commandType);
             if (string.IsNullOrEmpty(key))
             {
                 return false;
@@ -180,7 +180,7 @@ namespace Reinforcement
                 docStat.Warnings= warnings;
             }
 
-            ProcessWriterViewStat(docStat);//статистика по виду
+            ProcessWriterViewStat(docStat,doc);//статистика по виду
             ProcessWriterDocStat(docStat, key, commandType);//статистика всего документа для пользователя
 
             return true;
@@ -206,7 +206,7 @@ namespace Reinforcement
        
 
         private ViewStat pastViewStat = null;
-        private void ProcessWriterViewStat(DocStats docStat)
+        private void ProcessWriterViewStat(DocStats docStat, Document doc)
         {
             //запись характеристик вида
 
@@ -263,6 +263,7 @@ namespace Reinforcement
                 //попытка найти лист
                 string sheetName = None;
                 string sheetNum = None;
+                int sheetId = 0;
                 // 1. Активный вид — сам лист
                 if (activeView is ViewSheet sheet)
                 {
@@ -274,6 +275,10 @@ namespace Reinforcement
                     {
                         sheetNum = sheet.SheetNumber;
                     }
+                    //попытка id установить 
+                    ElementId viewId = activeView.Id;
+                    sheetId = (int)viewId.Value;
+                    
                 }
                 else
                 {
@@ -288,22 +293,51 @@ namespace Reinforcement
                             // дополнительно достаём номер листа через VIEWPORT_SHEET_NUMBER
                             string num = null;
                             var numParam = activeView.get_Parameter(BuiltInParameter.VIEWPORT_SHEET_NUMBER);
+
+                            //как id sheet достать??
+                            ElementId viewId = activeView.Id;
+                            sheetId = (int)viewId.Value;
+
                             if (numParam != null && numParam.HasValue)
                                 num = numParam.AsString();
                             if (!string.IsNullOrEmpty(num))
                             {
                                 sheetNum = num;
                             }
+
+                            // Пытаемся найти Viewport, через который вид размещён на листе
+                            Viewport vp = new FilteredElementCollector(doc)
+                                .OfClass(typeof(Viewport))
+                                .Cast<Viewport>()
+                                .FirstOrDefault(v => v.ViewId == activeView.Id);
+
+                            if (vp != null)
+                            {
+                                ElementId sheetElemId = vp.SheetId;
+                                sheetId = (int)sheetElemId.Value;
+
+                                // Имя и номер листа можно взять прямо из листа, а не из параметров вида
+                                ViewSheet Sheet = doc.GetElement(sheetElemId) as ViewSheet;
+                                if (Sheet != null)
+                                {
+                                    if (!string.IsNullOrEmpty(Sheet.Name))
+                                        sheetName = Sheet.Name;
+                                    if (!string.IsNullOrEmpty(Sheet.SheetNumber))
+                                        sheetNum = Sheet.SheetNumber;
+                                }
+                            }
+
                         }
                     }
                 }
-                //записываем
-                viewData.NumSheet = sheetNum;
-                viewData.NameSheet = sheetName;
-
+                
                 if (!string.IsNullOrEmpty(sheetName) && sheetName != None)
                 {
                     viewData.DateInSheet = Now;//первое размещение на листе
+                                               //записываем
+                    viewData.NumSheet = sheetNum;
+                    viewData.NameSheet = sheetName;
+                    viewData.IdSheet = sheetId;
                 }
             }
 
@@ -338,7 +372,7 @@ namespace Reinforcement
             docStat.CommandHitsHours[_hour] = (cmdHitsH.cliks + 1, cmdHitsH.time+ stepTime);//почасовая характеристика для оценки
            
 
-            if (commandType != 0)
+            if (commandType !=0)
             {
                 switch (commandType)
                 {
@@ -365,14 +399,21 @@ namespace Reinforcement
 
         // ==== Внутренняя логика ====
 
-        private static string GetCallerName()
+        private static string GetCallerName(EDocStatsOptions commandType)
         {
             // 0 — GetCallerName, 1 — Update, 2 — вызывающий команду
             var st = new StackTrace(false);
             var frames = st.GetFrames();
             if (frames == null || frames.Length < 5)
                 return null;
+            if(commandType== EDocStatsOptions.Invoker)
+            {
+                int cc = 0;
+            }
+            else
+            {
 
+            }
             var caller = frames[4].GetMethod();
             var typeName = caller?.DeclaringType?.Name;
             var methodName = caller?.Name;
