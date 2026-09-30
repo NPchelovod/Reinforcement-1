@@ -142,7 +142,7 @@ namespace Reinforcement
                 UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeAny()); //Element.GetChangeTypeElementAddition());
                 //Нет, Element.GetChangeTypeAny() не реагирует на создание (и удаление) Это частая ловушка в Revit API.
                 UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementAddition());
-
+                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
 
             }
             else if (forceReregister)

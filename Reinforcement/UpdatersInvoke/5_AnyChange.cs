@@ -18,11 +18,13 @@ namespace Reinforcement
         public static void Execute(UpdaterData data)
         {
 
-            if (!AllUpdater) { return; }
+            
             //сюда приходят от всех изменений элементы
             try
             {
-                App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                LookUsersUpdate(data);
+                //не заходим в удаленные элементы!!!
+                if (!AllUpdater || data.GetDeletedElementIds().Count > 0) { return; }
                 //меняем автора элемента
                 AutoFillNoteUpdater.AvtorUpdater(data);
             }
@@ -34,7 +36,50 @@ namespace Reinforcement
         }
         //переподписаться
 
-       
+       public static void LookUsersUpdate(UpdaterData data)
+        {
+            //var addedIds = data.GetAddedElementIds();
+            
+            //var deletes = data.GetDeletedElementIds();
+            if (data.GetAddedElementIds().Count > 0)
+            {
+                App_Apdater_1.LookUsers.Update("AnyChange.Execute.addedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                return;
+            }
+            else if(data.GetDeletedElementIds().Count>0)
+            {
+                App_Apdater_1.LookUsers.Update("AnyChange.Execute.deletes", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                return;
+            }
+
+            var modifiedIds = data.GetModifiedElementIds();
+            
+            if (modifiedIds.Count > 0)
+            {
+
+                ElementId id = modifiedIds.First();
+                var doc = data.GetDocument();
+                // --- 1. Изменение ГЕОМЕТРИИ (перемещение, изменение формы) ---
+                if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
+                {
+                    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                }
+                // --- 3. Изменение встроенного параметра (пример: Комментарии) ---
+                //else if (data.IsChangeTriggered(id, Element.GetChangeTypeParameter(id)))
+                //{
+                //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                //}
+                else
+                {
+                    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+                }
+            }
+            else
+            {
+                App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            }
+        }
+
         public static void PodpiskaAll()
         {
             var app = App.Application;//RevitAPI.UiApplication;

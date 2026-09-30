@@ -201,7 +201,8 @@
     <Compile Include="KR_ExportImport\ExportImport.cs" />
     <Compile Include="KR_ExportImport\ImportExcel.cs" />
     <Compile Include="KR_SAPR\5_SeachDublicateOnView.cs" />
-    <Compile Include="KR_SAPR\ArmLengthEauels.cs" />
+    <Compile Include="KR_SAPR\6_DeleteDublicateFamily.cs" />
+    <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
     <Compile Include="KR_SAPR\NumPilesWind.xaml.cs">

@@ -64,6 +64,8 @@ namespace Reinforcement
                  "Поиск дубликатов на активном виде", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Арм погон", assemblyPath, "Reinforcement.ArmLengthEquels",
                 "Погонная арматура, запись её длины в длину стержня", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Дубли семейств", assemblyPath, "Reinforcement.DeleteDublicateFamily",
+                "Замена дублей семейств, кнопка дилетанта", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

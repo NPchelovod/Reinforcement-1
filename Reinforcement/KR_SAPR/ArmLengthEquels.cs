@@ -13,6 +13,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using static Autodesk.Revit.DB.SpecTypeId;
@@ -43,25 +44,31 @@ namespace Reinforcement
 
                 foreach (var elem in elems)
                 {
-                    // Ищем параметры
-                    Parameter paramTarget = elem.LookupParameter("ДлинаСтержня");
-                    Parameter paramSource = elem.LookupParameter("Длина");
+                    try
+                    {
+                        // Ищем параметры
+                        Parameter paramTarget = elem.LookupParameter("ДлинаСтержня");
+                        Parameter paramSource = elem.LookupParameter("Длина");
 
-                    if (paramTarget == null || paramSource == null)
-                        continue;
+                        if (paramTarget == null || paramSource == null)
+                            continue;
 
-                    // Проверяем, что это параметры длины (опционально, но надёжно)
-                    if (paramSource.StorageType != StorageType.Double ||
-                        paramTarget.StorageType != StorageType.Double)
-                        continue;
+                        // Проверяем, что это параметры длины (опционально, но надёжно)
+                        if (paramSource.StorageType != StorageType.Double ||
+                            paramTarget.StorageType != StorageType.Double)
+                            continue;
 
-                    double lengthReal = paramSource.AsDouble(); // в Revit длина в футах (внутренние единицы)
+                        double lengthReal = paramSource.AsDouble(); // в Revit длина в футах (внутренние единицы)
 
-                    if (lengthReal <= 0)
-                        continue;
-                    //paramTarget.Set(lengthReal * mmPerFoot); // если целевой параметр ожидает мм
-                    paramTarget.Set(lengthReal);
-
+                        if (lengthReal <= 0)
+                            continue;
+                        //paramTarget.Set(lengthReal * mmPerFoot); // если целевой параметр ожидает мм
+                        paramTarget.Set(lengthReal);
+                    }
+                    catch (Exception ex)
+                    {
+                        App_Apdater_1.AppErrors.LogError(ex);
+                    }
 
                 }
                 t.Commit();
@@ -70,7 +77,7 @@ namespace Reinforcement
             return Result.Succeeded;
         }
         const double mmPerFoot = 304.8;
-        public List<Element> SelectOrAllElements()
+        public static List<Element> SelectOrAllElements(bool notGroop=false)
         {
 
             var uiDocument = RevitAPI.UiDocument;
@@ -92,8 +99,22 @@ namespace Reinforcement
             }
             var collector = new FilteredElementCollector(doc, activeView.Id);
             var allElements = collector.WhereElementIsNotElementType().ToElements();
-
-            return allElements.ToList();
+            if(!notGroop)
+            {
+                return allElements.ToList();
+            }
+            //иначе надо вернуть только те что не в группах
+            foreach (var elem in allElements)
+            {
+                if (elem == null) continue;
+                ElementId groupId = elem.GroupId;
+                if (groupId != ElementId.InvalidElementId)
+                {
+                    continue;
+                }
+                selectedElements.Add(elem);
+            }
+            return selectedElements.ToList();
 
         }
 
