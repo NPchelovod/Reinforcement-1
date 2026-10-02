@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Markup;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Updaters;
@@ -17,14 +19,24 @@ namespace Reinforcement
         public static bool AllUpdater = true;
         public static void Execute(UpdaterData data)
         {
-
-            
             //сюда приходят от всех изменений элементы
             try
             {
-                LookUsersUpdate(data);
+                
+                SecretComand(data);
+            }
+            catch (Exception ex)
+            {
+                App_Apdater_1.AppErrors.LogError(ex);
+            }
+           
+            try
+            {
+                
+                //LookUsersUpdate(data);
                 //не заходим в удаленные элементы!!!
-                if (!AllUpdater || data.GetDeletedElementIds().Count > 0) { return; }
+                if (!AllUpdater) { return; }
+               // if ( data.GetDeletedElementIds().Count > 0) { return; }
                 //меняем автора элемента
                 AutoFillNoteUpdater.AvtorUpdater(data);
             }
@@ -39,45 +51,102 @@ namespace Reinforcement
        public static void LookUsersUpdate(UpdaterData data)
         {
             //var addedIds = data.GetAddedElementIds();
-            
-            //var deletes = data.GetDeletedElementIds();
-            if (data.GetAddedElementIds().Count > 0)
-            {
-                App_Apdater_1.LookUsers.Update("AnyChange.Execute.addedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-                return;
-            }
-            else if(data.GetDeletedElementIds().Count>0)
-            {
-                App_Apdater_1.LookUsers.Update("AnyChange.Execute.deletes", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-                return;
-            }
+            //string lastCommand = App.PastCommand.Name;
+            ////var deletes = data.GetDeletedElementIds();
+            //App_Apdater_1.LookUsers.Update($"AnyChange.{lastCommand}");
+            //return;
+            //if (data.GetAddedElementIds().Count > 0)
+            //{
+            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.addedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //    return;
+            //}
+            //else if(data.GetDeletedElementIds().Count>0)
+            //{
+            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.deletes", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //    return;
+            //}
 
-            var modifiedIds = data.GetModifiedElementIds();
+            //var modifiedIds = data.GetModifiedElementIds();
             
+            //if (modifiedIds.Count > 0)
+            //{
+
+            //    ElementId id = modifiedIds.First();
+            //    var doc = data.GetDocument();
+            //    // --- 1. Изменение ГЕОМЕТРИИ (перемещение, изменение формы) ---
+            //    if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
+            //    {
+            //        App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //    }
+            //    // --- 3. Изменение встроенного параметра (пример: Комментарии) ---
+            //    //else if (data.IsChangeTriggered(id, Element.GetChangeTypeParameter(id)))
+            //    //{
+            //    //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //    //}
+            //    else
+            //    {
+            //        App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //    }
+            //}
+            //else
+            //{
+            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
+            //}
+        }
+
+        public static void SecretComand(UpdaterData data)
+        {
+            //команда срабатывает внутри группы
+
+            Document doc = data.GetDocument();
+            if (doc == null)
+            {
+                return;
+            }
+            if (App.InPendingSecret)
+            {
+                App.InPendingSecret = false;
+
+                
+                if (!string.IsNullOrEmpty(App.OnGroupCurrent.Name))
+                {
+                    Element elemGroup = GetAnyElement(data);//элемент в группе
+                    if (elemGroup == null) { return; }
+                    ElementId groupId = elemGroup.GroupId;
+                    if (groupId == ElementId.InvalidElementId) {  return; }
+
+                    List<Element>  elements = ArmLengthEquels.SelectOrAllElements();
+                    elements = elements.Where(el => el.GroupId == groupId).ToList();
+                    //надо найти имеющие туже группу
+
+                    //надо собрать все элементы которые принадлежат данной группе и находятся на виде
+                    DeleteDublicateFamily.ReplacedProcess(doc, elements, false);
+                }
+               
+            }
+        }
+
+        public static Element GetAnyElement(UpdaterData data)
+        {
+            Document doc = data.GetDocument();
+            if (doc == null)
+            {
+                return null;
+            }
+            // Получаем списки элементов
+            var addedIds = data.GetAddedElementIds();
+            var modifiedIds = data.GetModifiedElementIds();
+            if (addedIds.Count > 0)
+            {
+                Element element = doc.GetElement(addedIds.First());
+                return element;
+            }
             if (modifiedIds.Count > 0)
             {
-
-                ElementId id = modifiedIds.First();
-                var doc = data.GetDocument();
-                // --- 1. Изменение ГЕОМЕТРИИ (перемещение, изменение формы) ---
-                if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-                {
-                    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-                }
-                // --- 3. Изменение встроенного параметра (пример: Комментарии) ---
-                //else if (data.IsChangeTriggered(id, Element.GetChangeTypeParameter(id)))
-                //{
-                //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-                //}
-                else
-                {
-                    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-                }
+                Element element = doc.GetElement(modifiedIds.First());
+                return element;
             }
-            else
-            {
-                App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            }
+            return null;
         }
 
         public static void PodpiskaAll()

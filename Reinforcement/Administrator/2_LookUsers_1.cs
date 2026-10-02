@@ -88,15 +88,18 @@ namespace Reinforcement
 
         private bool ProcessWriter(string explicitCommandName, EDocStatsOptions commandType)
         {
-
+            if(OnlyOneCommand())
+            {
+                return false;
+            }
             string key = explicitCommandName ?? GetCallerName(commandType);
             if (string.IsNullOrEmpty(key))
             {
                 return false;
             }
             // ==== THROTTLE ====
-            if (ShouldThrottle(key))//защита от дублей
-                return false;
+            //if (ShouldThrottle(key))//защита от дублей
+            //    return false;
             // ==== /THROTTLE ====
 
 
@@ -190,7 +193,14 @@ namespace Reinforcement
         private static DateTime _lastThrottleTime = DateTime.MinValue;
         private static readonly TimeSpan ThrottleWindow = TimeSpan.FromMilliseconds(300);
 
-       
+        //по времени ограничение на действие
+        private bool OnlyOneCommand()
+        {
+
+            bool isThrottled = ((Now - _lastThrottleTime) < ThrottleWindow);
+            _lastThrottleTime = Now;
+            return isThrottled;
+        }
         /// <summary>
         /// true — повтор в пределах окна, обработку надо пропустить.
         /// Save/Sync/CloseRevit не глушим — они редкие и важные.

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Windows.Controls;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -10,7 +9,7 @@ using Autodesk.Revit.UI;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class DeleteDublicateFamily : IExternalCommand
+    public class ReplaceDuplicatesAllViews : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -18,42 +17,29 @@ namespace Reinforcement
             ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
-            UIDocument uiDoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            //тут все элементы с вида
-            List<Element> elems = ArmLengthEquels.SelectOrAllElements(); //чтобы группы не меняла
+            // 1. Все экземпляры семейств во всём проекте
+            List<FamilyInstance> allInstances = new FilteredElementCollector(doc)
+                .OfClass(typeof(FamilyInstance))
+                .Cast<FamilyInstance>()
+                .Where(fi => fi.Symbol != null)
+                .ToList();
 
-            //Шаг 3: Замена семейства и перенос параметров
-            using (Transaction trans = new Transaction(doc, "Замена семейств и перенос параметров"))
-            {
-                trans.Start();
-                ReplacedProcess(doc, elems, true);
-                trans.Commit();
-
-
-                return Result.Succeeded;
-            }
-        }
-
-        public static bool ReplacedProcess(Document doc, List<Element> elems, bool noGroop)
-        {
-            // Словарь для группировки: "ИмяСемейства" -> список экземпляров
+            // 2. Группировка по имени семейства
             var familyGroups = new Dictionary<string, List<FamilyInstance>>();
-
-            foreach (Element elem in elems)
+            foreach (var fi in allInstances)
             {
-                if (elem == null) continue;
-                if (elem is FamilyInstance fi && fi.Symbol != null)
+                string familyName = fi.Symbol.FamilyName;
+                if (!familyGroups.TryGetValue(familyName, out var list))
                 {
-                    string familyName = fi.Symbol.FamilyName;
-                    if (!familyGroups.ContainsKey(familyName))
-                        familyGroups[familyName] = new List<FamilyInstance>();
-                    familyGroups[familyName].Add(fi);
+                    list = new List<FamilyInstance>();
+                    familyGroups[familyName] = list;
                 }
+                list.Add(fi);
             }
 
-            //Шаг 2: Поиск «оригинального» семейства (без числового суффикса)
+            // 3. Все семейства проекта
             var allFamilies = new FilteredElementCollector(doc)
                 .OfClass(typeof(Family))
                 .Cast<Family>()
@@ -66,15 +52,11 @@ namespace Reinforcement
             {
                 string currentFamilyName = kvp.Key;
                 var match = suffixRegex.Match(currentFamilyName);
+                if (!match.Success) continue;
 
-                if (match.Success)
-                {
-                    string baseName = currentFamilyName.Substring(0, currentFamilyName.Length - match.Length);
-                    if (allFamilies.TryGetValue(baseName, out Family originalFamily))
-                    {
-                        replacementMap[currentFamilyName] = originalFamily;
-                    }
-                }
+                string baseName = currentFamilyName.Substring(0, currentFamilyName.Length - match.Length);
+                if (allFamilies.TryGetValue(baseName, out Family originalFamily))
+                    replacementMap[currentFamilyName] = originalFamily;
             }
 
             // === СЧЁТЧИКИ ===
@@ -83,9 +65,10 @@ namespace Reinforcement
             int skippedGroup = 0;
             int skippedSameType = 0;
             int failedCount = 0;
+
             var replacedViews = new Dictionary<string, int>();
 
-            // Расширенная запись: теперь храним Id и GroupId группы
+            // Список пропущенных из-за группы: имя семейства, Id элемента, имя группы, Id группы, имя вида
             var inGroupInfo = new List<(
                 string FamilyName,
                 int ElementId,
@@ -93,11 +76,14 @@ namespace Reinforcement
                 int GroupId,
                 string ViewName)>();
 
-            
+            // 4. Замена
+            using (Transaction trans = new Transaction(doc, "Замена дубликатов во всех видах"))
+            {
+                trans.Start();
 
                 foreach (var pair in replacementMap)
                 {
-                    string duplicateName = pair.Key;
+                    string dupName = pair.Key;
                     Family originalFamily = pair.Value;
 
                     var originalSymbols = originalFamily.GetFamilySymbolIds()
@@ -105,37 +91,27 @@ namespace Reinforcement
                         .Where(s => s != null)
                         .ToDictionary(s => s.Name, s => s, StringComparer.OrdinalIgnoreCase);
 
-                    foreach (FamilyInstance instance in familyGroups[duplicateName])
+                    foreach (FamilyInstance instance in familyGroups[dupName])
                     {
                         try
                         {
-                            // Пропускаем элементы внутри групп (Revit их менять не даст)
-                            if (noGroop && instance.GroupId != ElementId.InvalidElementId)
+                            // Пропускаем элементы в группах
+                            if (instance.GroupId != ElementId.InvalidElementId)
                             {
-                                //id группы ищем
+                                skippedGroup++;
 
-                                ElementId groupIdId = instance.GroupId;   // <-- вот он, Id группы
-                                if (groupIdId != App.OnGroupCurrent.Id)
-                                {
-                                    //иначе пробуем группу заредачить
+                                var (groupName, groupId, _) = GetGroupInfo(doc, instance);
+                                string viewName = GetViewName(doc, instance);
 
+                                inGroupInfo.Add((
+                                    FamilyName: instance.Symbol?.FamilyName ?? "<без семейства>",
+                                    ElementId: instance.Id.IntegerValue,
+                                    GroupName: groupName,
+                                    GroupId: groupId,
+                                    ViewName: viewName
+                                ));
 
-                                    var (groupName, groupId, _) = GetGroupInfo(doc, instance);
-
-
-                                    skippedGroup++;
-                                    string viewName = GetViewName(doc, instance);
-
-                                    inGroupInfo.Add((
-                                        FamilyName: instance.Symbol?.FamilyName ?? "<без семейства>",
-                                        ElementId: instance.Id.IntegerValue,
-                                        GroupName: groupName,
-                                        GroupId: groupId,
-                                        ViewName: viewName
-                                    ));
-
-                                    continue;
-                                }
+                                continue;
                             }
 
                             string currentTypeName = instance.Symbol.Name;
@@ -143,13 +119,12 @@ namespace Reinforcement
 
                             if (!originalSymbols.TryGetValue(currentTypeName, out targetSymbol))
                             {
-                                var typeMatch = NumericSuffixRegex.Match(currentTypeName);
-                                if (typeMatch.Success)
+                                var m = NumericSuffixRegex.Match(currentTypeName);
+                                if (m.Success)
                                 {
                                     string baseTypeName = currentTypeName
-                                        .Substring(0, currentTypeName.Length - typeMatch.Length)
+                                        .Substring(0, currentTypeName.Length - m.Length)
                                         .TrimEnd();
-
                                     if (baseTypeName.Length > 0)
                                         originalSymbols.TryGetValue(baseTypeName, out targetSymbol);
                                 }
@@ -167,7 +142,7 @@ namespace Reinforcement
                                 continue;
                             }
 
-                            // Копируем параметры ДО замены
+                            // Копируем параметры до замены
                             var paramValues = new Dictionary<string, object>();
                             foreach (Parameter p in instance.Parameters)
                             {
@@ -175,41 +150,31 @@ namespace Reinforcement
                                     paramValues[p.Definition.Name] = GetParameterValue(p);
                             }
 
-                            // --- Выполняем замену ---
-                            // --- Выполняем замену ---
                             if (!targetSymbol.IsActive)
                                 targetSymbol.Activate();
 
-                            ElementId newId = instance.ChangeTypeId(targetSymbol.Id);
-
-                            FamilyInstance updatedInstance = (newId != ElementId.InvalidElementId)
-                                ? doc.GetElement(newId) as FamilyInstance
-                                : instance;
-
-                            if (updatedInstance == null)
+                            ElementId failedId = instance.ChangeTypeId(targetSymbol.Id);
+                            if (failedId != ElementId.InvalidElementId)
                             {
-                                App_Apdater_1.AppErrors.LogError(new InvalidOperationException(
-                                    $"После замены типа для элемента {instance.Id} не удалось получить FamilyInstance."));
                                 failedCount++;
                                 continue;
                             }
 
-                            // Применяем сохранённые значения к новому/обновлённому элементу
-                            foreach (var kvp in paramValues)
+                            // Возвращаем параметры
+                            foreach (var pkv in paramValues)
                             {
-                                Parameter newParam = updatedInstance.LookupParameter(kvp.Key); // ✅ updatedInstance
-                                if (newParam == null || newParam.IsReadOnly) continue;
-                                if (newParam.StorageType == StorageType.ElementId) continue;
-                                try { SetParameterValue(newParam, kvp.Value); }
-                                catch (Exception) { continue; }
+                                Parameter np = instance.LookupParameter(pkv.Key);
+                                if (np == null || np.IsReadOnly) continue;
+                                if (np.StorageType == StorageType.ElementId) continue;
+                                try { SetParameterValue(np, pkv.Value); } catch { }
                             }
 
                             // === УСПЕШНАЯ ЗАМЕНА ===
                             replacedCount++;
 
-                            // Вид запрашиваем только здесь — для отчёта
                             string replacedViewName = GetViewName(doc, instance);
-                            if (!string.IsNullOrEmpty(replacedViewName))
+                            if (!string.IsNullOrEmpty(replacedViewName)
+                                && replacedViewName != "<вид не определён>")
                             {
                                 replacedViews.TryGetValue(replacedViewName, out int c);
                                 replacedViews[replacedViewName] = c + 1;
@@ -221,13 +186,13 @@ namespace Reinforcement
                             continue;
                         }
                     }
-                
+                }
 
-                
+                trans.Commit();
             }
 
             // === ОТЧЁТ ===
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine($"Успешно заменено: {replacedCount}");
 
             if (skippedNoType > 0)
@@ -237,7 +202,7 @@ namespace Reinforcement
             if (skippedSameType > 0)
                 sb.AppendLine($"Пропущено (тип уже совпадает): {skippedSameType}");
             if (failedCount > 0)
-                sb.AppendLine($"Не удалось заменить (после ChangeTypeId не получен FamilyInstance): {failedCount}");
+                sb.AppendLine($"Не удалось заменить (ChangeTypeId вернул ошибку): {failedCount}");
 
             if (replacedViews.Count > 0)
             {
@@ -252,8 +217,6 @@ namespace Reinforcement
                 sb.AppendLine();
                 sb.AppendLine($"=== Пропущены, т.к. внутри групп ({inGroupInfo.Count}) ===");
 
-                // Группируем по Id+имени группы, чтобы разные группы с одинаковым именем
-                // не сливались в одну строку
                 foreach (var g in inGroupInfo
                          .GroupBy(x => new { x.GroupId, x.GroupName })
                          .OrderByDescending(g => g.Count()))
@@ -265,11 +228,11 @@ namespace Reinforcement
             }
 
             TaskDialog td = new TaskDialog("Замена дубликатов семейств");
-            td.MainInstruction = $"Заменено: {replacedCount}";
+            td.MainInstruction = $"Готово. Заменено: {replacedCount}";
             td.MainContent = sb.ToString();
             td.Show();
 
-            return true;
+            return Result.Succeeded;
         }
 
         private static (string Name, int Id, ElementId GroupId) GetGroupInfo(Document doc, FamilyInstance fi)
@@ -308,10 +271,9 @@ namespace Reinforcement
                     return v.Name;
             }
             catch { }
-            return null;
+            return "<вид не определён>";
         }
 
-        // Регулярка для числового суффикса в КОНЦЕ имени (с опциональным пробелом перед ним).
         private static readonly System.Text.RegularExpressions.Regex NumericSuffixRegex =
             new System.Text.RegularExpressions.Regex(@"\s*(\d+)$");
 

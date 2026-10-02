@@ -182,7 +182,7 @@ namespace Reinforcement
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
 
-        public static bool correctGroup = false;
+        public static bool correctGroup = true;
 
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
@@ -215,7 +215,7 @@ namespace Reinforcement
                 }
 
                 // Проверка временного интервала сразу, до каких-либо действий
-                DateTime now = DateTime.UtcNow;
+                DateTime now = DateTime.Now;
                 if (now - _lastExecutionTime < _minimumInterval)
                     return;
 
@@ -233,9 +233,9 @@ namespace Reinforcement
                 // Получаем списки элементов
                 var addedIds = data.GetAddedElementIds();
                 var modifiedIds = data.GetModifiedElementIds();
+                
 
-           
-            
+
                 // Обрабатываем добавленные (автор при создании)
                 if (addedIds.Count > 0)
                 {
@@ -324,30 +324,49 @@ namespace Reinforcement
                 ElementId groupId = element.GroupId;
                 if (groupId != ElementId.InvalidElementId)
                 {
-                    // Проверяем, связан ли активный вид со сборкой
-                    //ElementId assemblyId = activeView.AssemblyInstanceId;
-                    //if (assemblyId != ElementId.InvalidElementId) не работает
-                    //{
-                    //    // Мы, вероятно, находимся в режиме редактирования сборки assemblyId
-                    //    // Дополнительно можно проверить, что изменяемые элементы принадлежат этой сборке
-                   
-                   
-                    //    if (element.AssemblyInstanceId == assemblyId)
-                    //    {
-                    //        // Элемент из редактируемой сборки
-
-                    //        int cd = 0;
-                    //    }
-                    //    int c = 0;
-                    //}
-                    
-                
-                    ////не знаю костыль работат только галка correctGroup)
-                    //var ui = RevitAPI.UiApplication.ActiveUIDocument;//Возможно, в активном документе есть свойство, указывающее на активную сборку.
                     if (!correctGroup)
                     {
                         continue;
                     }
+                    // Получаем экземпляр группы по GroupId элемента
+                    Group instanceGroup = doc.GetElement(groupId) as Group;
+                    if (instanceGroup == null)
+                    {
+                        // Странная ситуация — GroupId есть, а Group нет. Пропускаем.
+                        continue;
+                    }
+                    // Id типа группы (то, что лежит в App.OnGroupCurrent.Id)
+                    ElementId groupTypeId = instanceGroup.GetTypeId();
+                    // Сравниваем по значению, а не по ссылке
+                    bool sameGroupType =
+                        groupTypeId != null
+                        && App.OnGroupCurrent.Id != null
+                        && groupTypeId.Equals(App.OnGroupCurrent.Id);
+
+
+                    if (!sameGroupType)
+                    {  continue; }
+                        // Проверяем, связан ли активный вид со сборкой
+                        //ElementId assemblyId = activeView.AssemblyInstanceId;
+                        //if (assemblyId != ElementId.InvalidElementId) не работает
+                        //{
+                        //    // Мы, вероятно, находимся в режиме редактирования сборки assemblyId
+                        //    // Дополнительно можно проверить, что изменяемые элементы принадлежат этой сборке
+
+
+                        //    if (element.AssemblyInstanceId == assemblyId)
+                        //    {
+                        //        // Элемент из редактируемой сборки
+
+                        //        int cd = 0;
+                        //    }
+                        //    int c = 0;
+                        //}
+
+
+                        ////не знаю костыль работат только галка correctGroup)
+                        //var ui = RevitAPI.UiApplication.ActiveUIDocument;//Возможно, в активном документе есть свойство, указывающее на активную сборку.
+                        
                 }
 
                 // 1. Параметр для автора (или запасной)

@@ -177,6 +177,7 @@
     <Compile Include="Administrator\4_FailureBuffer.cs" />
     <Compile Include="Administrator\2_LookUsers_3_Writers.cs" />
     <Compile Include="Administrator\5_FlushOut.cs" />
+    <Compile Include="App_2_Invokers.cs" />
     <Compile Include="App_Apdater_1.cs" />
     <Compile Include="Administrator\2_LookUsers_1.cs" />
     <Compile Include="Administrator\3_AppErrors_5_Errors.cs" />
@@ -202,6 +203,7 @@
     <Compile Include="KR_ExportImport\ImportExcel.cs" />
     <Compile Include="KR_SAPR\5_SeachDublicateOnView.cs" />
     <Compile Include="KR_SAPR\6_DeleteDublicateFamily.cs" />
+    <Compile Include="KR_SAPR\7_DeleteDublicateFamilyAllViews.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
