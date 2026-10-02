@@ -77,29 +77,37 @@ namespace Reinforcement
             return Result.Succeeded;
         }
         const double mmPerFoot = 304.8;
-        public static List<Element> SelectOrAllElements(bool notGroop=false)
+        public static List<Element> SelectOrAllElements(bool notGroop = false, bool selectEl = true)
         {
 
             var uiDocument = RevitAPI.UiDocument;
             Document doc = uiDocument.Document;
 
             var selection = uiDocument.Selection;
-            var selectedIds = selection.GetElementIds();
+
             Autodesk.Revit.DB.View activeView = uiDocument.ActiveView;
+
             List<Element> selectedElements = new List<Element>();
-            foreach (var id in selectedIds)
+            if (selectEl)
             {
-                var elem = doc.GetElement(id);
-                if (elem != null)
-                    selectedElements.Add(elem);
+
+                //то выбранные элементы выделенные смотрим
+                var selectedIds = selection.GetElementIds();
+                foreach (var id in selectedIds)
+                {
+                    var elem = doc.GetElement(id);
+                    if (elem != null)
+                        selectedElements.Add(elem);
+                }
+                if (selectedElements.Count > 0)
+                {
+                    return selectedElements;
+                }
             }
-            if (selectedElements.Count > 0)
-            {
-                return selectedElements;
-            }
+
             var collector = new FilteredElementCollector(doc, activeView.Id);
             var allElements = collector.WhereElementIsNotElementType().ToElements();
-            if(!notGroop)
+            if (!notGroop)
             {
                 return allElements.ToList();
             }
