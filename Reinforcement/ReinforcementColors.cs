@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -30,10 +30,10 @@ namespace Reinforcement
             Document doc = uidoc.Document;
             View activeView = doc.ActiveView;
 
-            // Искомый фрагмент имени фильтра
+            // РСЃРєРѕРјС‹Р№ С„СЂР°РіРјРµРЅС‚ РёРјРµРЅРё С„РёР»СЊС‚СЂР°
             string filterNamePart = "RC - D";
 
-            // Собираем все фильтры параметров в документе
+            // РЎРѕР±РёСЂР°РµРј РІСЃРµ С„РёР»СЊС‚СЂС‹ РїР°СЂР°РјРµС‚СЂРѕРІ РІ РґРѕРєСѓРјРµРЅС‚Рµ
             List<ParameterFilterElement> matchingFilters = new FilteredElementCollector(doc)
                 .OfClass(typeof(ParameterFilterElement))
                 .Cast<ParameterFilterElement>()
@@ -44,10 +44,10 @@ namespace Reinforcement
             {
 
 
-                // 2. Диалог: применять ли цветовые переопределения?
-                TaskDialog dialog = new TaskDialog($"Фильтры {filterNamePart} не найдены, переопределить цвета?");
-                dialog.MainInstruction = "Использовать простое переопределение цветов арматуры?";
-                dialog.MainContent = "Если 'Да', к найденным фильтрам будут применены заранее заданные цвета. Если 'Нет', фильтры будут просто включены без изменения графики.";
+                // 2. Р”РёР°Р»РѕРі: РїСЂРёРјРµРЅСЏС‚СЊ Р»Рё С†РІРµС‚РѕРІС‹Рµ РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёСЏ?
+                TaskDialog dialog = new TaskDialog($"Р¤РёР»СЊС‚СЂС‹ {filterNamePart} РЅРµ РЅР°Р№РґРµРЅС‹, РїРµСЂРµРѕРїСЂРµРґРµР»РёС‚СЊ С†РІРµС‚Р°?");
+                dialog.MainInstruction = "РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РїСЂРѕСЃС‚РѕРµ РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ С†РІРµС‚РѕРІ Р°СЂРјР°С‚СѓСЂС‹?";
+                dialog.MainContent = "Р•СЃР»Рё 'Р”Р°', Рє РЅР°Р№РґРµРЅРЅС‹Рј С„РёР»СЊС‚СЂР°Рј Р±СѓРґСѓС‚ РїСЂРёРјРµРЅРµРЅС‹ Р·Р°СЂР°РЅРµРµ Р·Р°РґР°РЅРЅС‹Рµ С†РІРµС‚Р°. Р•СЃР»Рё 'РќРµС‚', С„РёР»СЊС‚СЂС‹ Р±СѓРґСѓС‚ РїСЂРѕСЃС‚Рѕ РІРєР»СЋС‡РµРЅС‹ Р±РµР· РёР·РјРµРЅРµРЅРёСЏ РіСЂР°С„РёРєРё.";
                 dialog.CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No;
                 TaskDialogResult result = dialog.Show();
 
@@ -60,7 +60,7 @@ namespace Reinforcement
                 return reinforcementColors.Execute(commandData, ref message, elements);
             }
             View targetView = activeView;//
-            //если наложен шаблон вида
+            //РµСЃР»Рё РЅР°Р»РѕР¶РµРЅ С€Р°Р±Р»РѕРЅ РІРёРґР°
             if (activeView.ViewTemplateId != ElementId.InvalidElementId)
             {
                 View viewTemplate = doc.GetElement(activeView.ViewTemplateId) as View;
@@ -69,7 +69,7 @@ namespace Reinforcement
                     targetView = viewTemplate;
                 }
             }
-            using (Transaction t = new Transaction(doc, "Активация фильтров вида"))
+            using (Transaction t = new Transaction(doc, "РђРєС‚РёРІР°С†РёСЏ С„РёР»СЊС‚СЂРѕРІ РІРёРґР°"))
             {
                 t.Start();
 
@@ -77,28 +77,28 @@ namespace Reinforcement
                 {
                     ElementId filterId = filter.Id;
 
-                    // Добавляем фильтр к виду, если его ещё нет
+                    // Р”РѕР±Р°РІР»СЏРµРј С„РёР»СЊС‚СЂ Рє РІРёРґСѓ, РµСЃР»Рё РµРіРѕ РµС‰С‘ РЅРµС‚
                     if (!targetView.GetFilters().Contains(filterId))
                     {
                         targetView.AddFilter(filterId);
                     }
-                    // Включаем видимость фильтра
+                    // Р’РєР»СЋС‡Р°РµРј РІРёРґРёРјРѕСЃС‚СЊ С„РёР»СЊС‚СЂР°
                     targetView.SetFilterVisibility(filterId, true);
 
                     string name = filter.Name;
-                    //ищем совпадающую настройку
+                    //РёС‰РµРј СЃРѕРІРїР°РґР°СЋС‰СѓСЋ РЅР°СЃС‚СЂРѕР№РєСѓ
                     var settings = GetColorsArm.Where(x=>name.Contains(x.Ds));
                     if(settings.Any())
                     {
                         var set = settings.First();
-                        //надо настроить в Линии (Проекции/Поверхности) у фильтра свойство данной линии
-                        // Применяем переопределение графики (цвет линий и т.д.)
+                        //РЅР°РґРѕ РЅР°СЃС‚СЂРѕРёС‚СЊ РІ Р›РёРЅРёРё (РџСЂРѕРµРєС†РёРё/РџРѕРІРµСЂС…РЅРѕСЃС‚Рё) Сѓ С„РёР»СЊС‚СЂР° СЃРІРѕР№СЃС‚РІРѕ РґР°РЅРЅРѕР№ Р»РёРЅРёРё
+                        // РџСЂРёРјРµРЅСЏРµРј РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ РіСЂР°С„РёРєРё (С†РІРµС‚ Р»РёРЅРёР№ Рё С‚.Рґ.)
                         targetView.SetFilterOverrides(filterId, set.OverrideGraphicSettings);
-                        //Если нужно также настроить цвет поверхности (штриховки), добавьте в инициализацию OverrideGraphicSettings соответствующие вызовы
+                        //Р•СЃР»Рё РЅСѓР¶РЅРѕ С‚Р°РєР¶Рµ РЅР°СЃС‚СЂРѕРёС‚СЊ С†РІРµС‚ РїРѕРІРµСЂС…РЅРѕСЃС‚Рё (С€С‚СЂРёС…РѕРІРєРё), РґРѕР±Р°РІСЊС‚Рµ РІ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ OverrideGraphicSettings СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РІС‹Р·РѕРІС‹
                     }
 
 
-                    // (Опционально) Сбросить переопределения графики, если нужно убрать старую раскраску
+                    // (РћРїС†РёРѕРЅР°Р»СЊРЅРѕ) РЎР±СЂРѕСЃРёС‚СЊ РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёСЏ РіСЂР°С„РёРєРё, РµСЃР»Рё РЅСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ СЃС‚Р°СЂСѓСЋ СЂР°СЃРєСЂР°СЃРєСѓ
                     // view.SetFilterOverrides(filterId, new OverrideGraphicSettings());
                 }
 
@@ -146,7 +146,7 @@ namespace Reinforcement
             // 1. get the active view
             View activeView = doc.ActiveView;
             View targetView = activeView;//
-            //если наложен шаблон вида
+            //РµСЃР»Рё РЅР°Р»РѕР¶РµРЅ С€Р°Р±Р»РѕРЅ РІРёРґР°
             if (activeView.ViewTemplateId != ElementId.InvalidElementId)
             {
                 View viewTemplate = doc.GetElement(activeView.ViewTemplateId) as View;
@@ -168,7 +168,7 @@ namespace Reinforcement
                 {
                     foreach (var parameterFilter in col)
                     {
-                        if (parameterFilter.Id.Value == idsArray[i]) // вместо ElementId.IntegerValue
+                        if (parameterFilter.Id.Value == idsArray[i]) // РІРјРµСЃС‚Рѕ ElementId.IntegerValue
                         {
                             filterElementsList.Add(parameterFilter);
                         }

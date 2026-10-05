@@ -36,11 +36,20 @@ namespace Reinforcement
         public static string userPKName;//имя пользователя ПК
 
         public static string updaterSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS";
+        public static string updaterSourceDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\UpdaterENS_Admin";
+
         public static string targetPluginDir;// текущая папка плагина)
 
+        public static string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин";
+
         public static DateTime InitialTimePlugin;
+        public static string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
 
+        public static string sourcePluginDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин_Admin";
 
+        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov" };
+
+        public static bool BAvtor = false;// не автор
         public static void CalcOtherProp()
         {
             InitialTimePlugin = DateTime.Now;
@@ -52,6 +61,11 @@ namespace Reinforcement
             VersionString = Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyFileVersionAttribute>()
                 ?.Version;
+
+            if(Avtors.Contains(Environment.UserName))
+            {
+                BAvtor = true;
+            }
         }
         public static LookUsers LookUsers = new LookUsers();
 
@@ -60,28 +74,37 @@ namespace Reinforcement
         {
             try
             {
-                // Папка, куда будет устанавливаться обновление (текущая папка плагина)
                 targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 tempFolder = Path.GetTempPath();
                 userPKName = $"{Environment.UserName}_{Environment.MachineName}";
 
                 CalcOtherProp();
+                if (!PluginOptions.AutomaticUpdatesEnabled) return;
 
-
-                
                 string tempUpdaterDir = Path.Combine(tempFolder, "ENS_Updater");
                 Directory.CreateDirectory(tempUpdaterDir);
 
-                
                 if (IsUpdaterRunning())
+                    return;
+
+                // --- 1. Выбираем папку-источник САМОГО апдейтера ---
+                // --- выбор апдейтера оставляем здесь: exe нужно СКОПИРОВАТЬ и ЗАПУСТИТЬ,
+                //     а «пока работает плагин» свежесть апдейтера уже не проверить. ---
+                // Не-автор: только основной источник.
+                // Автор:   свежайший из (main, admin), при равенстве — admin.
+                string updaterSource = ChooseSource(
+                    mainDir: updaterSourceDir,
+                    adminDir: updaterSourceDirAvtor,
+                    isAuthor: BAvtor);
+
+                if (updaterSource == null)
                 {
-                    // Для диагностики можно оставить лог, но TaskDialog не показываем —
-                    // пользователя это не касается.
+                    TaskDialog.Show("Ошибка обновления", "Папка с апдейтером не найдена.");
                     return;
                 }
 
-                // Копируем UpdaterENS целиком во временную папку
-                CopyDirectory(updaterSourceDir, tempUpdaterDir);
+                CopyDirectory(updaterSource, tempUpdaterDir);
+
                 string tempUpdaterExe = Path.Combine(tempUpdaterDir, "UpdaterENS.exe");
                 if (!File.Exists(tempUpdaterExe))
                 {
@@ -91,25 +114,30 @@ namespace Reinforcement
 
                 RemoveZoneIdentifiersRecursively(tempUpdaterDir);
 
-                // Папка с новыми файлами плагина
-                string sourcePluginDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин";
-                if (!Directory.Exists(sourcePluginDir))
+                // Быстрая «валидация существования» — но НЕ выбор источника.
+                // Источник плагина выберет сам UpdaterENS уже после закрытия Revit,
+                // чтобы учесть файлы, записанные в admin-папку во время работы плагина.
+                if (!Directory.Exists(sourcePluginDir) &&
+                    !(BAvtor && Directory.Exists(sourcePluginDirAvtor)))
                 {
-                    TaskDialog.Show("Ошибка обновления", "Папка с обновлением не найдена.");
+                    TaskDialog.Show("Ошибка обновления", "Папка с обновлением плагина не найдена.");
                     return;
                 }
-
                 
-
-                // Папка для резервных копий заменяемых файлов
-                string backupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
-                Directory.CreateDirectory(backupDir); // на всякий случай
+                Directory.CreateDirectory(backupDir);
 
                 int pid = Process.GetCurrentProcess().Id;
-
-                // Формируем аргументы: pid, source, target, backup, logFile
                 string logFile = Path.Combine(backupDir, $"{userPKName}_log.txt");
-                string arguments = $"\"{pid}\" \"{sourcePluginDir}\" \"{targetPluginDir}\" \"{backupDir}\" \"{logFile}\"";
+
+                // pid, mainSource, adminSource, target, backup, logFile, isAuthor
+                string arguments = string.Join(" ",
+                    Quote(pid.ToString()),
+                    Quote(sourcePluginDir),        // main
+                    Quote(sourcePluginDirAvtor),   // admin (используется только если isAuthor=1)
+                    Quote(targetPluginDir),
+                    Quote(backupDir),
+                    Quote(logFile),
+                    Quote(BAvtor ? "1" : "0"));
 
                 Process.Start(new ProcessStartInfo
                 {
@@ -117,16 +145,36 @@ namespace Reinforcement
                     Arguments = arguments,
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true,
-                    UseShellExecute = false // для надёжности
+                    UseShellExecute = false
                 });
-
-                
             }
             catch (Exception ex)
             {
                 App_Apdater_1.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка запуска обновления", ex.Message);
             }
+        }
+        private static string Quote(string s) => "\"" + s + "\"";
+        /// <summary>
+        /// Выбирает папку-источник.
+        /// Не-автор  → только mainDir.
+        /// Автор     → более свежая из mainDir / adminDir; при равных датах приоритет adminDir.
+        /// Возвращает null, если ни одна из доступных папок не существует.
+        /// </summary>
+        private static string ChooseSource(string mainDir, string adminDir, bool isAuthor)
+        {
+            bool mainOk = !string.IsNullOrWhiteSpace(mainDir) && Directory.Exists(mainDir);
+            bool adminOk = isAuthor
+                           && !string.IsNullOrWhiteSpace(adminDir)
+                           && Directory.Exists(adminDir);
+
+            if (!mainOk && !adminOk) return null;
+            if (!adminOk) return mainDir;
+            if (!mainOk) return adminDir;
+
+            return GetDateTimeFolder(adminDir) > GetDateTimeFolder(mainDir)
+                ? adminDir
+                : mainDir;
         }
         private static bool IsUpdaterRunning()
         {
@@ -144,8 +192,23 @@ namespace Reinforcement
                 return false;
             }
         }
+        /// <summary>
+        /// Возвращает максимальную дату модификации файлов .dll или .exe в директории.
+        /// Если файлов нет или директория не существует, возвращает DateTime.MinValue.
+        /// </summary>
+        private static DateTime GetDateTimeFolder(string sourceDir)
+        {
+            if (string.IsNullOrWhiteSpace(sourceDir) || !Directory.Exists(sourceDir))
+                return DateTime.MinValue;
 
+            var max = new[] { "*.dll", "*.exe" }
+                .SelectMany(mask => Directory.EnumerateFiles(sourceDir, mask, SearchOption.AllDirectories))
+                .Select(File.GetLastWriteTime)
+                .DefaultIfEmpty(DateTime.MinValue)
+                .Max();
 
+            return max;
+        }
 
         // Рекурсивное копирование директории с учётом дат изменения
         private static void CopyDirectory(string sourceDir, string targetDir)

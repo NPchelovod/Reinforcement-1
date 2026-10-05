@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -46,7 +46,7 @@ namespace Reinforcement
 
         public static HashSet<string> list_Name = new HashSet<string>
 {
-   "Граница грунта (М50)","ЕС_ЭУ_Компонент_Граница грунта","Граница грунта_М50"
+   "Р“СЂР°РЅРёС†Р° РіСЂСѓРЅС‚Р° (Рњ50)","Р•РЎ_Р­РЈ_РљРѕРјРїРѕРЅРµРЅС‚_Р“СЂР°РЅРёС†Р° РіСЂСѓРЅС‚Р°","Р“СЂР°РЅРёС†Р° РіСЂСѓРЅС‚Р°_Рњ50"
 };
         
 

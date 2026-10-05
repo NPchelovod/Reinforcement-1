@@ -25,91 +25,44 @@ namespace Reinforcement
 
         public HelperElement(Element element, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt)
         {
-            units = UnitTypeId.Millimeters;// единицы измерений
-
-            this.element = element;
-
-            this.namesLookupParameterString = namesLookupParameterString;
-            this.namesLookupParameterDouble = namesLookupParameterDouble;
-            this.namesLookupParameterInt = nameslookupParameterInt;
-
-            this.elementId = element.Id;
-            //сбор элементов всех данных какие можно собрать с него
-            Document doc = RevitAPI.Document;
-
-            //name = elementId.Value;
-            
-            name = element.Name;
-
-            familySymbol = doc.GetElement(elementId) as FamilySymbol;
-
-
-            //где находится данный элемент уровень и тд
-            levelId = element.LevelId;
-            levelElement = doc.GetElement(elementId);
-            viewPlan = levelElement as ViewPlan;
-
-            //надо определить высотную отметку где находится также
-
-            //определяем позицию
-            location = element.Location;
-            locationPoint = location as LocationPoint; // текущая локация вентканала
-            locationPointXYZ = locationPoint.Point; // текущая координата расположения
-
-            X = (int) Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.X, units),0); // a ConvertToInternalUnits переводит наоборот из метров в футы
-            Y = (int) Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Y, units),0);
-            Z = (int)Math.Round(UnitUtils.ConvertFromInternalUnits(locationPointXYZ.Z, units),0);
-
-            Rotation = locationPoint.Rotation; // угол поворота
-            //геометрические и иные параметры
-
-            foreach (var nameParameters in namesLookupParameterString)
+            if (element == null || !element.IsValidObject) throw new ArgumentException("Не найден действительный элемент", nameof(element));
+            units = UnitTypeId.Millimeters;
+            this.element = element; elementId = element.Id; name = element.Name;
+            var doc = element.Document;
+            familySymbol = (element as FamilyInstance)?.Symbol ?? element as FamilySymbol;
+            levelId = element.LevelId; levelElement = doc.GetElement(levelId);
+            var activePlan = doc.ActiveView as ViewPlan;
+            viewPlan = activePlan?.GenLevel?.Id == levelId ? activePlan : null;
+            location = element.Location; locationPoint = location as LocationPoint;
+            locationPointXYZ = locationPoint?.Point;
+            if (locationPointXYZ != null)
             {
-                Parameter foundParam = element.LookupParameter(nameParameters);
-                if (foundParam != null)
-                {
-                    string valueString = foundParam.AsValueString();
-                    if (!string.IsNullOrEmpty(valueString))
-                        lookupParameterString[nameParameters] = valueString;
-                }
+                X = (int)Math.Round(RevitAPI.ToMm(locationPointXYZ.X));
+                Y = (int)Math.Round(RevitAPI.ToMm(locationPointXYZ.Y));
+                Z = (int)Math.Round(RevitAPI.ToMm(locationPointXYZ.Z));
+                Rotation = locationPoint.Rotation;
             }
-            foreach (var nameParameters in namesLookupParameterDouble)
+            foreach (var parameterName in namesLookupParameterString ?? new List<string>())
             {
-                Parameter foundParam = element.LookupParameter(nameParameters);
-                if (foundParam != null)
-                {
-                    string valueString = foundParam.AsValueString();
-                    if (!string.IsNullOrEmpty(valueString))
-                    {
-                        double result;
-                        bool isValid = Double.TryParse(valueString, out result);
-                        if (isValid)
-                        {
-                            lookupParameterDouble[nameParameters] = result;
-                        }
-                    }
-                }
+                string value = ParameterHelper.ReadText(ParameterHelper.Find(element, parameterName));
+                if (!string.IsNullOrEmpty(value)) lookupParameterString[parameterName] = value;
             }
-            foreach (var nameParameters in namesLookupParameterInt)
+            foreach (var parameterName in namesLookupParameterDouble ?? new List<string>())
             {
-                Parameter foundParam = element.LookupParameter(nameParameters);
-                if (foundParam != null)
-                {
-                    string valueString = foundParam.AsValueString();
-                    if (!string.IsNullOrEmpty(valueString))
-                    {
-                        int result;
-                        bool isValid = int.TryParse(valueString, out result);
-
-                        if (isValid)
-                        {
-                            lookupParameterInt[nameParameters] = result;
-                        }
-                    }
-                }
+                var parameter = ParameterHelper.Find(element, parameterName);
+                double value;
+                // Lengths retain the legacy millimetre contract; other doubles use internal values.
+                if (parameter != null && parameter.Definition.GetDataType().Equals(SpecTypeId.Length)
+                    ? ParameterHelper.TryReadLength(parameter, units, out value)
+                    : ParameterHelper.TryReadDouble(parameter, out value)) lookupParameterDouble[parameterName] = value;
             }
-
+            foreach (var parameterName in nameslookupParameterInt ?? new List<string>())
+            {
+                int value;
+                if (ParameterHelper.TryReadInteger(ParameterHelper.Find(element, parameterName), out value)) lookupParameterInt[parameterName] = value;
+            }
         }
+        public bool HasPointLocation => locationPointXYZ != null;
 
         public ElementId elementId;
         public string name;

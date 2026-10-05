@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -45,7 +45,7 @@ namespace Reinforcement
                 {
                     foreach (var parameterFilter in col)
                     {
-                        if (parameterFilter.Id.Value == idsArray[i]) // новое вместо ElementId.IntegerValue
+                        if (parameterFilter.Id.Value == idsArray[i]) // РЅРѕРІРѕРµ РІРјРµСЃС‚Рѕ ElementId.IntegerValue
                         {
                             filterElementsList.Add(parameterFilter);
                         } 

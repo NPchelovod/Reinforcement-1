@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -11,7 +11,7 @@ using System.Linq;
 
 
 #endregion
-// стрелка вида
+// СЃС‚СЂРµР»РєР° РІРёРґР°
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -44,10 +44,10 @@ namespace Reinforcement
         }
         public static HashSet<string> list_Name = new HashSet<string>
         {
-            "ЕС_ОбозначениеВида",
-            "ЕС_Обозначение вида",
-            "ЕС_Обозначение Вида",
-            "ЕС_О_Обозначение вида"
+            "Р•РЎ_РћР±РѕР·РЅР°С‡РµРЅРёРµР’РёРґР°",
+            "Р•РЎ_РћР±РѕР·РЅР°С‡РµРЅРёРµ РІРёРґР°",
+            "Р•РЎ_РћР±РѕР·РЅР°С‡РµРЅРёРµ Р’РёРґР°",
+            "Р•РЎ_Рћ_РћР±РѕР·РЅР°С‡РµРЅРёРµ РІРёРґР°"
         };
 
     }

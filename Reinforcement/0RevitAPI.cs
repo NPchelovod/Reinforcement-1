@@ -34,7 +34,8 @@ namespace Reinforcement
         /// <summary>
         /// Активный UIDocument (интерфейсный документ).
         /// </summary>
-        public static UIDocument UiDocument => UiApplication.ActiveUIDocument;
+        public static UIDocument UiDocument => UiApplication.ActiveUIDocument
+            ?? throw new InvalidOperationException("Откройте документ Revit перед запуском команды.");
 
         /// <summary>
         /// Текущий Revit-документ.
@@ -49,15 +50,15 @@ namespace Reinforcement
         public static void Initialize(ExternalCommandData commandData)
         {
 
-            App_Apdater_1.LookUsers.Update();
             if (commandData == null)
                 throw new ArgumentNullException(nameof(commandData));
 
             _uiApplication = commandData.Application;
+            App_Apdater_1.LookUsers.Update();
         }
         public static void Initialize(UIApplication uIApplication)
         {
-            _uiApplication = uIApplication;
+            _uiApplication = uIApplication ?? throw new ArgumentNullException(nameof(uIApplication));
         }
         /// <summary>
         /// Перевод из внутренних единиц Revit (футы) в миллиметры.

@@ -17,29 +17,17 @@ namespace Reinforcement
     public class HelperSeach2
     {
 
-        private static Dictionary<string, ElementId> familySymbolsNames = new Dictionary<string, ElementId>();
 
         public static List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> DataSovpad = new List<(FamilySymbol FamilySymbol, double maxFamilySymbol, ElementId elementId)> ();
         public static (Element pile,  HashSet<string> PossibleNamesFamilySymbol) GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ExternalCommandData commandData)
         {
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
-            familySymbolsNames.Clear();
+            if (PossibleNamesFamilySymbol == null) throw new ArgumentNullException(nameof(PossibleNamesFamilySymbol));
 
-            FilteredElementCollector collection = null;
-            //if (PossibleNamesFamily.Count > 0)
-            //{
-            //    collection = new FilteredElementCollector(doc).OfClass(typeof(Family)); 
-            //}
-            //else
-            //{
-            //    collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
-            //}
-            collection = new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol));
-            foreach (var element in collection)
-            {
-                familySymbolsNames[element.Name] = element.Id;
-            }
+            List<Element> collection;
+            using (var collector = new FilteredElementCollector(doc))
+                collection = collector.OfClass(typeof(FamilySymbol)).ToElements().OrderBy(e => e.Id.Value).ToList();
 
             int iter = -1;
             Element pileMax = null;
@@ -56,6 +44,8 @@ namespace Reinforcement
                
 
                 double maxSimilarity = 0;
+                pileMax = null;
+                pileMaxName = null;
 
 
                 foreach (Element element in collection)
@@ -63,7 +53,7 @@ namespace Reinforcement
                     var name = element.Name;
                     foreach (string PossibleName in PossibleNamesChange)
                     {
-                        if (PossibleName.Count() < 4) { continue; }
+                        if (string.IsNullOrWhiteSpace(PossibleName)) { continue; }
 
                         var Similarity = HelperPrivateStatic.CalculateSimilarity(PossibleName, name);
                         if (Similarity > 0.7 && Similarity > maxSimilarity)

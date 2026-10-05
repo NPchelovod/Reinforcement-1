@@ -1,518 +1,142 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Configuration;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 using System.Windows.Forms;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-
 namespace Reinforcement
 {
-
-
-
+    // Compatibility facade: existing command signatures are retained.
     public class HelperSeach
     {
-
-        //public static Dictionary<Document, Dictionary<Element, string>> familySymbolsNames = new Dictionary<Document, Dictionary<Element, string>>();
-
-        //обеспечивает скорость в дальнейшем
-        //обеспечивает скорость в дальнейшем
         public static Dictionary<Document, Dictionary<string, Element>> PastElements = new Dictionary<Document, Dictionary<string, Element>>();
-
-        public static bool ResetNamesParam = false; // если тру то мы переопределяем параметр
-
-        //Element → ElementType → FamilySymbol
-
-
-        public static  HashSet<string> PereopPossibleNamesType(HashSet<string> PossibleNamesType)
+        public static bool ResetNamesParam;
+        public static void ClearCache(Document document = null)
         {
-            
-
-            ResetNamesParam = false;
-            DialogResult result = MessageBox.Show(
-                   $"Вы хотите переопределить семейство '{PossibleNamesType.FirstOrDefault()}'. Ввести свой'?",
-                   "Переопределение семейства",
-                   MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
-            {
-                int iter2 = 0;
-                
-                while (iter2 < 3)
-                {
-                    iter2++;
-                    var input = HelperPrivateStatic.GetUserInputWithForm();
-                    if (!input.Item2) {  break; }
-                    if (input.Item1.Count() > 2)
-                    {
-                        PossibleNamesType.Clear();
-                        PossibleNamesType.Add(input.Item1);
-                        break;
-                    }
-                }
-
-            }
-            return PossibleNamesType;
+            if (document == null) PastElements.Clear();
+            else PastElements.Remove(document);
         }
-
+        public static HashSet<string> PereopPossibleNamesType(HashSet<string> names)
+        {
+            if (names == null) throw new ArgumentNullException(nameof(names));
+            ResetNamesParam = false;
+            if (MessageBox.Show($"Переопределить семейство '{names.FirstOrDefault()}'?", "Переопределение семейства", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                var input = HelperPrivateStatic.GetUserInputWithForm();
+                if (input.Item2 && !string.IsNullOrWhiteSpace(input.Item1))
+                { names.Clear(); names.Add(input.Item1.Trim()); }
+            }
+            return names;
+        }
+        private static string NameKey(IEnumerable<string> names) => SearchQueryKey.Names(names);
+        private static string Key(HashSet<string> families, HashSet<string> types, ElementTypeOrSymbol mode)
+            => SearchQueryKey.Build(families, types, (int)mode);
+        private static List<ElementType> Collect(Document document, ElementTypeOrSymbol mode)
+        {
+            using (var collector = new FilteredElementCollector(document))
+                return collector.OfClass(mode == ElementTypeOrSymbol.Symbol ? typeof(FamilySymbol) : typeof(ElementType))
+                    .WhereElementIsElementType().Cast<ElementType>().OrderBy(t => t.Id.Value).ToList();
+        }
+        private static Element Cached(Document document, string key)
+        {
+            Dictionary<string, Element> cache; Element value;
+            if (PastElements.TryGetValue(document, out cache) && cache.TryGetValue(key, out value))
+            {
+                if (value != null && value.IsValidObject && document.GetElement(value.Id) != null) return value;
+                cache.Remove(key);
+            }
+            return null;
+        }
+        private static Element Remember(Document document, string key, Element value)
+        {
+            if (value == null) return null;
+            Dictionary<string, Element> cache;
+            if (!PastElements.TryGetValue(document, out cache)) PastElements[document] = cache = new Dictionary<string, Element>();
+            cache[key] = value; return value;
+        }
+        private static double Score(HashSet<string> names, string actual)
+        {
+            var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+            return usable.Count == 0 ? 1 : usable.Max(n => StringSimilarity.Calculate(n, actual));
+        }
+        private static bool Exact(HashSet<string> names, string actual)
+        {
+            var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+            return usable.Count == 0 || usable.Any(n => StringSimilarity.Normalize(n) == StringSimilarity.Normalize(actual));
+        }
         public static Element GetExistFamily(HashSet<string> PossibleNamesFamily, HashSet<string> PossibleNamesType, ElementTypeOrSymbol Type_seach)
         {
-            //ищем и по имени семейства и по имени экземпляра семейства
-            //Element → ElementType → FamilySymbol
-            Document doc = RevitAPI.Document;
-
-            Element element = null;
-
-
-            if (ResetNamesParam)
+            if (PossibleNamesFamily == null || PossibleNamesType == null) throw new ArgumentNullException("names");
+            if (ResetNamesParam) { ClearCache(); PereopPossibleNamesType(PossibleNamesType); }
+            var doc = RevitAPI.Document;
+            if (NameKey(PossibleNamesFamily).Length + NameKey(PossibleNamesType).Length == 0) return null;
+            var found = Cached(doc, Key(PossibleNamesFamily, PossibleNamesType, Type_seach));
+            if (found != null) return found;
+            var candidates = Collect(doc, Type_seach);
+            for (int attempt = 0; attempt < 3; attempt++)
             {
-                PastElements.Clear();
-                PereopPossibleNamesType(PossibleNamesType);
-                ResetNamesParam = false ;
-            }
-
-
-            if (PastElements.TryGetValue(doc, out var dats))
-            {
-                // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
-
-
-                foreach (string name in PossibleNamesType)
+                var exact = candidates.Where(t => Exact(PossibleNamesFamily, t.FamilyName) && Exact(PossibleNamesType, t.Name)).ToList();
+                ElementType best = exact.FirstOrDefault();
+                if (exact.Count != 1)
                 {
-                    if (dats.TryGetValue(name, out element) && element != null)
+                    best = candidates.OrderByDescending(t => Score(PossibleNamesFamily, t.FamilyName) + Score(PossibleNamesType, t.Name)).FirstOrDefault();
+                    string description = best == null ? "Совпадений нет." : $"Использовать '{best.FamilyName}: {best.Name}' (ID {best.Id})?";
+                    if (best == null || MessageBox.Show(description, exact.Count > 1 ? "Несколько совпадений" : "Точное семейство не найдено", MessageBoxButtons.YesNo) != DialogResult.Yes)
                     {
-                        return element;
+                        var input = HelperPrivateStatic.GetUserInputWithForm(PossibleNamesType.FirstOrDefault());
+                        if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
+                        PossibleNamesType.Clear(); PossibleNamesType.Add(input.Item1.Trim()); continue;
                     }
                 }
-
+                if (best == null) return null;
+                PossibleNamesType.Add(best.Name);
+                return Remember(doc, Key(PossibleNamesFamily, PossibleNamesType, Type_seach), best);
             }
-            else
-            {
-                //dats = new Dictionary<HashSet<string>, ElementType>(HashSet<string>.CreateSetComparer());
-                dats = new Dictionary<string, Element>();
-                PastElements[doc] = dats;
-            }
-
-            //все типоразмеры семейства
-            FilteredElementCollector col = new FilteredElementCollector(doc);
-            IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-            //IList<ElementType> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-
-            
-            int atempt = 0;
-            int atemptMax = 3;
-
-            bool stop = false;
-            double maxSimilarity = 0;
-            while (atempt < atemptMax &&!stop)
-            {
-                atempt++;
-
-                string maxNameType = "";
-
-                maxSimilarity = 0;
-                double similarity = 0;
-
-                bool existNamesFamily = PossibleNamesFamily.Count > 0;
-                bool existNamesType = PossibleNamesType.Count > 0;
-
-                if(!existNamesFamily && !existNamesType) { return null; }
-
-                foreach (ElementType elementType in elementTypes)
-                {
-
-                    //имя типоразмера
-                    string typeName = elementType.Name;
-                    //имя семейства
-                    string familyName = elementType.FamilyName;
-
-                    double SimilarityFamily = existNamesFamily?0:1;
-                    double SimilarityType = existNamesType ? 0:1;
-
-                    if(existNamesFamily && familyName.Length > 3)
-                    {
-                        foreach(string nameF in PossibleNamesFamily)
-                        {
-                            
-                             SimilarityFamily = Math.Max(SimilarityFamily, HelperPrivateStatic.CalculateSimilarity(nameF, familyName));
-                        }
-                    }
-                    
-                    if (existNamesType && typeName.Length > 3)
-                    {
-                        foreach (string nameT in PossibleNamesType)
-                        {
-                            
-                             SimilarityType = Math.Max(SimilarityType, HelperPrivateStatic.CalculateSimilarity(nameT, typeName)); 
-                        }
-                    }
-
-                    similarity = SimilarityFamily + SimilarityType;
-                    
-                    if(similarity <= maxSimilarity) { continue; }
-                    maxSimilarity = similarity;
-                    element = elementType;
-                    maxNameType = typeName;
-                    if (similarity>1.99)
-                    {
-                        stop=true;
-                    }
-
-                    if(stop)
-                    { break; }
-                }
-                if (stop)
-                { break; }
-
-
-                if(maxSimilarity<0.75)// меньше стольки запрашиваем диалог у пользователя
-                {
-                    // Спросить пользователя о использовании найденного семейства
-                    DialogResult result = MessageBox.Show(
-                    $"Точный типоразмер семейства '{PossibleNamesType.FirstOrDefault()}' не найден. Использовать '{maxNameType}'?",
-                    "Семейство не найдено",
-                    MessageBoxButtons.YesNo);
-                    if (result == DialogResult.Yes && element != null)
-                    {
-                        stop = true;
-                        break;
-                    }
-                    int iter2 = 0;
-                    bool proxod = true;
-                    while (iter2 < 3)
-                    {
-                        iter2++;
-                        var input = HelperPrivateStatic.GetUserInputWithForm();
-                        if (!input.Item2) { proxod = false; break; }
-
-
-                        if (input.Item1.Count() > 2)
-                        {
-                            PossibleNamesType.Add( input.Item1);
-                            break;
-                        }
-                    }
-                    if (!proxod)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if(element == null) { return null; }
-
-
-            PossibleNamesType.Add(element.Name);
-            dats[element.Name] = element;
-
-            //это ошибка можно без этого
-            FamilySymbol familySymbol = element as FamilySymbol;
-
-            return familySymbol;
+            return null;
         }
-
         public static Element GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ElementTypeOrSymbol Type_seach)
         {
-            if(PossibleNamesFamilySymbol.Count==0 || PossibleNamesFamilySymbol.Count==1 && string.IsNullOrEmpty(PossibleNamesFamilySymbol.FirstOrDefault()))
-            {
-                return null;
-            }
-            //поиск конкретного типоразмера элемента по имени семейства
-
-            Document doc = RevitAPI.Document;
-
-            Element element = null;
-
-            if (ResetNamesParam)
-            {
-                PastElements.Clear();
-                PereopPossibleNamesType(PossibleNamesFamilySymbol);
-                ResetNamesParam = false;
-            }
-
-            if (PastElements.TryGetValue(doc, out var dats))
-            {
-                // Если словарь для документа существует, пробуем найти элемент по PossibleNamesFamilySymbol
-
-
-                foreach(string name in PossibleNamesFamilySymbol)
-                {
-                    if (dats.TryGetValue(name, out element) && element!=null)
-                    {
-                        break;
-                    }
-                }
-
-            }
-            else
-            {
-                //dats = new Dictionary<HashSet<string>, ElementType>(HashSet<string>.CreateSetComparer());
-                dats = new Dictionary<string, Element>();
-                PastElements[doc] = dats;
-            }
-
-            if (element == null)
-            {
-                FilteredElementCollector col = new FilteredElementCollector(doc);
-                IList<Element> sravn_iter;
-                bool boolElementType = false;
-                if (Type_seach == ElementTypeOrSymbol.ElementType)
-                {
-                    IList<Element> elementTypes = col.OfClass(typeof(ElementType)).WhereElementIsElementType().ToElements();
-                    sravn_iter = elementTypes;
-                    boolElementType = true;
-                }
-                else
-                {
-                    IList<Element> symbols = col.OfClass(typeof(FamilySymbol)).WhereElementIsElementType().ToElements();
-                    sravn_iter = symbols;
-                }
-
-                var dictAnswer = new Dictionary<string, Element>();
-                foreach (var elem in sravn_iter)
-                {
-                    ElementType elemType = elem as ElementType;
-                    string eName = Type_seach == ElementTypeOrSymbol.ElementType ? elemType.Name : elemType.FamilyName;
-                    dictAnswer[eName] = elem;
-                }
-
-                var answer = SeachNameElement(PossibleNamesFamilySymbol, dictAnswer.Keys.ToList());
-                if (string.IsNullOrEmpty(answer.ePile)) { return null; }
-                dictAnswer.TryGetValue(answer.ePile, out element);
-
-                
-                dats[answer.ePile] = element;
-                PossibleNamesFamilySymbol.Add(answer.ePile);
-                
-                
-            }
-            return element;
-
+            if (PossibleNamesFamilySymbol == null) throw new ArgumentNullException(nameof(PossibleNamesFamilySymbol));
+            if (ResetNamesParam) { ClearCache(); PereopPossibleNamesType(PossibleNamesFamilySymbol); }
+            if (NameKey(PossibleNamesFamilySymbol).Length == 0) return null;
+            var doc = RevitAPI.Document;
+            var empty = new HashSet<string>();
+            string key = "name|" + Key(empty, PossibleNamesFamilySymbol, Type_seach);
+            var cached = Cached(doc, key); if (cached != null) return cached;
+            var candidates = Collect(doc, Type_seach);
+            Func<ElementType, string> name = t => Type_seach == ElementTypeOrSymbol.ElementType ? t.Name : t.FamilyName;
+            var answer = SeachNameElement(PossibleNamesFamilySymbol, candidates.Select(name).Distinct().ToList());
+            if (string.IsNullOrEmpty(answer.ePile)) return null;
+            var matches = candidates.Where(t => name(t) == answer.ePile).ToList();
+            if (matches.Count == 0) return null;
+            // Family-only requests intentionally choose the first type within that family.
+            // Same type names belonging to different families require confirmation.
+            if (Type_seach == ElementTypeOrSymbol.ElementType && matches.Select(t => t.FamilyName).Distinct().Count() > 1 &&
+                MessageBox.Show($"Тип '{answer.ePile}' есть в нескольких семействах. Использовать '{matches[0].FamilyName}' (ID {matches[0].Id})?", "Несколько совпадений", MessageBoxButtons.YesNo) != DialogResult.Yes) return null;
+            PossibleNamesFamilySymbol.Add(answer.ePile);
+            return Remember(doc, "name|" + Key(empty, PossibleNamesFamilySymbol, Type_seach), matches[0]);
         }
-
         public static (string nPile, string ePile) SeachNameElement(HashSet<string> PossibleNamesFamilySymbol, List<string> elements)
         {
-            //поиск совпадеиний имен просто
-
-            List<string> names = PossibleNamesFamilySymbol.ToList();
-            
-
-            bool famExist = false;
-
-            int iter = -1;
-            string nPile = null;
-
-            string ePile = null;
-
-            while (iter < 3)
+            if (PossibleNamesFamilySymbol == null || elements == null) throw new ArgumentNullException("names");
+            var requested = PossibleNamesFamilySymbol.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+            var actual = elements.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToList();
+            if (requested.Count == 0 || actual.Count == 0) return ("", null);
+            for (int attempt = 0; attempt < 4; attempt++)
             {
-                iter++;
-                double maxSimilarity = 0;
-                foreach (var nName in names)
-                {
-                    if (nName.Length < 3) { continue; }
-                    foreach (var eName in elements)
+                string bestRequest = null, bestActual = null; double maximum = 0;
+                foreach (var n in requested)
+                    foreach (var e in actual)
                     {
-
-                        if (eName.Length < 3) { continue; }
-
-                        var Similarity = HelperPrivateStatic.CalculateSimilarity(eName, nName);
-                        if (Similarity > 0.7 && Similarity > maxSimilarity)
-                        {
-                            maxSimilarity = Similarity;
-                            ePile = eName;
-                            nPile = nName;
-
-                            //хотя можно добавить и по ??? чтобы так не делало а то вдруг что не то
-                            if (maxSimilarity > 0.98 && nPile.Count() > 4)
-                            {
-                                famExist = true;
-                                break;
-                            }
-
-                        }
+                        if (StringSimilarity.Normalize(n) == StringSimilarity.Normalize(e)) return (n, e);
+                        double score = StringSimilarity.Calculate(n, e);
+                        if (score > maximum) { maximum = score; bestRequest = n; bestActual = e; }
                     }
-                    if (famExist)
-                    {
-                        break;
-                    }
-                }
-                if (famExist)
-                {
-                    break;
-                }
-
-                if (nPile == null)
-                {
-                    nPile = PossibleNamesFamilySymbol.FirstOrDefault();
-                }
-                // Спросить пользователя о использовании найденного семейства
-                DialogResult result = MessageBox.Show(
-                $"Точный типоразмер семейства '{nPile}' не найден. Использовать '{ePile}'?",
-                "Семейство не найдено",
-                MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes && ePile.Length>3)
-                {
-                    famExist = true;
-
-                    break;
-                }
-                int iter2 = -1;
-                bool proxod = true;
-                while (iter2 < 3)
-                {
-                    iter2++;
-                    var input = HelperPrivateStatic.GetUserInputWithForm();
-                    if (!input.Item2) { proxod = false; break; }
-
-
-                    if (input.Item1.Count() > 2)
-                    {
-                        names.Insert(0, input.Item1);
-                        break;
-                    }
-                }
-                if (!proxod)
-                {
-                    break;
-                }
-
-            }
-
-
-            if (famExist)
-            {
-                return (nPile, ePile);
+                if (bestActual != null && MessageBox.Show($"Точное имя не найдено. Использовать '{bestActual}'?", "Поиск семейства", MessageBoxButtons.YesNo) == DialogResult.Yes) return (bestRequest, bestActual);
+                var input = HelperPrivateStatic.GetUserInputWithForm(requested.FirstOrDefault());
+                if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) break;
+                requested.Clear(); requested.Add(input.Item1.Trim());
             }
             return ("", null);
-
         }
-
-        //глубокий поиск
-
-        //Element → ElementType → FamilySymbol
-
-
-
-
-
-
-
-
-        //public static (Element pile, string PossibleNamesFamilySymbol) GetElement(HashSet<string> PossibleNamesFamilySymbol)
-        //{ 
-        //    Document doc = RevitAPI.Document;
-        //    int iter = -1;
-        //    Element pileMax = null;
-        //    string pileMaxName = null;
-
-        //    bool famExist = false;
-
-        //    if(!familySymbolsNames.TryGetValue(doc, out var dats))
-        //    {
-
-        //    }
-
-        //    while (iter < 6)
-        //    {
-        //        iter++;
-
-
-
-        //        double maxSimilarity = 0;
-
-
-        //        foreach (string PossibleName in PossibleNamesFamilySymbol)
-        //        {
-        //            if (PossibleName.Count() < 3) { continue; }
-
-        //            foreach (var elementData in familySymbolsNames)
-        //            {
-        //                var element = elementData.Key;
-
-        //                var name = elementData.Value;
-
-        //                if (name.Count() < 3) { continue; }
-
-        //                var Similarity = HelperPrivateStatic.CalculateSimilarity(PossibleName, name);
-        //                if (Similarity > 0.7 && Similarity > maxSimilarity)
-        //                {
-        //                    maxSimilarity = Similarity;
-        //                    pileMax = element;
-        //                    pileMaxName = name;
-        //                    if (maxSimilarity > 0.98 && name.Count() > 4)
-        //                    {
-        //                        famExist = true;
-        //                        break;
-        //                    }
-
-        //                }
-        //            }
-        //            if (famExist)
-        //            {
-        //                break;
-        //            }
-        //        }
-
-        //        if (famExist)
-        //        {
-        //            break;
-        //        }
-        //        // Спросить пользователя о использовании найденного семейства
-        //        DialogResult result = MessageBox.Show(
-        //        $"Точный типоразмер семейства '{PossibleNamesChange.FirstOrDefault()}' не найден. Использовать '{pileMaxName}'?",
-        //        "Семейство не найдено",
-        //        MessageBoxButtons.YesNo);
-        //        if (result == DialogResult.Yes && maxSimilarity > 0.2)
-        //        {
-        //            famExist = true;
-
-        //            break;
-        //        }
-        //        int iter2 = -1;
-        //        bool proxod = true;
-        //        while (iter2 < 4)
-        //        {
-        //            iter2++;
-        //            var input = HelperPrivateStatic.GetUserInputWithForm();
-        //            if (!input.Item2) { proxod = false; break; }
-
-
-        //            if (input.Item1.Count() > 2)
-        //            {
-        //                PossibleNamesChange.Clear();
-        //                PossibleNamesChange.Add(input.Item1);
-        //                break;
-        //            }
-        //        }
-        //        if (!proxod)
-        //        {
-        //            break;
-        //        }
-
-        //    }
-
-
-        //    if (!famExist)
-        //    {
-        //        pileMax = null;
-        //        return (pileMax, PossibleNamesFamilySymbol);
-        //    }
-        //    else
-        //    {
-        //        if (!PossibleNamesFamilySymbol.Contains(pileMaxName))
-        //        { PossibleNamesFamilySymbol.Add(pileMaxName); }
-
-        //        return (pileMax, PossibleNamesFamilySymbol);
-        //    }
-
-
-        //}
-
     }
 }

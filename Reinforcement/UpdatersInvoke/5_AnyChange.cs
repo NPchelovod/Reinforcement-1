@@ -115,7 +115,7 @@ namespace Reinforcement
                     ElementId groupId = elemGroup.GroupId;
                     if (groupId == ElementId.InvalidElementId) {  return; }
 
-                    List<Element>  elements = ArmLengthEquels.SelectOrAllElements(false, false);
+                    List<Element>  elements = ArmLengthEquels.SelectOrAllElements(false,false);
                     elements = elements.Where(el => el.GroupId == groupId).ToList();
                     //надо найти имеющие туже группу
 

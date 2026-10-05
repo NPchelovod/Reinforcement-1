@@ -69,6 +69,9 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Дубли всех семейств", assemblyPath, "Reinforcement.ReplaceDuplicatesAllViews",
                 "Замена дублей семейств, во всем проекте!!!", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Виды дублей всех семейств", assemblyPath, "Reinforcement.ListDuplicateFamiliesByView",
+                "Показать виды дублей всех семейств", OV1);
+
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

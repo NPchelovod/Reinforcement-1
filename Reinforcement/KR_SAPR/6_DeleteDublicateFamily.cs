@@ -22,7 +22,7 @@ namespace Reinforcement
             Document doc = RevitAPI.Document;
 
             // Все элементы с вида (чтобы группы не менялись)
-            List<Element> elems = ArmLengthEquels.SelectOrAllElements();
+            List<Element> elems = ArmLengthEquels.SelectOrAllElements(false,true);
 
             using (Transaction trans = new Transaction(doc, "Замена семейств и перенос параметров"))
             {

@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0" DefaultTargets="Build">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
@@ -8,6 +8,9 @@
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignPlugin Condition="'$(SignPlugin)' == ''">true</SignPlugin>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -19,11 +22,15 @@
     <AssemblyName>Reinforcement</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <LangVersion>7.3</LangVersion>
+    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">$(ProgramW6432)\Autodesk\Revit 2024</RevitInstallDir>
+    <PlatformTarget>x64</PlatformTarget>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' And ('$(Platform)' == 'AnyCPU' Or '$(Platform)' == 'x64')">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
-    <!-- или full -->
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -32,10 +39,9 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2024\Revit.exe</StartProgram>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And ('$(Platform)' == 'AnyCPU' Or '$(Platform)' == 'x64')">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
-    <!-- или full -->
+    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -44,18 +50,17 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2024\Revit.exe</StartProgram>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Build|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Build' And ('$(Platform)' == 'AnyCPU' Or '$(Platform)' == 'x64')">
     <OutputPath>bin\Build\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
-    <!-- или full -->
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -64,27 +69,18 @@
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>KeyReinforcement2.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\AdWindows.dll</HintPath>
+      <HintPath>$(RevitInstallDir)\AdWindows.dll</HintPath>
       <Private>False</Private>
-    </Reference>
-    <Reference Include="EPPlus.Interfaces, Version=8.4.0.0, Culture=neutral, PublicKeyToken=a694d7f3b0907a61, processorArchitecture=MSIL">
-      <HintPath>..\packages\EPPlus.Interfaces.8.4.0\lib\net462\EPPlus.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="ExcelDataReader, Version=3.7.0.0, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
       <HintPath>..\packages\ExcelDataReader.3.7.0\lib\net462\ExcelDataReader.dll</HintPath>
     </Reference>
-    <Reference Include="HarfBuzzSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\HarfBuzzSharp.8.3.0.1\lib\net462\HarfBuzzSharp.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.12, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.12\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.IO.RecyclableMemoryStream, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IO.RecyclableMemoryStream.3.0.1\lib\netstandard2.0\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -92,15 +88,12 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="RevitAPI">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPI.dll</HintPath>
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAPIUI.dll</HintPath>
+      <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
-    </Reference>
-    <Reference Include="RevitAssemblyResolver">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\RevitAssemblyResolver.dll</HintPath>
     </Reference>
     <Reference Include="Spire.XLS, Version=16.3.6.0, Culture=neutral, PublicKeyToken=663f351905198cb3, processorArchitecture=MSIL">
       <HintPath>..\packages\Spire.XLS.16.3.6\lib\net48\Spire.XLS.dll</HintPath>
@@ -108,9 +101,6 @@
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ComponentModel.Annotations.5.0.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.configuration" />
@@ -131,9 +121,6 @@
       <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="System.Security" />
-    <Reference Include="System.Security.Cryptography.Xml, Version=8.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.Cryptography.Xml.8.0.2\lib\net462\System.Security.Cryptography.Xml.dll</HintPath>
-    </Reference>
     <Reference Include="System.Text.Encodings.Web, Version=10.0.0.12, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Encodings.Web.10.0.12\lib\net462\System.Text.Encodings.Web.dll</HintPath>
     </Reference>
@@ -143,16 +130,29 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="System.ValueTuple" />
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\packages\System.ValueTuple.4.6.2\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIFramework, Version=24.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2024\UIFramework.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Compile Include="Infrastructure\FamilyCacheEvents.cs" />
+    <Compile Include="Infrastructure\ParameterHelper.cs" />
+    <Compile Include="Infrastructure\RibbonImageHelper.cs" />
+    <Compile Include="Infrastructure\StringSimilarity.cs" />
+    <Compile Include="Infrastructure\BatchReport.cs" />
+    <Compile Include="Infrastructure\RevitCommandBase.cs" />
+    <Compile Include="2_Architecture\OpeningMarks\CreateOpeningMarksCommand.cs" />
+    <Compile Include="2_Architecture\OpeningMarks\OpeningMarkService.cs" />
+    <Compile Include="Infrastructure\ElevationGrouping.cs" />
+    <Compile Include="Infrastructure\PluginOptions.cs" />
+    <Compile Include="Infrastructure\SearchQueryKey.cs" />
+    <Reference Include="HarfBuzzSharp">
+      <HintPath>..\packages\HarfBuzzSharp.8.3.0.1\lib\net462\HarfBuzzSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="0_Helper\0HelperPrivateStatic.cs" />
@@ -204,6 +204,7 @@
     <Compile Include="KR_SAPR\5_SeachDublicateOnView.cs" />
     <Compile Include="KR_SAPR\6_DeleteDublicateFamily.cs" />
     <Compile Include="KR_SAPR\7_DeleteDublicateFamilyAllViews.cs" />
+    <Compile Include="KR_SAPR\8_ListDuplicateFamiliesByView.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
@@ -444,12 +445,9 @@
     <Content Include="OV_Construct\OV.py" />
     <Content Include="Reinforcement.addin" />
     <None Include="app.config" />
-    <None Include="KeyReinforcement.pfx" />
-    <None Include="KeyReinforcement2.snk" />
     <None Include="Resources\Снимок.PNG" />
     <None Include="Resources\CopyTaskFromElectric.png" />
     <None Include="Resources\AR_panel\rashet_walls2.png" />
-    <Content Include="Resources\EL_config.png" />
     <None Include="Resources\EL_svetilnic.png" />
     <None Include="Resources\EL_panel\EL_svetilnic2.png" />
     <None Include="Resources\EL_panel\EL_svetilnic.png" />
@@ -457,31 +455,20 @@
     <None Include="Resources\Hole.png" />
     <None Include="Resources\file_excel_icon_155407.png" />
     <None Include="Resources\flight.png" />
-    <Content Include="Resources\KR_config .png" />
     <None Include="Resources\KR_config.bmp" />
-    <Content Include="Resources\KR_config.png" />
     <None Include="Resources\KR_panel\hole_in_walls.png" />
     <None Include="Resources\KR_panel\toska1.png" />
     <None Include="Resources\KR_panel\toska2.png" />
     <Content Include="Resources\NoteLine_2.5.png" />
     <Content Include="Resources\NoteLine_3.5.png" />
-    <Content Include="Resources\OV_config.png" />
     <None Include="Resources\Panel_1_1_Configuration\AR_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\EL.png" />
     <Content Include="Resources\Panel_1_1_Configuration\EL_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR2.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\KR3.png" />
     <Content Include="Resources\Panel_1_1_Configuration\KR_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\OB.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\OB_config.png" />
     <Content Include="Resources\Panel_1_1_Configuration\OV_config.png" />
     <None Include="Resources\Panel_1_1_Configuration\Test_config.png" />
-    <Content Include="Resources\Panel_1_1_Configuration\VK.png" />
     <Content Include="Resources\Panel_1_1_Configuration\VK_config.png" />
     <None Include="Resources\rashet_walls2.png" />
     <None Include="Resources\Properties.png" />
-    <Content Include="Resources\VK_config.png" />
     <None Include="packages.config" />
     <None Include="Resources\WaterProof.png" />
     <None Include="Resources\SoilBorder.png" />
@@ -522,8 +509,6 @@
     <None Include="Resources\ES_Line1.png" />
     <None Include="Resources\ES_dot2.png" />
     <None Include="Resources\ES_dot1.png" />
-    <None Include="Resources\title.png" />
-    <None Include="Resources\ES_title.png" />
     <None Include="Resources\ES_breakLines.png" />
     <None Include="Resources\ES_line.png" />
     <None Include="Resources\ES_homut.png" />
@@ -618,35 +603,28 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
+    <PostBuildEvent Condition="'$(SignPlugin)' != 'false'">powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(ProjectDir)Sign-Plugin.ps1" -TargetPath "$(TargetPath)"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Sign-Plugin.ps1" />
+  </ItemGroup>
+  <Import Project="..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.0.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets" Condition="Exists('..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.0.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets')" />
+  <Import Project="..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.0.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets')" Text="NuGet package build file missing: ..\packages\HarfBuzzSharp.NativeAssets.Win32.8.3.0.1\buildTransitive\net462\HarfBuzzSharp.NativeAssets.Win32.targets. Restore packages before building." />
+    <Error Condition="!Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="NuGet package build file missing: ..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets. Restore packages before building." />
+  </Target>
+  <PropertyGroup>
     <PostBuildEvent>:: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2024"
 :: if exist "%25AppData%25\Autodesk\Revit\Addins\2024" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2024\ENSPlugin"
 :: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)*.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
 :: if exist "%25AppData%25\Autodesk\Revit\Addins\2021" copy "$(ProjectDir)$(OutputPath)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021"
 "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe" sign /fd SHA256 /f "C:\Certs\MyRevitPlugin.pfx" /p "kerulen" /tr "http://timestamp.digicert.com" /td SHA256 "$(TargetPath)"
 
-
 </PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Target Name="AfterClean">
-    <Delete Files="$(AppData)\Autodesk\REVIT\Addins\2020\Reinforcement.addin" />
-    <Delete Files="$(AppData)\Autodesk\REVIT\Addins\2020\Reinforcement.dll" />
-  </Target>
-  <Import Project="..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>Данный проект ссылается на пакеты NuGet, отсутствующие на этом компьютере. Используйте восстановление пакетов NuGet, чтобы скачать их.  Дополнительную информацию см. по адресу: http://go.microsoft.com/fwlink/?LinkID=322105. Отсутствует следующий файл: {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets'))" />
-  </Target>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
   </PropertyGroup>
 </Project>

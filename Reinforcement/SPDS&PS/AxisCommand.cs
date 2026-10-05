@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -46,8 +46,8 @@ namespace Reinforcement
         }
         public static HashSet<string> list_Name = new HashSet<string>
         {
-           "ЕС_Аннотация_Ось",
-            "ЕС_О_Ось условно"
+           "Р•РЎ_РђРЅРЅРѕС‚Р°С†РёСЏ_РћСЃСЊ",
+            "Р•РЎ_Рћ_РћСЃСЊ СѓСЃР»РѕРІРЅРѕ"
         };
        
     }

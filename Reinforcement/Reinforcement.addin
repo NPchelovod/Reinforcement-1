@@ -1,10 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <RevitAddIns>
-	<AddIn Type="Application">
-    <Name>Application Reinforcement</Name>
+  <AddIn Type="Application">
+    <Name>ЕС BIM — кандидат v2</Name>
     <Assembly>ENSPlugin\Reinforcement.dll</Assembly>
     <FullClassName>Reinforcement.App</FullClassName>
-    <ClientId>2c410dd7-90da-48e1-9c42-cbdb212304c6</ClientId>
+    <AddInId>2c410dd7-90da-48e1-9c42-cbdb212304c6</AddInId>
     <VendorId>EniseyStroy_ConstructiveDepartament</VendorId>
     <VendorDescription>
 		Если вы видите данное окно, то сообщите об этом в BIM-отдел и эту ошибку исправят в будущих версиях релиза плагина

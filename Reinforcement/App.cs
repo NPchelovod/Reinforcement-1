@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -32,18 +32,18 @@ namespace Reinforcement
 {
     public enum Panels
     {
-        Конфигурация,
-        СПДС,
-        Разработчик,
-        СхематичноеАрмирование,
-        ДетальноеАрмирование,
-        Оформление,
-        Выбор,
-        САПР,
-        КРвставки,
-        CopyКубики,
-        Опции,
-        ВолшебнаяKнопка
+        РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ,
+        РЎРџР”РЎ,
+        Р Р°Р·СЂР°Р±РѕС‚С‡РёРє,
+        РЎС…РµРјР°С‚РёС‡РЅРѕРµРђСЂРјРёСЂРѕРІР°РЅРёРµ,
+        Р”РµС‚Р°Р»СЊРЅРѕРµРђСЂРјРёСЂРѕРІР°РЅРёРµ,
+        РћС„РѕСЂРјР»РµРЅРёРµ,
+        Р’С‹Р±РѕСЂ,
+        РЎРђРџР ,
+        РљР РІСЃС‚Р°РІРєРё,
+        CopyРљСѓР±РёРєРё,
+        РћРїС†РёРё,
+        Р’РѕР»С€РµР±РЅР°СЏKРЅРѕРїРєР°
     }
     public partial class App : IExternalApplication
     {
@@ -61,30 +61,30 @@ namespace Reinforcement
 
         }
 
-        // !!! панели которые видны на начальном экране конфигурация КР
+        // !!! РїР°РЅРµР»Рё РєРѕС‚РѕСЂС‹Рµ РІРёРґРЅС‹ РЅР° РЅР°С‡Р°Р»СЊРЅРѕРј СЌРєСЂР°РЅРµ РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ РљР 
         public static List<string> list_panels_viewKR { get; set; } = new List<string>()
             {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Copy/Кубики",
-                "Импорт/Экспорт",
-                "Опции",
-                "Сюрприз",
+                "РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ",
+                "РЎРџР”РЎ",
+                "РЎС…РµРјР°С‚РёС‡РЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ",
+                "Р”РµС‚Р°Р»СЊРЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ",
+                "РћС„РѕСЂРјР»РµРЅРёРµ",
+                "Р’С‹Р±РѕСЂ",
+                "РЎРђРџР ",
+                "РљР  РІСЃС‚Р°РІРєРё",
+                "Copy/РљСѓР±РёРєРё",
+                "РРјРїРѕСЂС‚/Р­РєСЃРїРѕСЂС‚",
+                "РћРїС†РёРё",
+                "РЎСЋСЂРїСЂРёР·",
                 
 
             };
 
-        //постоянные панели
+        //РїРѕСЃС‚РѕСЏРЅРЅС‹Рµ РїР°РЅРµР»Рё
         //public static List<string> list_panels_const { get; set; } = new List<string>
         //    {
-        //        "Конфигурация",
-        //        "СПДС",
+        //        "РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ",
+        //        "РЎРџР”РЎ",
 
         //    };
 
@@ -92,43 +92,46 @@ namespace Reinforcement
 
     public Result OnStartup(UIControlledApplication app)
         {
-            Application = app; // Сохраняем app в статическое свойство
+            HelperSeach.ClearCache();
+            app.ControlledApplication.DocumentChanged += FamilyCacheEvents.DocumentChanged;
+            app.ControlledApplication.DocumentClosing += FamilyCacheEvents.DocumentClosing;
+            Application = app; // РЎРѕС…СЂР°РЅСЏРµРј app РІ СЃС‚Р°С‚РёС‡РµСЃРєРѕРµ СЃРІРѕР№СЃС‚РІРѕ
             app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
             
-            //для автообновления
+            //РґР»СЏ Р°РІС‚РѕРѕР±РЅРѕРІР»РµРЅРёСЏ
             App_Apdater_1.StartUpdateENS();
 
             //Create tab
-            string tabName = "ЕС BIM";
+            string tabName = "Р•РЎ BIM";
             app.CreateRibbonTab(tabName);
-            // Подписываемся на событие инициализации
+            // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
            
 
-            // сюда вписываешь новую панель и вообще все панели здесь в списке, список это порядок панелей, отображение панелей на конкретной конфигурации задача конфигуратора, в него иди и там настраивай
+            // СЃСЋРґР° РІРїРёСЃС‹РІР°РµС€СЊ РЅРѕРІСѓСЋ РїР°РЅРµР»СЊ Рё РІРѕРѕР±С‰Рµ РІСЃРµ РїР°РЅРµР»Рё Р·РґРµСЃСЊ РІ СЃРїРёСЃРєРµ, СЃРїРёСЃРѕРє СЌС‚Рѕ РїРѕСЂСЏРґРѕРє РїР°РЅРµР»РµР№, РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РїР°РЅРµР»РµР№ РЅР° РєРѕРЅРєСЂРµС‚РЅРѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё Р·Р°РґР°С‡Р° РєРѕРЅС„РёРіСѓСЂР°С‚РѕСЂР°, РІ РЅРµРіРѕ РёРґРё Рё С‚Р°Рј РЅР°СЃС‚СЂР°РёРІР°Р№
             var panelNames = new List<string>
             {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Copy/Кубики",
-                "Импорт/Экспорт",
-                "ОВ плит",
-                "АР панель",
-                "ОВ панель",
-                "ЭЛ панель",
-                "Разработчик",
-                "Опции",
-                "Сюрприз"
+                "РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ",
+                "РЎРџР”РЎ",
+                "РЎС…РµРјР°С‚РёС‡РЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ",
+                "Р”РµС‚Р°Р»СЊРЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ",
+                "РћС„РѕСЂРјР»РµРЅРёРµ",
+                "Р’С‹Р±РѕСЂ",
+                "РЎРђРџР ",
+                "РљР  РІСЃС‚Р°РІРєРё",
+                "Copy/РљСѓР±РёРєРё",
+                "РРјРїРѕСЂС‚/Р­РєСЃРїРѕСЂС‚",
+                "РћР’ РїР»РёС‚",
+                "РђР  РїР°РЅРµР»СЊ",
+                "РћР’ РїР°РЅРµР»СЊ",
+                "Р­Р› РїР°РЅРµР»СЊ",
+                "Р Р°Р·СЂР°Р±РѕС‚С‡РёРє",
+                "РћРїС†РёРё",
+                "РЎСЋСЂРїСЂРёР·"
             };
 
             
 
-            // команды которые создают кнопки на конкретных панелях
+            // РєРѕРјР°РЅРґС‹ РєРѕС‚РѕСЂС‹Рµ СЃРѕР·РґР°СЋС‚ РєРЅРѕРїРєРё РЅР° РєРѕРЅРєСЂРµС‚РЅС‹С… РїР°РЅРµР»СЏС…
             foreach (var panelName in panelNames)
             {
                 var panel = app.CreateRibbonPanel(tabName, panelName);
@@ -136,66 +139,66 @@ namespace Reinforcement
 
                 switch (panelName)
                 {
-                    case "Конфигурация":// управление всеми панелями
+                    case "РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ":// СѓРїСЂР°РІР»РµРЅРёРµ РІСЃРµРјРё РїР°РЅРµР»СЏРјРё
                         App_Panel_1_1_Configuration.AddSplitButton(panel, tabName);
                         break;
 
-                    case "СПДС":
+                    case "РЎРџР”РЎ":
                         App_Panel_1_2_KR_SPDS.KR_SPDS(panel, tabName);
                         break;
-                    case "Схематичное армирование":
+                    case "РЎС…РµРјР°С‚РёС‡РЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ":
                         App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, tabName);
                         break;
-                    case "Детальное армирование":
+                    case "Р”РµС‚Р°Р»СЊРЅРѕРµ Р°СЂРјРёСЂРѕРІР°РЅРёРµ":
                         App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, tabName);
                         break;
-                    case "Оформление":
+                    case "РћС„РѕСЂРјР»РµРЅРёРµ":
                         App_Panel_1_5_KR_Drawing.KR_Drawing(panel, tabName);
                         break;
-                    case "Выбор":
+                    case "Р’С‹Р±РѕСЂ":
                         App_Panel_1_6_KR_Selection.KR_Selection(panel, tabName);
                         break;
-                    case "САПР":
+                    case "РЎРђРџР ":
                         App_Panel_1_7_KR_SAPR.KR_SAPR(panel, tabName);
                         break;
 
-                    case "КР вставки":
+                    case "РљР  РІСЃС‚Р°РІРєРё":
                         App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Copy/Кубики":
+                    case "Copy/РљСѓР±РёРєРё":
                         App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Импорт/Экспорт":
+                    case "РРјРїРѕСЂС‚/Р­РєСЃРїРѕСЂС‚":
                         App_Panel_1_81_KR_Export.AddSplitButton(panel, tabName);
                         break;
 
 
-                    case "ОВ плит":
+                    case "РћР’ РїР»РёС‚":
                         App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
                         break;
-                    case "АР панель":
+                    case "РђР  РїР°РЅРµР»СЊ":
                         App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
                         break;
 
-                    case "ОВ панель":
+                    case "РћР’ РїР°РЅРµР»СЊ":
                         App_Panel_3_2_OV_utilit.OV_utilit(panel, tabName);
                         break;
 
-                    case "ЭЛ панель":
+                    case "Р­Р› РїР°РЅРµР»СЊ":
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
                         break;
 
-                    case "Разработчик":
+                    case "Р Р°Р·СЂР°Р±РѕС‚С‡РёРє":
                         App_Panel_7_2_AdminPanel.Admin_utilit(panel, tabName);
                         break;
 
-                    case "Опции":
+                    case "РћРїС†РёРё":
                         App_Panel_1_92_Opcii.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Сюрприз":
+                    case "РЎСЋСЂРїСЂРёР·":
                         App_Panel_1_91_Toska.AddSplitButton(panel, tabName);
                         break;
 
@@ -228,12 +231,12 @@ namespace Reinforcement
 
 
 
-            AnyChange.PodpiskaAll();// подписка на все
+            AnyChange.PodpiskaAll();// РїРѕРґРїРёСЃРєР° РЅР° РІСЃРµ
                                     // AutoFillNoteUpdater.RegisterUpdater();
 
 
             
-            // Подписка на событие закрытия Revit
+            // РџРѕРґРїРёСЃРєР° РЅР° СЃРѕР±С‹С‚РёРµ Р·Р°РєСЂС‹С‚РёСЏ Revit
             app.ApplicationClosing += OnRevitClosing;
             //app.ControlledApplication.DocumentClosed
             //app.ControlledApplication.ApplicationClosing += (sender, args) =>
@@ -241,7 +244,7 @@ namespace Reinforcement
             //    lookUsers.ForceFlush();
             //};
 
-            // Подписываемся на события сохранения моделей
+            // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёСЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РјРѕРґРµР»РµР№
             var controlledApp = app.ControlledApplication;
 
             controlledApp.DocumentSaving += OnDocumentSaving;
@@ -252,11 +255,11 @@ namespace Reinforcement
 
             app.ControlledApplication.DocumentChanged += OnDocumentChanged;
 
-            // Подписываемся на событие через ControlledApplication
+            // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ С‡РµСЂРµР· ControlledApplication
             app.ControlledApplication.FailuresProcessing +=
                 new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
 
-            //секретный набор команд
+            //СЃРµРєСЂРµС‚РЅС‹Р№ РЅР°Р±РѕСЂ РєРѕРјР°РЅРґ
             _secretHandler = new SecretReplacementHandler();
             _secretEvent = ExternalEvent.Create(_secretHandler);
             return Result.Succeeded;
@@ -273,16 +276,24 @@ namespace Reinforcement
         {
             try
             {
-                // Отписываемся от событий, чтобы избежать утечек памяти
+                // РћС‚РїРёСЃС‹РІР°РµРјСЃСЏ РѕС‚ СЃРѕР±С‹С‚РёР№, С‡С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ СѓС‚РµС‡РµРє РїР°РјСЏС‚Рё
                 var controlledApp = application.ControlledApplication;
-                //controlledApp.DocumentSaving -= OnDocumentSaving;
+                controlledApp.ApplicationInitialized -= OnApplicationInitialized;
+                application.ApplicationClosing -= OnRevitClosing;
+                controlledApp.DocumentChanged -= FamilyCacheEvents.DocumentChanged;
+                controlledApp.DocumentClosing -= FamilyCacheEvents.DocumentClosing;
+                HelperSeach.ClearCache();
+                _syncStartTimes.Clear();
+                _secretEvent?.Dispose();
+                _secretEvent = null;
+                controlledApp.DocumentSaving -= OnDocumentSaving;
                 controlledApp.DocumentSaved -= OnDocumentSaved;
-                //controlledApp.DocumentSynchronizingWithCentral -= OnDocumentSynchronizing;
+                controlledApp.DocumentSynchronizingWithCentral -= OnDocumentSynchronizing;
                 controlledApp.DocumentSynchronizedWithCentral -= OnDocumentSynchronized;
-                // Отписываемся (хорошая практика)
+                // РћС‚РїРёСЃС‹РІР°РµРјСЃСЏ (С…РѕСЂРѕС€Р°СЏ РїСЂР°РєС‚РёРєР°)
                 application.ControlledApplication.FailuresProcessing -= OnFailuresProcessing;
                 application.ControlledApplication.DocumentChanged -= OnDocumentChanged;
-                //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
+                //РќРѕ РµСЃС‚СЊ Рё РїСЂР°РєС‚РёС‡РµСЃРєРёР№ СЃРјС‹СЃР». OnShutdown РІС‹Р·С‹РІР°РµС‚СЃСЏ, РєРѕРіРґР° Revit Р·Р°РєСЂС‹РІР°РµС‚СЃСЏ С€С‚Р°С‚РЅРѕ. Р­С‚Рѕ РїРѕСЃР»РµРґРЅРёР№ РјРѕРјРµРЅС‚, РєРѕРіРґР° РІР°С€ РєРѕРґ РµС‰С‘ РјРѕР¶РµС‚ С‡С‚Рѕ-С‚Рѕ СЃРґРµР»Р°С‚СЊ
                 
             }
             catch (Exception ex)
@@ -294,21 +305,21 @@ namespace Reinforcement
                 App_Apdater_1.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
                 App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
             }
-            catch { /* уже нечего терять */ }
-            // Пытаемся сохранить накопленные ошибки самого revit
+            catch { /* СѓР¶Рµ РЅРµС‡РµРіРѕ С‚РµСЂСЏС‚СЊ */ }
+            // РџС‹С‚Р°РµРјСЃСЏ СЃРѕС…СЂР°РЅРёС‚СЊ РЅР°РєРѕРїР»РµРЅРЅС‹Рµ РѕС€РёР±РєРё СЃР°РјРѕРіРѕ revit
             try
             {
                 if (FailureBuffer.HasData)
                     FailureBuffer.Flush();
             }
-            catch { /* уже нечего терять */ }
+            catch { /* СѓР¶Рµ РЅРµС‡РµРіРѕ С‚РµСЂСЏС‚СЊ */ }
 
-            IsShuttingDown = true;//закрылся
+            IsShuttingDown = true;//Р·Р°РєСЂС‹Р»СЃСЏ
             return Result.Succeeded;
         }
         
         public static volatile bool IsShuttingDown = false;
-        // Словарь: документ -> время начала синхронизации
+        // РЎР»РѕРІР°СЂСЊ: РґРѕРєСѓРјРµРЅС‚ -> РІСЂРµРјСЏ РЅР°С‡Р°Р»Р° СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
         private static readonly ConcurrentDictionary<Document, DateTime> _syncStartTimes = new ConcurrentDictionary<Document, DateTime>();
         public static double secondSaveModel = 0;
 

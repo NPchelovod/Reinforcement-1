@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -14,7 +14,7 @@ using System.Linq;
 
 
 
-// создание оси начало команды
+// СЃРѕР·РґР°РЅРёРµ РѕСЃРё РЅР°С‡Р°Р»Рѕ РєРѕРјР°РЅРґС‹
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -51,8 +51,8 @@ namespace Reinforcement
         }
         public static HashSet<string> list_Name = new HashSet<string>
         {
-            "ЕС_Условная ось",
-            "ЕС_О_Ось условно"
+            "Р•РЎ_РЈСЃР»РѕРІРЅР°СЏ РѕСЃСЊ",
+            "Р•РЎ_Рћ_РћСЃСЊ СѓСЃР»РѕРІРЅРѕ"
         };
         
     }

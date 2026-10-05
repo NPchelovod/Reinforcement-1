@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -43,18 +43,18 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-        //имена семейсьва
+        //РёРјРµРЅР° СЃРµРјРµР№СЃСЊРІР°
         public static HashSet<string> list_Name = new HashSet<string>
         {
              
-            "ЕС_О_Линии разрыва",
-            "ЕС_О_Линия обр",
+            "Р•РЎ_Рћ_Р›РёРЅРёРё СЂР°Р·СЂС‹РІР°",
+            "Р•РЎ_Рћ_Р›РёРЅРёСЏ РѕР±СЂ",
             
         };
-        //имена типа
+        //РёРјРµРЅР° С‚РёРїР°
         public static HashSet<string> list_Type_Name = new HashSet<string>
         {
-            "Линейный обрыв",
+            "Р›РёРЅРµР№РЅС‹Р№ РѕР±СЂС‹РІ",
         };
 
     }

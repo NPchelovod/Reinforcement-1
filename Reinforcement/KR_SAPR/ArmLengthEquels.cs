@@ -76,7 +76,7 @@ namespace Reinforcement
 
             return Result.Succeeded;
         }
-        const double mmPerFoot = 304.8;
+       
         public static List<Element> SelectOrAllElements(bool notGroop = false, bool selectEl = true)
         {
 

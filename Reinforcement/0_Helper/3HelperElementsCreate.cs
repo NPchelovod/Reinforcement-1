@@ -24,52 +24,21 @@ namespace Reinforcement
         {
 
         };
-        public HelperElementsCreate(List<Element> OVElements, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt,int pogresZ = 500)
+        public HelperElementsCreate(List<Element> OVElements, List<string> namesLookupParameterString, List<string> namesLookupParameterDouble, List<string> nameslookupParameterInt, int pogresZ = 500)
         {
-            //идем по OVElements делаем DataOV и ataOVLevel
-
-            DataOV.Clear();
-            DataOVLevel.Clear();
-
-
-            HelperElement newData;
-            bool proxod = false;
-            foreach (var element in OVElements)
+            if (OVElements == null) throw new ArgumentNullException(nameof(OVElements));
+            if (pogresZ < 0) throw new ArgumentOutOfRangeException(nameof(pogresZ));
+            foreach (var element in OVElements.Where(e => e != null && e.IsValidObject).OrderBy(e => e.Id.Value))
             {
-                newData = new HelperElement(element, namesLookupParameterString, namesLookupParameterDouble, namesLookupParameterInt);
-                DataOV.Add(newData);
-
-                int Z = newData.Z;
-
-                if (!DataOVLevel.ContainsKey(Z))
-                {
-                    DataOVLevel[Z] = new List<HelperElement> { newData };
-                }
-                else
-                {
-                    proxod = false;
-                    if (pogresZ > 0)
-                    {
-                        //сначала проверка погрешности
-                        foreach (var Z_exist in DataOVLevel.Keys.ToList())
-                        {
-                            if (Math.Abs(Z_exist - Z) < pogresZ)
-                            {
-                                DataOVLevel[Z_exist].Add(newData);
-                                proxod = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!proxod)
-
-                    {
-                        DataOVLevel[Z].Add(newData);
-                    }
-                }
-
+                var data = new HelperElement(element, namesLookupParameterString, namesLookupParameterDouble, nameslookupParameterInt);
+                if (!data.HasPointLocation) { SkippedElementIds.Add(element.Id); continue; }
+                DataOV.Add(data);
+                int key = ElevationGrouping.FindKey(DataOVLevel.Keys, data.Z, pogresZ);
+                List<HelperElement> group;
+                if (!DataOVLevel.TryGetValue(key, out group)) DataOVLevel[key] = group = new List<HelperElement>();
+                group.Add(data);
             }
-
         }
+        public List<ElementId> SkippedElementIds { get; } = new List<ElementId>();
     }
 }

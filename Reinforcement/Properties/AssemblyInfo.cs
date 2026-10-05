@@ -1,4 +1,4 @@
-using System.Reflection;
+п»їusing System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -34,5 +34,5 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 //[assembly: AssemblyVersion("2020.0.0.0")]
 //[assembly: AssemblyFileVersion("2020.0.0.0")]
-[assembly: AssemblyVersion("2020.0.0.0")]          // Оставляем стабильным для совместимости с Revit
-[assembly: AssemblyFileVersion("2020.0.*")]         // Меняется при каждой пересборке
+[assembly: AssemblyVersion("2020.0.0.0")]          // РћСЃС‚Р°РІР»СЏРµРј СЃС‚Р°Р±РёР»СЊРЅС‹Рј РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё СЃ Revit
+[assembly: AssemblyFileVersion("0.1.1.0")]         // РњРµРЅСЏРµС‚СЃСЏ РїСЂРё РєР°Р¶РґРѕР№ РїРµСЂРµСЃР±РѕСЂРєРµ

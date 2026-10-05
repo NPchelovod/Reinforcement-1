@@ -1,4 +1,4 @@
-#region Namespaces
+п»ї#region Namespaces
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -13,7 +13,7 @@ using System.Linq;
 #endregion
 
 
-// Выноска СПДС - начало
+// Р’С‹РЅРѕСЃРєР° РЎРџР”РЎ - РЅР°С‡Р°Р»Рѕ
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -49,7 +49,7 @@ namespace Reinforcement
         }
         public static HashSet<string> list_Name = new HashSet<string>
          {
-             "ЕС_Аннотация_Текст_Выноска_3,5мм"
+             "Р•РЎ_РђРЅРЅРѕС‚Р°С†РёСЏ_РўРµРєСЃС‚_Р’С‹РЅРѕСЃРєР°_3,5РјРј"
          };
        
 

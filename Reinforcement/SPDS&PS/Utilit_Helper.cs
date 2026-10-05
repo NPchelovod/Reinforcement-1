@@ -15,23 +15,7 @@ namespace Reinforcement
 
         // поиск максимального пересечения строки с подстрокой
          public static int LongestCommonSubstring(string s1, string s2)
-        {
-            int maxLength = 0;
-            int[,] dp = new int[s1.Length + 1, s2.Length + 1];
-
-            for (int i = 1; i <= s1.Length; i++)
-            {
-                for (int j = 1; j <= s2.Length; j++)
-                {
-                    if (s1[i - 1] == s2[j - 1])
-                    {
-                        dp[i, j] = dp[i - 1, j - 1] + 1;
-                        maxLength = Math.Max(maxLength, dp[i, j]);
-                    }
-                }
-            }
-            return maxLength;
-        }
+            => StringSimilarity.LongestCommonSubstring(s1, s2);
 
         public static string unific_sravn_string(string FamName)
         {

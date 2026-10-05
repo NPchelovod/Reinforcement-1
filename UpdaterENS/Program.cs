@@ -15,6 +15,8 @@ namespace UpdaterENS
 
         // Максимальное число строк, которое хранится в лог-файле.
         private const int MaxLogLines = 100;
+        //авторы тогда директория из авторов
+        private  HashSet<string> Avtors = new HashSet<string> { "KVinogradov" };
 
         // Аргументы: pid, sourceDir, targetDir, backupDir, [logFile]
         static void Main(string[] args)
@@ -59,7 +61,10 @@ namespace UpdaterENS
         {
             if (args.Length < 4)
             {
-                Console.WriteLine("Usage: UpdaterENS.exe <pid> <sourceDir> <targetDir> <backupDir> [logFile]");
+                Console.WriteLine("Usage (new): UpdaterENS.exe <pid> <mainSource> <adminSource> " +
+                                  "<targetDir> <backupDir> <logFile> [isAuthor]");
+                Console.WriteLine("Usage (old): UpdaterENS.exe <pid> <sourceDir> <targetDir> " +
+                                  "<backupDir> [logFile]");
                 return;
             }
 
@@ -69,47 +74,71 @@ namespace UpdaterENS
                 return;
             }
 
-            string sourceDir = args[1];
-            string targetDir = args[2];
-            string backupDir = args[3];
-            string logFile = args.Skip(4)
-                                 .FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
+            string mainSourceDir;
+            string adminSourceDir;
+            string targetDir;
+            string backupDir;
+            string logFile;
+            bool isAuthor;
+            bool legacyFormat;
 
-            // Установка сертификата — только если ещё не установлен.
+            if (args.Length >= 6)
+            {
+                // --- Новый формат ---
+                legacyFormat = false;
+                mainSourceDir = args[1];
+                adminSourceDir = args[2];
+                targetDir = args[3];
+                backupDir = args[4];
+                logFile = args[5];
+                isAuthor = args.Length > 6 && args[6] == "1";
+            }
+            else
+            {
+                // --- Legacy ---
+                // Старый плагин уже сам выбрал папку и передал её как args[1].
+                // admin-папку и авторство он не знает — считаем, что не автор.
+                legacyFormat = true;
+                mainSourceDir = args[1];
+                adminSourceDir = null;
+                targetDir = args[2];
+                backupDir = args[3];
+                logFile = args.Length > 4 ? args[4] : null;
+                isAuthor = false;
+            }
+
             const string certSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Установка\Certs";
             EnsureCertificate(certSourceDir, logFile);
 
-            // Один раз при старте — обрезаем старый лог, если он слишком большой.
             TrimLogIfNeeded(logFile);
 
             Log(logFile, $"Update started at {DateTime.Now}. Waiting for process {pid} to exit...");
-            Log(logFile, $"Backup enabled: {rezervCopy}");
+            Log(logFile, $"Format: {(legacyFormat ? "LEGACY" : "NEW")}");
+            Log(logFile, $"Mode  : {(isAuthor ? "AUTHOR" : "USER")}");
+            Log(logFile, $"Main source : {mainSourceDir}");
+            if (!string.IsNullOrEmpty(adminSourceDir))
+                Log(logFile, $"Admin source: {adminSourceDir}");
+            Log(logFile, $"Target      : {targetDir}");
+            Log(logFile, $"Backup      : {backupDir} (enabled={rezervCopy})");
 
             try
             {
-                // 1. Ждём завершения процесса-родителя (того Revit, который нас запустил).
                 WaitForProcessExit(pid, logFile);
-
-                // 2. Пауза, чтобы Revit успел освободить handles на DLL.
                 Thread.Sleep(3000);
 
-                if (PathsEqual(sourceDir, targetDir))
+                if (PathsEqual(mainSourceDir, targetDir) ||
+                    (!string.IsNullOrEmpty(adminSourceDir) && PathsEqual(adminSourceDir, targetDir)))
                 {
-                    Log(logFile, "Source and target directories are the same. Aborting.");
+                    Log(logFile, "Source equals target. Aborting.");
                     return;
                 }
 
-                // 3. Ждём закрытия ОСТАЛЬНЫХ Revit.
-                //    Сначала быстрые проверки (5×10 с) — на случай, если пользователь
-                //    закрывает все Revit подряд. Затем длинные паузы (10×30 с) —
-                //    даём время спокойно закрыть второе окно.
-                //    Итого максимум ~350 с (~6 минут).
                 int[] delays = new[]
                 {
-                    10000, 10000, 10000, 10000, 10000,   // 5 × 10 с  = 50 с
-                    30000, 30000, 30000, 30000, 30000,   // 5 × 30 с  = 150 с
-                    30000, 30000, 30000, 30000, 30000    // 5 × 30 с  = 150 с
-                };
+            10000, 10000, 10000, 10000, 10000,
+            30000, 30000, 30000, 30000, 30000,
+            30000, 30000, 30000, 30000, 30000
+        };
 
                 bool allFree = WaitForOtherRevitProcesses(pid, logFile, delays);
                 if (!allFree)
@@ -118,6 +147,19 @@ namespace UpdaterENS
                                  "Update will be retried on next Revit launch.");
                     return;
                 }
+
+                // «Последний момент»: если за время работы Revit автор что-то
+                // дописал в admin — здесь это увидим и учтём.
+                // В legacy-режиме adminSourceDir == null → вернётся mainSourceDir.
+                string sourceDir = ChoosePluginSource(mainSourceDir, adminSourceDir, isAuthor);
+
+                if (sourceDir == null)
+                {
+                    Log(logFile, "No valid plugin source directory. Nothing to update.");
+                    return;
+                }
+
+                Log(logFile, $"Resolved plugin source: {sourceDir}");
 
                 int copied = CopyFilesAtomically(sourceDir, targetDir, backupDir, logFile);
                 Log(logFile, $"Update completed. Files updated: {copied}");
@@ -128,6 +170,22 @@ namespace UpdaterENS
             }
         }
 
+        private static string ChoosePluginSource(string mainDir, string adminDir, bool isAuthor)
+        {
+            bool mainOk = !string.IsNullOrWhiteSpace(mainDir) && Directory.Exists(mainDir);
+            bool adminOk = isAuthor
+                           && !string.IsNullOrWhiteSpace(adminDir)
+                           && Directory.Exists(adminDir);
+
+            if (!mainOk && !adminOk) return null;
+            if (!adminOk) return mainDir;
+            if (!mainOk) return adminDir;
+
+            DateTime mainTime = GetDateTimeFolder(mainDir);
+            DateTime adminTime = GetDateTimeFolder(adminDir);
+
+            return adminTime > mainTime ? adminDir : mainDir;
+        }
         // -------------------------------------------------------------------
         // Ожидания
         // -------------------------------------------------------------------
@@ -253,16 +311,35 @@ namespace UpdaterENS
 
             Log(logFile, $"Update triggered by {triggerReason}. Copying all files.");
 
-            // 2. Раз обновляемся — берём ВСЕ файлы, а не только те, что новее.
+            // 2. Раз обновляемся — берём ВСЕ файлы, но в список замены попадут
+            //    только те, у которых дата модификации отличается от целевой
+            //    (в любую сторону — свежее или старее), либо которых нет в target.
             var filesToUpdate = new List<string>();
+
             foreach (var sourceFilePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
             {
-                filesToUpdate.Add(GetRelativePath(sourceDir, sourceFilePath));
+                string relative = GetRelativePath(sourceDir, sourceFilePath);
+                string targetFilePath = Path.Combine(targetDir, relative);
+
+                if (!File.Exists(targetFilePath))
+                {
+                    filesToUpdate.Add(relative);
+                    continue;
+                }
+
+                DateTime srcTime = File.GetLastWriteTimeUtc(sourceFilePath);
+                DateTime dstTime = File.GetLastWriteTimeUtc(targetFilePath);
+
+                // Даты совпадают — считаем файл идентичным, пропускаем.
+                if (srcTime == dstTime)
+                    continue;
+
+                filesToUpdate.Add(relative);
             }
 
             if (filesToUpdate.Count == 0)
             {
-                Log(logFile, "Source folder is empty. Nothing to update.");
+                Log(logFile, "Trigger fired, but all files have matching timestamps. Nothing to copy.");
                 return 0;
             }
 
@@ -296,20 +373,16 @@ namespace UpdaterENS
             // 5. Уборка.
             try
             {
-                if (Directory.Exists(tempSubdir) &&
-                    !Directory.EnumerateFileSystemEntries(tempSubdir).Any())
+                if (Directory.Exists(tempSubdir))
                 {
-                    Directory.Delete(tempSubdir);
+                    Directory.Delete(tempSubdir, recursive: true);
                     Log(logFile, "Temporary folder deleted.");
-                }
-                else
-                {
-                    Log(logFile, $"Temp folder '{tempSubdir}' left for manual cleanup.");
                 }
             }
             catch (Exception ex)
             {
-                Log(logFile, $"Failed to delete temp folder: {ex.Message}");
+                Log(logFile, $"Failed to delete temp folder: {ex.Message} " +
+                             "Left for manual cleanup.");
             }
 
             return updated;
@@ -663,6 +736,24 @@ namespace UpdaterENS
                 Log(logFile, "Certificate installed and verified.");
             else
                 Log(logFile, "Certificate installation could not be verified.");
+        }
+
+        /// <summary>
+        /// Возвращает максимальную дату модификации файлов .dll или .exe в директории.
+        /// Если файлов нет или директория не существует, возвращает DateTime.MinValue.
+        /// </summary>
+        private static DateTime GetDateTimeFolder(string sourceDir)
+        {
+            if (string.IsNullOrWhiteSpace(sourceDir) || !Directory.Exists(sourceDir))
+                return DateTime.MinValue;
+
+            var max = new[] { "*.dll", "*.exe" }
+                .SelectMany(mask => Directory.EnumerateFiles(sourceDir, mask, SearchOption.AllDirectories))
+                .Select(File.GetLastWriteTime)
+                .DefaultIfEmpty(DateTime.MinValue)
+                .Max();
+
+            return max;
         }
     }
 }
