@@ -94,6 +94,34 @@ namespace Reinforcement
             // viewName -> (groupName -> count)   (только для экземпляров дубликатов внутри групп)
             var viewToGroups = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
 
+           
+
+            // -------------------------------------------------------------------
+            // 5. Собираем данные: Лист → Вид → { семейства, группы }
+            //    Плюс отдельно виды без листа (в конце отчёта).
+            // -------------------------------------------------------------------
+
+            // Предварительно: viewId → (имя листа, номер листа)
+            // Виды попадают на лист только через Viewport, поэтому идём по всем Viewport'ам.
+            var viewToSheet = new Dictionary<ElementId, (string Name, string Number)>();
+            foreach (Viewport vp in new FilteredElementCollector(doc).OfClass(typeof(Viewport)))
+            {
+                ElementId sheetId = vp.SheetId;
+                ElementId viewId = vp.ViewId;
+                if (sheetId == ElementId.InvalidElementId || viewId == ElementId.InvalidElementId)
+                    continue;
+                if (!(doc.GetElement(sheetId) is ViewSheet sheet)) continue;
+                if (!viewToSheet.ContainsKey(viewId))
+                    viewToSheet[viewId] = (sheet.Name, sheet.SheetNumber);
+            }
+
+            // Лист → ViewBucket (Виды и их содержимое)
+            var sheetData = new Dictionary<string, SheetBucket>(StringComparer.OrdinalIgnoreCase);
+
+            // Виды без листа — как раньше: viewName → { families }, viewName → { groups }
+            var noSheetFamilies = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
+            var noSheetGroups = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
+
             int totalDuplicateInstances = 0;
             int skippedNoType = 0;
             int skippedNoView = 0;
@@ -108,32 +136,88 @@ namespace Reinforcement
 
                 if (!duplicateFamilyNames.Contains(familyName)) continue;
 
-                string viewName = GetViewName(doc, el);
-                if (string.IsNullOrEmpty(viewName) || viewName == "<вид не определён>")
+                // --- Определяем вид и лист ---
+                string viewName = null;
+                string sheetName = null;
+                string sheetNumber = null;
+
+                ElementId vid = el.OwnerViewId;
+                if (vid == ElementId.InvalidElementId && el.GroupId != ElementId.InvalidElementId)
+                {
+                    if (doc.GetElement(el.GroupId) is Group grp)
+                        vid = grp.OwnerViewId;
+                }
+
+                if (vid != ElementId.InvalidElementId)
+                {
+                    Element viewElem = doc.GetElement(vid);
+                    if (viewElem is ViewSheet sheetDirect)
+                    {
+                        // Элемент лежит прямо на листе — нет промежуточного вида.
+                        sheetName = sheetDirect.Name;
+                        sheetNumber = sheetDirect.SheetNumber;
+                        viewName = "<на листе>";
+                    }
+                    else if (viewElem is View v)
+                    {
+                        viewName = v.Name;
+                        if (viewToSheet.TryGetValue(vid, out var s))
+                        {
+                            sheetName = s.Name;
+                            sheetNumber = s.Number;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(viewName))
                 {
                     skippedNoView++;
                     viewName = "<вид не определён>";
                 }
 
-                // Семейство
-                if (!viewToFamilies.TryGetValue(viewName, out var famDict))
-                {
-                    famDict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                    viewToFamilies[viewName] = famDict;
-                }
-                famDict.TryGetValue(familyName, out int fc);
-                famDict[familyName] = fc + 1;
-
-                // Группа (если элемент внутри группы)
+                // --- Имя группы ---
+                string groupName = null;
                 if (el.GroupId != ElementId.InvalidElementId)
+                    groupName = GetGroupName(doc, el);
+
+                // --- Раскладываем по структурам ---
+                if (!string.IsNullOrEmpty(sheetName))
                 {
-                    string groupName = GetGroupName(doc, el);
+                    string sheetKey = sheetNumber + "|" + sheetName;
+                    if (!sheetData.TryGetValue(sheetKey, out var bucket))
+                    {
+                        bucket = new SheetBucket { Name = sheetName, Number = sheetNumber };
+                        sheetData[sheetKey] = bucket;
+                    }
+
+                    if (!bucket.Views.TryGetValue(viewName, out var vb))
+                    {
+                        vb = new ViewBucket();
+                        bucket.Views[viewName] = vb;
+                    }
+
+                    vb.IncrementFamily(familyName);
+                    if (!string.IsNullOrEmpty(groupName))
+                        vb.IncrementGroup(groupName);
+
+                    bucket.TotalInstances++;
+                }
+                else
+                {
+                    if (!noSheetFamilies.TryGetValue(viewName, out var famDict))
+                    {
+                        famDict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                        noSheetFamilies[viewName] = famDict;
+                    }
+                    famDict.TryGetValue(familyName, out int fc);
+                    famDict[familyName] = fc + 1;
+
                     if (!string.IsNullOrEmpty(groupName))
                     {
-                        if (!viewToGroups.TryGetValue(viewName, out var grpDict))
+                        if (!noSheetGroups.TryGetValue(viewName, out var grpDict))
                         {
                             grpDict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                            viewToGroups[viewName] = grpDict;
+                            noSheetGroups[viewName] = grpDict;
                         }
                         grpDict.TryGetValue(groupName, out int gc);
                         grpDict[groupName] = gc + 1;
@@ -144,36 +228,41 @@ namespace Reinforcement
             }
 
             // -------------------------------------------------------------------
-            // 6. Формируем отчёт
+            // 6. Формируем отчёт: Листы → Виды, затем виды без листа
             // -------------------------------------------------------------------
             var sb = new StringBuilder();
             sb.AppendLine($"Всего экземпляров дубликатов: {totalDuplicateInstances}");
-            sb.AppendLine($"Видов с дубликатами: {viewToFamilies.Count}");
+            sb.AppendLine($"Листов с дубликатами: {sheetData.Count}");
+            sb.AppendLine($"Видов без листа с дубликатами: {noSheetFamilies.Count}");
             sb.AppendLine();
 
-            foreach (var kv in viewToFamilies.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+            // --- Листы (сортировка по номеру, потом по имени) ---
+            foreach (var bucket in sheetData.Values
+                .OrderBy(s => s.Number, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase))
             {
-                string viewName = kv.Key;
-                var famDict = kv.Value;
+                sb.AppendLine($"=== Лист «{bucket.Name}» №{bucket.Number} (экз.: {bucket.TotalInstances}) ===");
 
-                var famList = famDict
-                    .OrderBy(f => f.Key, StringComparer.OrdinalIgnoreCase)
-                    .Select(f => f.Value > 1 ? $"{f.Key} ({f.Value})" : f.Key);
+                foreach (var viewKv in bucket.Views.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+                    AppendViewLine(sb, viewKv.Key, viewKv.Value);
 
-                var line = new StringBuilder();
-                line.Append($"Вид «{viewName}» дубликаты: {string.Join(", ", famList)}");
+                sb.AppendLine();
+            }
 
-                // Добавляем группы, если есть
-                if (viewToGroups.TryGetValue(viewName, out var grpDict) && grpDict.Count > 0)
+            // --- Виды без листа — в конце, как раньше ---
+            if (noSheetFamilies.Count > 0)
+            {
+                sb.AppendLine("=== Виды без листа ===");
+                foreach (var kv in noSheetFamilies.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
                 {
-                    var grpList = grpDict
-                        .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-                        .Select(g => g.Value > 1 ? $"{g.Key} ({g.Value})" : g.Key);
+                    string viewName = kv.Key;
+                    var vb = new ViewBucket();
+                    vb.Families = kv.Value;
+                    if (noSheetGroups.TryGetValue(viewName, out var grpDict))
+                        vb.Groups = grpDict;
 
-                    line.Append($" Группы: {string.Join(", ", grpList)}");
+                    AppendViewLine(sb, viewName, vb);
                 }
-
-                sb.AppendLine(line.ToString());
             }
 
             if (skippedNoType > 0 || skippedNoView > 0)
@@ -196,13 +285,65 @@ namespace Reinforcement
             }
 
             TaskDialog td = new TaskDialog("Дубликаты семейств по видам");
-            td.MainInstruction = $"Найдено видов с дубликатами: {viewToFamilies.Count}";
+            td.MainInstruction = $"Листов: {sheetData.Count}, видов без листа: {noSheetFamilies.Count}";
             td.MainContent = sb.ToString();
             td.Show();
 
             return Result.Succeeded;
         }
 
+        // -------------------------------------------------------------------
+        // Вспомогательные
+        // -------------------------------------------------------------------
+
+        private static void AppendViewLine(StringBuilder sb, string viewName, ViewBucket vb)
+        {
+            var famList = vb.Families
+                .OrderBy(f => f.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(f => f.Value > 1 ? $"{f.Key} ({f.Value})" : f.Key);
+
+            var line = new StringBuilder();
+            line.Append($"  Вид «{viewName}» дубликаты: {string.Join(", ", famList)}");
+
+            if (vb.Groups.Count > 0)
+            {
+                var grpList = vb.Groups
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.Value > 1 ? $"{g.Key} ({g.Value})" : g.Key);
+                line.Append($" Группы: {string.Join(", ", grpList)}");
+            }
+
+            sb.AppendLine(line.ToString());
+        }
+
+        private sealed class ViewBucket
+        {
+            public Dictionary<string, int> Families =
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            public Dictionary<string, int> Groups =
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            public void IncrementFamily(string name)
+            {
+                Families.TryGetValue(name, out int c);
+                Families[name] = c + 1;
+            }
+
+            public void IncrementGroup(string name)
+            {
+                Groups.TryGetValue(name, out int c);
+                Groups[name] = c + 1;
+            }
+        }
+
+        private sealed class SheetBucket
+        {
+            public string Name;
+            public string Number;
+            public Dictionary<string, ViewBucket> Views =
+                new Dictionary<string, ViewBucket>(StringComparer.OrdinalIgnoreCase);
+            public int TotalInstances;
+        }
         // -------------------------------------------------------------------
         // Служебные
         // -------------------------------------------------------------------

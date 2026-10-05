@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Security.Cryptography.X509Certificates;
+using System.Runtime.InteropServices;
 
 namespace UpdaterENS
 {
@@ -15,8 +16,11 @@ namespace UpdaterENS
 
         // Максимальное число строк, которое хранится в лог-файле.
         private const int MaxLogLines = 100;
-        //авторы тогда директория из авторов
-        private  HashSet<string> Avtors = new HashSet<string> { "KVinogradov" };
+
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteFile(string lpFileName);
 
         // Аргументы: pid, sourceDir, targetDir, backupDir, [logFile]
         static void Main(string[] args)
@@ -308,6 +312,24 @@ namespace UpdaterENS
                 Log(logFile, "No dll is newer than in target. Nothing to update.");
                 return 0;
             }
+            // Сразу после проверки shouldUpdate = true, до стейджинга.
+            // Снимаем зону с источника, если есть права. Не критично, если не получится —
+            // staging всё равно вычистится по ходу.
+            try
+            {
+                int srcCleaned = 0, srcFailed = 0;
+                foreach (var f in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+                {
+                    if (RemoveZoneIdentifierVerified(f, null)) srcCleaned++;
+                    else srcFailed++;
+                }
+                Log(logFile, $"Source zone cleanup: cleaned={srcCleaned}, failed={srcFailed}");
+            }
+            catch (Exception ex)
+            {
+                Log(logFile, $"Source zone cleanup skipped: {ex.Message}");
+            }
+
 
             Log(logFile, $"Update triggered by {triggerReason}. Copying all files.");
 
@@ -355,21 +377,107 @@ namespace UpdaterENS
                 string tempFilePath = Path.Combine(tempSubdir, relative);
                 Directory.CreateDirectory(Path.GetDirectoryName(tempFilePath));
                 File.Copy(sourceFilePath, tempFilePath, overwrite: true);
+                // Ключевая точка: снимаем зону ЗДЕСЬ, а не после замены.
+                // После этого любые File.Replace/File.Move понесут в target
+                // уже «чистый» файл.
+                RemoveZoneIdentifierVerified(tempFilePath, logFile);
                 Log(logFile, $"Staged: {relative}");
             }
+            // 4. Замена. Сначала DLL — они критичны.
+            //    Если хоть одна DLL не заменилась, остальные файлы не трогаем:
+            //    лучше остаться на старой версии целиком, чем получить рассинхрон
+            //    "старая dll + новый xml/config".
+            var dllFiles = new List<string>();
+            var otherFiles = new List<string>();
 
+            foreach (var relative in filesToUpdate)
+            {
+                if (relative.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                    dllFiles.Add(relative);
+                else
+                    otherFiles.Add(relative);
+            }
+
+            // Главная сборка плагина — первой. Остальные — по алфавиту,
+            // чтобы порядок замены был стабильным и предсказуемым.
+            const string mainDllName = "Reinforcement.dll";
+            dllFiles = dllFiles
+            .OrderBy(f => string.Equals(Path.GetFileName(f), mainDllName,
+                                        StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+            otherFiles = otherFiles
+            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
             // 4. Замена.
             int updated = 0;
-            foreach (var relative in filesToUpdate)
+            int dllFailed = 0;
+            string failedDll = null;
+            // 4a. DLL
+            foreach (var relative in dllFiles)
             {
                 string tempFilePath = Path.Combine(tempSubdir, relative);
                 string targetFilePath = Path.Combine(targetDir, relative);
                 string backupFilePath = Path.Combine(backupDir, relative);
 
                 if (TrySwapFile(tempFilePath, targetFilePath, backupFilePath, relative, logFile))
+                {
                     updated++;
+                }
+                else
+                {
+                    dllFailed++; //хотя бы не расширяем «полу-состояние» дальше.
+                    failedDll = relative;
+                    Log(logFile,
+                        $"Stopping dll replacement: '{relative}' failed. " +
+                        $"Remaining {dllFiles.Count - updated - dllFailed} dll(s) will not be touched.");
+                    
+                    break;
+                }
             }
+            // 4b. Остальные файлы — только если все DLL заменились успешно.
+            if (dllFailed == 0)
+            {
+                foreach (var relative in otherFiles)
+                {
+                    string tempFilePath = Path.Combine(tempSubdir, relative);
+                    string targetFilePath = Path.Combine(targetDir, relative);
+                    string backupFilePath = Path.Combine(backupDir, relative);
 
+                    if (TrySwapFile(tempFilePath, targetFilePath, backupFilePath, relative, logFile))
+                        updated++;
+                }
+            }
+            else
+            {
+                Log(logFile,
+               $"Skipped {otherFiles.Count} non-dll file(s): " +
+               $"dll '{failedDll}' could not be replaced. " +
+               "Plugin left on the previous version to avoid version mismatch.");
+            }
+            // 4c. Финальная страховка по всему target.
+            int zoneFailed = 0;
+            try
+            {
+                foreach (var file in Directory.GetFiles(targetDir, "*", SearchOption.AllDirectories))
+                {
+                    // Не трогаем staging-подпапку — её сейчас удалим.
+                    if (file.StartsWith(tempSubdir, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (!RemoveZoneIdentifierVerified(file, logFile))
+                        zoneFailed++;
+                }
+
+                Log(logFile, zoneFailed == 0
+                    ? "Zone.Identifier stripped from target folder."
+                    : $"Zone.Identifier cleanup: {zoneFailed} file(s) still blocked!");
+            }
+            catch (Exception ex)
+            {
+                Log(logFile, $"Zone.Identifier cleanup error: {ex.Message}");
+            }
             // 5. Уборка.
             try
             {
@@ -404,6 +512,7 @@ namespace UpdaterENS
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(targetFilePath));
                         File.Move(tempFilePath, targetFilePath);
+                        RemoveZoneIdentifierVerified(targetFilePath, logFile); ;
                         Log(logFile, $"Added: {relativePath}");
                         return true;
                     }
@@ -436,6 +545,7 @@ namespace UpdaterENS
                     File.Replace(tempFilePath, targetFilePath,
                                  destinationBackupFileName: backupForReplace,
                                  ignoreMetadataErrors: true);
+                    RemoveZoneIdentifierVerified(targetFilePath, logFile); ;   // ← добавить
                     Log(logFile, $"Replaced: {relativePath} (attempt {attempt})");
                     return true;
                 }
@@ -452,7 +562,7 @@ namespace UpdaterENS
                     originalRenamed = true;
 
                     File.Move(tempFilePath, targetFilePath);
-
+                    RemoveZoneIdentifierVerified(targetFilePath, logFile); ;   // ← добавить
                     try { File.Delete(sideBak); } catch { }
 
                     Log(logFile, $"Renamed-swap: {relativePath} (attempt {attempt})");
@@ -487,7 +597,53 @@ namespace UpdaterENS
                          "Original file kept in place.");
             return false;
         }
+        /// <summary>
+        /// Удаляет альтернативный поток Zone.Identifier у файла.
+        /// В .NET Framework File.Delete НЕ поддерживает ADS-пути ("file:stream")
+        /// — он бросает NotSupportedException. Поэтому используем Win32 DeleteFile,
+        /// который с этим форматом работает.
+        /// Возвращает true, если поток отсутствует или успешно удалён.
+        /// </summary>
+        static bool RemoveZoneIdentifierVerified(string filePath, string logFile = null)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                return true;
 
+            string zonePath = filePath + ":Zone.Identifier";
+
+            // ERROR_FILE_NOT_FOUND = 2, ERROR_PATH_NOT_FOUND = 3 — потока нет, это норма.
+            const int ERROR_FILE_NOT_FOUND = 2;
+            const int ERROR_PATH_NOT_FOUND = 3;
+
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                if (DeleteFile(zonePath))
+                    return true; // поток был и удалён
+
+                int err = Marshal.GetLastWin32Error();
+                if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND)
+                    return true; // потока не было — тоже успех
+
+                if (attempt == 3)
+                {
+                    try
+                    {
+                        Log(logFile,
+                            $"RemoveZoneIdentifier FAILED for '{filePath}': Win32 error {err}");
+                    }
+                    catch { }
+                    return false;
+                }
+
+                Thread.Sleep(150);
+            }
+            return false;
+        }
+
+        static void RemoveZoneIdentifier(string filePath)
+        {
+            RemoveZoneIdentifierVerified(filePath, null);
+        }
         static bool IsFileWritable(string path)
         {
             if (!File.Exists(path)) return true;
@@ -755,5 +911,7 @@ namespace UpdaterENS
 
             return max;
         }
+
+        
     }
 }

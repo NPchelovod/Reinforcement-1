@@ -22,6 +22,7 @@ using System.Threading;
 using System.Windows.Documents;
 using System.Windows.Controls;
 using System.Text.Encodings.Web;
+using System.Runtime.InteropServices;
 namespace Reinforcement
 {
     public static class App_Apdater_1
@@ -47,7 +48,13 @@ namespace Reinforcement
 
         public static string sourcePluginDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин_Admin";
 
-        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov" };
+        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer" };
+
+        // В App_Apdater_1
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteFile(string lpFileName);
+
 
         public static bool BAvtor = false;// не автор
         public static void CalcOtherProp()
@@ -70,6 +77,28 @@ namespace Reinforcement
         public static LookUsers LookUsers = new LookUsers();
 
         public static AppErrors AppErrors = new AppErrors();
+
+        /// <summary>
+        /// Разовая очистка целевой папки плагина от альтернативного потока Zone.Identifier.
+        /// Вызывать из App.OnStartup ДО любой другой логики — лечит машины,
+        /// на которых ранее остались «заражённые» файлы (HRESULT 0x80131515).
+        /// </summary>
+        /// 
+        public static void CleanupTargetFolder()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(targetPluginDir))
+                    targetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                RemoveZoneIdentifiersRecursively(targetPluginDir);
+            }
+            catch (Exception ex)
+            {
+                try { AppErrors?.LogError(ex); } catch { }
+            }
+        }
+
         public static void StartUpdateENS()
         {
             try
@@ -80,6 +109,9 @@ namespace Reinforcement
 
                 CalcOtherProp();
                 if (!PluginOptions.AutomaticUpdatesEnabled) return;
+                // Разово вылечиваем текущую папку плагина от Zone.Identifier —
+                // на случай, если предыдущее обновление оставило метки.
+                CleanupTargetFolder();
 
                 string tempUpdaterDir = Path.Combine(tempFolder, "ENS_Updater");
                 Directory.CreateDirectory(tempUpdaterDir);
@@ -114,16 +146,15 @@ namespace Reinforcement
 
                 RemoveZoneIdentifiersRecursively(tempUpdaterDir);
 
-                // Быстрая «валидация существования» — но НЕ выбор источника.
-                // Источник плагина выберет сам UpdaterENS уже после закрытия Revit,
-                // чтобы учесть файлы, записанные в admin-папку во время работы плагина.
+                // Валидация наличия источника плагина — но не выбор.
+                // Источник выберет UpdaterENS уже после закрытия Revit.
                 if (!Directory.Exists(sourcePluginDir) &&
                     !(BAvtor && Directory.Exists(sourcePluginDirAvtor)))
                 {
                     TaskDialog.Show("Ошибка обновления", "Папка с обновлением плагина не найдена.");
                     return;
                 }
-                
+
                 Directory.CreateDirectory(backupDir);
 
                 int pid = Process.GetCurrentProcess().Id;
@@ -193,8 +224,8 @@ namespace Reinforcement
             }
         }
         /// <summary>
-        /// Возвращает максимальную дату модификации файлов .dll или .exe в директории.
-        /// Если файлов нет или директория не существует, возвращает DateTime.MinValue.
+        /// Максимальная дата модификации .dll / .exe в директории (рекурсивно).
+        /// DateTime.MinValue, если ничего не найдено / директории нет.
         /// </summary>
         private static DateTime GetDateTimeFolder(string sourceDir)
         {
@@ -210,6 +241,7 @@ namespace Reinforcement
             return max;
         }
 
+        // Рекурсивное копирование директории с учётом дат изменения
         // Рекурсивное копирование директории с учётом дат изменения
         private static void CopyDirectory(string sourceDir, string targetDir)
         {
@@ -230,6 +262,10 @@ namespace Reinforcement
                     File.GetLastWriteTimeUtc(filePath) > File.GetLastWriteTimeUtc(targetFilePath))
                 {
                     File.Copy(filePath, targetFilePath, overwrite: true);
+
+                    // File.Copy переносит ADS вместе с файлом — снимаем метку сразу,
+                    // чтобы не тащить «заражение» дальше по цепочке.
+                    RemoveZoneIdentifier(targetFilePath);
                 }
             }
         }
@@ -249,74 +285,58 @@ namespace Reinforcement
         }
 
         // Рекурсивное удаление альтернативного потока Zone.Identifier чтобы не показывать предупреждение «Этот файл получен из другой зоны»;
+        /// Не бросает исключений. Безопасно вызывать на любой существующей папке.
+        /// </summary>
         private static void RemoveZoneIdentifiersRecursively(string directory)
         {
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                return;
+
             foreach (var filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    string zonePath = filePath + ":Zone.Identifier";
-                    if (File.Exists(zonePath))
-                        File.Delete(zonePath);
-                }
-                catch
-                {
-                    // Игнорируем ошибки удаления
-                }
-            }
+                RemoveZoneIdentifier(filePath);
         }
 
+
+        /// <summary>
+        /// Удаляет альтернативный поток Zone.Identifier у одного файла.
+        /// Никогда не бросает исключений.
+        /// </summary>
         private static void RemoveZoneIdentifier(string filePath)
         {
-            string zoneIdentifierPath = filePath + ":Zone.Identifier";
+            if (string.IsNullOrEmpty(filePath))
+                return;
+
             try
             {
-                if (File.Exists(zoneIdentifierPath))
-                    File.Delete(zoneIdentifierPath);
+                DeleteFile(filePath + ":Zone.Identifier");
+                // Возвращаемое значение и GetLastWin32Error нас здесь не интересуют —
+                // нас устраивает и «удалено», и «потока не было».
             }
-            catch
-            {
-                // Игнорируем ошибки, файл может не иметь этого потока
-            }
+            catch { }
         }
+
 
 
         public static DateTime GetLatestFileTime(string directoryPath)
         {
-            //получение даты создания
             if (!Directory.Exists(directoryPath))
                 return DateTime.MinValue;
 
-            //var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
-            //                     .Select(f => new FileInfo(f))
-            //                     .Where(f => f.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-            //                                 f.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
-            //                     .ToList();
             var extensions = new[] { ".dll", ".exe" };
-            //var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
-            //.Where(p => Path.GetExtension(p).Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-            //    Path.GetExtension(p).Equals(".exe", StringComparison.OrdinalIgnoreCase));
-            //искать только в текущей директории (без вложенных папок),
+
             var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.TopDirectoryOnly)
-            .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase));
+                                 .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase));
 
             if (!paths.Any())
                 return DateTime.MinValue;
 
-            
-
             return paths.Max(p => File.GetLastWriteTimeUtc(p));
-
-            //if (files.Count == 0)
-            //    return DateTime.MinValue;
-
-            //// Максимальная дата последнего изменения
-            //return files.Max(f => f.LastWriteTimeUtc); //Если нужно получить дату создания, замените LastWriteTimeUtc на CreationTimeUtc
         }
-
-
     }
+
+
+}
 
            
 
-}
+

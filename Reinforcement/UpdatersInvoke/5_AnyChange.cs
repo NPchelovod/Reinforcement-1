@@ -29,7 +29,11 @@ namespace Reinforcement
             {
                 App_Apdater_1.AppErrors.LogError(ex);
             }
-           
+            finally
+            {
+                App.InPendingSecret = false;
+            }
+
             try
             {
                 
@@ -48,51 +52,7 @@ namespace Reinforcement
         }
         //переподписаться
 
-       public static void LookUsersUpdate(UpdaterData data)
-        {
-            //var addedIds = data.GetAddedElementIds();
-            //string lastCommand = App.PastCommand.Name;
-            ////var deletes = data.GetDeletedElementIds();
-            //App_Apdater_1.LookUsers.Update($"AnyChange.{lastCommand}");
-            //return;
-            //if (data.GetAddedElementIds().Count > 0)
-            //{
-            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.addedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //    return;
-            //}
-            //else if(data.GetDeletedElementIds().Count>0)
-            //{
-            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.deletes", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //    return;
-            //}
-
-            //var modifiedIds = data.GetModifiedElementIds();
-            
-            //if (modifiedIds.Count > 0)
-            //{
-
-            //    ElementId id = modifiedIds.First();
-            //    var doc = data.GetDocument();
-            //    // --- 1. Изменение ГЕОМЕТРИИ (перемещение, изменение формы) ---
-            //    if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-            //    {
-            //        App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //    }
-            //    // --- 3. Изменение встроенного параметра (пример: Комментарии) ---
-            //    //else if (data.IsChangeTriggered(id, Element.GetChangeTypeParameter(id)))
-            //    //{
-            //    //    App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds.geometry", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //    //}
-            //    else
-            //    {
-            //        App_Apdater_1.LookUsers.Update("AnyChange.Execute.modifiedIds", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //    }
-            //}
-            //else
-            //{
-            //    App_Apdater_1.LookUsers.Update("AnyChange.Execute", EDocStatsOptions.Invoker); //"AnyChange.Execute");
-            //}
-        }
+       
 
         public static void SecretComand(UpdaterData data)
         {
@@ -120,7 +80,7 @@ namespace Reinforcement
                     //надо найти имеющие туже группу
 
                     //надо собрать все элементы которые принадлежат данной группе и находятся на виде
-                    DeleteDublicateFamily.ReplacedProcess(doc, elements, false);
+                    DeleteDublicateFamily.ReplacedProcess(doc, elements, false, new HashSet<ElementId>(), false);
                 }
                
             }

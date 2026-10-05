@@ -88,18 +88,75 @@ namespace Reinforcement
 
         //    };
 
-        
 
     public Result OnStartup(UIControlledApplication app)
+    {
+            // Апдейтер запускаем ДО основной инициализации — он только стартует
+            // внешний процесс UpdaterENS.exe и сразу возвращается.
+            // Лечим уже заражённую папку плагина до того, как Revit попытается
+            // грузить её файлы.
+            App_Apdater_1.CleanupTargetFolder();
+            TryStartUpdate(app);
+
+            try
+            {
+                // ... твоя инициализация ...
+                return Startup(app);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    string logPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "RevitAddinsLogs", "ENSPlugin_startup.log");
+                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                    File.AppendAllText(logPath,
+                        $"\n=== {DateTime.Now} ===\n{ex}\n");
+                }
+                catch { }
+
+                TaskDialog.Show("ЕС BIM",
+                    "Плагин не запустился. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
+                    ex.Message);
+                return Result.Failed;
+            }
+        }
+        /// <summary>
+        /// Безопасный запуск автообновления.
+        /// Гарантированно не бросает исключений наружу и не ломает OnStartup.
+        /// </summary>
+        private static void TryStartUpdate(UIControlledApplication app)
         {
+            try
+            {
+                Application = app; // Сохраняем app в статическое свойство
+                App_Apdater_1.StartUpdateENS();
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    string logPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "RevitAddinsLogs", "ENSPlugin_startup.log");
+                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                    File.AppendAllText(logPath,
+                        $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
+                }
+                catch { }
+            }
+        }
+        public Result Startup(UIControlledApplication app)
+        {
+
             HelperSeach.ClearCache();
             app.ControlledApplication.DocumentChanged += FamilyCacheEvents.DocumentChanged;
             app.ControlledApplication.DocumentClosing += FamilyCacheEvents.DocumentClosing;
             Application = app; // Сохраняем app в статическое свойство
             app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
             
-            //для автообновления
-            App_Apdater_1.StartUpdateENS();
+            
 
             //Create tab
             string tabName = "ЕС BIM";

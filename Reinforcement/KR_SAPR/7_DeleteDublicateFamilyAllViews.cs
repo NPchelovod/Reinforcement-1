@@ -19,6 +19,28 @@ namespace Reinforcement
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
 
+
+            // Спрашиваем пользователя до старта транзакции.
+            TaskDialog dialog = new TaskDialog("Замена семейств")
+            {
+                MainInstruction = "Уверены, Исправлять во всём проекте?",
+                MainContent =
+                    "Да  — обрабатывать элементы на всех видах.\n" +
+                    "Нет — отмена операции.",
+                CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
+                DefaultButton = TaskDialogResult.No
+            };
+
+            TaskDialogResult answer = dialog.Show();
+
+            // Yes → исправлять группы → skipGroups = false
+            // No  → не трогать группы → skipGroups = true
+           
+            if (answer!=TaskDialogResult.Yes)
+            {
+                return Result.Succeeded;
+            }
+
             // -------------------------------------------------------------------
             // 1. Все элементы с типом-семейством (FamilyInstance + IndependentTag,
             //    TextNote-аннотации и т.п.), у которых есть FamilySymbol.
@@ -90,18 +112,34 @@ namespace Reinforcement
             int skippedSameType = 0;
             int failedCount = 0;
 
-            var replacedViews = new Dictionary<string, int>();
+            
 
-            var inGroupInfo = new List<(
-                string FamilyName,
-                int ElementId,
-                string GroupName,
-                int GroupId,
-                string ViewName)>();
+           
 
             var unmatchedTypes = new List<string>();
             var unmatchedTypesSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // Иерархические накопители для замен:
+            // sheetKey → ReplaceSheetData  (только листы)
+            var replaceSheetData = new Dictionary<string, ReplaceSheetData>(StringComparer.OrdinalIgnoreCase);
+            // viewName → ReplaceViewData    (виды без листа, идут в конце)
+            var replaceNoSheet = new Dictionary<string, ReplaceViewData>(StringComparer.OrdinalIgnoreCase);
 
+            var inGroupInfo = new List<GroupSkipInfo>();
+            // -------------------------------------------------------------------
+            // 4a. Карта "viewId → (имя листа, номер листа)"
+            //     Виды попадают на лист только через Viewport'ы.
+            // -------------------------------------------------------------------
+            var viewToSheet = new Dictionary<ElementId, (string Name, string Number)>();
+            foreach (Viewport vp in new FilteredElementCollector(doc).OfClass(typeof(Viewport)))
+            {
+                ElementId sheetId = vp.SheetId;
+                ElementId viewId = vp.ViewId;
+                if (sheetId == ElementId.InvalidElementId || viewId == ElementId.InvalidElementId)
+                    continue;
+                if (!(doc.GetElement(sheetId) is ViewSheet sheet)) continue;
+                if (!viewToSheet.ContainsKey(viewId))
+                    viewToSheet[viewId] = (sheet.Name, sheet.SheetNumber);
+            }
             // -------------------------------------------------------------------
             // 5. Замена
             // -------------------------------------------------------------------
@@ -136,18 +174,22 @@ namespace Reinforcement
                                 skippedGroup++;
 
                                 var (groupName, groupId, _) = GetGroupInfo(doc, instance);
-                                string viewName = GetViewName(doc, instance);
+                                var (_, viewName, sheetName, sheetNumber) = GetViewAndSheet(doc, instance, viewToSheet);
 
                                 var curSym = doc.GetElement(instance.GetTypeId()) as FamilySymbol;
                                 string famName = curSym?.FamilyName ?? "<без семейства>";
 
-                                inGroupInfo.Add((
-                                    FamilyName: famName,
-                                    ElementId: instance.Id.IntegerValue,
-                                    GroupName: groupName,
-                                    GroupId: groupId,
-                                    ViewName: viewName
-                                ));
+                                inGroupInfo.Add(new GroupSkipInfo
+                                {
+                                    FamilyName = famName,
+                                    OrigFamilyName = originalFamily.Name,
+                                    ElementId = instance.Id.IntegerValue,
+                                    GroupName = groupName,
+                                    GroupId = groupId,
+                                    ViewName = viewName,
+                                    SheetName = sheetName,
+                                    SheetNumber = sheetNumber
+                                });
                                 continue;
                             }
 
@@ -233,12 +275,52 @@ namespace Reinforcement
 
                             replacedCount++;
 
-                            string replacedViewName = GetViewName(doc, newElement);
-                            if (!string.IsNullOrEmpty(replacedViewName)
-                                && replacedViewName != "<вид не определён>")
+                            string dupFamilyName = dupName;
+                            string origFamilyName = originalFamily.Name;
+
+                            var (_, replacedViewName, replacedSheetName, replacedSheetNumber) =
+                                GetViewAndSheet(doc, newElement, viewToSheet);
+
+                            if (!string.IsNullOrEmpty(replacedViewName) &&
+                                replacedViewName != "<вид не определён>")
                             {
-                                replacedViews.TryGetValue(replacedViewName, out int c);
-                                replacedViews[replacedViewName] = c + 1;
+                                string replaceKey = dupFamilyName + " → " + origFamilyName;
+
+                                if (!string.IsNullOrEmpty(replacedSheetName))
+                                {
+                                    string sheetKey = replacedSheetNumber + "|" + replacedSheetName;
+
+                                    if (!replaceSheetData.TryGetValue(sheetKey, out var sheetBucket))
+                                    {
+                                        sheetBucket = new ReplaceSheetData
+                                        {
+                                            SheetName = replacedSheetName,
+                                            SheetNumber = replacedSheetNumber
+                                        };
+                                        replaceSheetData[sheetKey] = sheetBucket;
+                                    }
+
+                                    if (!sheetBucket.Views.TryGetValue(replacedViewName, out var vBucket))
+                                    {
+                                        vBucket = new ReplaceViewData();
+                                        sheetBucket.Views[replacedViewName] = vBucket;
+                                    }
+
+                                    vBucket.FamilyReplaces.TryGetValue(replaceKey, out int c);
+                                    vBucket.FamilyReplaces[replaceKey] = c + 1;
+                                    sheetBucket.TotalReplaces++;
+                                }
+                                else
+                                {
+                                    if (!replaceNoSheet.TryGetValue(replacedViewName, out var vBucket))
+                                    {
+                                        vBucket = new ReplaceViewData();
+                                        replaceNoSheet[replacedViewName] = vBucket;
+                                    }
+
+                                    vBucket.FamilyReplaces.TryGetValue(replaceKey, out int c);
+                                    vBucket.FamilyReplaces[replaceKey] = c + 1;
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -265,28 +347,114 @@ namespace Reinforcement
             if (failedCount > 0)
                 sb.AppendLine($"Не удалось заменить (после ChangeTypeId не получен Element): {failedCount}");
 
-            if (replacedViews.Count > 0)
+            // --- Замены по листам ---
+            if (replaceSheetData.Count > 0)
             {
                 sb.AppendLine();
-                sb.AppendLine("По видам:");
-                foreach (var kv in replacedViews.OrderByDescending(k => k.Value))
-                    sb.AppendLine($"  {kv.Key}: {kv.Value}");
+                sb.AppendLine("=== Замены по листам ===");
+
+                foreach (var bucket in replaceSheetData.Values
+                    .OrderBy(s => s.SheetNumber, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(s => s.SheetName, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"Лист «{bucket.SheetName}» №{bucket.SheetNumber} (заменено: {bucket.TotalReplaces})");
+
+                    foreach (var vk in bucket.Views.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine($"  Вид «{vk.Key}»:");
+                        foreach (var fk in vk.Value.FamilyReplaces
+                            .OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+                        {
+                            sb.AppendLine($"    {fk.Key} — {fk.Value} шт.");
+                        }
+                    }
+                }
             }
 
+            // --- Замены по видам без листа ---
+            if (replaceNoSheet.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("=== Замены на видах без листа ===");
+
+                foreach (var vk in replaceNoSheet.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine($"  Вид «{vk.Key}»:");
+                    foreach (var fk in vk.Value.FamilyReplaces
+                        .OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine($"    {fk.Key} — {fk.Value} шт.");
+                    }
+                }
+            }
+
+            // --- Пропущенные в группах ---
             if (inGroupInfo.Count > 0)
             {
                 sb.AppendLine();
                 sb.AppendLine($"=== Пропущены, т.к. внутри групп ({inGroupInfo.Count}) ===");
-                foreach (var g in inGroupInfo
-                         .GroupBy(x => new { x.GroupId, x.GroupName })
-                         .OrderByDescending(g => g.Count()))
+
+                // Сначала по листам, потом без листа.
+                var withSheet = inGroupInfo
+                    .Where(g => !string.IsNullOrEmpty(g.SheetName))
+                    .GroupBy(g => new { g.SheetNumber, g.SheetName })
+                    .OrderBy(gr => gr.Key.SheetNumber, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(gr => gr.Key.SheetName, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var sheetGroup in withSheet)
                 {
-                    sb.AppendLine($"  Группа «{g.Key.GroupName}» (Id {g.Key.GroupId}) — {g.Count()} шт.:");
-                    foreach (var row in g)
-                        sb.AppendLine($"      [{row.FamilyName}] Id {row.ElementId}  →  вид: {row.ViewName}");
+                    sb.AppendLine();
+                    sb.AppendLine($"Лист «{sheetGroup.Key.SheetName}» №{sheetGroup.Key.SheetNumber}:");
+
+                    foreach (var viewGroup in sheetGroup
+                        .GroupBy(g => g.ViewName)
+                        .OrderBy(vg => vg.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine($"  Вид «{viewGroup.Key}»:");
+
+                        foreach (var grp in viewGroup
+                            .GroupBy(g => new { g.GroupId, g.GroupName })
+                            .OrderByDescending(gg => gg.Count()))
+                        {
+                            sb.AppendLine($"    Группа «{grp.Key.GroupName}» (Id {grp.Key.GroupId}) — {grp.Count()} шт.:");
+                            foreach (var row in grp.OrderBy(r => r.ElementId))
+                            {
+                                sb.AppendLine(
+                                    $"      {row.FamilyName} → {row.OrigFamilyName}  [Id {row.ElementId}]");
+                            }
+                        }
+                    }
+                }
+
+                var noSheet = inGroupInfo.Where(g => string.IsNullOrEmpty(g.SheetName));
+                if (noSheet.Any())
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("Виды без листа:");
+
+                    foreach (var viewGroup in noSheet
+                        .GroupBy(g => g.ViewName)
+                        .OrderBy(vg => vg.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine($"  Вид «{viewGroup.Key}»:");
+
+                        foreach (var grp in viewGroup
+                            .GroupBy(g => new { g.GroupId, g.GroupName })
+                            .OrderByDescending(gg => gg.Count()))
+                        {
+                            sb.AppendLine($"    Группа «{grp.Key.GroupName}» (Id {grp.Key.GroupId}) — {grp.Count()} шт.:");
+                            foreach (var row in grp.OrderBy(r => r.ElementId))
+                            {
+                                sb.AppendLine(
+                                    $"      {row.FamilyName} → {row.OrigFamilyName}  [Id {row.ElementId}]");
+                            }
+                        }
+                    }
                 }
             }
 
+            // --- Unmatched ---
             if (unmatchedFamilies.Count > 0)
             {
                 sb.AppendLine();
@@ -316,7 +484,72 @@ namespace Reinforcement
         // -------------------------------------------------------------------
         // Служебные
         // -------------------------------------------------------------------
+        /// <summary>
+        /// Определяет вид и лист, на которых отображается элемент.
+        /// Если элемент лежит прямо на листе (без промежуточного вида) — ViewName = "&lt;на листе&gt;".
+        /// Если вид не на листе — SheetName/SheetNumber = null.
+        /// </summary>
+        private static (ElementId ViewId, string ViewName, string SheetName, string SheetNumber)
+            GetViewAndSheet(Document doc, Element elem,
+                            Dictionary<ElementId, (string Name, string Number)> viewToSheet)
+        {
+            try
+            {
+                ElementId vid = elem.OwnerViewId;
+                if (vid == ElementId.InvalidElementId && elem.GroupId != ElementId.InvalidElementId)
+                {
+                    if (doc.GetElement(elem.GroupId) is Group grp)
+                        vid = grp.OwnerViewId;
+                }
 
+                if (vid == ElementId.InvalidElementId)
+                    return (ElementId.InvalidElementId, "<вид не определён>", null, null);
+
+                Element viewElem = doc.GetElement(vid);
+
+                // Случай: элемент прямо на листе.
+                if (viewElem is ViewSheet directSheet)
+                    return (vid, "<на листе>", directSheet.Name, directSheet.SheetNumber);
+
+                // Случай: обычный вид.
+                if (viewElem is View v)
+                {
+                    if (viewToSheet != null && viewToSheet.TryGetValue(vid, out var s))
+                        return (vid, v.Name, s.Name, s.Number);
+                    return (vid, v.Name, null, null);
+                }
+            }
+            catch { }
+
+            return (ElementId.InvalidElementId, "<вид не определён>", null, null);
+        }
+        private sealed class ReplaceSheetData
+        {
+            public string SheetName;
+            public string SheetNumber;
+            public int TotalReplaces;
+            public Dictionary<string, ReplaceViewData> Views =
+                new Dictionary<string, ReplaceViewData>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private sealed class ReplaceViewData
+        {
+            // Ключ: "Дубликат → Оригинал", значение — сколько раз заменили.
+            public Dictionary<string, int> FamilyReplaces =
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private sealed class GroupSkipInfo
+        {
+            public string FamilyName;       // имя семейства-дубликата
+            public string OrigFamilyName;   // на какое семейство хотели бы заменить
+            public int ElementId;
+            public string GroupName;
+            public int GroupId;
+            public string ViewName;
+            public string SheetName;        // null, если вид не на листе
+            public string SheetNumber;
+        }
         private static (string Name, int Id, ElementId GroupId) GetGroupInfo(Document doc, Element elem)
         {
             ElementId gid = elem.GroupId;

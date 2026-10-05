@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Controls;
 using Autodesk.Revit.Attributes;
+
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
 
 namespace Reinforcement
 {
@@ -13,28 +15,70 @@ namespace Reinforcement
     public class DeleteDublicateFamily : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+    ExternalCommandData commandData,
+    ref string message,
+    ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
             UIDocument uiDoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            // Все элементы с вида (чтобы группы не менялись)
-            List<Element> elems = ArmLengthEquels.SelectOrAllElements(false,true);
+            // Спрашиваем пользователя до старта транзакции.
+            TaskDialog dialog = new TaskDialog("Замена семейств")
+            {
+                MainInstruction = "Исправлять группы на виде?",
+                MainContent =
+                    "Да  — обрабатывать элементы внутри групп (группы будут изменены).\n" +
+                    "Нет — пропустить элементы внутри групп, группы останутся как есть.",
+                CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
+                DefaultButton = TaskDialogResult.No
+            };
+
+            TaskDialogResult answer = dialog.Show();
+
+
+
+
+            // Yes → исправлять группы → skipGroups = false
+            // No  → не трогать группы → skipGroups = true
+            bool correctGroups = answer == TaskDialogResult.Yes;
+
+            
+            // Все элементы с вида (чтобы группы не менялись при отборе)
+            List<Element> elems = ArmLengthEquels.SelectOrAllElements(false, true);
+
+            HashSet<ElementId> GroupTrueCorrect = new HashSet<ElementId>();
+            if (correctGroups)
+            {
+                //поиск элементов
+                foreach (Element instance in elems)
+                {
+
+                    // Пропуск элементов внутри чужих групп
+                    //allNoGroop=false - тогда все группы пытаемся подкорректировать
+                    if (instance.GroupId != ElementId.InvalidElementId)
+                    {
+                        ElementId groupIdId = instance.GroupId;
+                        if(groupIdId!= ElementId.InvalidElementId)
+                        {
+                            GroupTrueCorrect.Add(groupIdId);
+                        }
+                    }
+                }
+            }
+            
 
             using (Transaction trans = new Transaction(doc, "Замена семейств и перенос параметров"))
             {
                 trans.Start();
-                ReplacedProcess(doc, elems, true);
+                ReplacedProcess(doc, elems,true, GroupTrueCorrect, !correctGroups);
                 trans.Commit();
             }
 
             return Result.Succeeded;
         }
 
-        public static bool ReplacedProcess(Document doc, List<Element> elems, bool noGroop)
+        public static bool ReplacedProcess(Document doc, List<Element> elems, bool noGroop, HashSet<ElementId> GroupTrueCorrect, bool showReport = true)
         {
             // -------------------------------------------------------------------
             // 1. Группировка: "ИмяСемейства" -> список экземпляров.
@@ -143,10 +187,11 @@ namespace Reinforcement
                     try
                     {
                         // Пропуск элементов внутри чужих групп
-                        if (noGroop && instance.GroupId != ElementId.InvalidElementId)
+                        //allNoGroop=false - тогда все группы пытаемся подкорректировать
+                        if ( noGroop && instance.GroupId != ElementId.InvalidElementId)
                         {
                             ElementId groupIdId = instance.GroupId;
-                            if (groupIdId != App.OnGroupCurrent.Id)
+                            if (groupIdId != App.OnGroupCurrent.Id && !GroupTrueCorrect.Contains(groupIdId))
                             {
                                 var (groupName, groupId, _) = GetGroupInfo(doc, instance);
                                 skippedGroup++;
@@ -266,63 +311,65 @@ namespace Reinforcement
             // -------------------------------------------------------------------
             // 6. Отчёт
             // -------------------------------------------------------------------
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"Успешно заменено: {replacedCount}");
-
-            if (skippedNoType > 0)
-                sb.AppendLine($"Пропущено (нет подходящего типоразмера): {skippedNoType}");
-            if (skippedGroup > 0)
-                sb.AppendLine($"Пропущено (внутри групп): {skippedGroup}");
-            if (skippedSameType > 0)
-                sb.AppendLine($"Пропущено (тип уже совпадает): {skippedSameType}");
-            if (failedCount > 0)
-                sb.AppendLine($"Не удалось заменить (после ChangeTypeId не получен Element): {failedCount}");
-
-            if (replacedViews.Count > 0)
+            if (showReport)
             {
-                sb.AppendLine();
-                sb.AppendLine("По видам:");
-                foreach (var kv in replacedViews.OrderByDescending(k => k.Value))
-                    sb.AppendLine($"  {kv.Key}: {kv.Value}");
-            }
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"Успешно заменено: {replacedCount}");
 
-            if (inGroupInfo.Count > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"=== Пропущены, т.к. внутри групп ({inGroupInfo.Count}) ===");
-                foreach (var g in inGroupInfo
-                         .GroupBy(x => new { x.GroupId, x.GroupName })
-                         .OrderByDescending(g => g.Count()))
+                if (skippedNoType > 0)
+                    sb.AppendLine($"Пропущено (нет подходящего типоразмера): {skippedNoType}");
+                if (skippedGroup > 0)
+                    sb.AppendLine($"Пропущено (внутри групп): {skippedGroup}");
+                if (skippedSameType > 0)
+                    sb.AppendLine($"Пропущено (тип уже совпадает): {skippedSameType}");
+                if (failedCount > 0)
+                    sb.AppendLine($"Не удалось заменить (после ChangeTypeId не получен Element): {failedCount}");
+
+                if (replacedViews.Count > 0)
                 {
-                    sb.AppendLine($"  Группа «{g.Key.GroupName}» (Id {g.Key.GroupId}) — {g.Count()} шт.:");
-                    foreach (var row in g)
-                        sb.AppendLine($"      [{row.FamilyName}] Id {row.ElementId}  →  вид: {row.ViewName}");
+                    sb.AppendLine();
+                    sb.AppendLine("По видам:");
+                    foreach (var kv in replacedViews.OrderByDescending(k => k.Value))
+                        sb.AppendLine($"  {kv.Key}: {kv.Value}");
                 }
+
+                if (inGroupInfo.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"=== Пропущены, т.к. внутри групп ({inGroupInfo.Count}) ===");
+                    foreach (var g in inGroupInfo
+                             .GroupBy(x => new { x.GroupId, x.GroupName })
+                             .OrderByDescending(g => g.Count()))
+                    {
+                        sb.AppendLine($"  Группа «{g.Key.GroupName}» (Id {g.Key.GroupId}) — {g.Count()} шт.:");
+                        foreach (var row in g)
+                            sb.AppendLine($"      [{row.FamilyName}] Id {row.ElementId}  →  вид: {row.ViewName}");
+                    }
+                }
+
+                if (unmatchedFamilies.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"=== Дубликаты-семейства без базового семейства ({unmatchedFamilies.Count}) ===");
+                    foreach (var s in unmatchedFamilies)
+                        sb.AppendLine($"  {s}");
+                }
+
+                if (unmatchedTypes.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"=== Типы-дубликаты без базового типа ({unmatchedTypes.Count}) ===");
+                    foreach (var s in unmatchedTypes.Take(30))
+                        sb.AppendLine($"  {s}");
+                    if (unmatchedTypes.Count > 30)
+                        sb.AppendLine($"  ... и ещё {unmatchedTypes.Count - 30}");
+                }
+
+                TaskDialog td = new TaskDialog("Замена дубликатов семейств");
+                td.MainInstruction = $"Заменено: {replacedCount}";
+                td.MainContent = sb.ToString();
+                td.Show();
             }
-
-            if (unmatchedFamilies.Count > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"=== Дубликаты-семейства без базового семейства ({unmatchedFamilies.Count}) ===");
-                foreach (var s in unmatchedFamilies)
-                    sb.AppendLine($"  {s}");
-            }
-
-            if (unmatchedTypes.Count > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"=== Типы-дубликаты без базового типа ({unmatchedTypes.Count}) ===");
-                foreach (var s in unmatchedTypes.Take(30))
-                    sb.AppendLine($"  {s}");
-                if (unmatchedTypes.Count > 30)
-                    sb.AppendLine($"  ... и ещё {unmatchedTypes.Count - 30}");
-            }
-
-            TaskDialog td = new TaskDialog("Замена дубликатов семейств");
-            td.MainInstruction = $"Заменено: {replacedCount}";
-            td.MainContent = sb.ToString();
-            td.Show();
-
             return true;
         }
 
