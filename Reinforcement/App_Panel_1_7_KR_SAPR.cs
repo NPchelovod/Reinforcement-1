@@ -1,15 +1,7 @@
-﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-
-using System;
-using System.Collections.Generic;
-using System.Configuration.Assemblies;
-using System.Diagnostics;
+﻿using Autodesk.Revit.UI;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Reflection;
-using System.Text;
+using System.Windows.Media;
 
 
 

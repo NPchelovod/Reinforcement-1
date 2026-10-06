@@ -1,5 +1,4 @@
-﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 
 using System;
 using System.Collections.Generic;
@@ -15,8 +14,6 @@ using AW = Autodesk.Windows;
 
 using System.Linq;
 using static Reinforcement.App;
-
-
 
 namespace Reinforcement
 {
@@ -60,9 +57,11 @@ namespace Reinforcement
             item.AddSeparator();
             App_Helper_Button.AddButtonToPullDownButton(item, "ЭЛ", assemblyPath, "Reinforcement.App_Panel_5_1_Configuration_EL", "Электрика", EL_config);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "тест", assemblyPath, "Reinforcement.App_Panel_6_1_Configuration_Test", "не трогать", Test_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Общее", assemblyPath, "App_Panel_6_1_Configuration_General", "Общее", KR_config);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "разраб", assemblyPath, "Reinforcement.App_Panel_7_1_Configuration_Admin", "не трогать", Admin_config);
+            App_Helper_Button.AddButtonToPullDownButton(item, "тест", assemblyPath, "Reinforcement.App_Panel_8_1_Configuration_Test", "не трогать", Test_config);
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "разраб", assemblyPath, "Reinforcement.App_Panel_9_1_Configuration_Admin", "не трогать", Admin_config);
 
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(KR_config);

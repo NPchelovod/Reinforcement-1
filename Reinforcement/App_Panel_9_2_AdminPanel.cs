@@ -17,7 +17,7 @@ using System.Linq;
 using static Reinforcement.App;
 namespace Reinforcement
 {
-    public class App_Panel_7_2_AdminPanel
+    public class App_Panel_9_2_AdminPanel
     {
         // 7. panelOV временная ничто так не временно как вечность
         public static void Admin_utilit(RibbonPanel panel, string tabName)

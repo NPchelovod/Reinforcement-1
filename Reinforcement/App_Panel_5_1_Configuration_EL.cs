@@ -2,10 +2,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-using System.Collections.Generic;
-
-using static Reinforcement.App;
-
 
 
 namespace Reinforcement
@@ -13,42 +9,16 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class App_Panel_5_1_Configuration_EL : IExternalCommand
     {
-        public static List<string> list_panels_view = new List<string>()
-            {
-               "Конфигурация",
-                "СПДС",
-                "ЭЛ панель",
-                "Импорт/Экспорт",
-                "Опции",
-                "Сюрприз"
-
-            };
         public Result Execute(
-          ExternalCommandData commandData,
-          ref string message,
-          ElementSet elements)
+            ExternalCommandData commandData,
+            ref string message,
+            ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
-            
+            App_Helper_Panels.CreatePanelConfiguration(EPanelSelf.EL);
 
-            foreach (var panel in PanelVisibility.Panels)
-            {
-                if (list_panels_view.Contains(panel.Key))
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = true;
-                    }
-                }
-                else
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = false;
-                    }
-                }
-            }
+
             return Result.Succeeded;
         }
     }

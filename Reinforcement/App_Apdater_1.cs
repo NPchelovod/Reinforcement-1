@@ -1,27 +1,14 @@
-﻿using Autodesk.Revit.ApplicationServices;
-using Autodesk.Revit.Attributes;
-using Autodesk.Revit.DB;
+﻿
 using Autodesk.Revit.UI;
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
+
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography.X509Certificates;
-using System.Windows.Forms;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Text.Json;
-using System.Threading;
-using System.Windows.Documents;
-using System.Windows.Controls;
-using System.Text.Encodings.Web;
+
 using System.Runtime.InteropServices;
 namespace Reinforcement
 {

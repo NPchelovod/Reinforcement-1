@@ -1,17 +1,10 @@
-﻿using Autodesk.Revit.DB;
+﻿
 using Autodesk.Revit.UI;
-using System;
+
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Windows.Forms;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+
 namespace Reinforcement
 {
     internal class App_Panel_1_4_KR_DetailReinf

@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -30,11 +31,10 @@ using AW = Autodesk.Windows;
 
 namespace Reinforcement
 {
-    public enum Panels
+    public enum EPanels
     {
         Конфигурация,
         СПДС,
-        Разработчик,
         СхематичноеАрмирование,
         ДетальноеАрмирование,
         Оформление,
@@ -42,53 +42,55 @@ namespace Reinforcement
         САПР,
         КРвставки,
         CopyКубики,
+        ИмпортЭкспорт,
+        ОВплит,
+        АРпанель,
+        ОВпанель,
+        ЭЛпанель,
+        ОбщаяПанель,
+        Разработчик,
         Опции,
-        ВолшебнаяKнопка
+        Сюрприз
     }
+    public static class PanelVisibility
+    {
+        public static Dictionary<EPanels, RibbonPanel> Panels { get; } = new Dictionary<EPanels, RibbonPanel>();
+
+    }
+
     public partial class App : IExternalApplication
     {
+        public static readonly Dictionary<EPanels, string> DPanels = new Dictionary<EPanels, string>
+        {
+            { EPanels.Конфигурация, "Конфигурация" },
+            { EPanels.СПДС, "СПДС" },
+            { EPanels.СхематичноеАрмирование, "Схематичное армирование" },
+            { EPanels.ДетальноеАрмирование, "Детальное армирование" },
+            { EPanels.Оформление, "Оформление" },
+            { EPanels.Выбор, "Выбор" },
+            { EPanels.САПР, "САПР" },
+            { EPanels.КРвставки, "КР вставки" },
+            { EPanels.CopyКубики, "Copy/Кубики" },
+            { EPanels.ИмпортЭкспорт, "Импорт/Экспорт" },
+            { EPanels.ОВплит, "ОВ плит" },
+            { EPanels.АРпанель, "АР панель" },
+            { EPanels.ОВпанель, "ОВ панель" },
+            { EPanels.ЭЛпанель, "ЭЛ панель" },
+            { EPanels.ОбщаяПанель, "Общая панель" },
+            { EPanels.Разработчик, "Разработчик" },
+            { EPanels.Опции, "Опции" },
+            { EPanels.Сюрприз, "Сюрприз" }
+        };
+        //все кнопки в порядке пребывания
+        public static List<EPanels> EPanelsList { get; set; } = Enum.GetValues(typeof(EPanels))
+            .Cast<EPanels>()
+            .ToList();
 
+        public static EPanelSelf MainEPanel { get; set; } = EPanelSelf.KR;//главная панель при запуске
 
         public static UIControlledApplication Application { get; private set; }=null;
-       // public static UIApplication _uiApplication => RevitAPI.UiApp
-        public static class PanelVisibility
-        {
-            /*
-            public static RibbonPanel Panel_1_1_Configuration { get; set; }
-            public static RibbonPanel panelSpds { get; set; }
-            */
-            public static Dictionary<string, RibbonPanel> Panels { get; } = new Dictionary<string, RibbonPanel>();
-
-        }
-
-        // !!! панели которые видны на начальном экране конфигурация КР
-        public static List<string> list_panels_viewKR { get; set; } = new List<string>()
-            {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Copy/Кубики",
-                "Импорт/Экспорт",
-                "Опции",
-                "Сюрприз",
-                
-            };
-
-        //постоянные панели
-        //public static List<string> list_panels_const { get; set; } = new List<string>
-        //    {
-        //        "Конфигурация",
-        //        "СПДС",
-
-        //    };
-
-
-    public Result OnStartup(UIControlledApplication app)
+       
+        public Result OnStartup(UIControlledApplication app)
     {
             // Апдейтер запускаем ДО основной инициализации — он только стартует
             // внешний процесс UpdaterENS.exe и сразу возвращается.
@@ -163,142 +165,97 @@ namespace Reinforcement
             // Подписываемся на событие инициализации
            
 
-            // сюда вписываешь новую панель и вообще все панели здесь в списке, список это порядок панелей, отображение панелей на конкретной конфигурации задача конфигуратора, в него иди и там настраивай
-            var panelNames = new List<string>
+            // команды которые создают кнопки на конкретных панелях// все кнопеи тут
+            foreach (EPanels ePanelName in EPanelsList)
             {
-                "Конфигурация",
-                "СПДС",
-                "Схематичное армирование",
-                "Детальное армирование",
-                "Оформление",
-                "Выбор",
-                "САПР",
-                "КР вставки",
-                "Copy/Кубики",
-                "Импорт/Экспорт",
-                "ОВ плит",
-                "АР панель",
-                "ОВ панель",
-                "ЭЛ панель",
-                "Разработчик",
-                "Опции",
-                "Сюрприз"
-            };
+                DPanels.TryGetValue(ePanelName, out string panelName);
+                if (string.IsNullOrEmpty(panelName)) { continue; }
 
-            
-
-            // команды которые создают кнопки на конкретных панелях
-            foreach (var panelName in panelNames)
-            {
                 var panel = app.CreateRibbonPanel(tabName, panelName);
-                PanelVisibility.Panels.Add(panelName, panel);
+                PanelVisibility.Panels.Add(ePanelName, panel);
 
-                switch (panelName)
+                switch (ePanelName)
                 {
-                    case "Конфигурация":// управление всеми панелями
+                    case EPanels.Конфигурация:// управление всеми панелями
                         App_Panel_1_1_Configuration.AddSplitButton(panel, tabName);
                         break;
 
-                    case "СПДС":
+                    case EPanels.СПДС:
                         App_Panel_1_2_KR_SPDS.KR_SPDS(panel, tabName);
                         break;
-                    case "Схематичное армирование":
+                    case EPanels.СхематичноеАрмирование:
                         App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, tabName);
                         break;
-                    case "Детальное армирование":
+                    case EPanels.ДетальноеАрмирование:
                         App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, tabName);
                         break;
-                    case "Оформление":
+                    case EPanels.Оформление:
                         App_Panel_1_5_KR_Drawing.KR_Drawing(panel, tabName);
                         break;
-                    case "Выбор":
+                    case EPanels.Выбор:
                         App_Panel_1_6_KR_Selection.KR_Selection(panel, tabName);
                         break;
-                    case "САПР":
+                    case EPanels.САПР:
                         App_Panel_1_7_KR_SAPR.KR_SAPR(panel, tabName);
                         break;
 
-                    case "КР вставки":
+                    case EPanels.КРвставки:
                         App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Copy/Кубики":
+                    case EPanels.CopyКубики:
                         App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Импорт/Экспорт":
+                    case EPanels.ИмпортЭкспорт:
                         App_Panel_1_81_KR_Export.AddSplitButton(panel, tabName);
                         break;
 
 
-                    case "ОВ плит":
+                    case EPanels.ОВплит:
                         App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
                         break;
-                    case "АР панель":
+                    case EPanels.АРпанель:
                         App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
                         break;
 
-                    case "ОВ панель":
+                    case EPanels.ОВпанель:
                         App_Panel_3_2_OV_utilit.OV_utilit(panel, tabName);
                         break;
 
-                    case "ЭЛ панель":
+                    case EPanels.ЭЛпанель:
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
                         break;
-
-                    case "Разработчик":
-                        App_Panel_7_2_AdminPanel.Admin_utilit(panel, tabName);
+                    case EPanels.ОбщаяПанель:
+                        App_Panel_6_2_General_panel.Gen_utilit(panel, tabName);
                         break;
 
-                    case "Опции":
+                    case EPanels.Разработчик:
+                        App_Panel_9_2_AdminPanel.Admin_utilit(panel, tabName);
+                        break;
+
+                    case EPanels.Опции:
                         App_Panel_1_92_Opcii.AddSplitButton(panel, tabName);
                         break;
 
-                    case "Сюрприз":
+                    case EPanels.Сюрприз:
                         App_Panel_1_91_Toska.AddSplitButton(panel, tabName);
                         break;
 
                 }
 
             }
-
-            
-
-            
-             
-
-            foreach (var panel in PanelVisibility.Panels)
-            {
-                if (list_panels_viewKR.Contains(panel.Key))
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = true;
-                    }
-                }
-                else
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = false;
-                    }
-                }
-            }
+            //создаем начальную панель
+            App_Helper_Panels.CreatePanelConfiguration(MainEPanel);
 
 
-
+            // подписка на все
             AnyChange.PodpiskaAll();// подписка на все
                                     // AutoFillNoteUpdater.RegisterUpdater();
 
-
-            
             // Подписка на событие закрытия Revit
             app.ApplicationClosing += OnRevitClosing;
-            //app.ControlledApplication.DocumentClosed
-            //app.ControlledApplication.ApplicationClosing += (sender, args) =>
-            //{
-            //    lookUsers.ForceFlush();
-            //};
+           
 
             // Подписываемся на события сохранения моделей
             var controlledApp = app.ControlledApplication;
@@ -321,13 +278,7 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
-        /* private void ControlledApp_DocumentChanged(object sender, Autodesk.Revit.DB.Events.DocumentChangedEventArgs e)
-         {
-
-         }*/
-
-
-
+        
         public Result OnShutdown(UIControlledApplication application)
         {
             try

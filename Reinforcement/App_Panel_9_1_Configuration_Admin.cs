@@ -4,12 +4,12 @@ using Autodesk.Revit.UI;
 
 
 
+
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
-    public class App_Panel_3_1_Configuration_OV : IExternalCommand
+    public class App_Panel_9_1_Configuration_Admin : IExternalCommand
     {
-
         public Result Execute(
              ExternalCommandData commandData,
              ref string message,
@@ -17,7 +17,7 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
-            App_Helper_Panels.CreatePanelConfiguration(EPanelSelf.OV);
+            App_Helper_Panels.CreatePanelConfiguration(EPanelSelf.Admin);
 
 
             return Result.Succeeded;

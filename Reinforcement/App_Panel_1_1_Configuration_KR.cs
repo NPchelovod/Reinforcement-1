@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Autodesk.Revit.UI;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 
-using AW = Autodesk.Windows;
-using RibbonPanel = Autodesk.Windows.RibbonPanel;
-using RibbonButton = Autodesk.Windows.RibbonButton;
-using static Reinforcement.App;
+
+
+using System.Linq;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
@@ -23,28 +17,8 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
-
-            var list_panels_view = App.list_panels_viewKR; // умолчательный вид
-
-
-            foreach (var panel in PanelVisibility.Panels)
-            {
-                if (list_panels_view.Contains(panel.Key))
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = true;
-                    }
-                }
-                else
-                {
-                    if (panel.Value != null)
-                    {
-                        panel.Value.Visible = false;
-                    }
-                }
-            }
-
+            App_Helper_Panels.CreatePanelConfiguration(EPanelSelf.KR);
+           
 
             return Result.Succeeded;
         }
