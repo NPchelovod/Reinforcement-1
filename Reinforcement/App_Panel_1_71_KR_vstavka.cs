@@ -28,11 +28,7 @@ namespace Reinforcement
             FillPullDown(ribbonPanel, data);
         }
 
-        public static void AddPullDownButton(RibbonPanel ribbonPanel, string name)
-        {
-            var data = new PulldownButtonData(name, name);
-            FillPullDown(ribbonPanel, data);
-        }
+       
         private static readonly string assemblyPath = Assembly.GetExecutingAssembly().Location;
         //private static RibbonPanel targetPanel;
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)

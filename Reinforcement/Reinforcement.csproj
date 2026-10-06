@@ -205,6 +205,7 @@
     <Compile Include="KR_SAPR\6_DeleteDublicateFamily.cs" />
     <Compile Include="KR_SAPR\7_DeleteDublicateFamilyAllViews.cs" />
     <Compile Include="KR_SAPR\8_ListDuplicateFamiliesByView.cs" />
+    <Compile Include="KR_SAPR\9_Memory.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />

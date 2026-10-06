@@ -13,6 +13,18 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class App_Panel_2_1_Configuration_AR : IExternalCommand
     {
+        public static List<string> list_panels_view = new List<string>()
+            {
+                "Конфигурация",
+                "СПДС",
+                "Выбор",
+                "Оформление",
+                "АР панель",
+                "Опции",
+                "Сюрприз",
+
+
+            };
         public Result Execute(
           ExternalCommandData commandData,
           ref string message,
@@ -22,16 +34,7 @@ namespace Reinforcement
             // панели которые должны быть видны
             
 
-            var list_panels_view = new List<string>()
-            {
-                "Конфигурация",
-                "СПДС",
-                "Выбор",
-                "Оформление",
-                "АР панель",
-                "Сюрприз"
-
-            };
+           
 
             foreach (var panel in PanelVisibility.Panels)
             {

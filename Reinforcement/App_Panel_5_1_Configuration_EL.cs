@@ -13,6 +13,16 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class App_Panel_5_1_Configuration_EL : IExternalCommand
     {
+        public static List<string> list_panels_view = new List<string>()
+            {
+               "Конфигурация",
+                "СПДС",
+                "ЭЛ панель",
+                "Импорт/Экспорт",
+                "Опции",
+                "Сюрприз"
+
+            };
         public Result Execute(
           ExternalCommandData commandData,
           ref string message,
@@ -20,15 +30,7 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
-            var list_panels_view = new List<string>()
-            {
-               "Конфигурация",
-                "СПДС",
-                "ЭЛ панель",
-                
-                "Сюрприз"
-
-            };
+            
 
             foreach (var panel in PanelVisibility.Panels)
             {

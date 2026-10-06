@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Autodesk.Revit.Attributes;
+﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-
+using System.Collections.Generic;
+using System.Text;
+using System;
+using System.Linq;
+using System.Windows.Forms;
+using System.Globalization;
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
     public class SeachDublicateOnView : IExternalCommand
     {
-        // 1 мм в футах (внутренние единицы Revit)
-        private const double MmToFeet = 10.0 / 304.8;
-
-        // Ограничение на вывод в TaskDialog, чтобы не упереться в лимиты UI
+       
         private const int MaxGroupsToPrint = 100;
 
         public Result Execute(
@@ -26,25 +24,45 @@ namespace Reinforcement
             UIDocument uiDoc = RevitAPI.UiDocument;
             Document doc = RevitAPI.Document;
 
-            if (uiDoc == null || doc == null)
+            if (uiDoc == null || doc == null) { message = "Нет активного документа."; return Result.Failed; }
+
+            Autodesk.Revit.DB.View activeView = uiDoc.ActiveView;
+            if (activeView == null) { message = "Нет активного вида."; return Result.Failed; }
+            // ---- запрос погрешности у пользователя ----
+            double? tolMm = AskToleranceMm(12.0);
+            if (tolMm == null)
             {
-                message = "Нет активного документа.";
-                return Result.Failed;
+                message = "Операция отменена пользователем.";
+                return Result.Cancelled;
             }
+            double tol = tolMm.Value / 304.8;   // мм -> футы
+            double inv = 1.0 / tol;             // футы -> мм (для ключа и отчёта)
 
-            View activeView = uiDoc.ActiveView;
-            if (activeView == null)
+            // ---- 1. Предварительно соберём ID, на которые ссылаются размеры ----
+            var dimensionedIds = new HashSet<ElementId>();
+            try
             {
-                message = "Нет активного вида.";
-                return Result.Failed;
+                var dims = new FilteredElementCollector(doc)
+                    .OfClass(typeof(Dimension))
+                    .WhereElementIsNotElementType();
+                foreach (Dimension dim in dims)
+                {
+                    try
+                    {
+                        foreach (Reference r in dim.References)
+                        {
+                            if (r != null && r.ElementId != ElementId.InvalidElementId)
+                                dimensionedIds.Add(r.ElementId);
+                        }
+                    }
+                    catch { /* пропускаем проблемные размеры */ }
+                }
             }
+            catch { }
 
-            // Точность 1 мм. Ключ = целое число миллиметров.
-            double tol = MmToFeet;         // 1 мм в футах
-            double inv = 1.0 / tol;        // множитель для перевода футов в мм
-
-            // Ключ: округлённые до мм координаты центра
-            var groups = new Dictionary<(long X, long Y, long Z), List<ElementId>>();
+            // ---- 2. Группировка: ключ теперь включает категорию ----
+            // (стена и перекрытие в одной точке — РАЗНЫЕ группы)
+            var groups = new Dictionary<(long X, long Y, long Z, ElementId Cat), List<ElementId>>();
 
             var collector = new FilteredElementCollector(doc, activeView.Id)
                 .WhereElementIsNotElementType();
@@ -54,7 +72,6 @@ namespace Reinforcement
             foreach (Element el in collector)
             {
                 if (el?.Category == null) continue;
-                // Только модельные категории (без аннотаций, осей, размеров)
                 if (el.Category.CategoryType != CategoryType.Model) continue;
 
                 XYZ center = GetElementCenter(el, activeView);
@@ -64,7 +81,7 @@ namespace Reinforcement
                 long ky = (long)Math.Round(center.Y * inv, MidpointRounding.AwayFromZero);
                 long kz = (long)Math.Round(center.Z * inv, MidpointRounding.AwayFromZero);
 
-                var key = (kx, ky, kz);
+                var key = (kx, ky, kz, el.Category.Id);
                 if (!groups.TryGetValue(key, out var list))
                 {
                     list = new List<ElementId>();
@@ -74,7 +91,6 @@ namespace Reinforcement
                 checkedCount++;
             }
 
-            // Оставляем только группы с более чем одним элементом
             var duplicates = groups
                 .Where(g => g.Value.Count > 1)
                 .OrderByDescending(g => g.Value.Count)
@@ -83,70 +99,89 @@ namespace Reinforcement
             if (duplicates.Count == 0)
             {
                 TaskDialog.Show("Поиск дубликатов",
-                    $"Проверено элементов: {checkedCount}\n" +
-                    "Дубликатов не найдено.");
+                    $"Проверено элементов: {checkedCount}\nДубликатов не найдено.");
                 return Result.Succeeded;
             }
 
-            // Собираем все ID и выделяем их на активном виде
-            var allIds = new List<ElementId>();
-            foreach (var g in duplicates)
-                allIds.AddRange(g.Value);
+            // ---- 3. Выбираем «хранителя» в каждой группе, остальное — в выделение ----
+            var toSelect = new List<ElementId>();     // пойдут в Selection.SetElementIds
+            var keepers = new HashSet<ElementId>();  // для отчёта
 
-            uiDoc.Selection.SetElementIds(allIds);
-
-            // ==== Формируем отчёт ====
             var sb = new StringBuilder();
             sb.AppendLine($"Проверено элементов: {checkedCount}");
             sb.AppendLine($"Групп дубликатов:   {duplicates.Count}");
-            sb.AppendLine($"Элементов в дубликатах: {allIds.Count}");
+            sb.AppendLine($"Погрешность: {tolMm.Value:0.###} мм");
             sb.AppendLine();
 
             int idx = 1;
+            int truncated = 0;
+
             foreach (var group in duplicates)
             {
-                if (idx > MaxGroupsToPrint)
-                {
-                    sb.AppendLine($"... (ещё {duplicates.Count - MaxGroupsToPrint + 1} групп, отчёт обрезан)");
-                    break;
-                }
+                // Хранитель = элемент с НАИМЕНЬШИМ числом привязок
+                // (размеры + зависимые элементы). Если все равны — первый в списке.
+                // Если хотите наоборот (хранить «наиболее привязанный») — 
+                // замените OrderBy на OrderByDescending.
+                ElementId keeper = group.Value
+                    .OrderBy(id => GetAttachmentScore(doc, id, dimensionedIds))
+                    .First();
 
-                // Восстанавливаем «центр» в футах для отображения в мм
-                XYZ center = new XYZ(
-                    group.Key.X / inv,
-                    group.Key.Y / inv,
-                    group.Key.Z / inv);
-
-                sb.AppendLine($"Группа {idx++} ({group.Value.Count} шт.) — " +
-                              $"X={center.X * 304.8:F1}  " +
-                              $"Y={center.Y * 304.8:F1}  " +
-                              $"Z={center.Z * 304.8:F1} мм");
+                keepers.Add(keeper);
 
                 foreach (var id in group.Value)
+                    if (id != keeper)
+                        toSelect.Add(id);
+
+                // ---- отчёт ----
+                if (idx <= MaxGroupsToPrint)
                 {
-                    var e = doc.GetElement(id);
-                    string catName = e?.Category?.Name ?? "?";
-                    string typeName = "";
+                    XYZ center = new XYZ(
+                        group.Key.X / inv,
+                        group.Key.Y / inv,
+                        group.Key.Z / inv);
 
-                    try
+                    string catName = doc.GetElement(group.Value[0])?.Category?.Name ?? "?";
+
+                    sb.AppendLine($"Группа {idx} [{catName}] ({group.Value.Count} шт.) — " +
+                                  $"X={center.X * 304.8:F1}  " +
+                                  $"Y={center.Y * 304.8:F1}  " +
+                                  $"Z={center.Z * 304.8:F1} мм");
+
+                    foreach (var id in group.Value)
                     {
-                        ElementId typeId = e.GetTypeId();
-                        if (typeId != ElementId.InvalidElementId)
+                        var e = doc.GetElement(id);
+                        string typeName = "";
+                        try
                         {
-                            var typeEl = doc.GetElement(typeId);
-                            typeName = typeEl?.Name ?? "";
+                            ElementId typeId = e.GetTypeId();
+                            if (typeId != ElementId.InvalidElementId)
+                                typeName = doc.GetElement(typeId)?.Name ?? "";
                         }
-                    }
-                    catch { /* пропускаем */ }
+                        catch { }
 
-                    sb.AppendLine($"    ID {id}   [{catName}] {typeName}");
+                        string mark = (id == keeper) ? "  [ОСТАВИТЬ]" : "  [удалить]";
+                        sb.AppendLine($"    ID {id}{mark}   {typeName}");
+                    }
+                    sb.AppendLine();
                 }
-                sb.AppendLine();
+                else
+                {
+                    truncated++;
+                }
+                idx++;
             }
+
+            if (truncated > 0)
+                sb.AppendLine($"... (ещё {truncated} групп, отчёт обрезан)");
+
+            uiDoc.Selection.SetElementIds(toSelect);
 
             TaskDialog dlg = new TaskDialog("Дубликаты на виде")
             {
-                MainInstruction = $"Найдено групп: {duplicates.Count}, элементов: {allIds.Count}",
+                MainInstruction =
+                    $"Групп: {duplicates.Count}, " +
+                    $"выделено под удаление: {toSelect.Count}, " +
+                    $"оставлено: {keepers.Count}",
                 MainContent = sb.ToString(),
                 CommonButtons = TaskDialogCommonButtons.Ok
             };
@@ -156,35 +191,108 @@ namespace Reinforcement
         }
 
         /// <summary>
-        /// Возвращает «центральную точку» элемента в футах.
-        /// Для стен и кривых — середина LocationCurve.
-        /// Для семейств — LocationPoint.
-        /// Fallback — центр BoundingBox на виде.
+        /// Чем больше «привязок» у элемента — тем больше score.
+        /// Размер, ссылающийся на элемент, весит 1000 (сильный признак).
+        /// Плюс количество зависимых элементов (hosted).
         /// </summary>
-        private static XYZ GetElementCenter(Element el, View view)
+        private static int GetAttachmentScore(Document doc, ElementId id, HashSet<ElementId> dimensionedIds)
+        {
+            int score = 0;
+            if (dimensionedIds.Contains(id)) score += 1000;
+            try
+            {
+                Element el = doc.GetElement(id);
+                if (el != null)
+                {
+                    var deps = el.GetDependentElements(null);
+                    if (deps != null) score += deps.Count;
+                }
+            }
+            catch { }
+            return score;
+        }
+
+        /// <summary>Без изменений.</summary>
+        private static XYZ GetElementCenter(Element el, Autodesk.Revit.DB.View view)
         {
             try
             {
                 Location loc = el.Location;
-
-                if (loc is LocationPoint lp)
-                    return lp.Point;
-
+                if (loc is LocationPoint lp) return lp.Point;
                 if (loc is LocationCurve lc && lc.Curve != null)
-                {
-                    // Середина кривой (для стен, балок, труб и т.п.)
                     return lc.Curve.Evaluate(0.5, true);
-                }
 
                 BoundingBoxXYZ bb = el.get_BoundingBox(view);
-                if (bb != null)
-                    return (bb.Min + bb.Max) * 0.5;
+                if (bb != null) return (bb.Min + bb.Max) * 0.5;
             }
-            catch
-            {
-                // некоторые элементы могут бросать исключение при обращении к Location
-            }
+            catch { }
             return null;
+        }
+        private static double? AskToleranceMm(double defaultMm)
+        {
+            using (var form = new System.Windows.Forms.Form())
+            {
+                form.Text = "Погрешность поиска дубликатов";
+                form.Width = 340;
+                form.Height = 170;
+                form.StartPosition = FormStartPosition.CenterScreen;
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                var lbl = new Label
+                {
+                    Text = "Погрешность совпадения центров, мм:",
+                    Left = 12,
+                    Top = 15,
+                    Width = 300
+                };
+                var txt = new System.Windows.Forms.TextBox
+                {
+                    Left = 12,
+                    Top = 42,
+                    Width = 300,
+                    Text = defaultMm.ToString("0.###", CultureInfo.InvariantCulture)
+                };
+                var btnOk = new Button
+                {
+                    Text = "ОК",
+                    Left = 150,
+                    Top = 80,
+                    Width = 75,
+                    DialogResult = DialogResult.OK
+                };
+                var btnCancel = new Button
+                {
+                    Text = "Отмена",
+                    Left = 237,
+                    Top = 80,
+                    Width = 75,
+                    DialogResult = DialogResult.Cancel
+                };
+
+                form.Controls.Add(lbl);
+                form.Controls.Add(txt);
+                form.Controls.Add(btnOk);
+                form.Controls.Add(btnCancel);
+                form.AcceptButton = btnOk;
+                form.CancelButton = btnCancel;
+
+                // Фокус в поле + выделить текст, чтобы сразу можно было печатать
+                form.Shown += (s, e) => { txt.Focus(); txt.SelectAll(); };
+
+                if (form.ShowDialog() != DialogResult.OK) return null;
+
+                string ss = (txt.Text ?? "").Trim().Replace(',', '.');
+                if (double.TryParse(ss,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out double mm) && mm > 0)
+                {
+                    return mm;
+                }
+                return null;
+            }
         }
     }
 }
