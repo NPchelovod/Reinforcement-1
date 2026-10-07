@@ -5,25 +5,11 @@ using System.Linq;
 
 namespace Reinforcement
 {
-    public enum EPanelSelf
-    {
-        KR,
-        AR,
-        OV,
-        VK,
-        EL,
-        General,
-        Test,
-        Admin
-
-    }
+    
     public static class App_Helper_Panels
     {
         
-
-        
-
-        public static  List<EPanels> KRpanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> KRpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.СПДС,
@@ -38,7 +24,7 @@ namespace Reinforcement
             EPanels.Опции,
             EPanels.Сюрприз,
         };
-        public static  List<EPanels> ARpanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> ARpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.СПДС,
@@ -48,7 +34,7 @@ namespace Reinforcement
             EPanels.Опции,
             EPanels.Сюрприз,
         };
-        public static  List<EPanels> OVpanel { get; set; } = new List<EPanels>()
+        public static  HashSet<EPanels> OVpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.СПДС,
@@ -56,14 +42,14 @@ namespace Reinforcement
             EPanels.Опции,
             EPanels.Сюрприз,
         };
-        public static  List<EPanels> VKpanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> VKpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.СПДС,
             EPanels.Опции,
             EPanels.Сюрприз,
         };
-        public static  List<EPanels> ELpanel { get; set; } = new List<EPanels>()
+        public static  HashSet<EPanels> ELpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.СПДС,
@@ -72,26 +58,26 @@ namespace Reinforcement
             EPanels.Опции,
             EPanels.Сюрприз,
         };
-        public static List<EPanels> GenPanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> GenPanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.ОбщаяПанель,
             EPanels.Опции,
         };
-        public static List<EPanels> TestPanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> TestPanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
              EPanels.ОВплит,
             EPanels.Опции,
         };
 
-        public static List<EPanels> AdminPanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> AdminPanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
              EPanels.Разработчик,
             EPanels.Опции,
         };
-        public static List<EPanels> Defaultpanel { get; set; } = new List<EPanels>()
+        public static HashSet<EPanels> Defaultpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
             EPanels.Опции,
@@ -104,7 +90,7 @@ namespace Reinforcement
             .ToList();
 
 
-        public static List<EPanels> GetListEPanel(EPanelSelf ePanelSelf)
+        public static HashSet<EPanels> GetListEPanel(EPanelSelf ePanelSelf)
         {
 
             switch (ePanelSelf)
@@ -117,7 +103,7 @@ namespace Reinforcement
                 case (EPanelSelf.OV):
                     return OVpanel;
                 case (EPanelSelf.VK):
-                    return OVpanel;
+                    return VKpanel;
                 case (EPanelSelf.EL):
                     return ELpanel;
                 case (EPanelSelf.General):
@@ -133,7 +119,7 @@ namespace Reinforcement
 
         public static void CreatePanelConfiguration(EPanelSelf ePanelSelf)
         {
-            List<EPanels>ePanels = GetListEPanel(ePanelSelf);
+            HashSet<EPanels>ePanels = GetListEPanel(ePanelSelf);
             foreach (var panel in PanelVisibility.Panels)
             {
                 if (ePanels.Contains(panel.Key))

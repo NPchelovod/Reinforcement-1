@@ -71,7 +71,7 @@ namespace Reinforcement
             using (Transaction trans = new Transaction(doc, "Замена семейств и перенос параметров"))
             {
                 trans.Start();
-                ReplacedProcess(doc, elems,true, GroupTrueCorrect, !correctGroups);
+                ReplacedProcess(doc, elems, true, GroupTrueCorrect);// !correctGroups);
                 trans.Commit();
             }
 

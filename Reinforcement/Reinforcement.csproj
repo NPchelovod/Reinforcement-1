@@ -138,7 +138,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
+    <Compile Include="General\2_Memory.cs" />
     <Compile Include="Infrastructure\FamilyCacheEvents.cs" />
     <Compile Include="Infrastructure\ParameterHelper.cs" />
     <Compile Include="Infrastructure\RibbonImageHelper.cs" />
@@ -203,8 +205,9 @@
     <Compile Include="KR_SAPR\5_SeachDublicateOnView.cs" />
     <Compile Include="KR_SAPR\6_DeleteDublicateFamily.cs" />
     <Compile Include="KR_SAPR\7_DeleteDublicateFamilyAllViews.cs" />
+    <Compile Include="KR_SAPR\81_SeachViewsFamily.cs" />
     <Compile Include="KR_SAPR\8_ListDuplicateFamiliesByView.cs" />
-    <Compile Include="KR_SAPR\9_Memory.cs" />
+    <Compile Include="KR_SAPR\9_App_Dimensions_MultipleOf200.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
     <Compile Include="KR_SAPR\NumPiles.cs" />
@@ -285,7 +288,6 @@
     <Compile Include="App_Panel_4_1_Configuration_VK.cs" />
     <Compile Include="App_Panel_5_1_Configuration_EL.cs" />
     <Compile Include="App_Panel_5_2_EL_utilit.cs" />
-    <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_8_1_Configuration_Test.cs" />
     <Compile Include="App_Panel_9_1_Configuration_Admin.cs" />
     <Compile Include="App_Panel_9_2_AdminPanel.cs" />

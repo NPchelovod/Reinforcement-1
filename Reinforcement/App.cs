@@ -31,6 +31,17 @@ using AW = Autodesk.Windows;
 
 namespace Reinforcement
 {
+    public enum EPanelSelf
+    {
+        KR,
+        AR,
+        OV,
+        VK,
+        EL,
+        General,
+        Test,
+        Admin
+    }
     public enum EPanels
     {
         Конфигурация,
@@ -60,6 +71,24 @@ namespace Reinforcement
 
     public partial class App : IExternalApplication
     {
+        public static readonly Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)> DConfigNames =
+    new Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)>
+        {
+            { EPanelSelf.KR,      ("КР",     "Reinforcement.App_Panel_1_1_Configuration_KR",  "Конструктив",            Properties.Resources.KR_config) },
+            { EPanelSelf.AR,      ("АР",     "Reinforcement.App_Panel_2_1_Configuration_AR",  "Архитектура",            Properties.Resources.AR_config) },
+            { EPanelSelf.OV,      ("ОВ",     "Reinforcement.App_Panel_3_1_Configuration_OV",  "Отопление и Вентиляция", Properties.Resources.OV_config) },
+            { EPanelSelf.VK,      ("ВК",     "Reinforcement.App_Panel_4_1_Configuration_VK",  "Водснаб и Канализация",  Properties.Resources.VK_config) },
+            { EPanelSelf.EL,      ("ЭЛ",     "Reinforcement.App_Panel_5_1_Configuration_EL",  "Электрика",              Properties.Resources.EL_config) },
+            { EPanelSelf.General, ("Общее",  "Reinforcement.App_Panel_6_1_Configuration_General",           "Общее",                  Properties.Resources.KR_config) },
+            { EPanelSelf.Test,    ("тест",   "Reinforcement.App_Panel_8_1_Configuration_Test","не трогать",             Properties.Resources.Test_config) },
+            { EPanelSelf.Admin,   ("разраб", "Reinforcement.App_Panel_9_1_Configuration_Admin","не трогать",             Properties.Resources.Properties) },
+        };
+
+        //все панели в порядке пребывания
+        public static List<EPanelSelf> EPanelSelfList { get; set; } = Enum.GetValues(typeof(EPanelSelf))
+            .Cast<EPanelSelf>()
+            .ToList();
+
         public static readonly Dictionary<EPanels, string> DPanels = new Dictionary<EPanels, string>
         {
             { EPanels.Конфигурация, "Конфигурация" },
@@ -86,6 +115,7 @@ namespace Reinforcement
             .Cast<EPanels>()
             .ToList();
 
+        //можем менять панель если надо так то
         public static EPanelSelf MainEPanel { get; set; } = EPanelSelf.KR;//главная панель при запуске
 
         public static UIControlledApplication Application { get; private set; }=null;
@@ -163,8 +193,8 @@ namespace Reinforcement
             string tabName = "ЕС BIM";
             app.CreateRibbonTab(tabName);
             // Подписываемся на событие инициализации
-           
 
+            PanelVisibility.Panels.Clear();
             // команды которые создают кнопки на конкретных панелях// все кнопеи тут
             foreach (EPanels ePanelName in EPanelsList)
             {
@@ -172,7 +202,7 @@ namespace Reinforcement
                 if (string.IsNullOrEmpty(panelName)) { continue; }
 
                 var panel = app.CreateRibbonPanel(tabName, panelName);
-                PanelVisibility.Panels.Add(ePanelName, panel);
+                PanelVisibility.Panels[ePanelName] = panel;
 
                 switch (ePanelName)
                 {
@@ -227,7 +257,7 @@ namespace Reinforcement
                         App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
                         break;
                     case EPanels.ОбщаяПанель:
-                        App_Panel_6_2_General_panel.Gen_utilit(panel, tabName);
+                        App_Panel_6_2_General_panel.AddSplitButton(panel, tabName);
                         break;
 
                     case EPanels.Разработчик:
