@@ -20,13 +20,16 @@ namespace Reinforcement
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)
         {
             var item = ribbonPanel.AddItem(data) as PulldownButton;
-            Image OV1 = Properties.Resources.Properties;
+            Image OV1 = Properties.Resources.ES_SelectWithFilter;
             //Image OV2 = Properties.Resources.toska2;
-            Image OV3 = Properties.Resources.Properties;
-            
+
+            App_Helper_Button.CreateButton("Высотные отм труб", "Высотные отм труб", "Reinforcement.HighOtm", Properties.Resources.Elevation, "Позволяет проставить высотные отметки", "на выделенных трубах или без выделения", ribbonPanel);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "СохрВид", assemblyPath, "Reinforcement.MemoryViewSave", $"Сохранить вид", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "ВосстанВид", assemblyPath, "Reinforcement.MemoryViewCorrect", $"Восстановить вид из записанного ранее состояния", OV1);
+           /* App_Helper_Button.AddButtonToPullDownButton(item, "Высотные отм", assemblyPath, "Reinforcement.HighOtm", $"Расстановка высотных отметок по обьектам\nможете выделить *///обьекты, можете не выделять", Properties.Resources.Elevation);
+
+
         }
         public static void Gen_utilit(RibbonPanel panel, string tabName)
         {

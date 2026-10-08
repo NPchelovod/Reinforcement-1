@@ -141,6 +141,7 @@
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
     <Compile Include="General\2_Memory.cs" />
+    <Compile Include="General\3_HighOtm.cs" />
     <Compile Include="Infrastructure\FamilyCacheEvents.cs" />
     <Compile Include="Infrastructure\ParameterHelper.cs" />
     <Compile Include="Infrastructure\RibbonImageHelper.cs" />

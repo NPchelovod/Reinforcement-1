@@ -35,7 +35,7 @@ namespace Reinforcement
 
         public static string sourcePluginDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин_Admin";
 
-        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer" };
+        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina" };
 
         // В App_Apdater_1
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

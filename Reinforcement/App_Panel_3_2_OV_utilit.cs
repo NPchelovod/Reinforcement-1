@@ -46,6 +46,10 @@ namespace Reinforcement
             App_Helper_Button.AddButtonToPullDownButton(item, "Аэро", assemblyPath, "Reinforcement.OV_Panel_GetPipes", "Позволяет считать аэродинамику", OV1);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Отверстия\n в плите", assemblyPath, "Reinforcement.RoundDistanceForOpeningsInSlabs", "Дорабатывает отверстия в плите для корректного отображения в ведомости отверстий\n\nОкругляет привязки выбранных отверстий до 5 мм. Поворачивает отверстия, чтобы Ширина - был размер по Х. Поворачивает отверстия для корректного отображения знака проема", OV2);
 
+
+            
+
+
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

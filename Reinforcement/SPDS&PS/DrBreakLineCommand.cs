@@ -49,12 +49,13 @@ namespace Reinforcement
              
             "ЕС_О_Линии разрыва",
             "ЕС_О_Линия обр",
-            
+             "ADSK_ЭУ_Узел_Линии разрыва"
+
         };
         //имена типа
         public static HashSet<string> list_Type_Name = new HashSet<string>
         {
-            "Линейный обрыв",
+            "Линейный обрыв"
         };
 
     }

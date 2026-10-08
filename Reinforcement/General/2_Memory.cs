@@ -86,7 +86,7 @@ namespace Reinforcement
             ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
-            UIDocument uidoc = commandData.Application.ActiveUIDocument;
+            UIDocument uidoc = RevitAPI.UiDocument;
             if (uidoc == null) return Result.Cancelled;
 
             Document doc = uidoc.Document;
@@ -115,7 +115,13 @@ namespace Reinforcement
             // 3) Если состояние совпадает с последним снимком — не плодим дубли
             var last = em.Snapshots.LastOrDefault();
             if (last != null && last.ElementIds.SetEquals(currentIds))
+            {
+                TaskDialog.Show("Сохранение вида",
+                    $"Состояние вида «{view.Name}» не изменилось с последнего снимка.\n" +
+                    $"Снимок от {last.Date:yyyy-MM-dd HH:mm} ({last.UserName}), элементов: {last.ElementIds.Count}.\n" +
+                    "Новая запись не создавалась.");
                 return Result.Succeeded;
+            }
 
             // 4) Добавляем новый снимок
             em.ViewId = viewIdValue;
@@ -137,15 +143,45 @@ namespace Reinforcement
                 return Result.Failed;
             }
 
-            string json = JsonSerializer.Serialize(em, ElementMemory.Options);
-            string tmp = filePath + ".tmp";
-            File.WriteAllText(tmp, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(em, ElementMemory.Options);
+                string tmp = filePath + ".tmp";
+                File.WriteAllText(tmp, json);
 
-            if (File.Exists(filePath))
-                File.Replace(tmp, filePath, destinationBackupFileName: null,
-                             ignoreMetadataErrors: true);
-            else
-                File.Move(tmp, filePath);
+                if (File.Exists(filePath))
+                    File.Replace(tmp, filePath, destinationBackupFileName: null,
+                                 ignoreMetadataErrors: true);
+                else
+                    File.Move(tmp, filePath);
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+                TaskDialog.Show("Сохранение вида",
+                    $"Не удалось сохранить состояние вида:\n{ex.Message}");
+                return Result.Failed;
+            }
+
+            // 6) Сообщаем пользователю, что сохранение прошло успешно
+            string pathInfo = filePath;
+            TaskDialog dialog = new TaskDialog("Сохранение вида")
+            {
+                MainInstruction = "Состояние вида сохранено",
+                MainContent =
+                    $"Вид: {view.Name}\n" +
+                    $"Документ: {doc.Title}\n" +
+                    $"Элементов сохранено: {currentIds.Count}\n" +
+                    $"Снимок № {em.Snapshots.Count} от {DateTime.Now:yyyy-MM-dd HH:mm}\n",// +
+                    //$"Файл: {pathInfo}",
+                CommonButtons = TaskDialogCommonButtons.Ok,
+                ExpandedContent = em.Snapshots.Count == 1
+                    ? "Это первый снимок для данного вида."
+                    : $"Всего снимков для вида: {em.Snapshots.Count}.\n" +
+                      $"Предыдущий: {em.Snapshots[em.Snapshots.Count - 2].Date:yyyy-MM-dd HH:mm} " +
+                      $"({em.Snapshots[em.Snapshots.Count - 2].UserName})."
+            };
+            dialog.Show();
 
             return Result.Succeeded;
         }
