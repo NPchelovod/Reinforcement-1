@@ -75,12 +75,17 @@ namespace Reinforcement
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 var exact = candidates.Where(t => Exact(PossibleNamesFamily, t.FamilyName) && Exact(PossibleNamesType, t.Name)).ToList();
-                ElementType best = exact.FirstOrDefault();
-                if (exact.Count != 1)
+                ElementType best;
+                if (exact.Count > 0)
+                {
+                    // Несколько точных совпадений — молча берём первое попавшееся.
+                    best = exact.First();
+                }
+                else
                 {
                     best = candidates.OrderByDescending(t => Score(PossibleNamesFamily, t.FamilyName) + Score(PossibleNamesType, t.Name)).FirstOrDefault();
                     string description = best == null ? "Совпадений нет." : $"Использовать '{best.FamilyName}: {best.Name}' (ID {best.Id})?";
-                    if (best == null || MessageBox.Show(description, exact.Count > 1 ? "Несколько совпадений" : "Точное семейство не найдено", MessageBoxButtons.YesNo) != DialogResult.Yes)
+                    if (best == null || MessageBox.Show(description, "Точное семейство не найдено", MessageBoxButtons.YesNo) != DialogResult.Yes)
                     {
                         var input = HelperPrivateStatic.GetUserInputWithForm(PossibleNamesType.FirstOrDefault());
                         if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
@@ -108,10 +113,8 @@ namespace Reinforcement
             if (string.IsNullOrEmpty(answer.ePile)) return null;
             var matches = candidates.Where(t => name(t) == answer.ePile).ToList();
             if (matches.Count == 0) return null;
-            // Family-only requests intentionally choose the first type within that family.
-            // Same type names belonging to different families require confirmation.
-            if (Type_seach == ElementTypeOrSymbol.ElementType && matches.Select(t => t.FamilyName).Distinct().Count() > 1 &&
-                MessageBox.Show($"Тип '{answer.ePile}' есть в нескольких семействах. Использовать '{matches[0].FamilyName}' (ID {matches[0].Id})?", "Несколько совпадений", MessageBoxButtons.YesNo) != DialogResult.Yes) return null;
+            // Если тип/имя встречается в нескольких семействах — молча берём первое попавшееся,
+            // без диалога «Несколько совпадений».
             PossibleNamesFamilySymbol.Add(answer.ePile);
             return Remember(doc, "name|" + Key(empty, PossibleNamesFamilySymbol, Type_seach), matches[0]);
         }

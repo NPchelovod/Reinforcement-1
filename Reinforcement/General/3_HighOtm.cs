@@ -3,281 +3,352 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+
 
 namespace Reinforcement
 {
     [Transaction(TransactionMode.Manual)]
     public class HighOtm : IExternalCommand
     {
-        // 1 мм в футах (внутренние единицы Revit)
-        private const double Tol = 1.0 / 304.8;
+        private const double Mm = 1.0 / 304.8;
+        private const double HeightTolerance = 1.0 * Mm;
+        private const double MatchTolerance = 1.0 * Mm;
+        private const double MergeDistance = 200.0 * Mm;
 
-        // 200 мм в футах — расстояние, в пределах которого стыки считаются совпадающими
-        private const double MergeDistance = 200.0 / 304.8;
-        //Понял логику — ставим отметки на обоих концах трубы, если её Z-координаты различаются, а затем «схлопываем» дубли на стыках, если они находятся в пределах 200 мм и имеют одинаковую Z.
-        public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+        private sealed class PipeInfo
         {
-            UIApplication uiApp = commandData.Application;
-            UIDocument uiDoc = uiApp.ActiveUIDocument;
-            Document doc = uiDoc.Document;
-            View activeView = doc.ActiveView;
+            public Pipe Pipe;
+            public XYZ Start;
+            public XYZ End;
+            public Reference AxisReference;
+        }
 
-            // 1. Получаем выделенные элементы
-            ICollection<ElementId> selectedIds = uiDoc.Selection.GetElementIds();
-            if (selectedIds.Count == 0)
+        private sealed class Candidate
+        {
+            public PipeInfo PipeInfo;
+            public XYZ Joint;
+            public XYZ Point;
+            public XYZ EdgePoint;
+            public Reference EdgeReference;
+        }
+
+        private sealed class PipeSelectionFilter : ISelectionFilter
+        {
+            public bool AllowElement(Element element) { return element is Pipe; }
+            public bool AllowReference(Reference reference, XYZ position) { return false; }
+        }
+
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            UIDocument uiDoc = commandData.Application.ActiveUIDocument;
+            Document doc = uiDoc.Document;
+            View view = doc.ActiveView;
+
+            View3D view3D = view as View3D;
+            if (!(view is ViewPlan) && !(view is ViewSection) &&
+                (view3D == null || view3D.IsPerspective))
             {
-                TaskDialog.Show("Ошибка", "Не выбрано ни одного элемента.");
-                return Result.Failed;
+                TaskDialog.Show("Отметки оси труб",
+                    "Откройте план, разрез, фасад или ортогональный 3D-вид.");
+                return Result.Cancelled;
             }
-            View3D view3D = GetOrCreate3DView(doc);
-            // 2. Находим типоразмер высотной отметки
-            SpotDimensionType spotElevationType = new FilteredElementCollector(doc)
+
+            List<ElementId> ids = uiDoc.Selection.GetElementIds()
+                .Where(id => doc.GetElement(id) is Pipe).ToList();
+            if (ids.Count == 0)
+            {
+                try
+                {
+                    ids = uiDoc.Selection.PickObjects(ObjectType.Element,
+                        new PipeSelectionFilter(), "Выберите трубы для отметок оси")
+                        .Select(r => r.ElementId).Distinct().ToList();
+                }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                    return Result.Cancelled;
+                }
+            }
+            if (ids.Count == 0) return Result.Cancelled;
+
+            SpotDimensionType spotType = new FilteredElementCollector(doc)
                 .OfClass(typeof(SpotDimensionType))
                 .Cast<SpotDimensionType>()
-                .FirstOrDefault(t => t.Name.Equals("ADSK_Стрелка_Проектная_Вверх",
-                    StringComparison.OrdinalIgnoreCase));
-
-            if (spotElevationType == null)
+                .Where(t => t.StyleType == DimensionStyleType.SpotElevation)
+                .OrderByDescending(t => string.Equals(t.Name,
+                    "ADSK_Стрелка_Проектная_Вверх", StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault();
+            if (spotType == null)
             {
-                TaskDialog.Show("Ошибка",
-                    "Не найден типоразмер высотной отметки 'ADSK_Стрелка_Проектная_Вверх'.");
+                message = "В проекте нет типоразмера высотной отметки.";
                 return Result.Failed;
             }
 
-            // 3. Собираем точки начала и конца всех кривых.
-            //    candidates — только там, где Z начала и конца различаются.
-            //    allEndpoints — все концы (для fallback, если высоты везде одинаковые).
-            var candidates = new List<(XYZ point, Reference reference)>();
-            var allEndpoints = new List<(XYZ point, Reference reference)>();
-            // Опции для получения геометрии с ссылками.
-            // IncludeNonVisibleObjects = true — чтобы получить и невидимую осевую линию.
-            var geomOptions = new Options
+            List<string> errors = new List<string>();
+            List<PipeInfo> pipes = new List<PipeInfo>();
+            foreach (ElementId id in ids)
             {
-                ComputeReferences = true,
-                IncludeNonVisibleObjects = false,   // <-- важно
-                View = activeView
-            };
-            foreach (ElementId id in selectedIds)
-            {
-                Element elem = doc.GetElement(id);
-
-                // 1) Координаты начала/конца берём из LocationCurve — они корректны.
-                if (!(elem?.Location is LocationCurve locCurve)) continue;
-                Curve locationCurve = locCurve.Curve;
-                if (locationCurve == null) continue;
-
-                XYZ start = locationCurve.GetEndPoint(0);
-                XYZ end = locationCurve.GetEndPoint(1);
-
-                // 2) Ссылки (Reference) ищем в геометрии элемента.
-                
-                // Пример для начальной точки
-                XYZ rayDirection = activeView.UpDirection.Negate(); // смотрим вниз
-                XYZ rayDir = view3D.UpDirection.Negate();
-                Reference refStart = FindFaceReference(view3D, start, rayDir);
-                Reference refEnd = FindFaceReference(view3D, end, rayDir);
-                GeometryElement geometry = elem.get_Geometry(geomOptions);
-                if (geometry != null)
+                Pipe pipe = doc.GetElement(id) as Pipe;
+                LocationCurve location = pipe == null ? null : pipe.Location as LocationCurve;
+                if (location == null || !(location.Curve is Line))
                 {
-                    foreach (GeometryObject geoObj in geometry)
-                    {
-                        // Нас интересуют только кривые (осевая линия трубы).
-                        if (!(geoObj is Curve refCurve)) continue;
-
-                        // Сравниваем концы геометрической кривой с концами LocationCurve.
-                        // Если совпадают с допуском — это та самая осевая линия.
-                        XYZ refStartPt = refCurve.GetEndPoint(0);
-                        XYZ refEndPt = refCurve.GetEndPoint(1);
-
-                        bool matchesStart = refStartPt.DistanceTo(start) < Tol
-                                            || refEndPt.DistanceTo(start) < Tol;
-                        bool matchesEnd = refStartPt.DistanceTo(end) < Tol
-                                          || refEndPt.DistanceTo(end) < Tol;
-
-                        if (matchesStart && matchesEnd)
-                        {
-                            // Пытаемся получить стабильные ссылки на концы кривой.
-                            refStart = refCurve.GetEndPointReference(
-                                refStartPt.DistanceTo(start) < Tol ? 0 : 1);
-                            refEnd = refCurve.GetEndPointReference(
-                                refEndPt.DistanceTo(end) < Tol ? 1 : 0);
-                            break; // нашли нужную кривую — выходим из цикла геометрии
-                        }
-                    }
+                    errors.Add("Труба " + id.Value + ": нет прямой оси.");
+                    continue;
                 }
 
-                // Собираем все концы для fallback (только если есть ссылка).
-                if (refStart != null) allEndpoints.Add((start, refStart));
-                if (refEnd != null) allEndpoints.Add((end, refEnd));
-
-                // Ставим отметки в начале И в конце, если высоты различаются.
-                if (Math.Abs(start.Z - end.Z) > Tol)
+                XYZ start = location.Curve.GetEndPoint(0);
+                XYZ end = location.Curve.GetEndPoint(1);
+                Reference axis = FindAxisReference(pipe, view, start, end);
+                pipes.Add(new PipeInfo
                 {
-                    if (refStart != null) candidates.Add((start, refStart));
-                    if (refEnd != null) candidates.Add((end, refEnd));
-                }
+                    Pipe = pipe,
+                    Start = start,
+                    End = end,
+                    AxisReference = axis
+                });
             }
-            // 4. Если высоты везде одинаковые — ставим одну отметку на крайнем элементе.
-            bool fallback = false;
-            if (candidates.Count == 0)
+
+            List<Candidate> candidates = MakeCandidates(pipes);
+            List<Candidate> unique = new List<Candidate>();
+            foreach (Candidate item in candidates)
             {
-                if (allEndpoints.Count == 0)
-                {
-                    TaskDialog.Show("Информация",
-                        "Не найдено элементов с криволинейной геометрией.");
-                    return Result.Succeeded;
-                }
-
-                // Центр всех концов
-                XYZ centroid = new XYZ(
-                    allEndpoints.Average(p => p.point.X),
-                    allEndpoints.Average(p => p.point.Y),
-                    allEndpoints.Average(p => p.point.Z));
-
-                // Берём точку, максимально удалённую от центра — это «край» цепочки
-                var extreme = allEndpoints
-                    .OrderByDescending(p => p.point.DistanceTo(centroid))
-                    .First();
-                //var extreme = allEndpoints.OrderBy(p => p.point.Y).ThenBy(p.point.X).First();
-                candidates.Add(extreme);
-                fallback = true;
+                if (!unique.Any(other =>
+                    Math.Abs(other.Joint.Z - item.Joint.Z) < HeightTolerance &&
+                    other.Joint.DistanceTo(item.Joint) < MergeDistance))
+                    unique.Add(item);
             }
 
-            // 5. Схлопываем дубли: если точка уже есть в списке в пределах MergeDistance
-            //    (200 мм) и имеет ту же Z — пропускаем её.
-            //    Порядок обхода сохраняет первую встреченную точку.
-            var elevationPoints = new List<(XYZ point, Reference reference)>();
-
-            foreach (var cand in candidates)
-            {
-                bool isDuplicate = elevationPoints.Any(existing =>
-                    Math.Abs(existing.point.Z - cand.point.Z) < Tol &&
-                    existing.point.DistanceTo(cand.point) < MergeDistance);
-
-                if (!isDuplicate)
-                    elevationPoints.Add(cand);
-            }
-
-            // 6. Создаём высотные отметки в транзакции
             int created = 0;
-            var errors = new List<string>();
-            using (Transaction trans = new Transaction(doc, "Расстановка высотных отметок"))
+            int axisFallbacks = 0;
+            using (Transaction transaction = new Transaction(doc, "Отметки оси труб"))
             {
-                trans.Start();
-
-                foreach (var (point, reference) in elevationPoints)
+                transaction.Start();
+                foreach (Candidate item in unique)
                 {
-                    // Точка излома выноски (смещение вверх на 1 м)
-                    //XYZ bend = point + XYZ.BasisZ * 1.0;
-                    //// Конец выноски
-                    //XYZ endLeader = bend + XYZ.BasisX * 1.0;
-                    XYZ viewRight = activeView.RightDirection;
-                    XYZ viewUp = activeView.UpDirection;
-
-                    XYZ bend = point + viewUp * 1.0;
-                    XYZ endLeader = bend + viewRight * 1.0;
-                    
-                    try
+                    string edgeError = null;
+                    string axisError = null;
+                    bool ok = item.EdgeReference != null && TryCreateSpot(
+                        doc, view, spotType, item.EdgeReference, item.EdgePoint,
+                        out edgeError);
+                    if (!ok && item.PipeInfo.AxisReference != null)
                     {
-                        SpotDimension spot = doc.Create.NewSpotElevation(
-                            activeView,
-                            reference,
-                            point,
-                            bend,
-                            endLeader,
-                            point,
-                            true); // с выноской
-
-                        if (spot != null)
-                        {
-                            spot.SpotDimensionType = spotElevationType;
-                            created++;
-                        }
+                        ok = TryCreateSpot(doc, view, spotType,
+                            item.PipeInfo.AxisReference, item.Point, out axisError);
+                        if (ok) axisFallbacks++;
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"Не удалось создать отметку в точке ({point.X:F3}, {point.Y:F3}, {point.Z:F3}): {ex.Message}");
-                        errors.Add($"{point.X:F3},{point.Y:F3},{point.Z:F3}: {ex.GetType().Name} — {ex.Message}");
-                    }
+                    if (ok) created++;
+                    else errors.Add("Труба " + item.PipeInfo.Pipe.Id.Value +
+                        ": кромка: " + (edgeError ?? "ссылка не найдена") +
+                        "; ось: " + (axisError ?? "ссылка не найдена"));
                 }
-
-                trans.Commit();
+                transaction.Commit();
             }
+
+            string report = "Создано отметок оси: " + created + ".";
+            if (axisFallbacks > 0)
+                report += "\nИз них по ссылке на ось: " + axisFallbacks + ".";
             if (errors.Count > 0)
-            {
-                TaskDialog.Show("Ошибки",
-                    $"Создано: {created}, ошибок: {errors.Count}\n\n" +
-                    string.Join("\n", errors.Take(10)));
-            }
-            // 7. Отчёт
-            string info = fallback
-                ? $"Высоты везде одинаковые — поставлена одна отметка на крайнем элементе.\n" +
-                  $"Создано отметок: {created}."
-                : $"Расставлено высотных отметок: {created} из {candidates.Count} кандидатов.\n" +
-                $"ошибок: {errors.Count}\n\n" +
-                    string.Join("\n", errors.Take(10));
-
-            TaskDialog.Show("Готово", info);
+                report += "\nОшибок/пропусков: " + errors.Count + ".\n\n" +
+                    string.Join("\n", errors.Take(8).ToArray());
+            TaskDialog.Show("Отметки оси труб", report);
             return Result.Succeeded;
         }
 
-        private Reference FindFaceReference(View3D view3D, XYZ point, XYZ direction)
+        private static bool TryCreateSpot(Document doc, View view,
+            SpotDimensionType spotType, Reference reference, XYZ point,
+            out string error)
         {
-            // Создаём искатель, который возвращает только грани (Face)
-            var intersector = new ReferenceIntersector(view3D)
+            error = null;
+            using (SubTransaction attempt = new SubTransaction(doc))
             {
-                TargetType = FindReferenceTarget.Face
-            };
-
-            // Находим ближайшее пересечение луча с гранями
-            ReferenceWithContext hit = intersector.FindNearest(point, direction);
-
-            // Возвращаем ссылку (или null, если ничего не нашли)
-            return hit?.GetReference();
-        }
-        private View3D GetOrCreate3DView(Document doc)
-        {
-            // 1. Пытаемся найти существующий 3D-вид (например, "{3D}")
-            View3D view3D = new FilteredElementCollector(doc)
-                .OfClass(typeof(View3D))
-                .Cast<View3D>()
-                .FirstOrDefault(v => !v.IsTemplate && v.Name == "{3D}");
-
-            // 2. Если не нашли — берём любой нешаблонный 3D-вид
-            if (view3D == null)
-            {
-                view3D = new FilteredElementCollector(doc)
-                    .OfClass(typeof(View3D))
-                    .Cast<View3D>()
-                    .FirstOrDefault(v => !v.IsTemplate);
-            }
-
-            // 3. Если 3D-видов нет вообще — создаём изометрический
-            if (view3D == null)
-            {
-                ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
-                    .OfClass(typeof(ViewFamilyType))
-                    .Cast<ViewFamilyType>()
-                    .FirstOrDefault(vft => vft.ViewFamily == ViewFamily.ThreeDimensional);
-
-                if (viewFamilyType != null)
+                attempt.Start();
+                try
                 {
-                    using (Transaction t = new Transaction(doc, "Создание 3D-вида"))
-                    {
-                        t.Start();
-                        view3D = View3D.CreateIsometric(doc, viewFamilyType.Id);
-                        t.Commit();
-                    }
+                    XYZ bend = point + view.UpDirection * (180.0 * Mm)
+                        + view.RightDirection * (120.0 * Mm);
+                    XYZ leaderEnd = bend + view.RightDirection * (280.0 * Mm);
+                    SpotDimension spot = doc.Create.NewSpotElevation(
+                        view, reference, point, bend, leaderEnd, point, true);
+                    if (spot == null)
+                        throw new InvalidOperationException("NewSpotElevation вернул null.");
+                    spot.SpotDimensionType = spotType;
+                    attempt.Commit();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    attempt.RollBack();
+                    error = ex.GetType().Name + " — " + ex.Message;
+                    return false;
                 }
             }
+        }
 
-            return view3D;
+        private static Reference FindAxisReference(Pipe pipe, View view, XYZ start, XYZ end)
+        {
+            // Revit stores the pipe axis as non-visible geometry. A reference to the
+            // WHOLE line is needed; endpoint references are unsuitable for a spot.
+            Options options = new Options
+            {
+                ComputeReferences = true,
+                IncludeNonVisibleObjects = true,
+                View = view
+            };
+            Reference found = null;
+            try { found = FindAxisInGeometry(pipe.get_Geometry(options), start, end); }
+            catch (Exception) { }
+            if (found != null) return found;
+
+            // Geometry extraction can be view-dependent. Retry without a view.
+            options = new Options
+            {
+                ComputeReferences = true,
+                IncludeNonVisibleObjects = true,
+                DetailLevel = ViewDetailLevel.Fine
+            };
+            try { return FindAxisInGeometry(pipe.get_Geometry(options), start, end); }
+            catch (Exception) { return null; }
+        }
+
+        private static Reference FindAxisInGeometry(
+            GeometryElement geometry, XYZ start, XYZ end)
+        {
+            if (geometry == null) return null;
+            foreach (GeometryObject obj in geometry)
+            {
+                Line line = obj as Line;
+                if (line == null || line.Reference == null) continue;
+                XYZ a = line.GetEndPoint(0);
+                XYZ b = line.GetEndPoint(1);
+                bool forward = a.DistanceTo(start) < MatchTolerance &&
+                    b.DistanceTo(end) < MatchTolerance;
+                bool reverse = a.DistanceTo(end) < MatchTolerance &&
+                    b.DistanceTo(start) < MatchTolerance;
+                if (forward || reverse) return line.Reference;
+            }
+            return null;
+        }
+
+        private static List<Candidate> MakeCandidates(List<PipeInfo> pipes)
+        {
+            List<Candidate> result = new List<Candidate>();
+            List<PipeInfo> horizontal = new List<PipeInfo>();
+            foreach (PipeInfo pipe in pipes)
+            {
+                if (Math.Abs(pipe.Start.Z - pipe.End.Z) > HeightTolerance)
+                {
+                    result.Add(AtEnd(pipe, true));
+                    result.Add(AtEnd(pipe, false));
+                }
+                else horizontal.Add(pipe);
+            }
+
+            // One spot for each elevation among horizontal pipes; sloped joints
+            // at that elevation are deduplicated in Execute.
+            List<List<PipeInfo>> levels = new List<List<PipeInfo>>();
+            foreach (PipeInfo pipe in horizontal)
+            {
+                List<PipeInfo> level = levels.FirstOrDefault(group =>
+                    Math.Abs(group[0].Start.Z - pipe.Start.Z) < HeightTolerance);
+                if (level == null)
+                {
+                    level = new List<PipeInfo>();
+                    levels.Add(level);
+                }
+                level.Add(pipe);
+            }
+            foreach (List<PipeInfo> level in levels)
+            {
+                XYZ centroid = new XYZ(level.Average(p => (p.Start.X + p.End.X) / 2),
+                    level.Average(p => (p.Start.Y + p.End.Y) / 2),
+                    level.Average(p => (p.Start.Z + p.End.Z) / 2));
+                PipeInfo extremePipe = level.OrderByDescending(p =>
+                    Math.Max(p.Start.DistanceTo(centroid), p.End.DistanceTo(centroid)))
+                    .First();
+                result.Add(AtEnd(extremePipe,
+                    extremePipe.Start.DistanceTo(centroid) >=
+                    extremePipe.End.DistanceTo(centroid)));
+            }
+            return result;
+        }
+
+        private static Candidate AtEnd(PipeInfo pipe, bool start)
+        {
+            XYZ joint = start ? pipe.Start : pipe.End;
+            XYZ other = start ? pipe.End : pipe.Start;
+            double length = joint.DistanceTo(other);
+            if (length < 0.01 * Mm)
+                return new Candidate { PipeInfo = pipe, Joint = joint, Point = joint };
+            // Move 1 mm inside the pipe: projection at a geometric end can fail.
+            XYZ point = length > 2.0 * Mm
+                ? joint + (other - joint).Normalize() * Mm
+                : joint + (other - joint) * 0.5;
+            XYZ edgePoint;
+            Reference edge = FindEdgeAtAxisHeight(pipe.Pipe, joint, other, out edgePoint);
+            return new Candidate
+            {
+                PipeInfo = pipe,
+                Joint = joint,
+                Point = point,
+                EdgePoint = edgePoint,
+                EdgeReference = edge
+            };
+        }
+
+        private static Reference FindEdgeAtAxisHeight(
+            Pipe pipe, XYZ joint, XYZ other, out XYZ edgePoint)
+        {
+            edgePoint = null;
+            Parameter diameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER);
+            if (diameter == null || !diameter.HasValue || diameter.AsDouble() <= 0)
+                return null;
+
+            XYZ axis = (other - joint).Normalize();
+            XYZ radial = axis.CrossProduct(XYZ.BasisZ);
+            if (radial.GetLength() < 0.01) radial = XYZ.BasisX;
+            else radial = radial.Normalize();
+            XYZ target = joint + radial * (diameter.AsDouble() / 2.0);
+
+            Options options = new Options
+            {
+                ComputeReferences = true,
+                IncludeNonVisibleObjects = false,
+                DetailLevel = ViewDetailLevel.Fine
+            };
+            GeometryElement geometry;
+            try { geometry = pipe.get_Geometry(options); }
+            catch (Exception) { return null; }
+            if (geometry == null) return null;
+
+            Reference best = null;
+            double bestDistance = 2.0 * Mm;
+            foreach (GeometryObject obj in geometry)
+            {
+                Solid solid = obj as Solid;
+                if (solid == null || solid.Volume <= 0) continue;
+                foreach (Edge edge in solid.Edges)
+                {
+                    if (edge.Reference == null) continue;
+                    try
+                    {
+                        IntersectionResult projection = edge.AsCurve().Project(target);
+                        if (projection == null) continue;
+                        XYZ p = projection.XYZPoint;
+                        double distance = p.DistanceTo(target);
+                        if (Math.Abs(p.Z - joint.Z) < HeightTolerance &&
+                            distance < bestDistance)
+                        {
+                            bestDistance = distance;
+                            best = edge.Reference;
+                            edgePoint = p;
+                        }
+                    }
+                    catch (Exception) { }
+                }
+            }
+            return best;
         }
     }
 }
