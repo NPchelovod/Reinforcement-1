@@ -14,6 +14,7 @@ namespace Reinforcement
     /// Поиск вида(-ов), где используется указанное семейство.
     /// Если задан типоразмер — фильтруем ещё и по нему.
     /// Отчёт: Лист → Вид → Семейство [Типоразмер] (кол-во) + Группы.
+    /// Найденные экземпляры выделяются в проекте.
     /// </summary>
     [Transaction(TransactionMode.ReadOnly)]
     public class SeachViewsFamily : IExternalCommand
@@ -26,12 +27,12 @@ namespace Reinforcement
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
             UIDocument uidoc = RevitAPI.UiDocument;
+
             // -------------------------------------------------------------------
             // 1. Пытаемся взять семейство/тип из выделения, если оно есть
             // -------------------------------------------------------------------
             var input = TryGetFromSelection(uidoc, doc, out string selInfo);
 
-            // Если из выделения ничего не извлеклось — показываем окно
             if (input == null)
             {
                 input = FamilySearchInput.Show();
@@ -107,6 +108,9 @@ namespace Reinforcement
             // -------------------------------------------------------------------
             var sheetData = new Dictionary<string, SheetBucket>(StringComparer.OrdinalIgnoreCase);
             var noSheetData = new Dictionary<string, ViewBucket>(StringComparer.OrdinalIgnoreCase);
+
+            // Список Id найденных экземпляров — для выделения в модели.
+            var foundIds = new List<ElementId>();
 
             int totalInstances = 0;
             int skippedNoView = 0;
@@ -196,6 +200,8 @@ namespace Reinforcement
                         vb.IncrementGroup(groupName);
                 }
 
+                // Запоминаем Id для выделения
+                foundIds.Add(el.Id);
                 totalInstances++;
             }
 
@@ -205,8 +211,6 @@ namespace Reinforcement
             var sb = new StringBuilder();
             if (!string.IsNullOrEmpty(selInfo))
                 sb.AppendLine(selInfo);
-            sb.AppendLine($"Семейство: «{familyQuery}»"
-                          + (hasTypeFilter ? $"  |  типоразмер: «{typeQuery}»" : ""));
             sb.AppendLine($"Семейство: «{familyQuery}»"
                           + (hasTypeFilter ? $"  |  типоразмер: «{typeQuery}»" : ""));
             sb.AppendLine($"Найдено экземпляров: {totalInstances}");
@@ -244,6 +248,14 @@ namespace Reinforcement
                             + $"({matchedTypeNames.Count}). Учтены все.");
             }
 
+            // -------------------------------------------------------------------
+            // 7. Выделяем найденные элементы в проекте
+            // -------------------------------------------------------------------
+            if (foundIds.Count > 0)
+            {
+                uidoc.Selection.SetElementIds(foundIds);
+            }
+
             TaskDialog td = new TaskDialog("Поиск семейства на видах");
             td.MainInstruction = hasTypeFilter
                 ? $"«{familyQuery}» / «{typeQuery}» — экземпляров: {totalInstances}"
@@ -257,10 +269,6 @@ namespace Reinforcement
         // -------------------------------------------------------------------
         // Вспомогательные
         // -------------------------------------------------------------------
-        /// <summary>
-        /// Пытается вытащить семейство/тип из текущего выделения.
-        /// Возвращает null, если выделения нет или оно не подходит.
-        /// </summary>
         private static FamilySearchInput.Result TryGetFromSelection(
             UIDocument uidoc, Document doc, out string info)
         {
@@ -269,7 +277,6 @@ namespace Reinforcement
             var ids = uidoc.Selection.GetElementIds();
             if (ids == null || ids.Count == 0) return null;
 
-            // Ищем первый элемент, у которого есть FamilySymbol
             foreach (var id in ids)
             {
                 Element el = doc.GetElement(id);
@@ -277,10 +284,8 @@ namespace Reinforcement
 
                 FamilySymbol sym = null;
 
-                // 1) Сам элемент — тип (FamilySymbol)
                 if (el is FamilySymbol fsDirect)
                     sym = fsDirect;
-                // 2) Сам элемент — экземпляр (FamilyInstance или любой с типом-символом)
                 else
                 {
                     ElementId tid = el.GetTypeId();
@@ -305,6 +310,7 @@ namespace Reinforcement
 
             return null;
         }
+
         private static void AppendViewLine(StringBuilder sb, string viewName, ViewBucket vb)
         {
             var famParts = new List<string>();
@@ -345,7 +351,6 @@ namespace Reinforcement
 
         private sealed class ViewBucket
         {
-            // family → (type → count)
             public Dictionary<string, Dictionary<string, int>> FamilyTypes =
                 new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
 
@@ -379,11 +384,6 @@ namespace Reinforcement
             public int TotalInstances;
         }
 
-        // -------------------------------------------------------------------
-        // Служебные — как в ListDuplicateFamiliesByView
-        // -------------------------------------------------------------------
-
-        /// <summary>Имя группы, в которой находится элемент. null — если нет.</summary>
         private static string GetGroupName(Document doc, Element elem)
         {
             try
@@ -445,7 +445,6 @@ namespace Reinforcement
             for (int i = 0; i < 4; i++)
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            // Семейство
             var lblFam = new TextBlock
             {
                 Text = "Семейство:",
@@ -458,7 +457,6 @@ namespace Reinforcement
             grid.Children.Add(lblFam);
             grid.Children.Add(txtFam);
 
-            // Типоразмер
             var lblType = new TextBlock
             {
                 Text = "Типоразмер:",
@@ -471,7 +469,6 @@ namespace Reinforcement
             grid.Children.Add(lblType);
             grid.Children.Add(txtType);
 
-            // Подсказка
             var hint = new TextBlock
             {
                 Text = "Типоразмер можно оставить пустым — будут показаны все типы семейства.",
@@ -482,7 +479,6 @@ namespace Reinforcement
             System.Windows.Controls.Grid.SetRow(hint, 2); System.Windows.Controls.Grid.SetColumn(hint, 0); System.Windows.Controls.Grid.SetColumnSpan(hint, 2);
             grid.Children.Add(hint);
 
-            // Кнопки
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
