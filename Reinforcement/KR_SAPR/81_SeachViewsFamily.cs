@@ -20,251 +20,259 @@ namespace Reinforcement
     public class SeachViewsFamily : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+          ExternalCommandData commandData,
+          ref string message,
+          ElementSet elements)
         {
-            RevitAPI.Initialize(commandData);
-            Document doc = RevitAPI.Document;
-            UIDocument uidoc = RevitAPI.UiDocument;
-
-            // -------------------------------------------------------------------
-            // 1. Пытаемся взять семейство/тип из выделения, если оно есть
-            // -------------------------------------------------------------------
-            var input = TryGetFromSelection(uidoc, doc, out string selInfo);
-
-            if (input == null)
-            {
-                input = FamilySearchInput.Show();
-                if (input == null) return Result.Cancelled;
-            }
-
-            string familyQuery = SafeTrim(input.FamilyName);
-            string typeQuery = SafeTrim(input.TypeName);
-
-            if (string.IsNullOrEmpty(familyQuery))
-            {
-                TaskDialog.Show("Поиск семейства", "Не задано имя семейства.");
-                return Result.Cancelled;
-            }
-            bool hasTypeFilter = !string.IsNullOrEmpty(typeQuery);
-
-            // -------------------------------------------------------------------
-            // 2. Отбираем FamilySymbol'ы, подходящие под фильтр
-            // -------------------------------------------------------------------
-            var targetSymbolIds = new HashSet<ElementId>();
-            var matchedTypeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (FamilySymbol fs in new FilteredElementCollector(doc)
-                        .OfClass(typeof(FamilySymbol))
-                        .Cast<FamilySymbol>())
-            {
-                string famName = SafeTrim(fs.FamilyName);
-                if (!string.Equals(famName, familyQuery, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                string typeName = SafeTrim(fs.Name);
-                if (hasTypeFilter &&
-                    !string.Equals(typeName, typeQuery, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                targetSymbolIds.Add(fs.Id);
-                matchedTypeNames.Add(typeName);
-            }
-
-            if (targetSymbolIds.Count == 0)
-            {
-                string msg = hasTypeFilter
-                    ? $"Не найдено типоразмер «{typeQuery}» у семейства «{familyQuery}»."
-                    : $"Семейство «{familyQuery}» в проекте не найдено.";
-                TaskDialog.Show("Поиск семейства", msg);
-                return Result.Succeeded;
-            }
-
-            // -------------------------------------------------------------------
-            // 3. Собираем все экземпляры проекта и фильтруем по типу
-            // -------------------------------------------------------------------
-            var allInstances = new FilteredElementCollector(doc)
-                .WhereElementIsNotElementType()
-                .ToList();
-
-            // -------------------------------------------------------------------
-            // 4. Предварительно: viewId → (имя листа, номер листа) через Viewport
-            // -------------------------------------------------------------------
-            var viewToSheet = new Dictionary<ElementId, (string Name, string Number)>();
-            foreach (Viewport vp in new FilteredElementCollector(doc).OfClass(typeof(Viewport)))
-            {
-                ElementId sheetId = vp.SheetId;
-                ElementId viewId = vp.ViewId;
-                if (sheetId == ElementId.InvalidElementId || viewId == ElementId.InvalidElementId)
-                    continue;
-                if (!(doc.GetElement(sheetId) is ViewSheet sheet)) continue;
-                if (!viewToSheet.ContainsKey(viewId))
-                    viewToSheet[viewId] = (sheet.Name, sheet.SheetNumber);
-            }
-
-            // -------------------------------------------------------------------
-            // 5. Раскладываем по структурам
-            // -------------------------------------------------------------------
-            var sheetData = new Dictionary<string, SheetBucket>(StringComparer.OrdinalIgnoreCase);
-            var noSheetData = new Dictionary<string, ViewBucket>(StringComparer.OrdinalIgnoreCase);
-
-            // Список Id найденных экземпляров — для выделения в модели.
-            var foundIds = new List<ElementId>();
-
-            int totalInstances = 0;
-            int skippedNoView = 0;
-
-            foreach (var el in allInstances)
-            {
-                ElementId tid = el.GetTypeId();
-                if (tid == ElementId.InvalidElementId) continue;
-                if (!targetSymbolIds.Contains(tid)) continue;
-
-                if (!(doc.GetElement(tid) is FamilySymbol sym)) continue;
-
-                string familyName = SafeTrim(sym.FamilyName);
-                string typeName = SafeTrim(sym.Name);
-
-                // --- вид и лист ---
-                string viewName = null;
-                string sheetName = null;
-                string sheetNumber = null;
-
-                ElementId vid = el.OwnerViewId;
-                if (vid == ElementId.InvalidElementId && el.GroupId != ElementId.InvalidElementId)
-                {
-                    if (doc.GetElement(el.GroupId) is Group grp)
-                        vid = grp.OwnerViewId;
-                }
-
-                if (vid != ElementId.InvalidElementId)
-                {
-                    Element viewElem = doc.GetElement(vid);
-                    if (viewElem is ViewSheet sheetDirect)
-                    {
-                        sheetName = sheetDirect.Name;
-                        sheetNumber = sheetDirect.SheetNumber;
-                        viewName = "<на листе>";
-                    }
-                    else if (viewElem is View v)
-                    {
-                        viewName = v.Name;
-                        if (viewToSheet.TryGetValue(vid, out var s))
-                        {
-                            sheetName = s.Name;
-                            sheetNumber = s.Number;
-                        }
-                    }
-                }
-
-                if (string.IsNullOrEmpty(viewName))
-                {
-                    skippedNoView++;
-                    viewName = "<вид не определён>";
-                }
-
-                string groupName = null;
-                if (el.GroupId != ElementId.InvalidElementId)
-                    groupName = GetGroupName(doc, el);
-
-                // --- раскладываем ---
-                if (!string.IsNullOrEmpty(sheetName))
-                {
-                    string sheetKey = sheetNumber + "|" + sheetName;
-                    if (!sheetData.TryGetValue(sheetKey, out var bucket))
-                    {
-                        bucket = new SheetBucket { Name = sheetName, Number = sheetNumber };
-                        sheetData[sheetKey] = bucket;
-                    }
-                    if (!bucket.Views.TryGetValue(viewName, out var vb))
-                    {
-                        vb = new ViewBucket();
-                        bucket.Views[viewName] = vb;
-                    }
-                    vb.IncrementFamilyType(familyName, typeName);
-                    if (!string.IsNullOrEmpty(groupName))
-                        vb.IncrementGroup(groupName);
-
-                    bucket.TotalInstances++;
-                }
-                else
-                {
-                    if (!noSheetData.TryGetValue(viewName, out var vb))
-                    {
-                        vb = new ViewBucket();
-                        noSheetData[viewName] = vb;
-                    }
-                    vb.IncrementFamilyType(familyName, typeName);
-                    if (!string.IsNullOrEmpty(groupName))
-                        vb.IncrementGroup(groupName);
-                }
-
-                // Запоминаем Id для выделения
-                foundIds.Add(el.Id);
-                totalInstances++;
-            }
-
-            // -------------------------------------------------------------------
-            // 6. Отчёт
-            // -------------------------------------------------------------------
-            var sb = new StringBuilder();
-            if (!string.IsNullOrEmpty(selInfo))
-                sb.AppendLine(selInfo);
-            sb.AppendLine($"Семейство: «{familyQuery}»"
-                          + (hasTypeFilter ? $"  |  типоразмер: «{typeQuery}»" : ""));
-            sb.AppendLine($"Найдено экземпляров: {totalInstances}");
-            sb.AppendLine($"Листов с семейством: {sheetData.Count}");
-            sb.AppendLine($"Видов без листа: {noSheetData.Count}");
-            sb.AppendLine();
-
-            foreach (var bucket in sheetData.Values
-                .OrderBy(s => s.Number, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase))
-            {
-                sb.AppendLine($"=== Лист «{bucket.Name}» №{bucket.Number} (экз.: {bucket.TotalInstances}) ===");
-                foreach (var viewKv in bucket.Views.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
-                    AppendViewLine(sb, viewKv.Key, viewKv.Value);
-                sb.AppendLine();
-            }
-
-            if (noSheetData.Count > 0)
-            {
-                sb.AppendLine("=== Виды без листа ===");
-                foreach (var kv in noSheetData.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
-                    AppendViewLine(sb, kv.Key, kv.Value);
-            }
-
-            if (skippedNoView > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"Экземпляров без определённого вида: {skippedNoView}");
-            }
-
-            if (hasTypeFilter && matchedTypeNames.Count > 1)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"Внимание: у семейства несколько символов с именем «{typeQuery}» "
-                            + $"({matchedTypeNames.Count}). Учтены все.");
-            }
-
-            // -------------------------------------------------------------------
-            // 7. Выделяем найденные элементы в проекте
-            // -------------------------------------------------------------------
-            if (foundIds.Count > 0)
-            {
-                uidoc.Selection.SetElementIds(foundIds);
-            }
-
-            TaskDialog td = new TaskDialog("Поиск семейства на видах");
-            td.MainInstruction = hasTypeFilter
-                ? $"«{familyQuery}» / «{typeQuery}» — экземпляров: {totalInstances}"
-                : $"«{familyQuery}» — экземпляров: {totalInstances}";
-            td.MainContent = sb.ToString();
-            td.Show();
-
-            return Result.Succeeded;
+           var n = new SelectParentElement();
+           return n.Execute(commandData, ref message, elements);
         }
+        //public Result Execute(
+        //    ExternalCommandData commandData,
+        //    ref string message,
+        //    ElementSet elements)
+        //{
+        //    RevitAPI.Initialize(commandData);
+        //    Document doc = RevitAPI.Document;
+        //    UIDocument uidoc = RevitAPI.UiDocument;
+
+        //    // -------------------------------------------------------------------
+        //    // 1. Пытаемся взять семейство/тип из выделения, если оно есть
+        //    // -------------------------------------------------------------------
+        //    var input = TryGetFromSelection(uidoc, doc, out string selInfo);
+
+        //    if (input == null)
+        //    {
+        //        input = FamilySearchInput.Show();
+        //        if (input == null) return Result.Cancelled;
+        //    }
+
+        //    string familyQuery = SafeTrim(input.FamilyName);
+        //    string typeQuery = SafeTrim(input.TypeName);
+
+        //    if (string.IsNullOrEmpty(familyQuery))
+        //    {
+        //        TaskDialog.Show("Поиск семейства", "Не задано имя семейства.");
+        //        return Result.Cancelled;
+        //    }
+        //    bool hasTypeFilter = !string.IsNullOrEmpty(typeQuery);
+
+        //    // -------------------------------------------------------------------
+        //    // 2. Отбираем FamilySymbol'ы, подходящие под фильтр
+        //    // -------------------------------------------------------------------
+        //    var targetSymbolIds = new HashSet<ElementId>();
+        //    var matchedTypeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        //    foreach (FamilySymbol fs in new FilteredElementCollector(doc)
+        //                .OfClass(typeof(FamilySymbol))
+        //                .Cast<FamilySymbol>())
+        //    {
+        //        string famName = SafeTrim(fs.FamilyName);
+        //        if (!string.Equals(famName, familyQuery, StringComparison.OrdinalIgnoreCase))
+        //            continue;
+
+        //        string typeName = SafeTrim(fs.Name);
+        //        if (hasTypeFilter &&
+        //            !string.Equals(typeName, typeQuery, StringComparison.OrdinalIgnoreCase))
+        //            continue;
+
+        //        targetSymbolIds.Add(fs.Id);
+        //        matchedTypeNames.Add(typeName);
+        //    }
+
+        //    if (targetSymbolIds.Count == 0)
+        //    {
+        //        string msg = hasTypeFilter
+        //            ? $"Не найдено типоразмер «{typeQuery}» у семейства «{familyQuery}»."
+        //            : $"Семейство «{familyQuery}» в проекте не найдено.";
+        //        TaskDialog.Show("Поиск семейства", msg);
+        //        return Result.Succeeded;
+        //    }
+
+        //    // -------------------------------------------------------------------
+        //    // 3. Собираем все экземпляры проекта и фильтруем по типу
+        //    // -------------------------------------------------------------------
+        //    var allInstances = new FilteredElementCollector(doc)
+        //        .WhereElementIsNotElementType()
+        //        .ToList();
+
+        //    // -------------------------------------------------------------------
+        //    // 4. Предварительно: viewId → (имя листа, номер листа) через Viewport
+        //    // -------------------------------------------------------------------
+        //    var viewToSheet = new Dictionary<ElementId, (string Name, string Number)>();
+        //    foreach (Viewport vp in new FilteredElementCollector(doc).OfClass(typeof(Viewport)))
+        //    {
+        //        ElementId sheetId = vp.SheetId;
+        //        ElementId viewId = vp.ViewId;
+        //        if (sheetId == ElementId.InvalidElementId || viewId == ElementId.InvalidElementId)
+        //            continue;
+        //        if (!(doc.GetElement(sheetId) is ViewSheet sheet)) continue;
+        //        if (!viewToSheet.ContainsKey(viewId))
+        //            viewToSheet[viewId] = (sheet.Name, sheet.SheetNumber);
+        //    }
+
+        //    // -------------------------------------------------------------------
+        //    // 5. Раскладываем по структурам
+        //    // -------------------------------------------------------------------
+        //    var sheetData = new Dictionary<string, SheetBucket>(StringComparer.OrdinalIgnoreCase);
+        //    var noSheetData = new Dictionary<string, ViewBucket>(StringComparer.OrdinalIgnoreCase);
+
+        //    // Список Id найденных экземпляров — для выделения в модели.
+        //    var foundIds = new List<ElementId>();
+
+        //    int totalInstances = 0;
+        //    int skippedNoView = 0;
+
+        //    foreach (var el in allInstances)
+        //    {
+        //        ElementId tid = el.GetTypeId();
+        //        if (tid == ElementId.InvalidElementId) continue;
+        //        if (!targetSymbolIds.Contains(tid)) continue;
+
+        //        if (!(doc.GetElement(tid) is FamilySymbol sym)) continue;
+
+        //        string familyName = SafeTrim(sym.FamilyName);
+        //        string typeName = SafeTrim(sym.Name);
+
+        //        // --- вид и лист ---
+        //        string viewName = null;
+        //        string sheetName = null;
+        //        string sheetNumber = null;
+
+        //        ElementId vid = el.OwnerViewId;
+        //        if (vid == ElementId.InvalidElementId && el.GroupId != ElementId.InvalidElementId)
+        //        {
+        //            if (doc.GetElement(el.GroupId) is Group grp)
+        //                vid = grp.OwnerViewId;
+        //        }
+
+        //        if (vid != ElementId.InvalidElementId)
+        //        {
+        //            Element viewElem = doc.GetElement(vid);
+        //            if (viewElem is ViewSheet sheetDirect)
+        //            {
+        //                sheetName = sheetDirect.Name;
+        //                sheetNumber = sheetDirect.SheetNumber;
+        //                viewName = "<на листе>";
+        //            }
+        //            else if (viewElem is View v)
+        //            {
+        //                viewName = v.Name;
+        //                if (viewToSheet.TryGetValue(vid, out var s))
+        //                {
+        //                    sheetName = s.Name;
+        //                    sheetNumber = s.Number;
+        //                }
+        //            }
+        //        }
+
+        //        if (string.IsNullOrEmpty(viewName))
+        //        {
+        //            skippedNoView++;
+        //            viewName = "<вид не определён>";
+        //        }
+
+        //        string groupName = null;
+        //        if (el.GroupId != ElementId.InvalidElementId)
+        //            groupName = GetGroupName(doc, el);
+
+        //        // --- раскладываем ---
+        //        if (!string.IsNullOrEmpty(sheetName))
+        //        {
+        //            string sheetKey = sheetNumber + "|" + sheetName;
+        //            if (!sheetData.TryGetValue(sheetKey, out var bucket))
+        //            {
+        //                bucket = new SheetBucket { Name = sheetName, Number = sheetNumber };
+        //                sheetData[sheetKey] = bucket;
+        //            }
+        //            if (!bucket.Views.TryGetValue(viewName, out var vb))
+        //            {
+        //                vb = new ViewBucket();
+        //                bucket.Views[viewName] = vb;
+        //            }
+        //            vb.IncrementFamilyType(familyName, typeName);
+        //            if (!string.IsNullOrEmpty(groupName))
+        //                vb.IncrementGroup(groupName);
+
+        //            bucket.TotalInstances++;
+        //        }
+        //        else
+        //        {
+        //            if (!noSheetData.TryGetValue(viewName, out var vb))
+        //            {
+        //                vb = new ViewBucket();
+        //                noSheetData[viewName] = vb;
+        //            }
+        //            vb.IncrementFamilyType(familyName, typeName);
+        //            if (!string.IsNullOrEmpty(groupName))
+        //                vb.IncrementGroup(groupName);
+        //        }
+
+        //        // Запоминаем Id для выделения
+        //        foundIds.Add(el.Id);
+        //        totalInstances++;
+        //    }
+
+        //    // -------------------------------------------------------------------
+        //    // 6. Отчёт
+        //    // -------------------------------------------------------------------
+        //    var sb = new StringBuilder();
+        //    if (!string.IsNullOrEmpty(selInfo))
+        //        sb.AppendLine(selInfo);
+        //    sb.AppendLine($"Семейство: «{familyQuery}»"
+        //                  + (hasTypeFilter ? $"  |  типоразмер: «{typeQuery}»" : ""));
+        //    sb.AppendLine($"Найдено экземпляров: {totalInstances}");
+        //    sb.AppendLine($"Листов с семейством: {sheetData.Count}");
+        //    sb.AppendLine($"Видов без листа: {noSheetData.Count}");
+        //    sb.AppendLine();
+
+        //    foreach (var bucket in sheetData.Values
+        //        .OrderBy(s => s.Number, StringComparer.OrdinalIgnoreCase)
+        //        .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase))
+        //    {
+        //        sb.AppendLine($"=== Лист «{bucket.Name}» №{bucket.Number} (экз.: {bucket.TotalInstances}) ===");
+        //        foreach (var viewKv in bucket.Views.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+        //            AppendViewLine(sb, viewKv.Key, viewKv.Value);
+        //        sb.AppendLine();
+        //    }
+
+        //    if (noSheetData.Count > 0)
+        //    {
+        //        sb.AppendLine("=== Виды без листа ===");
+        //        foreach (var kv in noSheetData.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+        //            AppendViewLine(sb, kv.Key, kv.Value);
+        //    }
+
+        //    if (skippedNoView > 0)
+        //    {
+        //        sb.AppendLine();
+        //        sb.AppendLine($"Экземпляров без определённого вида: {skippedNoView}");
+        //    }
+
+        //    if (hasTypeFilter && matchedTypeNames.Count > 1)
+        //    {
+        //        sb.AppendLine();
+        //        sb.AppendLine($"Внимание: у семейства несколько символов с именем «{typeQuery}» "
+        //                    + $"({matchedTypeNames.Count}). Учтены все.");
+        //    }
+
+        //    // -------------------------------------------------------------------
+        //    // 7. Выделяем найденные элементы в проекте
+        //    // -------------------------------------------------------------------
+        //    if (foundIds.Count > 0)
+        //    {
+        //        uidoc.Selection.SetElementIds(foundIds);
+        //    }
+
+        //    TaskDialog td = new TaskDialog("Поиск семейства на видах");
+        //    td.MainInstruction = hasTypeFilter
+        //        ? $"«{familyQuery}» / «{typeQuery}» — экземпляров: {totalInstances}"
+        //        : $"«{familyQuery}» — экземпляров: {totalInstances}";
+        //    td.MainContent = sb.ToString();
+        //    td.Show();
+
+        //    return Result.Succeeded;
+        //}
 
         // -------------------------------------------------------------------
         // Вспомогательные
