@@ -19,15 +19,57 @@ namespace Reinforcement
         //private static RibbonPanel targetPanel;
         private static void FillPullDown(RibbonPanel ribbonPanel, PulldownButtonData data)
         {
-            var item = ribbonPanel.AddItem(data) as PulldownButton;
+            Image OV = Properties.Resources.Elevation;
             Image OV1 = Properties.Resources.ES_SelectWithFilter;
-            //Image OV2 = Properties.Resources.toska2;
 
-            App_Helper_Button.CreateButton("Высотные отм труб", "Высотные отм труб", "Reinforcement.HighOtm", Properties.Resources.Elevation, "Позволяет проставить высотные отметки", "на выделенных трубах или без выделения", ribbonPanel);
+            var item = App_Helper_Button.CreatePulldownButton(ribbonPanel,
+                "ES_Instruments", "Инструменты", OV);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "СохрВид", assemblyPath, "Reinforcement.MemoryViewSave", $"Сохранить вид", OV1);
-            App_Helper_Button.AddButtonToPullDownButton(item, "ВосстанВид", assemblyPath, "Reinforcement.MemoryViewCorrect", $"Восстановить вид из записанного ранее состояния", OV1);
-           /* App_Helper_Button.AddButtonToPullDownButton(item, "Высотные отм", assemblyPath, "Reinforcement.HighOtm", $"Расстановка высотных отметок по обьектам\nможете выделить *///обьекты, можете не выделять", Properties.Resources.Elevation);
+            var item1 = App_Helper_Button.CreatePulldownButton(ribbonPanel,
+                "ES_MemoryViewPulldown", "Память вида", OV1);
+            var item2 = App_Helper_Button.CreatePulldownButton(ribbonPanel,
+                "ES_SectionBoxPulldown", "Память 3D границ", OV1);
+            var item3 = App_Helper_Button.CreatePulldownButton(ribbonPanel,
+                "ES_SectionBoxFitPulldown", "Растянуть 3D границы", OV1);
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Высотные отм", assemblyPath, "Reinforcement.HighOtm", $"Расстановка высотных отметок по обьектам\nможете выделить *///обьекты, можете не выделять", OV);
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item1, "СохрВид", assemblyPath, "Reinforcement.MemoryViewSave", "Сохранить вид", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item1, "ВосстанВид", assemblyPath, "Reinforcement.MemoryViewCorrect", "Восстановить вид", OV1);
+
+            App_Helper_Button.AddButtonToPullDownButton(item2, "Сохр3DГран", assemblyPath, "Reinforcement.SectionBoxSave", "Сохранить границы 3D вида", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item2, "Вост3DГран", assemblyPath, "Reinforcement.SectionBoxCorrect", "Восстановить границы 3D вида", OV1);
+
+            App_Helper_Button.AddButtonToPullDownButton(item3, "3Dгор", assemblyPath, "Reinforcement.SectionBoxFitHorizontal", "Растянуть границы 3D горизонтально", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item3, "3Dверт", assemblyPath, "Reinforcement.SectionBoxFitVertical", "Растянуть границы 3D вертикально", OV1);
+
+
+            
+
+            //var item = ribbonPanel.AddItem(data) as PulldownButton;
+            //Image OV1 = Properties.Resources.ES_SelectWithFilter;
+            ////Image OV2 = Properties.Resources.toska2;
+            //var item2 = ribbonPanel.AddItem(data) as PulldownButton;
+            //var item3 = ribbonPanel.AddItem(data) as PulldownButton;
+
+
+
+
+            //App_Helper_Button.CreateButton("Высотные отм труб", "Высотные отм труб", "Reinforcement.HighOtm", Properties.Resources.Elevation, "Позволяет проставить высотные отметки", "на выделенных трубах или без выделения", ribbonPanel);
+
+            //App_Helper_Button.AddButtonToPullDownButton(item, "СохрВид", assemblyPath, "Reinforcement.MemoryViewSave", $"Сохранить вид", OV1);
+            //App_Helper_Button.AddButtonToPullDownButton(item, "ВосстанВид", assemblyPath, "Reinforcement.MemoryViewCorrect", $"Восстановить вид из записанного ранее состояния", OV1);
+
+
+            //App_Helper_Button.AddButtonToPullDownButton(item2, "Сохр3DГран", assemblyPath, "Reinforcement.SectionBoxSave", $"Сохранить границы 3D вида", OV1);
+            //App_Helper_Button.AddButtonToPullDownButton(item2, "Вост3DГран", assemblyPath, "Reinforcement.SectionBoxCorrect", $"Восстановить границы 3D вида", OV1);
+
+            //App_Helper_Button.AddButtonToPullDownButton(item3, "3Dгор", assemblyPath, "Reinforcement.SectionBoxFitHorizontal", $"растянуть границы 3D вида горизонтально", OV1);
+            //App_Helper_Button.AddButtonToPullDownButton(item3, "3Dверт", assemblyPath, "Reinforcement.SectionBoxFitVertical", $"растянуть границы 3D вида вертикально", OV1);
+
+
+
 
 
         }

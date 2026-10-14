@@ -17,6 +17,7 @@ namespace Reinforcement
         private const double HeightTolerance = 1.0 * Mm;
         private const double MatchTolerance = 1.0 * Mm;
         private const double MergeDistance = 200.0 * Mm;
+        private const double MinPipeLength = 500.0 * Mm;
 
         private sealed class PipeInfo
         {
@@ -73,6 +74,9 @@ namespace Reinforcement
             }
             if (ids.Count == 0) return Result.Cancelled;
 
+            // Если выделена ровно одна труба — работаем с ней независимо от длины.
+            bool singlePipe = ids.Count == 1;
+
             SpotDimensionType spotType = new FilteredElementCollector(doc)
                 .OfClass(typeof(SpotDimensionType))
                 .Cast<SpotDimensionType>()
@@ -88,6 +92,7 @@ namespace Reinforcement
 
             List<string> errors = new List<string>();
             List<PipeInfo> pipes = new List<PipeInfo>();
+            int skippedShort = 0;
             foreach (ElementId id in ids)
             {
                 Pipe pipe = doc.GetElement(id) as Pipe;
@@ -96,6 +101,17 @@ namespace Reinforcement
                 {
                     errors.Add("Труба " + id.Value + ": нет прямой оси.");
                     continue;
+                }
+
+                // Отсекаем короткие трубы, если пользователь выделил более одной.
+                if (!singlePipe)
+                {
+                    double length = GetPipeLength(pipe, location);
+                    if (length < MinPipeLength)
+                    {
+                        skippedShort++;
+                        continue;
+                    }
                 }
 
                 XYZ start = location.Curve.GetEndPoint(0);
@@ -110,6 +126,15 @@ namespace Reinforcement
                 });
             }
 
+            if (pipes.Count == 0)
+            {
+                string msg = "Нет подходящих труб для простановки отметок.";
+                if (skippedShort > 0)
+                    msg += "\nПропущено коротких труб (< 500 мм): " + skippedShort + ".";
+                TaskDialog.Show("Отметки оси труб", msg);
+                return Result.Cancelled;
+            }
+
             List<Candidate> candidates = MakeCandidates(pipes);
             List<Candidate> unique = new List<Candidate>();
             foreach (Candidate item in candidates)
@@ -122,6 +147,7 @@ namespace Reinforcement
 
             int created = 0;
             int axisFallbacks = 0;
+            List<ElementId> createdSpotIds = new List<ElementId>();
             using (Transaction transaction = new Transaction(doc, "Отметки оси труб"))
             {
                 transaction.Start();
@@ -129,26 +155,44 @@ namespace Reinforcement
                 {
                     string edgeError = null;
                     string axisError = null;
+                    SpotDimension spot = null;
                     bool ok = item.EdgeReference != null && TryCreateSpot(
                         doc, view, spotType, item.EdgeReference, item.EdgePoint,
-                        out edgeError);
+                        out spot, out edgeError);
                     if (!ok && item.PipeInfo.AxisReference != null)
                     {
                         ok = TryCreateSpot(doc, view, spotType,
-                            item.PipeInfo.AxisReference, item.Point, out axisError);
+                            item.PipeInfo.AxisReference, item.Point,
+                            out spot, out axisError);
                         if (ok) axisFallbacks++;
                     }
-                    if (ok) created++;
-                    else errors.Add("Труба " + item.PipeInfo.Pipe.Id.Value +
-                        ": кромка: " + (edgeError ?? "ссылка не найдена") +
-                        "; ось: " + (axisError ?? "ссылка не найдена"));
+                    if (ok)
+                    {
+                        created++;
+                        if (spot != null) createdSpotIds.Add(spot.Id);
+                    }
+                    else
+                    {
+                        errors.Add("Труба " + item.PipeInfo.Pipe.Id.Value +
+                            ": кромка: " + (edgeError ?? "ссылка не найдена") +
+                            "; ось: " + (axisError ?? "ссылка не найдена"));
+                    }
                 }
                 transaction.Commit();
+            }
+
+            // Выделяем созданные отметки.
+            if (createdSpotIds.Count > 0)
+            {
+                try { uiDoc.Selection.SetElementIds(createdSpotIds); }
+                catch (Exception) { }
             }
 
             string report = "Создано отметок оси: " + created + ".";
             if (axisFallbacks > 0)
                 report += "\nИз них по ссылке на ось: " + axisFallbacks + ".";
+            if (skippedShort > 0)
+                report += "\nПропущено коротких труб (< 500 мм): " + skippedShort + ".";
             if (errors.Count > 0)
                 report += "\nОшибок/пропусков: " + errors.Count + ".\n\n" +
                     string.Join("\n", errors.Take(8).ToArray());
@@ -156,10 +200,25 @@ namespace Reinforcement
             return Result.Succeeded;
         }
 
+        private static double GetPipeLength(Pipe pipe, LocationCurve location)
+        {
+            Parameter p = pipe.LookupParameter("Длина");
+            if (p == null || !p.HasValue)
+                p = pipe.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
+            if (p != null && p.HasValue)
+            {
+                if (p.StorageType == StorageType.Double) return p.AsDouble();
+                if (p.StorageType == StorageType.Integer) return p.AsInteger();
+            }
+            try { return location.Curve.Length; }
+            catch (Exception) { return 0.0; }
+        }
+
         private static bool TryCreateSpot(Document doc, View view,
             SpotDimensionType spotType, Reference reference, XYZ point,
-            out string error)
+            out SpotDimension createdSpot, out string error)
         {
+            createdSpot = null;
             error = null;
             using (SubTransaction attempt = new SubTransaction(doc))
             {
@@ -175,6 +234,7 @@ namespace Reinforcement
                         throw new InvalidOperationException("NewSpotElevation вернул null.");
                     spot.SpotDimensionType = spotType;
                     attempt.Commit();
+                    createdSpot = spot;
                     return true;
                 }
                 catch (Exception ex)
@@ -188,8 +248,6 @@ namespace Reinforcement
 
         private static Reference FindAxisReference(Pipe pipe, View view, XYZ start, XYZ end)
         {
-            // Revit stores the pipe axis as non-visible geometry. A reference to the
-            // WHOLE line is needed; endpoint references are unsuitable for a spot.
             Options options = new Options
             {
                 ComputeReferences = true,
@@ -201,7 +259,6 @@ namespace Reinforcement
             catch (Exception) { }
             if (found != null) return found;
 
-            // Geometry extraction can be view-dependent. Retry without a view.
             options = new Options
             {
                 ComputeReferences = true,
@@ -245,8 +302,6 @@ namespace Reinforcement
                 else horizontal.Add(pipe);
             }
 
-            // One spot for each elevation among horizontal pipes; sloped joints
-            // at that elevation are deduplicated in Execute.
             List<List<PipeInfo>> levels = new List<List<PipeInfo>>();
             foreach (PipeInfo pipe in horizontal)
             {
@@ -281,7 +336,6 @@ namespace Reinforcement
             double length = joint.DistanceTo(other);
             if (length < 0.01 * Mm)
                 return new Candidate { PipeInfo = pipe, Joint = joint, Point = joint };
-            // Move 1 mm inside the pipe: projection at a geometric end can fail.
             XYZ point = length > 2.0 * Mm
                 ? joint + (other - joint).Normalize() * Mm
                 : joint + (other - joint) * 0.5;

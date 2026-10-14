@@ -31,9 +31,17 @@ using AW = Autodesk.Windows;
 
 namespace Reinforcement
 {
-    public enum EPanelSelf
+    public enum EUserOtdel //все отделы для определения типа пользователя
     {
+        None=0,
         KR,
+        AR,
+        Engineer, //ОВ, ВК, ЭЛ - все инженеры
+    }
+
+    public enum EPanelSelf //все конфигурации в порядке инициализации
+    {
+        KR=0,
         AR,
         OV,
         VK,
@@ -42,9 +50,9 @@ namespace Reinforcement
         Test,
         Admin
     }
-    public enum EPanels
+    public enum EPanels //все панели внутри которых кнопки, в порядке инициализации
     {
-        Конфигурация,
+        Конфигурация=0,
         СПДС,
         СхематичноеАрмирование,
         ДетальноеАрмирование,
@@ -115,6 +123,7 @@ namespace Reinforcement
             .Cast<EPanels>()
             .ToList();
 
+        public static EUserOtdel EUserOtdel { get; set; } = EUserOtdel.None;
         //можем менять панель если надо так то
         public static EPanelSelf MainEPanel { get; set; } = EPanelSelf.KR;//главная панель при запуске
 
@@ -129,10 +138,11 @@ namespace Reinforcement
             App_Apdater_1.CleanupTargetFolder();
             TryStartUpdate(app);
 
+            Result result = Result.Succeeded;
             try
             {
                 // ... твоя инициализация ...
-                return Startup(app);
+                result= Startup(app);
             }
             catch (Exception ex)
             {
@@ -152,6 +162,20 @@ namespace Reinforcement
                     ex.Message);
                 return Result.Failed;
             }
+
+            try
+            {
+                if (result == Result.Succeeded)
+                {
+                    App_OtherExe.Execute();
+                }
+            }
+            catch (Exception ex)
+            {
+                try { App_Apdater_1.AppErrors?.LogError(ex); } catch { }
+            }
+            return result;
+
         }
         /// <summary>
         /// Безопасный запуск автообновления.
@@ -188,6 +212,8 @@ namespace Reinforcement
             app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
             
             
+
+
 
             //Create tab
             string tabName = "ЕС BIM";
@@ -275,6 +301,24 @@ namespace Reinforcement
                 }
 
             }
+
+            //определяем пользователя
+            string usName = Environment.UserName.ToLower();
+            if(usName.StartsWith("k"))
+            {
+                EUserOtdel = EUserOtdel.KR;
+            }
+            else if(usName.StartsWith("a"))
+            {
+                EUserOtdel = EUserOtdel.AR;
+            }
+            else if(usName.StartsWith("i"))
+            {
+                EUserOtdel = EUserOtdel.Engineer;
+            }
+            
+
+
             //создаем начальную панель
             App_Helper_Panels.CreatePanelConfiguration(MainEPanel);
 

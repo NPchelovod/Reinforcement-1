@@ -288,7 +288,7 @@ namespace Reinforcement
         /// Удаляет альтернативный поток Zone.Identifier у одного файла.
         /// Никогда не бросает исключений.
         /// </summary>
-        private static void RemoveZoneIdentifier(string filePath)
+        public static void RemoveZoneIdentifier(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
                 return;

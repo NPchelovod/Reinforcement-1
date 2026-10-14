@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using static Reinforcement.SnapshotChooser;
 
 namespace Reinforcement
 {
@@ -19,10 +20,20 @@ namespace Reinforcement
     {
         public DateTime Date { get; set; }
         public string UserName { get; set; }
+        /// <summary>
+        /// Пользовательское название/примечание. Может быть null или пустым —
+        /// тогда в списке отображается только дата и автор.
+        /// </summary>
+        public string Label { get; set; } = string.Empty;
         public HashSet<int> ElementIds { get; set; } = new HashSet<int>();
 
         public override string ToString()
-            => $"{Date:yyyy-MM-dd HH:mm}  |  {UserName,-20}  |  элементов: {ElementIds.Count}";
+        {
+            string core = $"{Date:yyyy-MM-dd HH:mm}  |  {UserName,-20}  |  элементов: {ElementIds.Count}";
+            return string.IsNullOrWhiteSpace(Label)
+                ? core
+                : $"[{Label}]  " + core;
+        }
     }
 
     public class ElementMemory
@@ -43,6 +54,7 @@ namespace Reinforcement
         /// System.Text.Json такое не умеет, поэтому List.
         /// </summary>
         public List<MemorySnapshot> Snapshots { get; set; } = new List<MemorySnapshot>();
+
 
         public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {
@@ -122,6 +134,14 @@ namespace Reinforcement
                     "Новая запись не создавалась.");
                 return Result.Succeeded;
             }
+            // 3.5) Спрашиваем у пользователя название/примечание для снимка.
+            SnapshotLabelResult labelResult = SnapshotLabelDialog.Ask(
+                view.Name, doc.Title, currentIds.Count);
+
+            if (labelResult.IsCancelled)
+                return Result.Cancelled;
+
+            string label = labelResult.Label;   // может быть null
 
             // 4) Добавляем новый снимок
             em.ViewId = viewIdValue;
@@ -132,6 +152,7 @@ namespace Reinforcement
             {
                 Date = DateTime.Now,
                 UserName = Environment.UserName,
+                Label = label,                 // <-- добавили
                 ElementIds = currentIds
             });
 
@@ -171,9 +192,9 @@ namespace Reinforcement
                 MainContent =
                     $"Вид: {view.Name}\n" +
                     $"Документ: {doc.Title}\n" +
+                    (string.IsNullOrWhiteSpace(label) ? "" : $"Название: {label}\n") +
                     $"Элементов сохранено: {currentIds.Count}\n" +
-                    $"Снимок № {em.Snapshots.Count} от {DateTime.Now:yyyy-MM-dd HH:mm}\n",// +
-                    //$"Файл: {pathInfo}",
+                    $"Снимок № {em.Snapshots.Count} от {DateTime.Now:yyyy-MM-dd HH:mm}\n",
                 CommonButtons = TaskDialogCommonButtons.Ok,
                 ExpandedContent = em.Snapshots.Count == 1
                     ? "Это первый снимок для данного вида."
@@ -269,7 +290,7 @@ namespace Reinforcement
             }
             else
             {
-                snapshot = SnapshotChooser.Choose(em.Snapshots);
+                snapshot = SnapshotChooser.Choose(em, viewIdValue);
                 if (snapshot == null) return Result.Cancelled;
             }
 
@@ -329,28 +350,38 @@ namespace Reinforcement
     // ---------------------------------------------------------------------
     internal static class SnapshotChooser
     {
-        public static MemorySnapshot Choose(List<MemorySnapshot> snapshots)
+        public static MemorySnapshot Choose(ElementMemory memory, int viewId)
         {
             MemorySnapshot result = null;
+            var snapshots = memory.Snapshots ?? new List<MemorySnapshot>();
 
             var window = new Window
             {
                 Title = "Выбор сохранённого состояния вида",
-                Width = 560,
-                Height = 340,
+                Width = 620,
+                Height = 400,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 ResizeMode = ResizeMode.NoResize
             };
 
             var grid = new System.Windows.Controls.Grid();
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var listBox = new ListBox();
-            foreach (var s in snapshots)
-                listBox.Items.Add(s.ToString());
-            listBox.SelectedIndex = snapshots.Count - 1; // по умолчанию — самый свежий
-            System.Windows.Controls.Grid.SetRow(listBox, 0);
+            var hint = new TextBlock
+            {
+                Text = "Выделите строку и нажмите Delete, чтобы удалить снимок из файла памяти вида.",
+                Margin = new Thickness(8, 8, 8, 4),
+                Foreground = System.Windows.Media.Brushes.DimGray,
+                FontStyle = FontStyles.Italic,
+                TextWrapping = TextWrapping.Wrap
+            };
+            System.Windows.Controls.Grid.SetRow(hint, 0);
+            grid.Children.Add(hint);
+
+            var listBox = new ListBox { Margin = new Thickness(8, 0, 8, 0) };
+            System.Windows.Controls.Grid.SetRow(listBox, 1);
             grid.Children.Add(listBox);
 
             var panel = new StackPanel
@@ -359,6 +390,8 @@ namespace Reinforcement
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(6)
             };
+            System.Windows.Controls.Grid.SetRow(panel, 2);
+            grid.Children.Add(panel);
 
             var ok = new Button
             {
@@ -374,10 +407,56 @@ namespace Reinforcement
                 Margin = new Thickness(4),
                 IsCancel = true
             };
+            panel.Children.Add(ok);
+            panel.Children.Add(cancel);
+
+            void RefreshList()
+            {
+                listBox.Items.Clear();
+                foreach (var s in snapshots)
+                    listBox.Items.Add(s.ToString());
+                if (snapshots.Count > 0)
+                    listBox.SelectedIndex = snapshots.Count - 1;
+                ok.IsEnabled = snapshots.Count > 0;
+            }
+            RefreshList();
+
+            // Удаление выделенной строки по Delete — с реальной перезаписью файла.
+            window.PreviewKeyDown += (s, e) =>
+            {
+                if (e.Key != System.Windows.Input.Key.Delete) return;
+                int idx = listBox.SelectedIndex;
+                if (idx < 0 || idx >= snapshots.Count) return;
+
+                var toRemove = snapshots[idx];
+                var confirm = MessageBox.Show(window,
+                    $"Удалить снимок от {toRemove.Date:yyyy-MM-dd HH:mm} ({toRemove.UserName})?\n\n" +
+                    "Изменение будет немедленно записано в файл памяти вида. Действие необратимо.",
+                    "Удаление снимка",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                e.Handled = true;
+                if (confirm != MessageBoxResult.Yes) return;
+
+                snapshots.RemoveAt(idx);
+                memory.Snapshots = snapshots;
+                SaveMemory(memory, viewId);
+                RefreshList();
+
+                if (snapshots.Count == 0)
+                {
+                    MessageBox.Show(window,
+                        "Все снимки для этого вида удалены. Файл памяти вида стёрт.",
+                        "Удаление снимков",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    window.DialogResult = false;
+                    window.Close();
+                }
+            };
 
             ok.Click += (s, e) =>
             {
-                if (listBox.SelectedIndex >= 0)
+                if (listBox.SelectedIndex >= 0 && listBox.SelectedIndex < snapshots.Count)
                     result = snapshots[listBox.SelectedIndex];
                 window.DialogResult = true;
                 window.Close();
@@ -388,12 +467,171 @@ namespace Reinforcement
                 window.Close();
             };
 
-            panel.Children.Add(ok);
-            panel.Children.Add(cancel);
-            System.Windows.Controls.Grid.SetRow(panel, 1);
+            window.Content = grid;
+            window.ShowDialog();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Перезаписывает JSON-файл памяти вида. Если снимков не осталось — удаляет файл.
+        /// </summary>
+        private static void SaveMemory(ElementMemory memory, int viewId)
+        {
+            string path = ElementMemory.FilePath(viewId);
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                if (memory.Snapshots == null || memory.Snapshots.Count == 0)
+                {
+                    if (File.Exists(path)) File.Delete(path);
+                    return;
+                }
+
+                string json = JsonSerializer.Serialize(memory, ElementMemory.Options);
+                string tmp = path + ".tmp";
+                File.WriteAllText(tmp, json);
+
+                if (File.Exists(path))
+                    File.Replace(tmp, path, destinationBackupFileName: null,
+                                 ignoreMetadataErrors: true);
+                else
+                    File.Move(tmp, path);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Не удалось сохранить изменения в файл памяти вида:\n" + ex.Message,
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+    }
+
+    // ---------------------------------------------------------------------
+    //  Диалог ввода названия снимка (возвращает результат-класс, без out/ref)
+    // ---------------------------------------------------------------------
+    internal sealed class SnapshotLabelResult
+    {
+        public bool IsCancelled { get; private set; }
+        public string Label { get; private set; }
+
+        public static SnapshotLabelResult Cancel()
+            => new SnapshotLabelResult { IsCancelled = true };
+
+        public static SnapshotLabelResult Ok(string label)
+            => new SnapshotLabelResult { Label = label };
+    }
+
+    internal static class SnapshotLabelDialog
+    {
+        public static SnapshotLabelResult Ask(
+            string viewName, string docTitle, int elementCount)
+        {
+            SnapshotLabelResult result = SnapshotLabelResult.Cancel();
+
+            var window = new Window
+            {
+                Title = "Название снимка",
+                Width = 480,
+                Height = 220,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                ResizeMode = ResizeMode.NoResize,
+                ShowInTaskbar = false
+            };
+
+            var grid = new System.Windows.Controls.Grid();
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var info = new TextBlock
+            {
+                Margin = new Thickness(10, 10, 10, 4),
+                TextWrapping = TextWrapping.Wrap,
+                Text =
+                    $"Вид: {viewName}\n" +
+                    $"Документ: {docTitle}\n" +
+                    $"Элементов: {elementCount}"
+            };
+            System.Windows.Controls.Grid.SetRow(info, 0);
+            grid.Children.Add(info);
+
+            var prompt = new TextBlock
+            {
+                Text = "Название / примечание (необязательно):",
+                Margin = new Thickness(10, 6, 10, 2)
+            };
+            System.Windows.Controls.Grid.SetRow(prompt, 1);
+            grid.Children.Add(prompt);
+
+            var textBox = new System.Windows.Controls.TextBox
+            {
+                Margin = new Thickness(10, 0, 10, 8),
+                VerticalAlignment = VerticalAlignment.Top,
+                AcceptsReturn = false,
+                MaxLength = 120
+            };
+            System.Windows.Controls.Grid.SetRow(textBox, 2);
+            grid.Children.Add(textBox);
+
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(6)
+            };
+            System.Windows.Controls.Grid.SetRow(panel, 3);
             grid.Children.Add(panel);
 
+            var ok = new Button
+            {
+                Content = "Сохранить",
+                Width = 110,
+                Margin = new Thickness(4),
+                IsDefault = true
+            };
+            var skip = new Button
+            {
+                Content = "Без названия",
+                Width = 130,
+                Margin = new Thickness(4)
+            };
+            var cancel = new Button
+            {
+                Content = "Отмена",
+                Width = 90,
+                Margin = new Thickness(4),
+                IsCancel = true
+            };
+            panel.Children.Add(ok);
+            panel.Children.Add(skip);
+            panel.Children.Add(cancel);
+
+            ok.Click += (s, e) =>
+            {
+                string text = (textBox.Text ?? "").Trim();
+                result = SnapshotLabelResult.Ok(string.IsNullOrEmpty(text) ? null : text);
+                window.DialogResult = true;
+                window.Close();
+            };
+            skip.Click += (s, e) =>
+            {
+                result = SnapshotLabelResult.Ok(null);
+                window.DialogResult = true;
+                window.Close();
+            };
+            cancel.Click += (s, e) =>
+            {
+                result = SnapshotLabelResult.Cancel();
+                window.DialogResult = false;
+                window.Close();
+            };
+
             window.Content = grid;
+            window.Loaded += (s, e) => textBox.Focus();
             window.ShowDialog();
 
             return result;

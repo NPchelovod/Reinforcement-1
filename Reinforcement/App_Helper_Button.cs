@@ -109,7 +109,23 @@ namespace Reinforcement
             }
             return null;
         }
+        public static PulldownButton CreatePulldownButton(
+        RibbonPanel panel, string uniqueName, string text, Image image)
+        {
+            if (panel == null) throw new ArgumentNullException(nameof(panel));
 
+            var data = new PulldownButtonData(uniqueName, text);
+            var button = panel.AddItem(data) as PulldownButton;
+            if (button == null) return null;
+
+            if (image != null)
+            {
+                ImageSource src = Convert(image);
+                button.Image = src;
+                button.LargeImage = src;
+            }
+            return button;
+        }
 
 
 
