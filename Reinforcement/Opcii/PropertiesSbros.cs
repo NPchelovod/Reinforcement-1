@@ -18,6 +18,8 @@ namespace Reinforcement
             //сброс поисковых параметров статики
             HelperSeach.PastElements.Clear();
             HelperSeachAllElements.newNames.Clear();
+
+            HelperSeach.ClearCache();
             return Result.Succeeded;
             }
         }

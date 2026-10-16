@@ -137,7 +137,11 @@ namespace Reinforcement
                     }
                 }
             }
+            //текущая панель чтобы может знать какой чаще пользуются???
+            App.CurrentEPanel = ePanelSelf;
         }
+
+        
 
 
     }

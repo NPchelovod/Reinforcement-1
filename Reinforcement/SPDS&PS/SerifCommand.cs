@@ -44,9 +44,9 @@ namespace Reinforcement
             return Result.Succeeded;
         }
         public static HashSet<string> list_Name = new HashSet<string>
-{
-   "ЕС_Засечка"
-};
+        {
+           "ЕС_Засечка"
+        };
         
 
     }

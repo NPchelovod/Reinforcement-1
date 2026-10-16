@@ -38,7 +38,7 @@ namespace Reinforcement
         AR,
         Engineer, //ОВ, ВК, ЭЛ - все инженеры
     }
-
+    
     public enum EPanelSelf //все конфигурации в порядке инициализации
     {
         KR=0,
@@ -127,6 +127,7 @@ namespace Reinforcement
         //можем менять панель если надо так то
         public static EPanelSelf MainEPanel { get; set; } = EPanelSelf.KR;//главная панель при запуске
 
+        public static EPanelSelf CurrentEPanel { get; set; } = EPanelSelf.KR;//текущая панель
         public static UIControlledApplication Application { get; private set; }=null;
        
         public Result OnStartup(UIControlledApplication app)

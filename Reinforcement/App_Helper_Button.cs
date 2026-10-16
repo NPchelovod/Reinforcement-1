@@ -142,7 +142,42 @@ namespace Reinforcement
             }
         }
 
+        public static SplitButton CreateSplitButton(
+    RibbonPanel panel, string uniqueName, string text, Image image)
+        {
+            if (panel == null) throw new ArgumentNullException(nameof(panel));
 
+            var data = new SplitButtonData(uniqueName, text);
+            var button = panel.AddItem(data) as SplitButton;
+            if (button == null) return null;
+
+            if (image != null)
+            {
+                ImageSource src = Convert(image);
+                button.Image = src;
+                button.LargeImage = src;
+            }
+            return button;
+        }
+
+        public static PushButton AddButtonToSplitButton(
+            SplitButton button, string name, string path,
+            string linkToCommand, string toolTip, Image img)
+        {
+            var data = new PushButtonData(name, name, path, linkToCommand);
+            var pushButton = button.AddPushButton(data) as PushButton;
+            if (pushButton == null) return null;
+
+            pushButton.ToolTip = toolTip;
+
+            var imageSource = App_Helper_Button.Convert(img);
+            if (imageSource != null)
+            {
+                pushButton.Image = imageSource;
+                pushButton.LargeImage = imageSource;
+            }
+            return pushButton;
+        }
 
 
     }

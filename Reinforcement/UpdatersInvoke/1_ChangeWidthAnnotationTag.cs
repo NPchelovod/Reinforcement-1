@@ -146,7 +146,7 @@ namespace Updaters
         {
             try
             {
-                string name = element.LookupParameter("Семейство и типоразмер").AsValueString();
+                string name = element?.LookupParameter("Семейство и типоразмер").AsValueString();
 
                 if (!name.Contains("Выноска") && !name.Contains("выноска")) { return false; }
                 
