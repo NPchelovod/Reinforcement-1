@@ -9,47 +9,110 @@ namespace Reinforcement
     public class HelperSeach
     {
         public static Dictionary<Document, Dictionary<string, Element>> PastElements = new Dictionary<Document, Dictionary<string, Element>>();
+        // Переопределённые (эффективные) наборы имён.
+        // Исходные HashSet'ы, которые передаёт вызывающий код, НИКОГДА не мутируются.
+        // На каждый (документ, исходный набор имён) хранится свой эффективный набор,
+        // в который дописываются пользовательские переопределения и выбранные кандидаты.
+        // Сравнение исходных наборов — по содержимому, а не по ссылке,
+        // чтобы свежесозданный HashSet с теми же строками тоже находил переопределение.
+        private static readonly Dictionary<Document, Dictionary<HashSet<string>, HashSet<string>>> _overriddenNames
+            = new Dictionary<Document, Dictionary<HashSet<string>, HashSet<string>>>();
+
+        private sealed class HashSetByNameComparer : IEqualityComparer<HashSet<string>>
+        {
+            public static readonly HashSetByNameComparer Instance = new HashSetByNameComparer();
+
+            public bool Equals(HashSet<string> x, HashSet<string> y)
+            {
+                if (ReferenceEquals(x, y)) return true;
+                if (x == null || y == null) return false;
+                if (x.Count != y.Count) return false;
+                foreach (var s in x)
+                    if (!y.Contains(s)) return false;
+                return true;
+            }
+
+            public int GetHashCode(HashSet<string> obj)
+            {
+                if (obj == null) return 0;
+                unchecked
+                {
+                    int hash = 17;
+                    foreach (var s in obj.OrderBy(n => n, StringComparer.Ordinal))
+                        hash = hash * 31 + (s?.GetHashCode() ?? 0);
+                    return hash;
+                }
+            }
+        }
+        /// <summary>
+        /// Возвращает эффективный набор имён для (doc, original):
+        ///   - если переопределение уже есть — вернёт его;
+        ///   - если нет и createIfMissing=false — вернёт original;
+        ///   - если нет и createIfMissing=true — создаст копию original,
+        ///     зарегистрирует её как переопределение и вернёт.
+        /// Оригинал никогда не мутируется.
+        /// </summary>
+        private static HashSet<string> GetEffective(Document doc, HashSet<string> original,
+                                                    bool createIfMissing = false)
+        {
+            if (original == null) return null;
+            if (doc == null) return original;
+
+            Dictionary<HashSet<string>, HashSet<string>> perDoc;
+            if (!_overriddenNames.TryGetValue(doc, out perDoc))
+            {
+                if (!createIfMissing) return original;
+                perDoc = new Dictionary<HashSet<string>, HashSet<string>>(HashSetByNameComparer.Instance);
+                _overriddenNames[doc] = perDoc;
+            }
+
+            HashSet<string> effective;
+            if (perDoc.TryGetValue(original, out effective)) return effective;
+            if (!createIfMissing) return original;
+
+            effective = new HashSet<string>(original);
+            perDoc[original] = effective;
+            return effective;
+        }
 
         // Оригинальные содержимые HashSet'ов, которые были изменены
-        // пользовательскими переопределениями или принятием неточного кандидата.
-        // Ключ — сам HashSet (сравнение по ссылке, т.к. HashSet не переопределяет Equals).
-        private static readonly Dictionary<HashSet<string>, string[]> _overrides
-            = new Dictionary<HashSet<string>, string[]>();
-
-        private static void SaveOverride(HashSet<string> set)
-        {
-            if (set == null) return;
-            if (!_overrides.ContainsKey(set)) _overrides[set] = set.ToArray();
-        }
+        
 
         public static bool ResetNamesParam;
         public static void ClearCache(Document document = null)
         {
-            if (document == null) PastElements.Clear();
-            else PastElements.Remove(document);
-
-            // Откат пользовательских переопределений имён семейств/типоразмеров.
-            foreach (var kv in _overrides)
+            if (document == null)
             {
-                kv.Key.Clear();
-                foreach (var n in kv.Value) kv.Key.Add(n);
+                PastElements.Clear();
+                _overriddenNames.Clear();
             }
-            _overrides.Clear();
+            else
+            {
+                PastElements.Remove(document);
+                _overriddenNames.Remove(document);
+            }
         }
         public static HashSet<string> PereopPossibleNamesType(HashSet<string> names)
         {
             if (names == null) throw new ArgumentNullException(nameof(names));
             ResetNamesParam = false;
-            if (MessageBox.Show($"Переопределить семейство '{names.FirstOrDefault()}'?", "Переопределение семейства", MessageBoxButtons.YesNo) == DialogResult.Yes)
+
+            if (MessageBox.Show($"Переопределить семейство '{names.FirstOrDefault()}'?",
+                                "Переопределение семейства",
+                                MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 var input = HelperPrivateStatic.GetUserInputWithForm();
                 if (input.Item2 && !string.IsNullOrWhiteSpace(input.Item1))
                 {
-                    SaveOverride(names);          // <-- запоминаем оригинал до правки
-                    names.Clear(); names.Add(input.Item1.Trim()); 
-                
+                    var doc = RevitAPI.Document;
+                    // Пишем в эффективный набор — исходный не трогаем.
+                    var effective = GetEffective(doc, names, createIfMissing: true);
+                    effective.Clear();
+                    effective.Add(input.Item1.Trim());
                 }
             }
+
+            // Возвращаем исходный набор как есть — он не мутируется.
             return names;
         }
         private static string NameKey(IEnumerable<string> names) => SearchQueryKey.Names(names);
@@ -125,14 +188,23 @@ namespace Reinforcement
         //    return null;
         //}
 
-        public static Element GetExistFamily(HashSet<string> PossibleNamesFamily, HashSet<string> PossibleNamesType, ElementTypeOrSymbol Type_seach)
+        public static Element GetExistFamily(HashSet<string> PossibleNamesFamily,
+                                     HashSet<string> PossibleNamesType,
+                                     ElementTypeOrSymbol Type_seach)
         {
-            if (PossibleNamesFamily == null || PossibleNamesType == null) throw new ArgumentNullException("names");
+            if (PossibleNamesFamily == null || PossibleNamesType == null)
+                throw new ArgumentNullException("names");
             if (ResetNamesParam) { ClearCache(); PereopPossibleNamesType(PossibleNamesType); }
-            var doc = RevitAPI.Document;
-            if (NameKey(PossibleNamesFamily).Length + NameKey(PossibleNamesType).Length == 0) return null;
 
-            var found = Cached(doc, Key(PossibleNamesFamily, PossibleNamesType, Type_seach));
+            var doc = RevitAPI.Document;
+
+            // Достаём эффективные наборы из словаря (или оригиналы, если переопределений нет).
+            var effFamily = GetEffective(doc, PossibleNamesFamily);
+            var effType = GetEffective(doc, PossibleNamesType);
+
+            if (NameKey(effFamily).Length + NameKey(effType).Length == 0) return null;
+
+            var found = Cached(doc, Key(effFamily, effType, Type_seach));
             if (found != null) return found;
 
             var candidates = Collect(doc, Type_seach);
@@ -140,24 +212,22 @@ namespace Reinforcement
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 var exact = candidates
-                    .Where(t => Exact(PossibleNamesFamily, t.FamilyName) && Exact(PossibleNamesType, t.Name))
+                    .Where(t => Exact(effFamily, t.FamilyName) && Exact(effType, t.Name))
                     .ToList();
 
                 ElementType best;
 
                 if (exact.Count == 1)
                 {
-                    // Ровно одно точное совпадение — берём молча
                     best = exact[0];
                 }
                 else
                 {
-                    // 0 или >1 точных — показываем окно с топ-3
                     var pool = exact.Count > 1 ? exact : candidates;
                     var ranked = pool
-                        .OrderByDescending(t => Score(PossibleNamesFamily, t.FamilyName)
-                                              + Score(PossibleNamesType, t.Name))
-                        .Take(3)
+                        .OrderByDescending(t => Score(effFamily, t.FamilyName)
+                                              + Score(effType, t.Name))
+                        .Take(6)
                         .ToList();
 
                     string title = exact.Count > 1
@@ -168,71 +238,89 @@ namespace Reinforcement
 
                     if (best == null)
                     {
-                        // Пользователь не выбрал из окна — ввод имени типоразмера
-                        var input = HelperPrivateStatic.GetUserInputWithForm(PossibleNamesType.FirstOrDefault());
+                        // Отказались от окна — ввод имени типоразмера вручную.
+                        var input = HelperPrivateStatic.GetUserInputWithForm(effType.FirstOrDefault());
                         if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
-                        PossibleNamesType.Clear();
-                        PossibleNamesType.Add(input.Item1.Trim());
+
+                        // Пишем не в PossibleNamesType, а в эффективный набор.
+                        var effectiveType = GetEffective(doc, PossibleNamesType, createIfMissing: true);
+                        effectiveType.Add(input.Item1.Trim());
+                        effType = effectiveType;
                         continue;
                     }
                 }
 
                 if (best == null) return null;
-                SaveOverride(PossibleNamesType);  // <-- сюда добавили имя best.Name
-                PossibleNamesType.Add(best.Name);
-                return Remember(doc, Key(PossibleNamesFamily, PossibleNamesType, Type_seach), best);
+
+                // Фиксируем выбор пользователя в эффективном наборе.
+                var effTypeFinal = GetEffective(doc, PossibleNamesType, createIfMissing: true);
+                effTypeFinal.Add(best.Name);
+                effType = effTypeFinal;
+
+                return Remember(doc, Key(effFamily, effType, Type_seach), best);
             }
 
             return null;
         }
-        public static Element GetExistFamily(HashSet<string> PossibleNamesFamilySymbol, ElementTypeOrSymbol Type_seach)
+        public static Element GetExistFamily(HashSet<string> PossibleNamesFamilySymbol,
+                                     ElementTypeOrSymbol Type_seach)
         {
-            if (PossibleNamesFamilySymbol == null) throw new ArgumentNullException(nameof(PossibleNamesFamilySymbol));
+            if (PossibleNamesFamilySymbol == null)
+                throw new ArgumentNullException(nameof(PossibleNamesFamilySymbol));
             if (ResetNamesParam) { ClearCache(); PereopPossibleNamesType(PossibleNamesFamilySymbol); }
-            if (NameKey(PossibleNamesFamilySymbol).Length == 0) return null;
+
             var doc = RevitAPI.Document;
+
+            var effNames = GetEffective(doc, PossibleNamesFamilySymbol);
+            if (NameKey(effNames).Length == 0) return null;
+
             var empty = new HashSet<string>();
-            string key = "name|" + Key(empty, PossibleNamesFamilySymbol, Type_seach);
-            var cached = Cached(doc, key); if (cached != null) return cached;
+            string key = "name|" + Key(empty, effNames, Type_seach);
+            var cached = Cached(doc, key);
+            if (cached != null) return cached;
+
             var candidates = Collect(doc, Type_seach);
-            Func<ElementType, string> name = t => Type_seach == ElementTypeOrSymbol.ElementType ? t.Name : t.FamilyName;
-            var answer = SeachNameElement(PossibleNamesFamilySymbol, candidates.Select(name).Distinct().ToList());
-            if (string.IsNullOrEmpty(answer.ePile)) return null;
-            var matches = candidates.Where(t => name(t) == answer.ePile).ToList();
-            if (matches.Count == 0) return null;
-            // Если тип/имя встречается в нескольких семействах — молча берём первое попавшееся,
-            // без диалога «Несколько совпадений».
-            SaveOverride(PossibleNamesFamilySymbol);  // <-- запоминаем до добавления
-            PossibleNamesFamilySymbol.Add(answer.ePile);
-            return Remember(doc, "name|" + Key(empty, PossibleNamesFamilySymbol, Type_seach), matches[0]);
+            Func<ElementType, string> name = t => Type_seach == ElementTypeOrSymbol.ElementType
+                                                    ? t.Name
+                                                    : t.FamilyName;
+
+            var chosen = SeachNameElement(effNames, candidates, name);
+            if (chosen == null) return null;
+
+            // Фиксируем выбор в эффективном наборе (оригинал не трогаем).
+            var effNamesFinal = GetEffective(doc, PossibleNamesFamilySymbol, createIfMissing: true);
+            effNamesFinal.Add(name(chosen));
+
+            return Remember(doc, "name|" + Key(empty, effNamesFinal, Type_seach), chosen);
         }
-        public static (string nPile, string ePile) SeachNameElement(HashSet<string> PossibleNamesFamilySymbol, List<string> elements)
+        public static ElementType SeachNameElement(
+    HashSet<string> PossibleNamesFamilySymbol,
+    List<ElementType> elements,
+    Func<ElementType, string> getName)
         {
             if (PossibleNamesFamilySymbol == null || elements == null) throw new ArgumentNullException("names");
             var requested = PossibleNamesFamilySymbol.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
-            var actual = elements.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToList();
-            if (requested.Count == 0 || actual.Count == 0) return ("", null);
+            if (requested.Count == 0 || elements.Count == 0) return null;
 
             for (int attempt = 0; attempt < 4; attempt++)
             {
-                // 1. Точное совпадение — возвращаем сразу, без диалогов.
+                // 1. Точное совпадение — молча возвращаем первый попавшийся по имени,
+                //    но с сохранением всех кандидатов в списке (без GroupBy).
                 foreach (var n in requested)
-                    foreach (var e in actual)
-                        if (StringSimilarity.Normalize(n) == StringSimilarity.Normalize(e))
-                            return (n, e);
+                    foreach (var el in elements)
+                        if (StringSimilarity.Normalize(n) == StringSimilarity.Normalize(getName(el)))
+                            return el;
 
-                // 2. Собираем топ-3 по схожести и показываем окно выбора.
-                var ranked = actual
-                    .Select(e => new { Name = e, Score = requested.Max(n => StringSimilarity.Calculate(n, e)) })
+                // 2. Топ-5 по схожести — без схлопывания одинаковых имён.
+                var ranked = elements
+                    .Select(el => new { El = el, Score = requested.Max(n => StringSimilarity.Calculate(n, getName(el))) })
                     .OrderByDescending(x => x.Score)
-                    .Take(3)
-                    .Select(x => x.Name)
+                    .Take(5)
+                    .Select(x => x.El)
                     .ToList();
 
-                string chosen = ShowCandidateSelection(ranked, "Точное имя не найдено");
-
-                if (chosen != null)
-                    return (requested.FirstOrDefault(), chosen);
+                var chosen = ShowCandidateSelection(ranked, "Точное имя не найдено");
+                if (chosen != null) return chosen;
 
                 // 3. Пользователь отменил окно — просим ввести имя вручную.
                 var input = HelperPrivateStatic.GetUserInputWithForm(requested.FirstOrDefault());
@@ -240,7 +328,7 @@ namespace Reinforcement
                 requested.Clear();
                 requested.Add(input.Item1.Trim());
             }
-            return ("", null);
+            return null;
         }
 
 
@@ -309,7 +397,7 @@ namespace Reinforcement
                 foreach (var t in candidates)
                 {
                     // Формат: "Семейство: Типоразмер  (ID ...)"
-                    listBox.Items.Add($"{t.FamilyName}: {t.Name}   (ID {t.Id.Value})");
+                    listBox.Items.Add($"{t.FamilyName} | {t.Name}   (ID {t.Id.Value})");
                 }
                 listBox.SelectedIndex = 0;
 
@@ -358,7 +446,7 @@ namespace Reinforcement
         /// Показывает окно выбора из строковых кандидатов. Возвращает выбранную строку
         /// или null, если пользователь отменил выбор.
         /// </summary>
-        private static string ShowCandidateSelection(List<string> candidates, string title)
+        private static string ShowCandidateSelection(List<string> candidates, List<string> displays, string title)
         {
             if (candidates == null || candidates.Count == 0) return null;
             if (candidates.Count == 1) return candidates[0];
@@ -392,7 +480,11 @@ namespace Reinforcement
                     IntegralHeight = false
                 };
 
-                foreach (var s in candidates) listBox.Items.Add(s);
+                for (int i = 0; i < candidates.Count; i++)
+                {
+                    string text = (displays != null && i < displays.Count) ? displays[i] : candidates[i];
+                    listBox.Items.Add(text);
+                }
                 listBox.SelectedIndex = 0;
 
                 var okButton = new Button

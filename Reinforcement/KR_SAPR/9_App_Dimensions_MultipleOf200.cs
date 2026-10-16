@@ -10,13 +10,21 @@ namespace Reinforcement
     [Transaction(TransactionMode.Manual)]
     public class App_Dimensions_MultipleOf200 : IExternalCommand
     {
-        private const long Step = 200; // шаг кратности в мм
-        private const long Min = 200; // строго больше этого
+        private const long Step1 = 200; // шаг кратности в мм
+        private const long Min1 = 200; // строго больше этого
 
         public Result Execute(ExternalCommandData commandData,
                               ref string message,
                               ElementSet elements)
         {
+            return Exec( commandData,
+                              ref message,
+                              elements, Step1, Min1);
+        }
+        public static Result Exec(ExternalCommandData commandData,
+                              ref string message,
+                              ElementSet elements, long Step, long Min)
+        { 
             UIDocument uidoc = commandData.Application.ActiveUIDocument;
             if (uidoc == null)
             {
@@ -73,7 +81,7 @@ namespace Reinforcement
                     {
                         // Обычный односегментный размер
                         if (dim.Value.HasValue &&
-                         TryBuildPrefix(dim.Value.Value, out string prefix))
+                         TryBuildPrefix(dim.Value.Value, out string prefix, Step, Min))
                         {
                             dim.Prefix = prefix;
                             changed++;
@@ -89,7 +97,7 @@ namespace Reinforcement
                         foreach (DimensionSegment seg in dim.Segments)
                         {
                             if (seg.Value.HasValue &&
-                                TryBuildPrefix(seg.Value.Value, out string prefix))
+                                TryBuildPrefix(seg.Value.Value, out string prefix, Step, Min))
                             {
                                 seg.Prefix = prefix;
                                 changed++;
@@ -113,7 +121,7 @@ namespace Reinforcement
         /// Если значение кратно 200 и строго больше 200,
         /// возвращает префикс вида "200xN=".
         /// </summary>
-        private static bool TryBuildPrefix(double valueInternal, out string prefix)
+        private static bool TryBuildPrefix(double valueInternal, out string prefix, long Step, long Min)
         {
             prefix = string.Empty;
 

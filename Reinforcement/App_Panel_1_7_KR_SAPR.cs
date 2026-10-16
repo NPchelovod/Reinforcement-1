@@ -67,6 +67,9 @@ namespace Reinforcement
                 "Показать виды и листы на которых дубли семейств\nпоказывает где дублированные семейства", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Префикс размера 200xn", assemblyPath, "Reinforcement.App_Dimensions_MultipleOf200",
                "Размерам кратным 200 добавляет префикс 200xn\nдля армирования полезно", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Префикс размера 100xn", assemblyPath, "Reinforcement.App_Dimensions_MultipleOf100",
+               "Размерам кратным 100 добавляет префикс 100xn\nдля армирования полезно", OV1);
+
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Найти семейство", assemblyPath, "Reinforcement.SeachViewsFamily",
               "Поиск листов и видов где семейство размещено", OV1);

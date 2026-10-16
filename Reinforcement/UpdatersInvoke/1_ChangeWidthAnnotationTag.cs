@@ -76,7 +76,7 @@ namespace Updaters
                 Document doc = data.GetDocument();
                 if (doc == null) { return; }
                 //var ids = data.GetModifiedElementIds();
-                var ids = data.GetModifiedElementIds().ToList(); // ✅ Материализовать!
+                var ids = data.GetModifiedElementIds(); //.ToList() ✅ Материализовать!
 
                 //bool functProxod = false;
                 //var pastElements2 = new HashSet<Element>();
@@ -89,7 +89,16 @@ namespace Updaters
 
                 foreach (var id in ids)
                 {
+                    var element = doc.GetElement(id);
+                    if (element == null)
+                    {
+                        continue;
+                    }
+                    string name = element?.LookupParameter("Семейство и типоразмер").AsValueString();
 
+                    if (!name.Contains("Выноска") && !name.Contains("выноска")) {continue; }
+                    var paramTop = element.LookupParameter("Текст верх");
+                    if (paramTop == null) { continue; }
 
                     bool shouldProcess;
                     lock (pastElements) // ✅ Короткий lock только для проверки
@@ -105,19 +114,8 @@ namespace Updaters
                     }
                     pastElements[id] =now;
 
-                    var element = doc.GetElement(id);
 
-                    if (element == null)
-                    {
-                        continue;
-                    }
-                    // два раза чтобы не входила сама в себя рекурсией
-
-                    if (shrift(doc, element, id))
-                    {
-                        //два раза не надо лезть туда
-                        continue;
-                    } // корректировка выносок
+                    shrift(doc, element, name, paramTop);
 
                 }
             }
@@ -142,32 +140,12 @@ namespace Updaters
         private static Dictionary<ElementId, DateTime> pastElements = new Dictionary<ElementId, DateTime>();
         private DateTime _lastExecutionTime = DateTime.MinValue;
         private readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200); // задержка 500 мс
-        private bool shrift(Document doc,Element element, ElementId elementId)
+        private bool shrift(Document doc,Element element,  string name,Parameter paramTop)
         {
             try
             {
-                string name = element?.LookupParameter("Семейство и типоразмер").AsValueString();
-
-                if (!name.Contains("Выноска") && !name.Contains("выноска")) { return false; }
                 
-                now = DateTime.UtcNow;
-           
-
-                //lock (pastElements) // ✅ Короткий lock 
-                //{
-                //    //if (pastElements.TryGetValue(elementId, out var pd))
-                //    //{
-                //    //    if (now - pd < _minimumInterval)
-                //    //    {
-                //    //        return false;
-                //    //    }
-                //    //}
-                //    pastElements[elementId] = now;
-                //}
-                var paramTop = element.LookupParameter("Текст верх");
-                if (paramTop == null) {return false;}
-
-
+                
                 string firstText = paramTop.AsString();
                 string secondText = element.LookupParameter("Текст низ").AsString();
                
@@ -188,7 +166,7 @@ namespace Updaters
 
                 double width1 = RevitAPI.ToFoot(GetCharacterWidth(doc, firstText, H_size));
                 double width2 = RevitAPI.ToFoot(GetCharacterWidth(doc, secondText, H_size));
-                double width = Math.Max(width1, width2);
+                double width = Math.Max(width1, width2); //может быть нулевым, ну вроде не опасно
                 
 
                 foreach(var wid in nameWidths)// возможные имена

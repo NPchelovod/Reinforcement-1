@@ -137,21 +137,15 @@ namespace UpdaterENS
                     return;
                 }
 
-                int[] delays = new[]
+                WaitForOtherRevitProcessesIndefinitely(pid, logFile);
+                // Даже после выхода процессов Windows может держать хендлы на dll
+                // ещё несколько секунд. Даём ОС «дожать» это — иначе File.Replace
+                // на первом же шаге упрётся в «file in use».
+                if (!WaitForTargetDllsFree(targetDir, logFile))
                 {
-            10000, 10000, 10000, 10000, 10000,
-            30000, 30000, 30000, 30000, 30000,
-            30000, 30000, 30000, 30000, 30000
-        };
-
-                bool allFree = WaitForOtherRevitProcesses(pid, logFile, delays);
-                if (!allFree)
-                {
-                    Log(logFile, "Other Revit processes are still running. " +
-                                 "Update will be retried on next Revit launch.");
+                    Log(logFile, "Target dlls remained locked. Aborting; will retry on next Revit launch.");
                     return;
                 }
-
                 // «Последний момент»: если за время работы Revit автор что-то
                 // дописал в admin — здесь это увидим и учтём.
                 // В legacy-режиме adminSourceDir == null → вернётся mainSourceDir.
@@ -211,16 +205,22 @@ namespace UpdaterENS
         }
 
         /// <summary>
-        /// Ждёт закрытия чужих процессов Revit. Интервалы между проверками
-        /// задаются массивом pollDelaysMs.
-        /// Возвращает true, если все Revit закрылись; false — если попытки
-        /// исчерпаны, а процессы ещё живы.
+        /// Ждёт закрытия чужих процессов Revit без ограничения по времени.
+        /// Логирует: первое обнаружение, изменение количества процессов
+        /// и далее не чаще, чем раз в logIntervalSec (по умолчанию 5 минут).
         /// </summary>
-        static bool WaitForOtherRevitProcesses(int ownPid, string logFile, int[] pollDelaysMs)
+        static void WaitForOtherRevitProcessesIndefinitely(int ownPid, string logFile)
         {
-            bool logged = false;
+            const int pollIntervalMs = 5000;
+            const int logIntervalSec = 6000;   // 5 минут — было 60
 
-            for (int i = 0; i <= pollDelaysMs.Length; i++)
+            bool loggedFirstTime = false;
+
+
+            DateTime lastLog = DateTime.MinValue;
+            int lastCount = -1;
+
+            while (true)
             {
                 Process[] others;
                 try
@@ -232,37 +232,80 @@ namespace UpdaterENS
                 catch (Exception ex)
                 {
                     Log(logFile, $"Enum Revit processes failed: {ex.Message}");
-                    return true; // не смогли проверить — считаем, что свободно
+                    return; // не смогли проверить — считаем, что свободно
                 }
 
-                if (others.Length == 0)
+                int count = others.Length;
+
+                if (count == 0)
                 {
-                    if (logged)
-                        Log(logFile, "All Revit processes have exited.");
-                    return true;
+                    if (loggedFirstTime)
+                        Log(logFile, "All Revit processes have exited. Proceeding with update.");
+                    return;
                 }
 
-                if (!logged)
+                bool shouldLog =
+                    !loggedFirstTime ||
+                    count != lastCount ||
+                    (DateTime.Now - lastLog).TotalSeconds >= logIntervalSec;
+
+                if (shouldLog)
                 {
-                    Log(logFile, $"Waiting for {others.Length} other Revit process(es): " +
+                    Log(logFile, $"Waiting for {count} other Revit process(es): " +
                                  string.Join(", ", others.Select(p => p.Id)));
-                    logged = true;
+                    lastLog = DateTime.Now;
+                    loggedFirstTime = true;
+                    lastCount = count;
                 }
 
                 foreach (var p in others) p.Dispose();
-
-                if (i == pollDelaysMs.Length)
-                    break; // попытки исчерпаны
-
-                int delayMs = pollDelaysMs[i];
-                Log(logFile, $"Attempt {i + 1}/{pollDelaysMs.Length}: " +
-                             $"other Revit still running, retry in {delayMs / 1000} s...");
-                Thread.Sleep(delayMs);
+                Thread.Sleep(pollIntervalMs);
             }
+        }
+        /// <summary>
+        /// Проверяет, что все .dll в target-папке доступны для записи.
+        /// Если что-то залочено — ждёт с интервалами 3, 9, 15, 25, 50 секунд.
+        /// Возвращает true, если все dll освободились; false — если попытки исчерпаны.
+        /// </summary>
+        static bool WaitForTargetDllsFree(string targetDir, string logFile)
+        {
+            
 
+            for (int attempt = 0; attempt <= delaysSec.Length; attempt++)
+            {
+                List<string> locked;
+                try
+                {
+                    locked = Directory
+                        .GetFiles(targetDir, "*.dll", SearchOption.AllDirectories)
+                        .Where(f => !IsFileWritable(f))
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Log(logFile, $"WaitForTargetDllsFree scan error: {ex.Message}");
+                    return true; // не смогли проверить — не блокируем обновление
+                }
+
+                if (locked.Count == 0)
+                {
+                    Log(logFile, "All target dll are writable.");
+                    return true;
+                }
+
+                if (attempt == delaysSec.Length)
+                {
+                    Log(logFile, $"Still locked after retries: {string.Join(", ", locked)}");
+                    return false;
+                }
+
+                int delay = delaysSec[attempt];
+                Log(logFile, $"{locked.Count} target dll(s) still locked. " +
+                             $"Retry in {delay} s... ({string.Join(", ", locked.Select(Path.GetFileName))})");
+                Thread.Sleep(delay * 1000);
+            }
             return false;
         }
-
         // -------------------------------------------------------------------
         // Копирование
         // -------------------------------------------------------------------
@@ -495,11 +538,11 @@ namespace UpdaterENS
 
             return updated;
         }
-
+        const int maxAttempts = 12;
         static bool TrySwapFile(string tempFilePath, string targetFilePath,
                                 string backupFilePath, string relativePath, string logFile)
         {
-            const int maxAttempts = 10;
+            
             int attempt = 0;
 
             while (attempt < maxAttempts)
@@ -658,10 +701,15 @@ namespace UpdaterENS
             catch (IOException) { return false; }
             catch (UnauthorizedAccessException) { return false; }
         }
-
+        // 3, 9, 15, 25, 50 с — и далее всегда 50 с.
+        public static int[] delaysSec = { 3, 9, 15, 25, 50 };
         static void SleepBackoff(int attempt, string logFile)
         {
-            int delayMs = Math.Min(3000 * attempt, 15000);
+            
+            
+            int idx = Math.Min(Math.Max(attempt - 1, 0), delaysSec.Length - 1);
+            int delayMs = delaysSec[idx] * 1000;
+
             Log(logFile, $"Retrying in {delayMs / 1000} s...");
             Thread.Sleep(delayMs);
         }

@@ -27,7 +27,7 @@ namespace Reinforcement
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
-            
+            chkUpdater.IsChecked = AnyChange.AllUpdater;
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
