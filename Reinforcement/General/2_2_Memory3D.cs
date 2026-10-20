@@ -70,11 +70,38 @@ namespace Reinforcement
             return path;
         }
 
+        /// <summary>Актуальный путь: {id}_border.json</summary>
         public static string FilePath(int viewId)
         {
             string dir = GetPath();
             if (string.IsNullOrEmpty(dir)) return null;
+            return Path.Combine(dir, viewId + "_border.json");
+        }
+        /// <summary>Старый путь: {id}.json (только для чтения/удаления)</summary>
+        public static string LegacyFilePath(int viewId)
+        {
+            string dir = GetPath();
+            if (string.IsNullOrEmpty(dir)) return null;
             return Path.Combine(dir, viewId + ".json");
+        }
+
+
+        /// <summary>
+        /// Возвращает путь к существующему файлу памяти:
+        /// сначала новый {id}_border.json, если его нет — старый {id}.json.
+        /// Если ничего нет — null.
+        /// </summary>
+        public static string FindExistingPath(int viewId)
+        {
+            string newPath = FilePath(viewId);
+            if (!string.IsNullOrEmpty(newPath) && File.Exists(newPath))
+                return newPath;
+
+            string oldPath = LegacyFilePath(viewId);
+            if (!string.IsNullOrEmpty(oldPath) && File.Exists(oldPath))
+                return oldPath;
+
+            return null;
         }
 
         // --- утилиты сериализации ---
@@ -155,6 +182,14 @@ namespace Reinforcement
                     File.Replace(tmp, filePath, null, true);
                 else
                     File.Move(tmp, filePath);
+
+                // Убираем устаревший файл старого формата {id}.json,
+                // чтобы данные не задваивались.
+                string legacy = SectionBoxMemory.LegacyFilePath(viewIdValue);
+                if (!string.IsNullOrEmpty(legacy) && File.Exists(legacy))
+                {
+                    try { File.Delete(legacy); } catch { /* не критично */ }
+                }
             }
             catch (Exception ex)
             {
@@ -172,8 +207,8 @@ namespace Reinforcement
 
         public static SectionBoxMemory GetMemory(int viewId)
         {
-            string target = SectionBoxMemory.FilePath(viewId);
-            if (string.IsNullOrEmpty(target) || !File.Exists(target))
+            string target = SectionBoxMemory.FindExistingPath(viewId);
+            if (string.IsNullOrEmpty(target))
                 return new SectionBoxMemory { ViewId = viewId };
 
             try

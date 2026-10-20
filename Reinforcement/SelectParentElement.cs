@@ -32,9 +32,46 @@ namespace Reinforcement
 
             // ---------------------------------------------------------------
             // Ветка A: активный вид — спецификация.
+            //тут ищем не все семейства а только виды специфицируемые
             // ---------------------------------------------------------------
             if (doc.ActiveView is ViewSchedule schedule)
             {
+
+                //может в спецификации уже выделена строка и она подсвечивает элементы, 
+                //надо только их перечислить и оформить возврат
+
+                // 1. Пробуем взять элементы из текущего выделения в модели.
+                //    При щелчке по строке спецификации Revit подсвечивает именно экземпляры,
+                //    и они попадают в Selection.GetElementIds().
+                ICollection<ElementId> selectedIds = uidoc.Selection.GetElementIds();
+
+                if (selectedIds != null && selectedIds.Count > 0)
+                {
+                    // Опционально: отфильтровать служебные элементы спецификации,
+                    // если они вдруг попали в выделение (обычно их там нет).
+                    List<ElementId> preselected = new List<ElementId>();
+                    foreach (ElementId id in selectedIds)
+                    {
+                        Element el = doc.GetElement(id);
+                        if (el == null) continue;
+                        if (el is ViewSchedule) continue; // сама спецификация — не экземпляр
+                        preselected.Add(id);
+                    }
+
+                    if (preselected.Count > 0)
+                    {
+                        return ShowElementsViewReport(
+                            doc: doc,
+                            uidoc: uidoc,
+                            elementIds: preselected,
+                            headerLine: $"Источник: выделенная строка спецификации " +
+                                        $"(элементов: {preselected.Count})");
+                    }
+                }
+
+                // 2. Если выделения нет — продолжаем по-старому: спрашиваем номер строки.
+                //часто не срабатывает, но бывает работает
+
                 int? rowNumber = ScheduleRowInput.Show();
                 if (!rowNumber.HasValue)
                     return Result.Cancelled;
@@ -68,6 +105,7 @@ namespace Reinforcement
 
             // ---------------------------------------------------------------
             // Ветка B: поиск по имени семейства / типоразмера.
+            //а тут все
             // ---------------------------------------------------------------
             FamilySearchRequest familyInput = TryReadFamilyFromSelection(
                 uidoc: uidoc,

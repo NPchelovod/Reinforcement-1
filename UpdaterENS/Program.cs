@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices;
+using System.Runtime.ConstrainedExecution;
 
 namespace UpdaterENS
 {
@@ -15,7 +16,7 @@ namespace UpdaterENS
         public static bool rezervCopy = false;
 
         // Максимальное число строк, которое хранится в лог-файле.
-        private const int MaxLogLines = 100;
+        private const int MaxLogLines = 200;
 
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -110,8 +111,8 @@ namespace UpdaterENS
                 logFile = args.Length > 4 ? args[4] : null;
                 isAuthor = false;
             }
-
-            const string certSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Установка\Certs";
+            const string certSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\Сертифицирование\Certs";
+            //const string certSourceDir = @"Y:\Revit\_ЕС BIM_Плагин\3_Установка\Certs";
             EnsureCertificate(certSourceDir, logFile);
 
             TrimLogIfNeeded(logFile);

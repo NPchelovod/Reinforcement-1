@@ -21,6 +21,11 @@ namespace Reinforcement
         public DateTime Date { get; set; }
         public string UserName { get; set; }
         /// <summary>
+        /// Имя документа на момент снимка. Может отличаться от текущего,
+        /// если документ был переименован через «Сохранить как».
+        /// </summary>
+        public string NameDocument { get; set; } = string.Empty;
+        /// <summary>
         /// Пользовательское название/примечание. Может быть null или пустым —
         /// тогда в списке отображается только дата и автор.
         /// </summary>
@@ -152,7 +157,8 @@ namespace Reinforcement
             {
                 Date = DateTime.Now,
                 UserName = Environment.UserName,
-                Label = label,                 // <-- добавили
+                NameDocument = doc.Title,     // <-- фиксируем имя документа
+                Label = label,
                 ElementIds = currentIds
             });
 
@@ -239,9 +245,9 @@ namespace Reinforcement
     public class MemoryViewCorrect : IExternalCommand
     {
         public Result Execute(
-            ExternalCommandData commandData,
-            ref string message,
-            ElementSet elements)
+    ExternalCommandData commandData,
+    ref string message,
+    ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
             UIDocument uidoc = commandData.Application.ActiveUIDocument;
@@ -262,6 +268,15 @@ namespace Reinforcement
                 return Result.Succeeded;
             }
 
+            // Память
+            ElementMemory em = MemoryViewSave.GetElementMemory(viewIdValue);
+            if (em.Snapshots == null || em.Snapshots.Count == 0)
+            {
+                TaskDialog.Show("Восстановление вида",
+                    "Для этого вида ещё не сохранялось состояние.");
+                return Result.Succeeded;
+            }
+
             // Выделенные элементы не трогаем
             var selectedIdsInt = uidoc.Selection.GetElementIds()
                 .Select(i => (int)i.Value).ToHashSet();
@@ -271,16 +286,7 @@ namespace Reinforcement
                 .WhereElementIsNotElementType()
                 .ToElements();
 
-            if (allElements.Count == 0) return Result.Succeeded;
-
-            // Память
-            ElementMemory em = MemoryViewSave.GetElementMemory(viewIdValue);
-            if (em.Snapshots == null || em.Snapshots.Count == 0)
-            {
-                TaskDialog.Show("Восстановление вида",
-                    "Для этого вида ещё не сохранялось состояние.");
-                return Result.Succeeded;
-            }
+            
 
             // Выбор снимка
             MemorySnapshot snapshot;
@@ -296,7 +302,7 @@ namespace Reinforcement
 
             HashSet<int> keepIds = snapshot.ElementIds ?? new HashSet<int>();
 
-            // Формируем список на скрытие
+            // ---- 1. Что скрыть: видимые сейчас, но НЕ в снимке и не выделены ----
             List<ElementId> toHide = new List<ElementId>();
             foreach (var el in allElements)
             {
@@ -304,29 +310,90 @@ namespace Reinforcement
                 if (keepIds.Contains(idCur)) continue;         // был в снимке
                 if (selectedIdsInt.Contains(idCur)) continue;  // выделен — не трогаем
                 if (el.IsHidden(view)) continue;               // уже скрыт
-
                 toHide.Add(el.Id);
             }
 
-            if (toHide.Count == 0)
+            // ---- 2. Что показать: есть в снимке, существует, но сейчас скрыт ----
+            List<ElementId> toUnhide = new List<ElementId>();
+            foreach (int idInt in keepIds)
+            {
+                if (selectedIdsInt.Contains(idInt)) continue;  // выделен — не трогаем
+
+                ElementId eid = new ElementId(idInt);
+                Element el = doc.GetElement(eid);
+                if (el == null) continue;                      // был удалён
+
+                try
+                {
+                    if (el.IsHidden(view))
+                        toUnhide.Add(eid);
+                }
+                catch
+                {
+                    // Элемент не относится к виду (или недоступен для IsHidden) — пропускаем.
+                }
+            }
+
+            if (toHide.Count == 0 && toUnhide.Count == 0)
             {
                 TaskDialog.Show("Восстановление вида",
                     "Все элементы соответствуют сохранённому состоянию.");
                 return Result.Succeeded;
             }
 
+            // ---- 3. Если есть скрытые элементы из снимка — спрашиваем пользователя ----
+            bool doUnhide = false;
+            if (toUnhide.Count > 0)
+            {
+                TaskDialog askDialog = new TaskDialog("Восстановление вида")
+                {
+                    MainInstruction =
+                        $"Восстановить {toUnhide.Count} скрытых элементов?",
+                    MainContent =
+                        "В сохранённом снимке эти элементы были видимы, " +
+                        "а сейчас они скрыты.\n\n" +
+                        $"Да — сделать видимыми {toUnhide.Count} элем.\n" +
+                        "Нет — оставить их скрытыми.",
+                    CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
+                    DefaultButton = TaskDialogResult.Yes
+                };
+                doUnhide = askDialog.Show() == TaskDialogResult.Yes;
+            }
+
+            if (toHide.Count == 0 && !doUnhide)
+            {
+                TaskDialog.Show("Восстановление вида",
+                    $"Скрывать нечего.\n" +
+                    $"Скрытых элементов из снимка: {toUnhide.Count} — по вашему выбору оставлены скрытыми.\n" +
+                    $"Снимок: {snapshot.Date:yyyy-MM-dd HH:mm} ({snapshot.UserName}).");
+                return Result.Succeeded;
+            }
+
+            int hiddenCount = 0;
+            int unhiddenCount = 0;
+
             using (Transaction t = new Transaction(doc, "Восстановление вида по памяти"))
             {
                 t.Start();
                 try
                 {
-                    // HideElements бросает исключение, если хотя бы один элемент
-                    // скрыть нельзя. Скрываем по одному, ошибки игнорируем.
+                    // Скрываем «лишние» по одному, ошибки игнорируем
                     foreach (var id in toHide)
                     {
-                        try { view.HideElements(new List<ElementId> { id }); }
+                        try { view.HideElements(new List<ElementId> { id }); hiddenCount++; }
                         catch { /* пропускаем некрыемые */ }
                     }
+
+                    // Возвращаем видимость тем, что были в снимке
+                    if (doUnhide && toUnhide.Count > 0)
+                    {
+                        foreach (var id in toUnhide)
+                        {
+                            try { view.UnhideElements(new List<ElementId> { id }); unhiddenCount++; }
+                            catch { /* скрыт категорией/фильтром/РГ — так просто не вернуть */ }
+                        }
+                    }
+
                     t.Commit();
                 }
                 catch (Exception ex)
@@ -337,9 +404,25 @@ namespace Reinforcement
                 }
             }
 
-            TaskDialog.Show("Восстановление вида",
-                $"Скрыто элементов: {toHide.Count}.\n" +
-                $"Снимок: {snapshot.Date:yyyy-MM-dd HH:mm} ({snapshot.UserName}).");
+            // ---- 4. Отчёт ----
+            string report = "";
+            if (hiddenCount > 0)
+                report += $"Скрыто элементов: {hiddenCount}.\n";
+            if (unhiddenCount > 0)
+                report += $"Восстановлено видимость: {unhiddenCount}.\n";
+
+            if (doUnhide && toUnhide.Count > 0 && unhiddenCount < toUnhide.Count)
+            {
+                report +=
+                    $"Не удалось показать: {toUnhide.Count - unhiddenCount} " +
+                    "(скрыты категорией, фильтром или рабочей группой).\n";
+            }
+
+            report += $"Снимок: {snapshot.Date:yyyy-MM-dd HH:mm} ({snapshot.UserName}).";
+            if (!string.IsNullOrWhiteSpace(snapshot.NameDocument))
+                report += $"\nДокумент: {snapshot.NameDocument}";
+
+            TaskDialog.Show("Восстановление вида", report);
 
             return Result.Succeeded;
         }
@@ -414,7 +497,18 @@ namespace Reinforcement
             {
                 listBox.Items.Clear();
                 foreach (var s in snapshots)
-                    listBox.Items.Add(s.ToString());
+                {
+                    listBox.Items.Add(new ListBoxItem
+                    {
+                        Content = s.ToString(),
+                        ToolTip =
+                            $"Дата: {s.Date:yyyy-MM-dd HH:mm}\n" +
+                            $"Автор: {s.UserName}\n" +
+                            $"Документ: {(string.IsNullOrWhiteSpace(s.NameDocument) ? "<не сохранён>" : s.NameDocument)}\n" +
+                            $"Элементов: {s.ElementIds.Count}" +
+                            (string.IsNullOrWhiteSpace(s.Label) ? "" : $"\nНазвание: {s.Label}")
+                    });
+                }
                 if (snapshots.Count > 0)
                     listBox.SelectedIndex = snapshots.Count - 1;
                 ok.IsEnabled = snapshots.Count > 0;

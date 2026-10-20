@@ -19,27 +19,94 @@ namespace Reinforcement
             RevitAPI.Initialize(commandData);
             Document doc = RevitAPI.Document;
 
+            UIDocument uidoc = RevitAPI.UiDocument;
+            /// -------------------------------------------------------------------
+            // 0a. Если что-то выделено — предложить режим
+            //     "только выделенные типы семейств".
+            // -------------------------------------------------------------------
+            bool onlySelected = false;
+            var selectedFamilyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Спрашиваем пользователя до старта транзакции.
+            ICollection<ElementId> preselectedIds = uidoc.Selection.GetElementIds();
+            if (preselectedIds != null && preselectedIds.Count > 0)
+            {
+                foreach (ElementId id in preselectedIds)
+                {
+                    Element el = doc.GetElement(id);
+                    if (el == null) continue;
+
+                    // Инстанс или сам FamilySymbol
+                    FamilySymbol sym = el as FamilySymbol;
+                    if (sym == null)
+                    {
+                        ElementId typeId = el.GetTypeId();
+                        if (typeId != ElementId.InvalidElementId)
+                            sym = doc.GetElement(typeId) as FamilySymbol;
+                    }
+                    if (sym == null) continue;
+
+                    string famName = SafeTrim(sym.FamilyName);
+                    if (!string.IsNullOrEmpty(famName))
+                        selectedFamilyNames.Add(famName);
+                }
+
+                if (selectedFamilyNames.Count > 0)
+                {
+                    // Покажем первые 15 имён, чтобы пользователь понимал, что попало.
+                    string listText = string.Join("\n",
+                        selectedFamilyNames.Take(15).Select(n => $"  • {n}"));
+                    if (selectedFamilyNames.Count > 15)
+                        listText += $"\n  ... и ещё {selectedFamilyNames.Count - 15}";
+
+                    TaskDialog selDialog = new TaskDialog("Ограничить область замены")
+                    {
+                        MainInstruction =
+                            $"В модели выделено элементов. Затрагивать только " +
+                            $"выделенные типы семейств ({selectedFamilyNames.Count})?",
+                        MainContent =
+                            listText + "\n\n" +
+                            "Да — заменять только эти семейства.\n" +
+                            "Нет — обрабатывать весь проект.",
+                        CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
+                        DefaultButton = TaskDialogResult.Yes
+                    };
+
+                    if (selDialog.Show() == TaskDialogResult.Yes)
+                        onlySelected = true;
+                }
+            }
+
+            // -------------------------------------------------------------------
+            // 0b. Диалог подтверждения (с учётом выбранного режима)
+            // -------------------------------------------------------------------
+            string confirmInstruction = onlySelected
+                ? $"Уверены, исправлять только выделенные типы семейств? ({selectedFamilyNames.Count})"
+                : "Уверены, Исправлять во всём проекте?";
+
+            string confirmContent = onlySelected
+                ? "Да — обработать только выделенные семейства.\nНет — отмена."
+                : "Да  — обрабатывать элементы на всех видах.\nНет — отмена операции.";
+
             TaskDialog dialog = new TaskDialog("Замена семейств")
             {
-                MainInstruction = "Уверены, Исправлять во всём проекте?",
-                MainContent =
-                    "Да  — обрабатывать элементы на всех видах.\n" +
-                    "Нет — отмена операции.",
+                MainInstruction = confirmInstruction,
+                MainContent = confirmContent,
                 CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No,
                 DefaultButton = TaskDialogResult.No
             };
 
-            TaskDialogResult answer = dialog.Show();
-
-            // Yes → исправлять группы → skipGroups = false
-            // No  → не трогать группы → skipGroups = true
-           
-            if (answer!=TaskDialogResult.Yes)
-            {
+            if (dialog.Show() != TaskDialogResult.Yes)
                 return Result.Succeeded;
-            }
+
+            //TaskDialogResult answer = dialog.Show();
+
+            //// Yes → исправлять группы → skipGroups = false
+            //// No  → не трогать группы → skipGroups = true
+           
+            //if (answer!=TaskDialogResult.Yes)
+            //{
+            //    return Result.Succeeded;
+            //}
 
             // -------------------------------------------------------------------
             // 1. Все элементы с типом-семейством (FamilyInstance + IndependentTag,
@@ -74,6 +141,19 @@ namespace Reinforcement
                 }
                 list.Add(el);
             }
+            // -------------------------------------------------------------------
+            // 2a. Если пользователь выбрал «только выделенные» — режем семейства.
+            // -------------------------------------------------------------------
+            if (onlySelected && selectedFamilyNames.Count > 0)
+            {
+                var filtered = new Dictionary<string, List<Element>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in familyGroups)
+                {
+                    if (selectedFamilyNames.Contains(kvp.Key))
+                        filtered[kvp.Key] = kvp.Value;
+                }
+                familyGroups = filtered;
+            }
 
             // -------------------------------------------------------------------
             // 3. Все семейства проекта (ключи с обрезкой)
@@ -105,6 +185,15 @@ namespace Reinforcement
                     unmatchedFamilies.Add($"«{currentFamilyName}» → база «{baseName}»");
             }
 
+            
+            if (onlySelected && replacementMap.Count == 0)
+            {
+                TaskDialog.Show(
+                "Замена семейств",
+                "Среди выделенных семейств нет дубликатов"
+                );
+                return Result.Succeeded;
+            }
             // === СЧЁТЧИКИ ===
             int replacedCount = 0;
             int skippedNoType = 0;

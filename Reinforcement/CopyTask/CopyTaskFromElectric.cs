@@ -57,13 +57,24 @@ namespace Reinforcement
                 "Коробка ЭЛ_КУ1301",
             };
 
+            var projectFamilies = new FilteredElementCollector(doc)
+            .OfClass(typeof(Family))
+            .Cast<Family>()
+            .Select(f => f.Name)
+            .ToList();
+
+            // Локальная функция — соответствует ли имя семейства хотя бы одному префиксу
+            bool MatchesRequiredFamily(string familyName) =>
+                requiredFamilies.Any(prefix =>
+                    familyName != null &&
+                    familyName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
             // Проверка наличия семейств в проекте
+            // Семейство считается найденным, если есть хотя бы одно, чьё имя начинается с требуемого префикса
             var missingFamilies = requiredFamilies
-                .Where(familyName => !new FilteredElementCollector(doc)
-                    .OfClass(typeof(Family))
-                    .Cast<Family>()
-                    .Any(f => f.Name.Equals(familyName)))
-                    .ToList();
+                .Where(prefix => !projectFamilies.Any(name =>
+                    name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
 
             if (missingFamilies.Any())
             {
@@ -74,9 +85,11 @@ namespace Reinforcement
             // Удаление существующих коробок на активном виде
             FilteredElementCollector collector = new FilteredElementCollector(doc, activeView.Id)
                 .OfClass(typeof(FamilyInstance));
+                
+
             var boxesToDelete = collector
                 .Cast<FamilyInstance>()
-                .Where(fi => requiredFamilies.Contains(fi.Symbol.Family.Name))
+                .Where(fi => MatchesRequiredFamily(fi.Symbol.Family.Name))
                 .ToList();
 
             // УДАЛЕНИЕ СУЩЕСТВУЮЩИХ ВИДОВ
@@ -175,13 +188,15 @@ namespace Reinforcement
                 .OfCategory(BuiltInCategory.OST_ConduitFitting)
                 .Cast<FamilyInstance>()
                 .ToList();
+
             
+
             var elementsToCopy = allConduitFittings
-                .Where(x => requiredFamilies.Contains(x.Symbol.Family.Name))
+                .Where(x => MatchesRequiredFamily(x.Symbol.Family.Name))
                 .ToList();
 
             var excludedElements = allConduitFittings
-                .Where(x => !requiredFamilies.Contains(x.Symbol.Family.Name))
+                .Where(x => !MatchesRequiredFamily(x.Symbol.Family.Name))
                 .ToList();
 
 
@@ -216,28 +231,116 @@ namespace Reinforcement
                             .ToElementIds()
                             .ToHashSet();
 
-                        var elementsToRemove = copiedElementIds.Where(id => !visibleElements.Contains(id)).ToList();
+                       
 
+                        var elementsToRemove = copiedElementIds
+                            .Where(id => !visibleElements.Contains(id))
+                            .ToList();
 
-                        // Удалить невидимые элементы на 3д виде!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-                        // Удалить невидимые элементы
-                        try
+                        // Диалог: удалять невидимые коробки?
+                        if (elementsToRemove.Any())
                         {
-                            if (elementsToRemove.Any())
+                            TaskDialog td = new TaskDialog("Невидимые коробки");
+                            td.MainInstruction = $"Найдено {elementsToRemove.Count} скопированных коробок, не видимых на активном виде";
+                            td.MainContent =
+                                "Рекомендуется удалить их, чтобы на виде не остались невидимые элементы.\n\n" +
+                                "Если оставить — они будут присутствовать в модели, но не отображаться на текущем виде " +
+                                "(возможно, из-за настроек вида, секционного бокса, фильтров или рабочих наборов).";
+                            td.CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No;
+                            td.DefaultButton = TaskDialogResult.Yes;
+
+                            TaskDialogResult removeResult = td.Show();
+
+                            if (removeResult == TaskDialogResult.Yes)
                             {
-                                // Логирование для отладки
-                                Debug.WriteLine($"Удаление {elementsToRemove.Count} невидимых элементов");
-                                doc.Delete(elementsToRemove);
+                                try
+                                {
+                                    Debug.WriteLine($"Удаление {elementsToRemove.Count} невидимых элементов");
+                                    doc.Delete(elementsToRemove);
+                                }
+                                catch (Exception ex)
+                                {
+                                    App_Apdater_1.AppErrors.LogError(ex);
+                                    Debug.WriteLine($"Ошибка при удалении элементов: {ex.Message}");
+                                }
+                            }
+                            else
+                            {
+                                // Пользователь отказался удалять — оставляем элементы в модели
+                                Debug.WriteLine($"Оставлено {elementsToRemove.Count} невидимых элементов по выбору пользователя");
                             }
                         }
-                        catch (Exception ex)
+
+                        // Проверка дубликатов: старые коробки, совпадающие по координатам с новыми (допуск 10 мм)
+                        const double toleranceMm = 15.0;
+                        double toleranceFt = toleranceMm / 304.8; // мм -> футы (внутренние единицы Revit)
+
+                        var copiedIdSet = new HashSet<ElementId>(copiedElementIds);
+
+                        var allBoxesOnView = new FilteredElementCollector(doc, activeView.Id)
+                            .OfClass(typeof(FamilyInstance))
+                            .OfCategory(BuiltInCategory.OST_ConduitFitting)
+                            .Cast<FamilyInstance>()
+                            .Where(fi => MatchesRequiredFamily(fi.Symbol.Family.Name))
+                            .ToList();
+
+                        var newBoxes = allBoxesOnView.Where(fi => copiedIdSet.Contains(fi.Id)).ToList();
+                        var oldBoxes = allBoxesOnView.Where(fi => !copiedIdSet.Contains(fi.Id)).ToList();
+
+                        var duplicatesToDelete = new HashSet<ElementId>();
+                        foreach (var newBox in newBoxes)
                         {
-                           App_Apdater_1.AppErrors.LogError(ex);
-                            // Более конкретная обработка исключений
-                            Debug.WriteLine($"Ошибка при удалении элементов: {ex.Message}");
-                            // Можно добавить дополнительную обработку или логирование
+                            var newPt = (newBox.Location as LocationPoint)?.Point;
+                            if (newPt == null) continue;
+
+                            foreach (var oldBox in oldBoxes)
+                            {
+                                if (duplicatesToDelete.Contains(oldBox.Id)) continue;
+
+                                var oldPt = (oldBox.Location as LocationPoint)?.Point;
+                                if (oldPt == null) continue;
+
+                                if (newPt.DistanceTo(oldPt) <= toleranceFt)
+                                {
+                                    duplicatesToDelete.Add(oldBox.Id);
+                                    break; // этот старый уже помечен — переходим к следующему новому
+                                }
+                            }
                         }
+
+                        if (duplicatesToDelete.Any())
+                        {
+                            TaskDialog tdDup = new TaskDialog("Дубликаты коробок");
+                            tdDup.MainInstruction = $"Найдено {duplicatesToDelete.Count} старых коробок, " +
+                                                    $"совпадающих по координатам с новыми (допуск {toleranceMm:0} мм)";
+                            tdDup.MainContent =
+                                "По этим координатам уже были коробки в модели.\n\n" +
+                                "Удалить старые коробки, оставив только что скопированные из связи?\n\n" +
+                                "• «Да» — старые будут удалены, останутся новые (из связи);\n" +
+                                "• «Нет» — в модели будут обе коробки в одной точке.";
+                            tdDup.CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No;
+                            tdDup.DefaultButton = TaskDialogResult.Yes;
+
+                            if (tdDup.Show() == TaskDialogResult.Yes)
+                            {
+                                try
+                                {
+                                    Debug.WriteLine($"Удаление {duplicatesToDelete.Count} старых коробок-дубликатов");
+                                    doc.Delete(duplicatesToDelete.ToList());
+                                }
+                                catch (Exception ex)
+                                {
+                                    App_Apdater_1.AppErrors.LogError(ex);
+                                    Debug.WriteLine($"Ошибка при удалении дубликатов: {ex.Message}");
+                                }
+                            }
+                            else
+                            {
+                                Debug.WriteLine($"Оставлено {duplicatesToDelete.Count} старых коробок (пользователь отказался удалять)");
+                            }
+                        }
+
+                        
 
 
                     }

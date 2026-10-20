@@ -8,12 +8,14 @@ namespace Reinforcement
         public static void KR_Selection(RibbonPanel panelSelection, string tabName)
         {
             App_Helper_Button.CreateButton("Найти элемент", "Найти\nэлемент", "Reinforcement.SelectParentElement", Properties.Resources.ЕС_Выбор,
-               "Позволяет найти семейство, даже в спецификации в спецификации",
+               "Позволяет найти семейство, даже в спецификации",
                "A. Выбрать искомый экземпляр или ввести его вручную\n" +
                "Б. или ввести семейство искомое вручную\n" +
-               "В1. Выделить нужную деталь в строчке спецификации\n" +
-               "В2. Нажать на кнопку\n" +
-              "В3. Перейти на любой другой вид.\nТеперь можно поменять свойства детали",
+               "Г1. Сначала Выделить нужную строку спецификации\n" +
+               "Г2. Нажать на кнопку\n" +
+               "Г3. Может потребоваться ввести номер строки спецификации\n" +
+               "Г4. Перейти на любой другой вид.\nТеперь можно поменять свойства детали",
+               
               panelSelection);
 
             App_Helper_Button.CreateButton("Выбор с фильтром", "Выбор\nс фильтром", "Reinforcement.CommandPickWithFilter", Properties.Resources.ES_SelectWithFilter,

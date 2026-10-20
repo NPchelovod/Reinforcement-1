@@ -61,8 +61,9 @@ namespace Reinforcement
                 "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ", OV1);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Дубли всех семейств", assemblyPath, "Reinforcement.ReplaceDuplicatesAllViews",
-                "Замена дублей семейств, во всем проекте!!!\n"+ 
-                "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ", OV1);
+                "Замена дублей семейств, во ВСЕМ проекте!!!\n"+ 
+                "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ\n"+
+                "если вы выделили семействоА2 то меняется только оно в проекте", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Виды дублей всех\nсемейств", assemblyPath, "Reinforcement.ListDuplicateFamiliesByView",
                 "Показать виды и листы на которых дубли семейств\nпоказывает где дублированные семейства", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Префикс размера 200xn", assemblyPath, "Reinforcement.App_Dimensions_MultipleOf200",
@@ -72,7 +73,7 @@ namespace Reinforcement
 
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Найти семейство", assemblyPath, "Reinforcement.SeachViewsFamily",
-              "Поиск листов и видов где семейство размещено", OV1);
+              "Поиск листов и видов где семейство размещено, работает и в спецификации", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;
