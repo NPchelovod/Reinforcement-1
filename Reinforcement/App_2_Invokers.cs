@@ -137,6 +137,8 @@ namespace Reinforcement
         private const int PatternTimeWindowMs = 12000; // 6 секунд - мало бывает виснет
         private static bool _pendingSecret;
         public static bool InPendingSecret = false;
+
+        public static DateTime DateLastCommandChanged = DateTime.MinValue;
         
         private void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
         {
@@ -148,12 +150,15 @@ namespace Reinforcement
             {
                 return;
             }
-            App_Apdater_1.LookUsers.Update(comand, EDocStatsOptions.Invoker);
+            
 
             Document doc = e.GetDocument();
 
             // Отсекаем фоновые документы/семейства, если они не нужны
             if (doc == null) { return; }
+            App_Apdater_1.LookUsers.Update(comand, EDocStatsOptions.Invoker);
+
+           
 
             if (PastCommands.Count >= 20)
             {
@@ -161,6 +166,8 @@ namespace Reinforcement
             }
             PastCommand = new SPastCommand(comand, DateTime.Now);
             PastCommands.Enqueue(PastCommand);
+
+            DateLastCommandChanged = DateTime.Now;
             // === Магия: проверяем секретный паттерн ===
             if (MatchesSecretPattern())
             {
@@ -231,6 +238,8 @@ namespace Reinforcement
                 OnGroupCurrent = ("", null);
             }
 
+            //запускаем запись автора
+            //AutoFillNoteUpdater.ProcessAvtorUpdate();
             // Остальные транзакции — ничего не делают, состояние сохраняется
         }
         private static bool MatchesSecretPattern()

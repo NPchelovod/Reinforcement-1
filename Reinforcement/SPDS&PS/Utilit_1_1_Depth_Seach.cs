@@ -13,7 +13,6 @@ using Autodesk.Revit.UI;
 namespace Reinforcement
 {
 
-
     public enum ElementTypeOrSymbol
     {
         Symbol,
@@ -21,28 +20,68 @@ namespace Reinforcement
     }
     internal class Utilit_1_1_Depth_Seach
     {
-
         
+        public static Dictionary<Document, Dictionary<string, Element>> MemoryTypes = new Dictionary<Document, Dictionary<string, Element>>();
 
         public static bool GetResult( HashSet<String> FamNames, ElementTypeOrSymbol Type_seach, HashSet<string> TypeNames = null  )
         {
+
+            string key = TypeNames!=null&& TypeNames.Any()? ToKey(TypeNames): ToKey(FamNames);
+            Element element = null;
+            
+            Document doc = RevitAPI.Document;
+            bool existHistory=false;
+            if(MemoryTypes.TryGetValue(doc, out var els))
+            {
+                if(els.TryGetValue(key, out element)&&element!=null)
+                {
+                    existHistory=true;
+                }
+            }
+            else
+            {
+                els = new Dictionary<string, Element>();
+                MemoryTypes[doc] = els;
+            }
+
             //расстановка по модели элемента
-
-            Element element = TypeNames == null ? HelperSeach.GetExistFamily(FamNames, Type_seach) : HelperSeach.GetExistFamily(FamNames, TypeNames, Type_seach);
-
-            if ( element == null ) {return false;}
+            if (!existHistory)
+            {
+                element = TypeNames == null ? HelperSeach.GetExistFamily(FamNames, Type_seach) : HelperSeach.GetExistFamily(FamNames, TypeNames, Type_seach);
+                if (element == null) { return false; }
+            }
 
             ElementType elementType = element as ElementType;
+
             if ( elementType == null ) {return false;}
 
             UIDocument uidoc = RevitAPI.UiDocument;
 
+            //надо проверить поставился ли элемент
             uidoc.PostRequestForElementTypePlacement(elementType);
-
+            if (!existHistory)
+            {
+                //
+                els[key] = element;
+            }
             return true;
 
         }
+        static string ToKey(HashSet<string> set)
+         => string.Join("|", set.OrderBy(x => x ?? ""));
 
+        public static void ClearCache(Document document = null)
+        {
+            if (document == null)
+            {
+                MemoryTypes.Clear();
+
+            }
+            else
+            {
+                MemoryTypes.Remove(document);
+            }
+        }
 
     }
 }

@@ -12,244 +12,85 @@ using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
 using Updaters;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using static Autodesk.Revit.DB.SpecTypeId;
 
 namespace Reinforcement
 {
-    [Transaction(TransactionMode.Manual)]
-    public class RegisterAutoFillUpdater
+   
+    public class AutoFillNoteUpdater 
     {
-        // Используем тот же AddInId, что и в вашем приложении
-        public static AddInId addInId { get; set; }
-
-        public static readonly HashSet<BuiltInCategory> BuiltInCategorys = new HashSet<BuiltInCategory>()
-        { BuiltInCategory.OST_Walls              ,    // Стены
-                BuiltInCategory.OST_Floors       ,          // Перекрытия
-                BuiltInCategory.OST_Ceilings     ,          // Потолки
-                BuiltInCategory.OST_StructuralColumns ,     // Несущие колонны
-                BuiltInCategory.OST_StructuralFraming ,     // Несущий каркас (балки)
-                BuiltInCategory.OST_GenericModel      ,     // Обобщенные модели
-                BuiltInCategory.OST_GenericAnnotation ,     // Типовые аннотации
-                BuiltInCategory.OST_Views             ,     // Виды
-                BuiltInCategory.OST_Grids               ,   // Оси
-                BuiltInCategory.OST_Doors                ,  // Двери
-                BuiltInCategory.OST_Windows               , // Окна
-                BuiltInCategory.OST_Lines                 , // Линии
-                BuiltInCategory.OST_TextNotes              ,// Текстовые примечания
-                BuiltInCategory.OST_Stairs                 ,// Лестницы
-                BuiltInCategory.OST_DetailComponents,// например узлы или область маскировки
-                BuiltInCategory.OST_Dimensions,
-                BuiltInCategory.OST_SpotCoordinates,//координаты
-                // === ВАШИ НОВЫЕ КАТЕГОРИИ (ИНЖЕНЕРИЯ) ===
-                BuiltInCategory.OST_PipeCurves     ,        // Трубы
-                BuiltInCategory.OST_MechanicalEquipment,     // Оборудование (ОВ/ВК/Технология)
-                BuiltInCategory.OST_DuctTerminal       ,    // Воздухораспределители (решетки)
-
-                // === АНАЛОГИЧНЫЕ MEP-КАТЕГОРИИ (НЕОБХОДИМЫЕ ДЛЯ КОМПЛЕКТА) ===
-                // 1. Вентиляция
-                BuiltInCategory.OST_DuctCurves ,            // Воздуховоды
-                BuiltInCategory.OST_DuctFitting  ,          // Фитинги воздуховодов (отводы, тройники)
-                BuiltInCategory.OST_DuctAccessory  ,        // Арматура воздуховодов (дроссели, клапаны)
-                BuiltInCategory.OST_FlexDuctCurves  ,       // Гибкие воздуховоды
-
-                // 2. Трубопроводы и сантехника
-                BuiltInCategory.OST_PipeFitting     ,       // Фитинги трубопроводов
-                BuiltInCategory.OST_PipeAccessory    ,      // Арматура трубопроводов (краны, вентили)
-                BuiltInCategory.OST_FlexPipeCurves  ,       // Гибкие трубы
-                BuiltInCategory.OST_PlumbingFixtures  ,     // Сантехнические приборы
-
-                BuiltInCategory.OST_PipeTags,
-
-                // 3. Электрика и слаботочка
-                BuiltInCategory.OST_ElectricalEquipment  ,   // Электрооборудование (щиты)
-                BuiltInCategory.OST_ElectricalFixtures  ,    // Электроустановочные изделия (розетки)
-                BuiltInCategory.OST_LightingFixtures    ,    // Осветительные приборы (светильники)
-                BuiltInCategory.OST_CableTray         ,      // Кабельные лотки
-                BuiltInCategory.OST_Conduit           ,      // Короба / Трубы для кабеля
-                BuiltInCategory.OST_DataDevices        ,     // Сетевые устройства (слаботочка)
-                // добавьте другие нужные категории
-
-                BuiltInCategory.OST_IOSDetailGroups,
-                BuiltInCategory.OST_TitleBlocks,
-
-                BuiltInCategory.OST_Toposolid,
-                BuiltInCategory.OST_StairsRailing,
-                BuiltInCategory.OST_ShaftOpening,
-                BuiltInCategory.OST_RoomSeparationLines,
-
-                BuiltInCategory.OST_StructConnections, //гидрошпонка
-                BuiltInCategory.OST_RvtLinks, //связанные файлоы
-                BuiltInCategory.OST_StructuralFoundation, //сваи и тп
-                BuiltInCategory.OST_Sheets,
-                BuiltInCategory.OST_Cameras,
-                BuiltInCategory.OST_Materials,
-                BuiltInCategory.OST_ProjectBasePoint,
-                BuiltInCategory.OST_SharedBasePoint,
-
-                BuiltInCategory.OST_Viewports, // видовые экраны
-             BuiltInCategory.OST_Levels,
-             BuiltInCategory.OST_RevisionClouds //чудо облачко
-        };
-        public static void Register(bool forceReregister = false)
-        {
-            var updater = new AutoFillNoteUpdater();
-
-            if (!UpdaterRegistry.IsUpdaterRegistered(updater.GetUpdaterId()))
-            {
-                UpdaterRegistry.RegisterUpdater(updater, true);
-                var updaterId = updater.GetUpdaterId();
-
-                //ElementClassFilter allElementsFilter = new ElementClassFilter(typeof(Element));
-
-                var categoryIds = BuiltInCategorys.Select(x=> new ElementId(x)).ToList();
-
-                //метод второй для всех категорий
-
-                var allCategories = Enum.GetValues(typeof(BuiltInCategory)).Cast<BuiltInCategory>();
-                if(allCategories.Count()> categoryIds.Count)
-                {
-                    //очень много категорий так нельзя
-                   // categoryIds = allCategories.Select(x => new ElementId(x)).ToList();
-                }
-                //categoryIds = new List<ElementId>();
-                //foreach (BuiltInCategory bic in Enum.GetValues(typeof(BuiltInCategory)))
-                //{
-                //    // Пропускаем заведомо недопустимые или внутренние категории
-                //    if (bic == BuiltInCategory.INVALID || bic == BuiltInCategory.OST_IOSModelGroups)
-                //        continue;
-
-                    //    try
-                    //    {
-                    //        categoryIds.Add(new ElementId(bic));
-                    //    }
-                    //    catch
-                    //    {
-                    //        // Некоторые категории могут быть недопустимы для ElementId — просто пропускаем
-                    //    }
-                    //}
-
-
-                    // Фильтр: все элементы (или только нужные категории)
-                    //ElementClassFilter classFilter = new ElementClassFilter(typeof(Element));
-
-                ElementMulticategoryFilter classFilter = new ElementMulticategoryFilter(categoryIds);
-
-
-                //ElementClassFilter classFilter = new ElementClassFilter(typeof(FamilyInstance));
-                // При необходимости можно ограничить категориями, где есть параметр ADSK_Примечание
-
-                // Триггер на добавление элементов
-
-                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeAny()); //Element.GetChangeTypeElementAddition());
-                //Нет, Element.GetChangeTypeAny() не реагирует на создание (и удаление) Это частая ловушка в Revit API.
-                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementAddition());
-                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
-
-            }
-            else if (forceReregister)
-            {
-                UpdaterRegistry.RemoveAllTriggers(updater.GetUpdaterId());
-                UpdaterRegistry.UnregisterUpdater(updater.GetUpdaterId());
-                Register(false);
-            }
-        }
-        public static void RegisterUpdater()
-        {
-            AutoFillNoteUpdater updater = new AutoFillNoteUpdater();
-            UpdaterRegistry.RegisterUpdater(updater);
-
-            // Фильтр – все элементы (можно уточнить, если параметр есть только у определённых категорий)
-            ElementClassFilter filter = new ElementClassFilter(typeof(Element));
-
-            // Триггер на добавление элементов
-            UpdaterRegistry.AddTrigger(
-                updater.GetUpdaterId(),
-                filter,
-                Element.GetChangeTypeElementAddition());
-        }
-    }
-    public class AutoFillNoteUpdater : IUpdater
-    {
-        public void Execute(UpdaterData data)
-        {
-            // Делегируем главному диспетчеру (если так задумано)
-            AnyChange.Execute(data); // передаём главному методу распределения
-        }
+        
 
         // === Конфигурация ===
         public static bool regWriterAvtor = true;       // записывать автора
-        public static bool regWriterAvtorPrim = false;  // использовать запасной параметр примечания
-        public static bool regWriterSoAvtor = true;     // записывать соавтора
+       
+        
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
 
         public static bool correctGroup = true;
-
+        //public static int CommandInt = 3;
+        
         public static string NameAvtor = "ЕС_Автор";
         public static string NameSoAvtor = "ЕС_Посл Автор";
         //public static string NamePrimeh = "ADSK_Примечание";
 
         // === Временные данные ===
         private static DateTime _lastExecutionTime = DateTime.MinValue;
+        //private static DateTime _lastExecutionTimeUpdate = DateTime.MinValue;
         private static readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200);
-        private static bool _isUpdating = false; // флаг защиты от рекурсии
+
+        //private static readonly TimeSpan _minimumIntervaCommand = TimeSpan.FromMilliseconds(500);//если прошло более 5 секунд то обновляем автора из апдейтера
 
         // === Текущие значения (пересчитываются при каждом реальном выполнении) ===
+
         
-        private static string _userDate;
+
+        private static string _nowDate;                // dd.MM.yy.HH
+
+        public const int MaxCoAuthorsLength = 170;     // лимит строки соавторов
+
+
+        
 
         public static string UserName = "";
         /// <summary>
         /// Основной метод, вызываемый диспетчером для обработки добавленных/изменённых элементов.
         /// </summary>
         private static int _inUpdate;
-        public static void AvtorUpdater(UpdaterData data)
+        //private static int _inUpdateProcess;
+        public static Document Doc = null;
+        public static List<ElementId> AddedIds = new List<ElementId>();
+        public static List<ElementId> ModifiedIds = new List<ElementId>();
+
+        public Dictionary<Document, List<ElementId>> DocElChange = new Dictionary<Document, List<ElementId>>();
+
+        public static void AvtorUpdater(SnapshotModificationElements snapshotModificationElements)
         {
             if (!regWriterAvtor) return;
+            bool isUpdate=false;
             try
             {
                 // Защита от рекурсивного вызова
                 // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
-                if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
+                if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0 || snapshotModificationElements.Doc==null)
                 {
                     return;
                 }
+                isUpdate = true;
 
-                // Проверка временного интервала сразу, до каких-либо действий
+               // Проверка временного интервала сразу, до каких-либо действий
                 DateTime now = DateTime.Now;
                 if (now - _lastExecutionTime < _minimumInterval)
+                {
                     return;
-
-                Document doc = data.GetDocument();
-                if (doc == null)
-                { 
-                    return;
-                }
-                if (string.IsNullOrEmpty(UserName))
-                {
-                    UserName = doc.Application.Username;
-                }
-                _userDate = $"{UserName}_{now:dd.MM.yy.HH}";
-
-                // Получаем списки элементов
-                var addedIds = data.GetAddedElementIds();
-                var modifiedIds = data.GetModifiedElementIds();
-                
-
-
-                // Обрабатываем добавленные (автор при создании)
-                if (addedIds.Count > 0)
-                {
-                    ProcessElements(doc, addedIds, isNewElement: true);
-                }
-
-                // Обрабатываем изменённые (автор и соавтор)
-                if (modifiedIds.Count > 0)
-                {
-                    ProcessElements(doc, modifiedIds, isNewElement: false);
                 }
 
                 // Обновляем время последнего выполнения
-                _lastExecutionTime = DateTime.UtcNow;
+                _lastExecutionTime = now;
+
+                ProcessAvtorUpdate(now, snapshotModificationElements);//обновляем отсюда
+                
             }
             catch(Exception ex) 
             {
@@ -257,10 +98,40 @@ namespace Reinforcement
             }
             finally
             {
-                Interlocked.Exchange(ref _inUpdate, 0);
+                if (isUpdate)
+                {
+                    Interlocked.Exchange(ref _inUpdate, 0);
+                }
             }
         }
+        private static bool _firstUpdate = false;//было ли хоть одно апдейте
+        private static  int _commandSimvols = 3;
+        private static string cmdName = null;
+        public static void ProcessAvtorUpdate(DateTime now, SnapshotModificationElements snapshotModificationElements)
+        {
+            
+                _nowDate = now.ToString("dd.MM.yy.HH");
+                
 
+                //имя команды
+                cmdName = snapshotModificationElements.CommandName;
+
+                
+                cmdName = string.IsNullOrEmpty(cmdName)
+                        ? null
+                        : cmdName.Substring(0, Math.Min(_commandSimvols, cmdName.Length));
+                
+
+                // Обрабатываем добавленные (автор при создании)
+               
+                ProcessElements(now, snapshotModificationElements, isNewElement: true);
+                
+
+                // Обрабатываем изменённые (автор и соавтор)
+                
+                 ProcessElements(now, snapshotModificationElements, isNewElement: false);
+                
+        }
 
         /// <summary>
         /// Безопасная установка значения параметра (только если оно изменилось).
@@ -302,22 +173,15 @@ namespace Reinforcement
         /// Обработка списка элементов: запись автора (при необходимости) и соавтора.
         /// </summary>
         /// 
-        private static void ProcessElements(Document doc, ICollection<ElementId> ids, bool isNewElement)
+        private static void ProcessElements(DateTime now, SnapshotModificationElements snapshotModificationElements, bool isNewElement)
         {
-            
-            //View activeView = doc.ActiveView;
-            //при открывании проекта активного вида может не быть
-            //bool isGroupEditMode = false;
-            //if (activeView != null)
-            //{
-            //    ElementId editingGroupId = activeView.GroupId;
-            //    // Режим редактирования группы активен, если у активного вида есть GroupId
-            //    isGroupEditMode = activeView.GroupId != ElementId.InvalidElementId;
-            //}
 
-            foreach (var id in ids)
+            var elements = isNewElement? snapshotModificationElements.AddedElements : snapshotModificationElements.ModifiedElements;
+            Document doc = snapshotModificationElements.Doc;
+
+            foreach (Element element in elements)
             {
-                Element element = doc.GetElement(id);
+               
                 if (element == null) continue;
                 // Проверка: если элемент входит в группу и группа не в режиме редактирования – пропускаем
 
@@ -346,46 +210,25 @@ namespace Reinforcement
 
                     if (!sameGroupType)
                     {  continue; }
-                        // Проверяем, связан ли активный вид со сборкой
-                        //ElementId assemblyId = activeView.AssemblyInstanceId;
-                        //if (assemblyId != ElementId.InvalidElementId) не работает
-                        //{
-                        //    // Мы, вероятно, находимся в режиме редактирования сборки assemblyId
-                        //    // Дополнительно можно проверить, что изменяемые элементы принадлежат этой сборке
-
-
-                        //    if (element.AssemblyInstanceId == assemblyId)
-                        //    {
-                        //        // Элемент из редактируемой сборки
-
-                        //        int cd = 0;
-                        //    }
-                        //    int c = 0;
-                        //}
-
-
-                        ////не знаю костыль работат только галка correctGroup)
-                        //var ui = RevitAPI.UiApplication.ActiveUIDocument;//Возможно, в активном документе есть свойство, указывающее на активную сборку.
                         
                 }
 
                 // 1. Параметр для автора (или запасной)
                 Parameter authorParam = element.LookupParameter(NameAvtor);
-                //if (authorParam == null && regWriterAvtorPrim)
-                //    authorParam = element.LookupParameter(NamePrimeh);
+               
 
-                if (authorParam == null) continue; // нет нужного параметра – пропускаем
-                if (authorParam.IsReadOnly)
-                {
-                    continue;
-                }    
+                if (authorParam == null || authorParam.IsReadOnly) continue; // нет нужного параметра – пропускаем
+               
                 string authorValue = authorParam.AsString();
 
+               
                 // Для нового элемента записываем автора, если поле пустое
                 if (string.IsNullOrEmpty(authorValue))//isNewElement
                 {
-                    SetParam(authorParam, _userDate);
-                    authorValue = _userDate; // обновляем локальное значение для дальнейшего использования
+                    // Автор — это "кто создал", тип смены тут не нужен
+                    authorValue = new AuthorEntry(UserName, _nowDate, cmdName).ToString();
+                    SetParam(authorParam, authorValue);
+                  
                 }
 
                 // 2. Параметр соавтора
@@ -406,45 +249,170 @@ namespace Reinforcement
                 }
             }
         }
-        
+
 
         /// <summary>
         /// Формирует новую строку соавторов на основе предыдущей.
         /// </summary>
         private static string BuildNewCoAuthors(string pastValue)
         {
-            // Если хранение нескольких авторов отключено, или строка пустая/слишком длинная – просто заменяем
-            if (!longAvtors || string.IsNullOrEmpty(pastValue) || pastValue.Length > 170)
-                return _userDate;
+            var newEntry = new AuthorEntry(UserName, _nowDate, cmdName);
 
-            // Разбиваем на отдельные записи
-            var entries = pastValue
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToList();
+            if (!longAvtors)
+                return newEntry.ToString();
 
-            // Удаляем все записи, начинающиеся с "username_"
-            string prefix = UserName + "_";
-            entries.RemoveAll(e => e.StartsWith(prefix));
+            // 1) Разбираем существующую строку
+            var entries = new List<AuthorEntry>();
+            if (!string.IsNullOrEmpty(pastValue))
+            {
+                foreach (var part in pastValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (AuthorEntry.TryParse(part, out var e))
+                        entries.Add(e);
+                }
+            }
 
-            // Вставляем актуальную запись в начало
-            entries.Insert(0, _userDate);
+            // 2) Убираем дубликат "имя+дата" (правка в тот же час)
+            //entries.RemoveAll(e => e.Name == newEntry.Name && e.Date == newEntry.Date);
 
-            return string.Join(", ", entries);
+            //в тот же день дубли убираем
+            entries.RemoveAll(e => e.Name == newEntry.Name &&  e.IsSameDayAs(newEntry));
+
+            // 3) Точная дедупликация
+            var seen = new HashSet<string>();
+            entries = entries.Where(e => seen.Add(e.ToString())).ToList();
+
+            // 4) Свежая запись — в начало
+            entries.Insert(0, newEntry);
+
+            // 5) Помещается — выходим сразу
+            string result = SerializeEntries(entries);
+            if (result.Length <= MaxCoAuthorsLength)
+                return result;
+
+            // 6) Слишком длинно — сначала схлопываем последовательных авторов
+            entries = CollapseConsecutiveSameAuthor(entries);
+            result = SerializeEntries(entries);
+
+            // 7) Всё ещё длинно — удаляем с конца (самые старые)
+            while (result.Length > MaxCoAuthorsLength && entries.Count > 1)
+            {
+                entries.RemoveAt(entries.Count - 1);
+                result = SerializeEntries(entries);
+            }
+
+            return result;
+        }
+        /// <summary>
+        /// Схлопывает подряд идущие записи одного автора (по порядку в строке = от новых к старым).
+        /// Оставляет более новую запись. Если у оставляемой тип не задан, а у отбрасываемой — был,
+        /// тип наследуется, чтобы не потерять информацию о характере правки.
+        /// </summary>
+        private static List<AuthorEntry> CollapseConsecutiveSameAuthor(List<AuthorEntry> entries)
+        {
+            if (entries.Count <= 1) return entries;
+
+            var result = new List<AuthorEntry>(entries.Count) { entries[0] };
+            for (int i = 1; i < entries.Count; i++)
+            {
+                var prev = result[result.Count - 1];
+                var cur = entries[i];
+                if (cur.Name == prev.Name)
+                {
+                    // Тот же автор подряд — старая запись отбрасывается.
+                    if (string.IsNullOrEmpty(prev.ChangeType) && !string.IsNullOrEmpty(cur.ChangeType))
+                        prev.ChangeType = cur.ChangeType;
+                    continue;
+                }
+                result.Add(cur);
+            }
+            return result;
+        }
+        private static string SerializeEntries(List<AuthorEntry> entries)
+        => string.Join(", ", entries.Select(e => e.ToString()));
+
+
+
+
+
+
+       
+    }
+    /// <summary>
+    /// Одна запись в поле «соавтор»:
+    ///   Name_dd.MM.yy.HH          — без типа
+    ///   Name_dd.MM.yy.HH_type     — с типом изменения (1–2 символа)
+    /// </summary>
+    public class AuthorEntry
+    {
+        public string Name { get; set; }
+        public string Date { get; set; }   // dd.MM.yy.HH
+        public string ChangeType { get; set; }   // может быть null/пусто
+
+        public AuthorEntry() { }
+        public AuthorEntry(string name, string date, string changeType = null)
+        {
+            Name = name;
+            Date = date;
+            ChangeType = string.IsNullOrWhiteSpace(changeType) ? null : changeType.Trim();
         }
 
+        public override string ToString()
+            => string.IsNullOrEmpty(ChangeType)
+                ? $"{Name}_{Date}"
+                : $"{Name}_{Date}_{ChangeType}";
 
+        private static readonly System.Text.RegularExpressions.Regex DateRegex =
+            new System.Text.RegularExpressions.Regex(@"^\d{2}\.\d{2}\.\d{2}\.\d{2}$");
 
+        public static bool TryParse(string s, out AuthorEntry entry)
+        {
+            entry = null;
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            s = s.Trim();
 
+            var parts = s.Split('_');
+            if (parts.Length < 2) return false;
 
+            int dateIdx;
+            string changeType = null;
 
-        private static AddInId _addInId => RegisterAutoFillUpdater.addInId;
-       
-        private static UpdaterId _updaterId = new UpdaterId(_addInId, new Guid("D7C9AA9A-7172-466C-AE34-B1CD8457271E"));
-        public string GetAdditionalInformation() => string.Empty;
-        public ChangePriority GetChangePriority() => ChangePriority.Annotations;
-        public UpdaterId GetUpdaterId() => _updaterId;
-        public string GetUpdaterName() => "Updater для заполнения ADSK_Примечание";
+            // сначала считаем, что типа нет — тогда последняя часть должна быть датой
+            if (DateRegex.IsMatch(parts[parts.Length - 1]))
+            {
+                dateIdx = parts.Length - 1;
+            }
+            else if (parts.Length >= 3 && DateRegex.IsMatch(parts[parts.Length - 2]))
+            {
+                // иначе — второй с конца должен быть датой, а последний кусок это тип
+                dateIdx = parts.Length - 2;
+                changeType = parts[parts.Length - 1];
+            }
+            else
+            {
+                return false;
+            }
+
+            string name = string.Join("_", parts.Take(dateIdx));
+            if (string.IsNullOrEmpty(name)) return false;
+
+            entry = new AuthorEntry(name, parts[dateIdx], changeType);
+            return true;
+        }
+
+        /// <summary>
+        /// Совпадает ли дата с другой записью в пределах одного календарного дня.
+        /// Формат Date — "dd.MM.yy.HH", поэтому день — первые 8 символов.
+        /// </summary>
+        public bool IsSameDayAs(AuthorEntry other)
+        {
+            if (other == null) return false;
+            if (string.IsNullOrEmpty(Date) || string.IsNullOrEmpty(other.Date)) return false;
+
+            // dd.MM.yy.HH → dd.MM.yy = первые 8 символов
+            if (Date.Length < 8 || other.Date.Length < 8) return false;
+
+            return string.CompareOrdinal(Date, 0, other.Date, 0, 8) == 0;
+        }
     }
 }

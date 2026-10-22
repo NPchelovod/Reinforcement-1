@@ -350,6 +350,16 @@ namespace Reinforcement
             //секретный набор команд
             _secretHandler = new SecretReplacementHandler();
             _secretEvent = ExternalEvent.Create(_secretHandler);
+
+            //подписка на события в ревите внутри транзакции 
+            // В методе OnStartup или при инициализации
+            //RevitCommandId commandId = RevitCommandId.LookupCommandId("ID_ВАШЕЙ_КОМАНДЫ");
+            //if (commandId != null)
+            //{
+            //    AddInCommandBinding binding = app.CreateAddInCommandBinding(commandId);
+            //    binding.BeforeExecuted += OnBeforeCommandExecuted;
+            //}
+
             return Result.Succeeded;
         }
 
@@ -362,6 +372,8 @@ namespace Reinforcement
                 var controlledApp = application.ControlledApplication;
                 controlledApp.ApplicationInitialized -= OnApplicationInitialized;
                 application.ApplicationClosing -= OnRevitClosing;
+
+                
                 controlledApp.DocumentChanged -= FamilyCacheEvents.DocumentChanged;
                 controlledApp.DocumentClosing -= FamilyCacheEvents.DocumentClosing;
                 HelperSeach.ClearCache();

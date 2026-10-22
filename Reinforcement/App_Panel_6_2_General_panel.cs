@@ -77,6 +77,21 @@ namespace Reinforcement
                     "Reinforcement.SectionBoxFitVertical",
                     "Растянуть границы 3D вертикально", OV1);
             }
+
+            // ===== 4. Растянуть 3D границы =====
+            var item4 = App_Helper_Button.CreateSplitButton(ribbonPanel,
+                "ES_SectionBoxPosition", "Позиционирование По", OV1);
+            if (item4 != null)
+            {
+                App_Helper_Button.AddButtonToSplitButton(item4, "БуферВида", assemblyPath,
+                    "Reinforcement.ViewPositionCopy",
+                    "Сохраняет 3Д границы и взгляд на 3Д вид", OV1);
+
+                App_Helper_Button.AddButtonToSplitButton(item4, "Позиционировать", assemblyPath,
+                    "Reinforcement.ViewPositionPaste",
+                    "На другом виде можно восстановить буферизованный фзгляд", OV1);
+            }
+
         }
         public static void Gen_utilit(RibbonPanel panel, string tabName)
         {

@@ -81,14 +81,17 @@ namespace Reinforcement
         public static bool ResetNamesParam;
         public static void ClearCache(Document document = null)
         {
+            Utilit_1_1_Depth_Seach.ClearCache(document);
             if (document == null)
             {
                 PastElements.Clear();
-                _overriddenNames.Clear();
+                
+                _overriddenNames.Clear(); //← раскомментировать, только если действительно нужен полный сброс
             }
             else
             {
                 PastElements.Remove(document);
+               
                 _overriddenNames.Remove(document);
             }
         }
@@ -198,7 +201,6 @@ namespace Reinforcement
 
             var doc = RevitAPI.Document;
 
-            // Достаём эффективные наборы из словаря (или оригиналы, если переопределений нет).
             var effFamily = GetEffective(doc, PossibleNamesFamily);
             var effType = GetEffective(doc, PossibleNamesType);
 
@@ -216,6 +218,7 @@ namespace Reinforcement
                     .ToList();
 
                 ElementType best;
+                bool userPicked = false;
 
                 if (exact.Count == 1)
                 {
@@ -238,24 +241,45 @@ namespace Reinforcement
 
                     if (best == null)
                     {
-                        // Отказались от окна — ввод имени типоразмера вручную.
+                        // Отказались от окна — ручной ввод имени типоразмера.
                         var input = HelperPrivateStatic.GetUserInputWithForm(effType.FirstOrDefault());
                         if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
 
-                        // Пишем не в PossibleNamesType, а в эффективный набор.
                         var effectiveType = GetEffective(doc, PossibleNamesType, createIfMissing: true);
                         effectiveType.Add(input.Item1.Trim());
                         effType = effectiveType;
                         continue;
                     }
+                    userPicked = true;
                 }
 
                 if (best == null) return null;
 
-                // Фиксируем выбор пользователя в эффективном наборе.
-                var effTypeFinal = GetEffective(doc, PossibleNamesType, createIfMissing: true);
-                effTypeFinal.Add(best.Name);
-                effType = effTypeFinal;
+                if (userPicked)
+                {
+                    // ФИКС: пользователь сделал явный выбор — фиксируем его
+                    // в эффективных наборах, чтобы следующий вызов (даже при пустом
+                    // кэше элементов или нестабильном порядке HashSet) уже
+                    // не считался неоднозначным.
+                    if (!string.IsNullOrEmpty(best.FamilyName))
+                    {
+                        var effFamilyFinal = GetEffective(doc, PossibleNamesFamily, createIfMissing: true);
+                        effFamilyFinal.Clear();
+                        effFamilyFinal.Add(best.FamilyName);
+                        effFamily = effFamilyFinal;
+                    }
+                    var effTypeFinal = GetEffective(doc, PossibleNamesType, createIfMissing: true);
+                    effTypeFinal.Clear();
+                    effTypeFinal.Add(best.Name);
+                    effType = effTypeFinal;
+                }
+                else
+                {
+                    // Тихий выбор (одно точное совпадение) — просто фиксируем имя типа.
+                    var effTypeFinal = GetEffective(doc, PossibleNamesType, createIfMissing: true);
+                    effTypeFinal.Add(best.Name);
+                    effType = effTypeFinal;
+                }
 
                 return Remember(doc, Key(effFamily, effType, Type_seach), best);
             }
@@ -284,11 +308,16 @@ namespace Reinforcement
                                                     ? t.Name
                                                     : t.FamilyName;
 
-            var chosen = SeachNameElement(effNames, candidates, name);
+            var chosen = SeachNameElement(effNames, candidates, name, out bool userPicked);
             if (chosen == null) return null;
 
-            // Фиксируем выбор в эффективном наборе (оригинал не трогаем).
             var effNamesFinal = GetEffective(doc, PossibleNamesFamilySymbol, createIfMissing: true);
+
+            if (userPicked)
+            {
+                // ФИКС: сужаем набор до выбранного имени.
+                effNamesFinal.Clear();
+            }
             effNamesFinal.Add(name(chosen));
 
             return Remember(doc, "name|" + Key(empty, effNamesFinal, Type_seach), chosen);
@@ -297,21 +326,29 @@ namespace Reinforcement
     HashSet<string> PossibleNamesFamilySymbol,
     List<ElementType> elements,
     Func<ElementType, string> getName)
+    => SeachNameElement(PossibleNamesFamilySymbol, elements, getName, out _);
+
+        public static ElementType SeachNameElement(
+            HashSet<string> PossibleNamesFamilySymbol,
+            List<ElementType> elements,
+            Func<ElementType, string> getName,
+            out bool userPicked)
         {
-            if (PossibleNamesFamilySymbol == null || elements == null) throw new ArgumentNullException("names");
+            userPicked = false;
+            if (PossibleNamesFamilySymbol == null || elements == null)
+                throw new ArgumentNullException("names");
+
             var requested = PossibleNamesFamilySymbol.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
             if (requested.Count == 0 || elements.Count == 0) return null;
 
             for (int attempt = 0; attempt < 4; attempt++)
             {
-                // 1. Точное совпадение — молча возвращаем первый попавшийся по имени,
-                //    но с сохранением всех кандидатов в списке (без GroupBy).
+                // Тихий выбор — точное совпадение
                 foreach (var n in requested)
                     foreach (var el in elements)
                         if (StringSimilarity.Normalize(n) == StringSimilarity.Normalize(getName(el)))
                             return el;
 
-                // 2. Топ-5 по схожести — без схлопывания одинаковых имён.
                 var ranked = elements
                     .Select(el => new { El = el, Score = requested.Max(n => StringSimilarity.Calculate(n, getName(el))) })
                     .OrderByDescending(x => x.Score)
@@ -320,9 +357,12 @@ namespace Reinforcement
                     .ToList();
 
                 var chosen = ShowCandidateSelection(ranked, "Точное имя не найдено");
-                if (chosen != null) return chosen;
+                if (chosen != null)
+                {
+                    userPicked = true;
+                    return chosen;
+                }
 
-                // 3. Пользователь отменил окно — просим ввести имя вручную.
                 var input = HelperPrivateStatic.GetUserInputWithForm(requested.FirstOrDefault());
                 if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) break;
                 requested.Clear();
@@ -330,6 +370,7 @@ namespace Reinforcement
             }
             return null;
         }
+        
 
 
         //public static (string nPile, string ePile) SeachNameElement(HashSet<string> PossibleNamesFamilySymbol, List<string> elements)

@@ -29,17 +29,27 @@ namespace Reinforcement
         public double[] TBasisY { get; set; }
         public double[] TBasisZ { get; set; }
 
+        // === Ориентация камеры (ViewOrientation3D) ===
+        public double[] Eye { get; set; }
+        public double[] Up { get; set; }
+        public double[] Forward { get; set; }
+
+        /// <summary>Есть ли в снимке сохранённая ориентация камеры.</summary>
+        public bool HasOrientation
+            => Eye != null && Up != null && Forward != null;
+
         public override string ToString()
         {
             string core = $"{Date:yyyy-MM-dd HH:mm}  |  {UserName,-20}  |  {(IsActive ? "вкл" : "выкл")}";
+            // Пометка для старых снимков без ориентации
+            if (!HasOrientation) core += "  |  без ориентации";
             return string.IsNullOrWhiteSpace(Label) ? core : $"[{Label}]  " + core;
         }
     }
 
     public class SectionBoxMemory
     {
-        public static string PrimaryPath =
-            @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy\MemoryViews";
+        public static string PrimaryPath = ElementMemory.GetPath();
 
         public static string FolderName = "Memory3DSectionBoxes";
 
@@ -56,31 +66,19 @@ namespace Reinforcement
             WriteIndented = true
         };
 
-        public static string GetPath()
-        {
-            if (Directory.Exists(PrimaryPath))
-                return PrimaryPath;
-
-            string path = App_Apdater_1.targetPluginDir;
-            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
-                return null;
-
-            path = Path.Combine(path, FolderName);
-            Directory.CreateDirectory(path);
-            return path;
-        }
+        
 
         /// <summary>Актуальный путь: {id}_border.json</summary>
         public static string FilePath(int viewId)
         {
-            string dir = GetPath();
+            string dir = PrimaryPath;
             if (string.IsNullOrEmpty(dir)) return null;
             return Path.Combine(dir, viewId + "_border.json");
         }
         /// <summary>Старый путь: {id}.json (только для чтения/удаления)</summary>
         public static string LegacyFilePath(int viewId)
         {
-            string dir = GetPath();
+            string dir = PrimaryPath;
             if (string.IsNullOrEmpty(dir)) return null;
             return Path.Combine(dir, viewId + ".json");
         }
@@ -147,6 +145,14 @@ namespace Reinforcement
                 SectionBoxLabelDialog.Ask(view3D.Name, doc.Title, view3D.IsSectionBoxActive);
             if (labelResult.IsCancelled) return Result.Cancelled;
 
+
+            // Снимок ориентации (для старых Revit-версий GetOrientation может вернуть null)
+            ViewOrientation3D orientation = view3D.GetOrientation();
+            double[] eye = SectionBoxMemory.ToArray(orientation?.EyePosition);
+            double[] up = SectionBoxMemory.ToArray(orientation?.UpDirection);
+            double[] forward = SectionBoxMemory.ToArray(orientation?.ForwardDirection);
+
+
             // Добавляем снимок
             mem.ViewId = viewIdValue;
             mem.NameView = view3D.Name;
@@ -163,7 +169,12 @@ namespace Reinforcement
                 TOrigin = SectionBoxMemory.ToArray(box.Transform?.Origin),
                 TBasisX = SectionBoxMemory.ToArray(box.Transform?.BasisX),
                 TBasisY = SectionBoxMemory.ToArray(box.Transform?.BasisY),
-                TBasisZ = SectionBoxMemory.ToArray(box.Transform?.BasisZ)
+                TBasisZ = SectionBoxMemory.ToArray(box.Transform?.BasisZ),
+
+                // === НОВОЕ ===
+                Eye = eye,
+                Up = up,
+                Forward = forward
             });
 
             string filePath = SectionBoxMemory.FilePath(viewIdValue);
@@ -199,8 +210,10 @@ namespace Reinforcement
             }
 
             TaskDialog.Show("Границы 3D вида",
-                $"Границы сохранены.\nСнимок № {mem.Snapshots.Count} от {DateTime.Now:yyyy-MM-dd HH:mm}." +
-                (string.IsNullOrWhiteSpace(labelResult.Label) ? "" : $"\nНазвание: {labelResult.Label}"));
+            $"Границы сохранены.\n" +
+            $"Снимок № {mem.Snapshots.Count} от {DateTime.Now:yyyy-MM-dd HH:mm}.\n" +
+            $"Ориентация: {(eye != null ? "сохранена" : "нет данных")}" +
+            (string.IsNullOrWhiteSpace(labelResult.Label) ? "" : $"\nНазвание: {labelResult.Label}"));
 
             return Result.Succeeded;
         }
@@ -258,9 +271,15 @@ namespace Reinforcement
             }
 
             // Восстанавливаем BoundingBoxXYZ
-            BoundingBoxXYZ box = new BoundingBoxXYZ();
-            box.Min = SectionBoxMemory.FromArray(snapshot.Min);
-            box.Max = SectionBoxMemory.FromArray(snapshot.Max);
+            XYZ min = SectionBoxMemory.FromArray(snapshot.Min);
+            XYZ max = SectionBoxMemory.FromArray(snapshot.Max);
+            if (min == null || max == null)
+            {
+                TaskDialog.Show("Границы 3D вида",
+                    "В снимке отсутствуют валидные границы (Min/Max). Восстановление невозможно.");
+                return Result.Failed;
+            }
+            BoundingBoxXYZ box = new BoundingBoxXYZ { Min = min, Max = max };
 
             if (snapshot.TOrigin != null && snapshot.TBasisX != null &&
                 snapshot.TBasisY != null && snapshot.TBasisZ != null)
@@ -273,18 +292,48 @@ namespace Reinforcement
                 box.Transform = t;
             }
 
+            // Готовим ориентацию (если в снимке есть)
+            ViewOrientation3D orientation = null;
+            if (snapshot.HasOrientation)
+            {
+                XYZ eye = SectionBoxMemory.FromArray(snapshot.Eye);
+                XYZ up = SectionBoxMemory.FromArray(snapshot.Up);
+                XYZ forward = SectionBoxMemory.FromArray(snapshot.Forward);
+
+                if (eye != null && up != null && forward != null)
+                {
+                    try { orientation = new ViewOrientation3D(eye, up, forward); }
+                    catch { orientation = null; } // битые данные — не применяем ориентацию
+                }
+            }
+
+            string orientationError = null;
+
             using (Transaction t = new Transaction(doc, "Восстановление границ 3D вида"))
             {
                 t.Start();
+
+                if (orientation != null)
+                {
+                    try { view3D.SetOrientation(orientation); }
+                    catch (Exception ex) { orientationError = ex.Message; } // без диалога внутри
+                }
+
                 view3D.SetSectionBox(box);
                 view3D.IsSectionBoxActive = snapshot.IsActive;
+
                 t.Commit();
             }
+
+            string orientationStatus = orientationError != null
+            ? "не применена: " + orientationError
+            : (snapshot.HasOrientation ? "восстановлена" : "в снимке отсутствует");
 
             TaskDialog.Show("Границы 3D вида",
                 $"Границы восстановлены.\n" +
                 $"Снимок: {snapshot.Date:yyyy-MM-dd HH:mm} ({snapshot.UserName}), " +
-                $"состояние: {(snapshot.IsActive ? "включены" : "выключены")}.");
+                $"состояние: {(snapshot.IsActive ? "включены" : "выключены")}.\n" +
+                $"Ориентация: {orientationStatus}");
 
             return Result.Succeeded;
         }
