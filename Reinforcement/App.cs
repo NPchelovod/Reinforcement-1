@@ -325,7 +325,7 @@ namespace Reinforcement
 
 
             // подписка на все
-            AnyChange.PodpiskaAll();// подписка на все
+            AnyChangeClass.PodpiskaAll();// подписка на все
                                     // AutoFillNoteUpdater.RegisterUpdater();
 
             // Подписка на событие закрытия Revit

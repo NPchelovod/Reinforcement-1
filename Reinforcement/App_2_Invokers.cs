@@ -9,10 +9,11 @@ using Autodesk.Revit.UI;
 
 namespace Reinforcement
 {
-    public readonly struct SPastCommand
+    public  class SPastCommand
     {
         public readonly string Name;//имя команды
         public readonly DateTime DateTime;//дата команды
+        public SnapshotModificationElements snapshotModificationElements=null;
         public SPastCommand(string name, DateTime dateTime)
         {
             Name = name; DateTime = dateTime;
@@ -124,7 +125,7 @@ namespace Reinforcement
             "Завершить работу редактирования группы" // RU
         };
         //а можно как в машине, когда там 3 раза ключ в зажигания и тд... сделать 3 раза подряд на какую-то из э
-        public static SPastCommand PastCommand =new SPastCommand();
+        public static SPastCommand PastCommand =null;
         public static Queue<SPastCommand> PastCommands = new Queue<SPastCommand>();
         private static readonly string[] PatternToDetect =
         {
@@ -160,37 +161,37 @@ namespace Reinforcement
 
            
 
-            if (PastCommands.Count >= 20)
+            if (PastCommands.Count >= 10)
             {
                 PastCommands.Dequeue();//убираем самый старый элемент
             }
-            PastCommand = new SPastCommand(comand, DateTime.Now);
+            DateLastCommandChanged = DateTime.Now;
+            PastCommand = new SPastCommand(comand, DateLastCommandChanged);
             PastCommands.Enqueue(PastCommand);
 
-            DateLastCommandChanged = DateTime.Now;
+            
             // === Магия: проверяем секретный паттерн ===
-            if (MatchesSecretPattern())
+            
+            if(!string.IsNullOrEmpty(OnGroupCurrent.Name) && MatchesSecretPattern())
             {
-                if(!string.IsNullOrEmpty(OnGroupCurrent.Name))
-                {
-                    //мы в группе выполняем команду
-                    PastCommands.Clear();
-                    InPendingSecret=true;
-                    //_pendingSecret = true;
-                    //// Подписка в OnStartup:
-                    //Application.Idling += (s, a) =>
-                    //{
-                    //    if (_pendingSecret)
-                    //    {
-                    //        _pendingSecret = false;
-                    //        _secretEvent?.Raise();
-                    //    }
-                    //};
-                }
+                //мы в группе выполняем команду
+                //PastCommands.Clear();
+                InPendingSecret=true;
+                //_pendingSecret = true;
+                //// Подписка в OnStartup:
+                //Application.Idling += (s, a) =>
+                //{
+                //    if (_pendingSecret)
+                //    {
+                //        _pendingSecret = false;
+                //        _secretEvent?.Raise();
+                //    }
+                //};
+                
 
             }
             
-            // --- Вход в режим редактирования группы ---
+            // --- распознаем Вход в режим редактирования группы ---
             if (txNames.Any(n => EnterGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
             {
                 var modifiedIds = e.GetModifiedElementIds();
@@ -238,6 +239,9 @@ namespace Reinforcement
                 OnGroupCurrent = ("", null);
             }
 
+            AnyChange.SeachCommandModificationElements();//теперь ищем сопоставление изменения и команды
+
+            AutoFillNoteUpdater.AvtorUpdaterLong();
             //запускаем запись автора
             //AutoFillNoteUpdater.ProcessAvtorUpdate();
             // Остальные транзакции — ничего не делают, состояние сохраняется

@@ -51,19 +51,66 @@ namespace Reinforcement
         public const int MaxCoAuthorsLength = 170;     // лимит строки соавторов
 
 
-        
-
         public static string UserName = "";
         /// <summary>
         /// Основной метод, вызываемый диспетчером для обработки добавленных/изменённых элементов.
         /// </summary>
         private static int _inUpdate;
         //private static int _inUpdateProcess;
-        public static Document Doc = null;
-        public static List<ElementId> AddedIds = new List<ElementId>();
-        public static List<ElementId> ModifiedIds = new List<ElementId>();
 
-        public Dictionary<Document, List<ElementId>> DocElChange = new Dictionary<Document, List<ElementId>>();
+        private static int _inUpdateLong;
+        public static void AvtorUpdaterLong()
+        {
+            if (!regWriterAvtor) return;
+            bool isUpdate = false;
+            try
+            {
+                // Защита от рекурсивного вызова
+                // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
+                if (Interlocked.CompareExchange(ref _inUpdateLong, 1, 0) != 0)
+                {
+                    return;
+                }
+                isUpdate = true;
+                //отложенное обновление авторов
+                // Копируем элементы из очереди, чтобы безопасно перебирать и менять флаги
+                var snapshots = AnyChange.SnapshotModificationElementsQueue.ToArray();
+                DateTime now = DateTime.Now;
+
+                foreach (var snapshot in snapshots)
+                {
+                    //если старая модификация или если известна команда
+                    if (snapshot.IsAvtorUpdate) { continue; }
+                    if (!snapshot.NotCommandAndChangedFind)//в иных случаях всегда обрабатываем
+                    {
+                        if (snapshot.SPastCommand == null)
+                        {
+                            //то обрабатываем только если по секундам уже старая
+                            if ((now - snapshot.DateCreate) < AnyChange.ComandAndChangedMaxTime)
+                            { continue; }
+                        }
+
+                    }
+
+                    //теперь обработка
+                    ProcessAvtorUpdate(now, snapshot);//обновляем отсюда
+                }
+            }
+            catch (Exception ex)
+            {
+                App_Apdater_1.AppErrors.LogError(ex);
+            }
+            finally
+            {
+                if (isUpdate)
+                {
+                    Interlocked.Exchange(ref _inUpdateLong, 0);
+                }
+            }
+
+
+        }
+
 
         public static void AvtorUpdater(SnapshotModificationElements snapshotModificationElements)
         {
@@ -104,32 +151,33 @@ namespace Reinforcement
                 }
             }
         }
-        private static bool _firstUpdate = false;//было ли хоть одно апдейте
+       
         private static  int _commandSimvols = 3;
         private static string cmdName = null;
         public static void ProcessAvtorUpdate(DateTime now, SnapshotModificationElements snapshotModificationElements)
         {
             
-                _nowDate = now.ToString("dd.MM.yy.HH");
+            _nowDate = now.ToString("dd.MM.yy.HH");
                 
 
-                //имя команды
-                cmdName = snapshotModificationElements.CommandName;
+            //имя команды
+            cmdName = snapshotModificationElements.CommandName;
 
                 
-                cmdName = string.IsNullOrEmpty(cmdName)
-                        ? null
-                        : cmdName.Substring(0, Math.Min(_commandSimvols, cmdName.Length));
+            cmdName = string.IsNullOrEmpty(cmdName)
+                    ? null
+                    : cmdName.Substring(0, Math.Min(_commandSimvols, cmdName.Length));
+
+            snapshotModificationElements.IsAvtorUpdate = true;
+
+            // Обрабатываем добавленные (автор при создании)
+
+            ProcessElements(now, snapshotModificationElements, isNewElement: true);
                 
 
-                // Обрабатываем добавленные (автор при создании)
-               
-                ProcessElements(now, snapshotModificationElements, isNewElement: true);
+            // Обрабатываем изменённые (автор и соавтор)
                 
-
-                // Обрабатываем изменённые (автор и соавтор)
-                
-                 ProcessElements(now, snapshotModificationElements, isNewElement: false);
+            ProcessElements(now, snapshotModificationElements, isNewElement: false);
                 
         }
 

@@ -30,13 +30,32 @@ namespace Reinforcement
         public ChangePriority GetChangePriority() => ChangePriority.Annotations;
         public UpdaterId GetUpdaterId() => _updaterId;
         public string GetUpdaterName() => "ENS_Updater всех процессов";
+
+
+        public static void PodpiskaAll()
+        {
+            var app = App.Application;//RevitAPI.UiApplication;
+            if (app != null)
+            {
+                RegisterUpdater.addInId = app.ActiveAddInId;
+                RegisterUpdater.Register();
+
+                RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
+                RegisterZakladkaUpdater.Register();
+
+                RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+
+                RegisterAutoFillUpdater.Register();
+            }
+        }
     }
     public class SnapshotModificationElements
     {
         //Слепок измененных элементов
         public DateTime DateCreate;
+        public SPastCommand SPastCommand = null; //команда которая вызвала изменения
 
-        public SnapshotModificationElements(DateTime dateCreate, HashSet<ElementId> addedIds, HashSet<ElementId> modifiedIds, HashSet<ElementId> addAndModifiedsElementsId, List<Element> addedElements, List<Element> modifiedElements, List<Element> addAndModifiedsElements, Document doc, string commandName)
+        public SnapshotModificationElements(DateTime dateCreate, HashSet<ElementId> addedIds, HashSet<ElementId> modifiedIds, HashSet<ElementId> addAndModifiedsElementsId, List<Element> addedElements, List<Element> modifiedElements, List<Element> addAndModifiedsElements, Document doc)
         {
             DateCreate = dateCreate;
             AddedIds = addedIds;
@@ -46,7 +65,7 @@ namespace Reinforcement
             ModifiedElements = modifiedElements;
             AddAndModifiedsElements = addAndModifiedsElements;
             Doc = doc;
-            CommandName = commandName;
+           
         }
 
         public HashSet<ElementId> AddedIds = new HashSet<ElementId>();
@@ -59,9 +78,13 @@ namespace Reinforcement
 
         public Document Doc = null;
 
-        public string CommandName = null;
-        public bool IsCommand => CommandName != null && (AddedIds.Count > 0 || ModifiedIds.Count > 0);
+        public string CommandName => SPastCommand==null? null : SPastCommand.Name;
+        //по команде измененная
+        public bool IsCommandAndChanged => CommandName != null && (AddedIds.Count > 0 || ModifiedIds.Count > 0);
 
+        public bool NotCommandAndChangedFind = false;// невозможно найти команду которая запустила, значит не будем больше трогать
+
+        public bool IsAvtorUpdate = false;// автором обработана
 
     }
 
@@ -121,12 +144,12 @@ namespace Reinforcement
                 }
 
                 DateTime now = DateTime.Now;
-                SnapshotModificationElements snapshotModificationElements = new SnapshotModificationElements(now, addedSet, modifiedSet, allSet, addedElements, modifElements, addAndModifiedsElements,doc, null  );
+                SnapshotModificationElements snapshotModificationElements = new SnapshotModificationElements(now, addedSet, modifiedSet, allSet, addedElements, modifElements, addAndModifiedsElements,doc  );
                 lock (_sync)
                 {
                     SnapshotModificationElementsQueue.Enqueue(snapshotModificationElements);
                     PastSnapshotModificationElements = snapshotModificationElements;
-                    if (SnapshotModificationElementsQueue.Count >= MaxHistory)
+                    if (SnapshotModificationElementsQueue.Count > MaxHistory)
                     {
                         SnapshotModificationElementsQueue.Dequeue();//убираем самый старый элемент
                     }
@@ -134,7 +157,7 @@ namespace Reinforcement
 
                 //секретная команда
 
-                SecretComand(data);
+                SecretComand(snapshotModificationElements);
 
                 if (!AllUpdater) { return; }
                 
@@ -146,7 +169,9 @@ namespace Reinforcement
 
                     // if ( data.GetDeletedElementIds().Count > 0) { return; }
                     //меняем автора элемента
-                    AutoFillNoteUpdater.AvtorUpdater(snapshotModificationElements);
+                    int c = 0;
+                    //логика вынесена в транзакцию и подписку
+                    //AutoFillNoteUpdater.AvtorUpdater(snapshotModificationElements);
                 }
                 catch (Exception ex)
                 {
@@ -161,11 +186,54 @@ namespace Reinforcement
             }
             
         }
-        //переподписаться
+
+        public static readonly TimeSpan ComandAndChangedMaxTime = TimeSpan.FromSeconds(2);
+        //автопоиск соответствия команд
+        public static void SeachCommandModificationElements()
+        {
+            // Копируем элементы из очереди, чтобы безопасно перебирать и менять флаги
+            var snapshots = SnapshotModificationElementsQueue.ToArray();
+
+            // Команды, которые ещё не привязаны ни к одному снапшоту
+            var commands = App.PastCommands.Where(c => c.snapshotModificationElements == null).ToList();
+
+            foreach (var snap in snapshots)
+            {
+                // Пропускаем уже обработанные
+                if (snap.SPastCommand != null || snap.NotCommandAndChangedFind)
+                    continue;
+
+                // Ищем подходящую команду:
+                // 1. Команда создана раньше снапшота
+                // 2. Разница не больше 5 секунд
+                var matchedCommand = commands
+                    .FirstOrDefault(cmd =>
+                        cmd.DateTime <= snap.DateCreate &&
+                        (snap.DateCreate - cmd.DateTime) <= ComandAndChangedMaxTime);
+
+                if (matchedCommand != null)
+                {
+                    // Привязываем
+                    snap.SPastCommand = matchedCommand;
+                    
+                    matchedCommand.snapshotModificationElements = snap;
+
+                    // Можно сразу убрать команду из списка доступных, чтобы не подбирать её повторно
+                    commands.Remove(matchedCommand);
+                }
+                else
+                {
+                    // Подходящей команды нет: помечаем, чтобы в следующих запусках не искать снова
+                    snap.NotCommandAndChangedFind = true;
+                }
+            }
+        }
+
+
 
 
         private static int _inSecretComand;
-        private static void SecretComand(UpdaterData data)
+        private static void SecretComand(SnapshotModificationElements snapshotModificationElements)
         {
             //команда срабатывает внутри группы
             if (!App.InPendingSecret)
@@ -180,26 +248,25 @@ namespace Reinforcement
                 }
                 
                 App.InPendingSecret = false;
-                Document doc = data.GetDocument();
-                if (doc == null)
+                if (string.IsNullOrEmpty(App.OnGroupCurrent.Name))
                 {
                     return;
-                }
+                }    
 
-                if (!string.IsNullOrEmpty(App.OnGroupCurrent.Name))
-                {
-                    Element elemGroup = GetAnyElement(data);//элемент в группе
-                    if (elemGroup == null) { return; }
-                    ElementId groupId = elemGroup.GroupId;
-                    if (groupId == ElementId.InvalidElementId) { return; }
+                   
+                Element elemGroup = snapshotModificationElements.AddAndModifiedsElements.FirstOrDefault();//элемент в группе
+                if (elemGroup == null) { return; }
+                ElementId groupId = elemGroup.GroupId;
+                if (groupId == ElementId.InvalidElementId) { return; }
 
-                    List<Element> elements = ArmLengthEquels.SelectOrAllElements(false, false);
-                    elements = elements.Where(el => el.GroupId == groupId).ToList();
-                    //надо найти имеющие туже группу
+                //лучше только выделенные, иначе если есть несколько групп на виде то ошибка будет
+                List<Element> elements = snapshotModificationElements.AddAndModifiedsElements;// ArmLengthEquels.SelectOrAllElements(false, false);
+                elements = elements.Where(el => el.GroupId == groupId).ToList();
+                //надо найти имеющие туже группу
 
-                    //надо собрать все элементы которые принадлежат данной группе и находятся на виде
-                    DeleteDublicateFamily.ReplacedProcess(doc, elements, false, new HashSet<ElementId>(), false);
-                }
+                //надо собрать все элементы которые принадлежат данной группе и находятся на виде
+                DeleteDublicateFamily.ReplacedProcess(snapshotModificationElements.Doc, elements, false, new HashSet<ElementId>(), false);
+                
 
                 
             }
@@ -242,21 +309,6 @@ namespace Reinforcement
             return null;
         }
 
-        public static void PodpiskaAll()
-        {
-            var app = App.Application;//RevitAPI.UiApplication;
-            if (app != null)
-            {
-                RegisterUpdater.addInId = app.ActiveAddInId;
-                RegisterUpdater.Register();
-
-                RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
-                RegisterZakladkaUpdater.Register();
-
-                RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
-
-                RegisterAutoFillUpdater.Register();
-            }
-        }
+        
     }
 }
