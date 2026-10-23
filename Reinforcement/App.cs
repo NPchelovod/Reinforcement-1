@@ -34,15 +34,15 @@ namespace Reinforcement
     public enum EUserOtdel //все отделы для определения типа пользователя
     {
         None=0,
-        KR,
-        AR,
-        Engineer, //ОВ, ВК, ЭЛ - все инженеры
+        KR=1,
+        AR=2,
+        Engineer=3, //ОВ, ВК, ЭЛ - все инженеры
     }
     
     public enum EPanelSelf //все конфигурации в порядке инициализации
     {
         KR=0,
-        AR,
+        AR=1,
         OV,
         VK,
         EL,
@@ -79,6 +79,8 @@ namespace Reinforcement
 
     public partial class App : IExternalApplication
     {
+        public static readonly string TabName = "ЕС BIM";
+
         public static readonly Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)> DConfigNames =
     new Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)>
         {
@@ -123,11 +125,11 @@ namespace Reinforcement
             .Cast<EPanels>()
             .ToList();
 
-        public static EUserOtdel EUserOtdel { get; set; } = EUserOtdel.None;
+        public static EUserOtdel EUserOtdel { get; set; } = EUserOtdel.None; //отдел для определения КР или иной пользователь
         //можем менять панель если надо так то
         public static EPanelSelf MainEPanel { get; set; } = EPanelSelf.KR;//главная панель при запуске
 
-        public static EPanelSelf CurrentEPanel { get; set; } = EPanelSelf.KR;//текущая панель
+        public static EPanelSelf CurrentEPanel { get; set; } = EPanelSelf.KR;//текущая панель у пользователя
         public static UIControlledApplication Application { get; private set; }=null;
        
         public Result OnStartup(UIControlledApplication app)
@@ -136,13 +138,14 @@ namespace Reinforcement
             // внешний процесс UpdaterENS.exe и сразу возвращается.
             // Лечим уже заражённую папку плагина до того, как Revit попытается
             // грузить её файлы.
+            
             App_Apdater_1.CleanupTargetFolder();
-            TryStartUpdate(app);
+            TryStartUpdate(app);//пытаемся скачать обновления
 
             Result result = Result.Succeeded;
             try
             {
-                // ... твоя инициализация ...
+                // ... твоя инициализация  - Запуск самого плагина...
                 result= Startup(app);
             }
             catch (Exception ex)
@@ -158,7 +161,7 @@ namespace Reinforcement
                 }
                 catch { }
 
-                TaskDialog.Show("ЕС BIM",
+                TaskDialog.Show($"{TabName}",
                     "Плагин не запустился. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
                     ex.Message);
                 return Result.Failed;
@@ -166,6 +169,7 @@ namespace Reinforcement
 
             try
             {
+                //запуск иных файлов exe.
                 if (result == Result.Succeeded)
                 {
                     App_OtherExe.Execute();
@@ -205,20 +209,18 @@ namespace Reinforcement
         }
         public Result Startup(UIControlledApplication app)
         {
+            Application = app; // Сохраняем app в статическое свойство
+            //самое главное - подписаться на инициализацию
+            app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
 
             HelperSeach.ClearCache();
-            app.ControlledApplication.DocumentChanged += FamilyCacheEvents.DocumentChanged;
-            app.ControlledApplication.DocumentClosing += FamilyCacheEvents.DocumentClosing;
-            Application = app; // Сохраняем app в статическое свойство
-            app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
+            //app.ControlledApplication.DocumentChanged += FamilyCacheEvents.DocumentChanged;
+            //app.ControlledApplication.DocumentClosing += FamilyCacheEvents.DocumentClosing;
             
             
-
-
-
             //Create tab
-            string tabName = "ЕС BIM";
-            app.CreateRibbonTab(tabName);
+            
+            app.CreateRibbonTab(TabName);
             // Подписываемся на событие инициализации
 
             PanelVisibility.Panels.Clear();
@@ -228,75 +230,75 @@ namespace Reinforcement
                 DPanels.TryGetValue(ePanelName, out string panelName);
                 if (string.IsNullOrEmpty(panelName)) { continue; }
 
-                var panel = app.CreateRibbonPanel(tabName, panelName);
+                var panel = app.CreateRibbonPanel(TabName, panelName);
                 PanelVisibility.Panels[ePanelName] = panel;
 
                 switch (ePanelName)
                 {
                     case EPanels.Конфигурация:// управление всеми панелями
-                        App_Panel_1_1_Configuration.AddSplitButton(panel, tabName);
+                        App_Panel_1_1_Configuration.AddSplitButton(panel, TabName);
                         break;
 
                     case EPanels.СПДС:
-                        App_Panel_1_2_KR_SPDS.KR_SPDS(panel, tabName);
+                        App_Panel_1_2_KR_SPDS.KR_SPDS(panel, TabName);
                         break;
                     case EPanels.СхематичноеАрмирование:
-                        App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, tabName);
+                        App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, TabName);
                         break;
                     case EPanels.ДетальноеАрмирование:
-                        App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, tabName);
+                        App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, TabName);
                         break;
                     case EPanels.Оформление:
-                        App_Panel_1_5_KR_Drawing.KR_Drawing(panel, tabName);
+                        App_Panel_1_5_KR_Drawing.KR_Drawing(panel, TabName);
                         break;
                     case EPanels.Выбор:
-                        App_Panel_1_6_KR_Selection.KR_Selection(panel, tabName);
+                        App_Panel_1_6_KR_Selection.KR_Selection(panel, TabName);
                         break;
                     case EPanels.САПР:
-                        App_Panel_1_7_KR_SAPR.KR_SAPR(panel, tabName);
+                        App_Panel_1_7_KR_SAPR.KR_SAPR(panel, TabName);
                         break;
 
                     case EPanels.КРвставки:
-                        App_Panel_1_71_KR_vstavka.AddSplitButton(panel, tabName);
+                        App_Panel_1_71_KR_vstavka.AddSplitButton(panel, TabName);
                         break;
 
                     case EPanels.CopyКубики:
-                        App_Panel_1_8_KR_Task.AddSplitButton(panel, tabName);
+                        App_Panel_1_8_KR_Task.AddSplitButton(panel, TabName);
                         break;
 
                     case EPanels.ИмпортЭкспорт:
-                        App_Panel_1_81_KR_Export.AddSplitButton(panel, tabName);
+                        App_Panel_1_81_KR_Export.AddSplitButton(panel, TabName);
                         break;
 
 
                     case EPanels.ОВплит:
-                        App_Panel_1_9_KR_to_OV.AddSplitButton(panel, tabName);
+                        App_Panel_1_9_KR_to_OV.AddSplitButton(panel, TabName);
                         break;
                     case EPanels.АРпанель:
-                        App_Panel_2_2_AR_utilit.AR_utilit(panel, tabName);
+                        App_Panel_2_2_AR_utilit.AR_utilit(panel, TabName);
                         break;
 
                     case EPanels.ОВпанель:
-                        App_Panel_3_2_OV_utilit.OV_utilit(panel, tabName);
+                        App_Panel_3_2_OV_utilit.OV_utilit(panel, TabName);
                         break;
 
                     case EPanels.ЭЛпанель:
-                        App_Panel_5_2_EL_utilit.EL_utilit(panel, tabName);
+                        App_Panel_5_2_EL_utilit.EL_utilit(panel, TabName);
                         break;
                     case EPanels.ОбщаяПанель:
-                        App_Panel_6_2_General_panel.AddSplitButton(panel, tabName);
+                        App_Panel_6_2_General_panel.AddSplitButton(panel, TabName);
                         break;
 
                     case EPanels.Разработчик:
-                        App_Panel_9_2_AdminPanel.Admin_utilit(panel, tabName);
+                        App_Panel_9_2_AdminPanel.Admin_utilit(panel, TabName);
                         break;
 
                     case EPanels.Опции:
-                        App_Panel_1_92_Opcii.AddSplitButton(panel, tabName);
+                        App_Panel_1_92_Opcii.AddSplitButton(panel, TabName);
                         break;
 
                     case EPanels.Сюрприз:
-                        App_Panel_1_91_Toska.AddSplitButton(panel, tabName);
+                        App_Panel_1_91_Toska.AddSplitButton(panel, TabName);
                         break;
 
                 }
@@ -324,46 +326,72 @@ namespace Reinforcement
             App_Helper_Panels.CreatePanelConfiguration(MainEPanel);
 
 
-            // подписка на все
-            AnyChangeClass.PodpiskaAll();// подписка на все
-                                    // AutoFillNoteUpdater.RegisterUpdater();
-
-            // Подписка на событие закрытия Revit
-            app.ApplicationClosing += OnRevitClosing;
-           
-
-            // Подписываемся на события сохранения моделей
-            var controlledApp = app.ControlledApplication;
-
-            controlledApp.DocumentSaving += OnDocumentSaving;
-            controlledApp.DocumentSynchronizingWithCentral += OnDocumentSynchronizing;
-
-            controlledApp.DocumentSaved += OnDocumentSaved;
-            controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;
-
-            app.ControlledApplication.DocumentChanged += OnDocumentChanged;
-
-            // Подписываемся на событие через ControlledApplication
-            app.ControlledApplication.FailuresProcessing +=
-                new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
+            //все подписки реализуем
+            Podpiska(app);
 
             //секретный набор команд
-            _secretHandler = new SecretReplacementHandler();
-            _secretEvent = ExternalEvent.Create(_secretHandler);
 
-            //подписка на события в ревите внутри транзакции 
-            // В методе OnStartup или при инициализации
-            //RevitCommandId commandId = RevitCommandId.LookupCommandId("ID_ВАШЕЙ_КОМАНДЫ");
-            //if (commandId != null)
-            //{
-            //    AddInCommandBinding binding = app.CreateAddInCommandBinding(commandId);
-            //    binding.BeforeExecuted += OnBeforeCommandExecuted;
-            //}
 
             return Result.Succeeded;
         }
 
+        public static bool ExistPodpiskaOnChanged=false;// активна ли подписка
+        public void Podpiska(UIControlledApplication app)
+        {
+            try
+            {
+                // подписка на все изменения элементов, возможно ненужна
+                PodpiskaAll(app);// подписка на все
+                                             // AutoFillNoteUpdater.RegisterUpdater();
+
+                // Подписка на событие закрытия Revit
+                app.ApplicationClosing += OnRevitClosing;
+
+
+                
+                var controlledApp = app.ControlledApplication;
+
+                //любое изменение внутри документа
+                app.ControlledApplication.DocumentChanged += OnDocumentChanged;
+
+                // Подписываемся на события сохранения моделей
+                controlledApp.DocumentSaving += OnDocumentSaving;
+                controlledApp.DocumentSynchronizingWithCentral += OnDocumentSynchronizing;//начало синхронизации
+
+                controlledApp.DocumentSaved += OnDocumentSaved;
+                controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;//конец синхронизации
+
+                // Подписываемся на событие ошибок через ControlledApplication
+                app.ControlledApplication.FailuresProcessing +=
+                    new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
+
+                ExistPodpiskaOnChanged= true;
+
+            }
+            catch (Exception ex)
+            {
+                App_Apdater_1.AppErrors.LogError(ex);
+                ExistPodpiskaOnChanged= false;
+            }
+        }
         
+        public static void PodpiskaAll(UIControlledApplication app)
+        {
+            //var app = App.Application;//RevitAPI.UiApplication;
+            
+            RegisterUpdater.addInId = app.ActiveAddInId;
+            RegisterUpdater.Register();
+
+            RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
+            RegisterZakladkaUpdater.Register();
+
+            RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+
+            RegisterAutoFillUpdater.Register();
+            
+        }
+
+
         public Result OnShutdown(UIControlledApplication application)
         {
             try
@@ -378,8 +406,7 @@ namespace Reinforcement
                 controlledApp.DocumentClosing -= FamilyCacheEvents.DocumentClosing;
                 HelperSeach.ClearCache();
                 _syncStartTimes.Clear();
-                _secretEvent?.Dispose();
-                _secretEvent = null;
+                
                 controlledApp.DocumentSaving -= OnDocumentSaving;
                 controlledApp.DocumentSaved -= OnDocumentSaved;
                 controlledApp.DocumentSynchronizingWithCentral -= OnDocumentSynchronizing;
@@ -388,7 +415,7 @@ namespace Reinforcement
                 application.ControlledApplication.FailuresProcessing -= OnFailuresProcessing;
                 application.ControlledApplication.DocumentChanged -= OnDocumentChanged;
                 //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
-                
+                StopPeriodicWork();
             }
             catch (Exception ex)
             {
@@ -418,8 +445,7 @@ namespace Reinforcement
         public static double secondSaveModel = 0;
 
 
-        private static ExternalEvent _secretEvent;
-        private static SecretReplacementHandler _secretHandler;
+      
 
     }
 }

@@ -28,7 +28,7 @@ namespace Reinforcement
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
 
-        public static bool correctGroup = true;
+        public static bool correctGroup = false;//так пока надежнее и быстрее
         //public static int CommandInt = 3;
         
         public static string NameAvtor = "ЕС_Автор";

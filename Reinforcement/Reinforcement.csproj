@@ -138,9 +138,12 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Compile Include="App_21_Invokers.cs" />
+    <Compile Include="App_22_InvokersDocChanged.cs" />
     <Compile Include="App_OtherExe.cs" />
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
+    <Compile Include="CreateReinfTag.cs" />
     <Compile Include="General\2_2_Memory3D.cs" />
     <Compile Include="General\2_Memory.cs" />
     <Compile Include="General\3_HighOtm.cs" />
@@ -186,7 +189,6 @@
     <Compile Include="Administrator\4_FailureBuffer.cs" />
     <Compile Include="Administrator\2_LookUsers_3_Writers.cs" />
     <Compile Include="Administrator\5_FlushOut.cs" />
-    <Compile Include="App_2_Invokers.cs" />
     <Compile Include="App_Apdater_1.cs" />
     <Compile Include="Administrator\2_LookUsers_1.cs" />
     <Compile Include="Administrator\3_AppErrors_5_Errors.cs" />
@@ -272,6 +274,7 @@
     </Compile>
     <Compile Include="OV_Panel\OV_Panel_Calculate.cs" />
     <Compile Include="OV_Panel\OV_Panel_GetPipes.cs" />
+    <Compile Include="ReinforceBasementWalls\CreateViewBySelectedWalls.cs" />
     <Compile Include="RoundDistanceForOpeningsInSlabs.cs" />
     <Compile Include="3_Electric\_past_copy.cs" />
     <Compile Include="App.cs" />
@@ -347,6 +350,7 @@
     <Compile Include="CreateNewProjectBySchedule.cs" />
     <Compile Include="OpenFamiliesFolder.cs" />
     <Compile Include="SetDotRebarsByDWG.cs" />
+    <Compile Include="SetLeaderEndToCenter.cs" />
     <Compile Include="SPDS&amp;PS\NoteLineCommand25mm.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_Helper.cs" />
     <Compile Include="SPDS&amp;PS\Utilit_1_1_Depth_Seach.cs" />
@@ -354,6 +358,7 @@
     <Compile Include="Test\AddParameterToFamily.cs" />
     <Compile Include="Test\SetParamReinfByElementMark.cs" />
     <Compile Include="Test\GetAllAnnotationTagBounds.cs" />
+    <Compile Include="Test\TagPlacer.cs" />
     <Compile Include="ToposolidCreate.cs" />
     <Compile Include="SetIndependentTagToReinforcement.cs" />
     <Compile Include="KR_SAPR\CopySelectedSchedules\CommandCopySelectedSchedules.cs" />
@@ -444,7 +449,7 @@
     <Compile Include="UpdatersInvoke\3_ZacladRegisterUpdater.cs" />
     <Compile Include="UpdatersInvoke\50_AnyChange.cs" />
     <Compile Include="UpdatersInvoke\51_AnyChange.cs" />
-    <Compile Include="UpdatersInvoke\52_AnyChangeModifications.cs" />
+    <Compile Include="UpdatersInvoke\6_PereodicHandler.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />
