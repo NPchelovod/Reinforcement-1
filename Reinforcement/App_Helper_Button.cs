@@ -137,7 +137,7 @@ namespace Reinforcement
             try { return RibbonImageHelper.Convert(img); }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 Debug.WriteLine(ex.Message); return null;
             }
         }

@@ -121,7 +121,7 @@ namespace Updaters
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
             }
             finally
             {
@@ -197,7 +197,7 @@ namespace Updaters
             }
             catch (Exception ex)
             {
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
                 return false; 
             }
             return true;

@@ -26,15 +26,15 @@ namespace Reinforcement
         private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
                                                                   // Жёсткий порог — на такой файл лучше даже не замахиваться парсером
         private const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ
-        public static string folderStatistics = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\_statistics";
+       
         //запись  архива
-        public static string folderStatisticsHistory = Path.Combine(folderStatistics, "Архив");
+        public static string folderStatisticsHistory = Path.Combine(App_Folders.FolderStatistics, "Архив");
 
         
 
         public static string fileName => $"{Environment.UserName}_{Environment.MachineName}.json";
 
-        public static string filePath => Path.Combine(folderStatistics, fileName);
+        public static string filePath => Path.Combine(App_Folders.FolderStatistics, fileName);
         //2 часа — разумное значение. Некоторые системы берут 15 минут, некоторые — 4 часа. Но полностью убирать периодический флаш почти никто не делает.
         private static readonly TimeSpan FlushInterval = TimeSpan.FromHours(2.5);
 
@@ -61,7 +61,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 Debug.WriteLine($"ForceFlush failed: {ex.Message}");
 
             }
@@ -87,7 +87,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 MarkStorageUnavailable();
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 Debug.WriteLine($"FlushInternalLock failed: {ex.Message}");
             }
             finally
@@ -168,7 +168,7 @@ namespace Reinforcement
                 // Неудача — откатываемся к состоянию до слияния
                 DictDateDocStats = backup;
                 WriteStats = backupPerf;
-                App_Apdater_1.AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
+                RevitAPI.AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
             }
         }
 
@@ -249,7 +249,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 return new LookUsers();
             }
         }
@@ -328,14 +328,14 @@ namespace Reinforcement
 
                 File.Copy(filePath, historyPath, overwrite: true);
                 try { File.Delete(filePath); }
-                catch (Exception ex) { App_Apdater_1.AppErrors.LogError(ex); }
+                catch (Exception ex) { RevitAPI.AppErrors.LogError(ex); }
 
                 return File.Exists(historyPath);
             }
             catch (Exception ex)
             {
                 MarkStorageUnavailable();
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 return false;
             }
         }
@@ -347,8 +347,8 @@ namespace Reinforcement
                 if (!IsStorageAvailable())
                     return false;
 
-                if (!Directory.Exists(folderStatistics))
-                    Directory.CreateDirectory(folderStatistics);
+                if (!Directory.Exists(App_Folders.FolderStatistics))
+                    Directory.CreateDirectory(App_Folders.FolderStatistics);
                 // Убеждаемся, что поле есть (после десериализации старых файлов могло быть null)
                 if (WriteStats == null) WriteStats = new WritePerfStats();
                 // --- 1. Замер сериализации ---
@@ -392,7 +392,7 @@ namespace Reinforcement
                                swIo.Elapsed.TotalMilliseconds);
 
                 // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
-                App_Apdater_1.AppErrors?.FlushErrorsToLog();
+                RevitAPI.AppErrors?.FlushErrorsToLog();
 
                 return true;
             }
@@ -400,8 +400,8 @@ namespace Reinforcement
             {
                 // Любая IO-ошибка → диск считается недоступным до следующей проверки
                 MarkStorageUnavailable();
-                App_Apdater_1.AppErrors?.LogError(ex);
-                App_Apdater_1.AppErrors?.FlushErrorsToLog();
+                RevitAPI.AppErrors?.LogError(ex);
+                RevitAPI.AppErrors?.FlushErrorsToLog();
                 return false;
             }
         }

@@ -275,7 +275,7 @@ namespace Reinforcement
 
                         if (newElement == null)
                         {
-                            App_Apdater_1.AppErrors.LogError(new InvalidOperationException(
+                            RevitAPI.AppErrors.LogError(new InvalidOperationException(
                                 $"После замены типа для элемента {instance.Id} не удалось получить Element."));
                             failedCount++;
                             continue;
@@ -302,7 +302,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
-                        App_Apdater_1.AppErrors.LogError(ex);
+                        RevitAPI.AppErrors.LogError(ex);
                         continue;
                     }
                 }

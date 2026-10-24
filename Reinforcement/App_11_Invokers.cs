@@ -13,6 +13,7 @@ namespace Reinforcement
 
     public partial class App
     {
+       
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
         {
             // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
@@ -34,7 +35,7 @@ namespace Reinforcement
             // Здесь сохраняем статистику
             //закрытие приложения
             //аналогично  Result OnShutdown
-            //App_Apdater_1.LookUsers.ForceFlush(true);
+            //RevitAPI.LookUsers.ForceFlush(true);
             //LookUsers.Instance.ForceFlush();
         }
 
@@ -77,7 +78,7 @@ namespace Reinforcement
             {
                 secondSaveModel = 0;
             }
-            App_Apdater_1.LookUsers.Update("OnDocumentSaved", EDocStatsOptions.Save);
+            RevitAPI.LookUsers.Update("OnDocumentSaved", EDocStatsOptions.Save);
         }
         private void OnDocumentSynchronized(object sender, DocumentSynchronizedWithCentralEventArgs e)
         {
@@ -96,7 +97,7 @@ namespace Reinforcement
                 secondSaveModel = 0;
             }
 
-            App_Apdater_1.LookUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
+            RevitAPI.LookUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
         }
 
         
@@ -182,7 +183,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try { App_Apdater_1.AppErrors?.LogError(ex); } catch { }
+                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
             }
         }
 

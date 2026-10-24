@@ -67,7 +67,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
-                        App_Apdater_1.AppErrors.LogError(ex);
+                        RevitAPI.AppErrors.LogError(ex);
                     }
 
                 }

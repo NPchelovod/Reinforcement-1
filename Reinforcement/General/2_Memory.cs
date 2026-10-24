@@ -72,7 +72,7 @@ namespace Reinforcement
             if (Directory.Exists(PrimaryPath))
                 return PrimaryPath;
 
-            string path = App_Apdater_1.targetPluginDir;
+            string path = App_Folders.TargetPluginDir;
             if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
                 return null;
 

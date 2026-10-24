@@ -14,7 +14,7 @@ namespace Reinforcement
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
-        public static string GetDatePluginText => $"Плагин от: {App_Apdater_1.TargetLatestTime.ToLocalTime():d MMM yyyy, HH:mm}";
+        public static string GetDatePluginText => $"Плагин от: {UpdaterPlagina.TargetLatestTime.ToLocalTime():d MMM yyyy, HH:mm}";
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             chkFillAuthor.IsChecked = AutoFillNoteUpdater.regWriterAvtor;
@@ -22,8 +22,8 @@ namespace Reinforcement
             chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
             AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
            
-            var buildDate = App_Apdater_1.TargetLatestTime.ToLocalTime(); //локальное время
-            var version = App_Apdater_1.VersionString; 
+            var buildDate = UpdaterPlagina.TargetLatestTime.ToLocalTime(); //локальное время
+            var version = UpdaterPlagina.VersionString; 
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;

@@ -1,14 +1,16 @@
-﻿using Autodesk.Revit.UI;
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Reinforcement;
 using System.Threading;
 
 public class PeriodicHandler : IExternalEventHandler
 {
-    public static bool ChangeModel=false;
-    public static readonly string TransactionName = "ENS Отложенное действие";
+    public static bool ChangeModelFromDoc = false;
+    public static bool ChangeModelFromInvoke = false;
+    public static readonly string TransactionName = RevitAPI.GetTranzactionName("Отложенное действие");
     public void Execute(UIApplication app)
     {
-        if (!ChangeModel) { return; }
+        if (!ChangeModelFromDoc) { return; }
 
         UIDocument uidoc = app.ActiveUIDocument;
         if (uidoc == null) return;

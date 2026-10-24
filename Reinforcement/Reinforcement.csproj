@@ -138,8 +138,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
-    <Compile Include="App_21_Invokers.cs" />
-    <Compile Include="App_22_InvokersDocChanged.cs" />
+    <Compile Include="App_01_Folders.cs" />
+    <Compile Include="App_11_Invokers.cs" />
+    <Compile Include="App_12_InvokersDocChanged.cs" />
+    <Compile Include="App_13_PeriodicHandler.cs" />
     <Compile Include="App_OtherExe.cs" />
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
@@ -159,7 +161,6 @@
     <Compile Include="2_Architecture\OpeningMarks\CreateOpeningMarksCommand.cs" />
     <Compile Include="2_Architecture\OpeningMarks\OpeningMarkService.cs" />
     <Compile Include="Infrastructure\ElevationGrouping.cs" />
-    <Compile Include="Infrastructure\PluginOptions.cs" />
     <Compile Include="Infrastructure\SearchQueryKey.cs" />
     <Reference Include="HarfBuzzSharp">
       <HintPath>..\packages\HarfBuzzSharp.8.3.0.1\lib\net462\HarfBuzzSharp.dll</HintPath>
@@ -189,7 +190,7 @@
     <Compile Include="Administrator\4_FailureBuffer.cs" />
     <Compile Include="Administrator\2_LookUsers_3_Writers.cs" />
     <Compile Include="Administrator\5_FlushOut.cs" />
-    <Compile Include="App_Apdater_1.cs" />
+    <Compile Include="App_21_UpdaterPlagina.cs" />
     <Compile Include="Administrator\2_LookUsers_1.cs" />
     <Compile Include="Administrator\3_AppErrors_5_Errors.cs" />
     <Compile Include="Administrator\3_AppErrors_6_ErrorsShow.cs" />
@@ -449,7 +450,6 @@
     <Compile Include="UpdatersInvoke\3_ZacladRegisterUpdater.cs" />
     <Compile Include="UpdatersInvoke\50_AnyChange.cs" />
     <Compile Include="UpdatersInvoke\51_AnyChange.cs" />
-    <Compile Include="UpdatersInvoke\6_PereodicHandler.cs" />
     <Compile Include="WallSchedulesCommand.cs" />
     <Compile Include="Trash\CommandSlabSchedules.cs" />
     <Compile Include="SPDS&amp;PS\RcFonCommand.cs" />

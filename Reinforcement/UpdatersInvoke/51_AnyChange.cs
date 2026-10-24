@@ -81,13 +81,13 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                    App_Apdater_1.AppErrors.LogError(ex);
+                    RevitAPI.AppErrors.LogError(ex);
                     // Debug.WriteLine($"Ошибка в AnyChange: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 
             }
             
@@ -147,7 +147,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
             }
             finally
             {

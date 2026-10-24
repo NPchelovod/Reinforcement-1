@@ -66,7 +66,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                   App_Apdater_1.AppErrors.LogError(ex);
+                   RevitAPI.AppErrors.LogError(ex);
                     trans1.RollBack();
                     TaskDialog.Show("Ошибка транзакции", $"Ошибка при установке УГО: {ex.Message}");
                     return;

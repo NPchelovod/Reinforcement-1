@@ -79,7 +79,7 @@ namespace Reinforcement
 
     public partial class App : IExternalApplication
     {
-        public static readonly string TabName = "ЕС BIM";
+        public static readonly string TabName = "ЕС BIM"; // имя всей панели которая видна в ревите
 
         public static readonly Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)> DConfigNames =
     new Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)>
@@ -139,8 +139,9 @@ namespace Reinforcement
             // Лечим уже заражённую папку плагина до того, как Revit попытается
             // грузить её файлы.
             
-            App_Apdater_1.CleanupTargetFolder();
-            TryStartUpdate(app);//пытаемся скачать обновления
+           
+
+            TryStartUpdate(app);//пытаемся скачать обновления и начальные данные загружаем об окружении
 
             Result result = Result.Succeeded;
             try
@@ -177,7 +178,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try { App_Apdater_1.AppErrors?.LogError(ex); } catch { }
+                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
             }
             return result;
 
@@ -188,10 +189,30 @@ namespace Reinforcement
         /// </summary>
         private static void TryStartUpdate(UIControlledApplication app)
         {
+            Application = app; // Сохраняем app в статическое свойство
+            //1. запускаем инициализацию путей и тд
             try
             {
-                Application = app; // Сохраняем app в статическое свойство
-                App_Apdater_1.StartUpdateENS();
+                App_Folders.Initializator();
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    string logPath = Path.Combine(
+                       Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                       "RevitAddinsLogs", "ENSPlugin_startup.log");
+                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                    File.AppendAllText(logPath,
+                        $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
+                }
+                catch { }
+            }
+            //2. Запускаем сам апдейтер
+            try
+            {
+                
+                UpdaterPlagina.StartUpdateENS();
             }
             catch (Exception ex)
             {
@@ -370,7 +391,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
                 ExistPodpiskaOnChanged= false;
             }
         }
@@ -419,12 +440,12 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                App_Apdater_1.AppErrors.LogError(ex);
+                RevitAPI.AppErrors.LogError(ex);
             }
             try
             {
-                App_Apdater_1.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
-                App_Apdater_1.LookUsers.ForceFlush(closeRevit: true);
+                RevitAPI.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
+                RevitAPI.LookUsers.ForceFlush(closeRevit: true);
             }
             catch { /* уже нечего терять */ }
             // Пытаемся сохранить накопленные ошибки самого revit

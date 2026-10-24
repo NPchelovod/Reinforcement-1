@@ -174,7 +174,7 @@ namespace Reinforcement
                             {
                                 doc.Delete(view.Id);
                             }
-                            catch (Exception ex) {App_Apdater_1.AppErrors.LogError(ex); }
+                            catch (Exception ex) {RevitAPI.AppErrors.LogError(ex); }
                         }
 
                         t.Commit();
@@ -260,7 +260,7 @@ namespace Reinforcement
                                 }
                                 catch (Exception ex)
                                 {
-                                    App_Apdater_1.AppErrors.LogError(ex);
+                                    RevitAPI.AppErrors.LogError(ex);
                                     Debug.WriteLine($"Ошибка при удалении элементов: {ex.Message}");
                                 }
                             }
@@ -330,7 +330,7 @@ namespace Reinforcement
                                 }
                                 catch (Exception ex)
                                 {
-                                    App_Apdater_1.AppErrors.LogError(ex);
+                                    RevitAPI.AppErrors.LogError(ex);
                                     Debug.WriteLine($"Ошибка при удалении дубликатов: {ex.Message}");
                                 }
                             }
@@ -361,7 +361,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
 
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка", $"Произошла ошибка: {ex.Message}");
                 return Result.Failed;
             }
@@ -444,7 +444,7 @@ namespace Reinforcement
                                     }
                                     catch (Exception ex)
                                     {
-                                       App_Apdater_1.AppErrors.LogError(ex);
+                                       RevitAPI.AppErrors.LogError(ex);
                                         TaskDialog.Show("Ошибка копирования",
                                             $"Не удалось скопировать линии в вид {copiedView.Name}: {ex.Message}");
                                     }
@@ -512,7 +512,7 @@ namespace Reinforcement
                         }
                         catch (Exception ex)
                         {
-                           App_Apdater_1.AppErrors.LogError(ex);
+                           RevitAPI.AppErrors.LogError(ex);
                             TaskDialog.Show("Ошибка копирования вида",
                                 $"Не удалось скопировать вид {linkedView.Name}: {ex.Message}");
                         }
@@ -676,7 +676,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                   App_Apdater_1.AppErrors.LogError(ex);
+                   RevitAPI.AppErrors.LogError(ex);
                     TaskDialog.Show("Предупреждение",
                         $"Не удалось скопировать все параметры вида: {ex.Message}");
                 }
@@ -685,7 +685,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
                 TaskDialog.Show("Критическая ошибка",
                     $"Ошибка создания плана для уровня {targetLevel.Name}: {ex}");
                 return null;
@@ -722,7 +722,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка создания чертежа", ex.Message);
                 return null;
             }
@@ -756,7 +756,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
             }
         }
     }

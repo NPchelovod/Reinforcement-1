@@ -16,7 +16,7 @@ namespace Reinforcement
         /// Ошибки, накопленные за сессию. Попадут в JSON при следующем WriteFile.
         /// </summary>
         /// //запись ошибок
-        public static string folderErrors = Path.Combine(LookUsers.folderStatistics, "Errors");
+        
         private List<string> Errors { get; set; } = new List<string>();
         private const int MaxErrors = 100; // чтобы файл не разрастался
         private static int _inLogError;
@@ -142,7 +142,7 @@ namespace Reinforcement
             return null;
         }
         public static string errorLogPath =>
-        Path.Combine(folderErrors, $"{Environment.UserName}_{Environment.MachineName}.errors.log");
+        Path.Combine(App_Folders.FolderErrors, $"{Environment.UserName}_{Environment.MachineName}.errors.log");
         
         private const int MaxLogLines = 200;
         /// <summary>

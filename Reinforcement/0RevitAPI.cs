@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.DB;
+using System;
+using System.Windows.Forms;
 
 namespace Reinforcement
 {
@@ -10,7 +11,15 @@ namespace Reinforcement
     /// </summary>
     public static class RevitAPI
     {
-        
+        public static LookUsers LookUsers = new LookUsers();//статистика пользователя по командам
+
+        public static AppErrors AppErrors = new AppErrors();//ошибки пользователя
+        public static string GetTranzactionName(string nameMethod)
+        {
+            return $"{App.TabName}_{nameMethod}";
+        }
+        public static bool OurTranzaction(string tranzactionName) { return tranzactionName.StartsWith(App.TabName); }
+
         private static UIApplication _uiApplication;
 
         /// <summary>
@@ -54,7 +63,7 @@ namespace Reinforcement
                 throw new ArgumentNullException(nameof(commandData));
 
             _uiApplication = commandData.Application;
-            App_Apdater_1.LookUsers.Update();
+            RevitAPI.LookUsers.Update();
         }
         public static void Initialize(UIApplication uIApplication)
         {
@@ -74,6 +83,37 @@ namespace Reinforcement
         public static double ToFoot(double number)
         {
             return UnitUtils.ConvertToInternalUnits(number, UnitTypeId.Millimeters);
+        }
+
+
+        public static bool RequestPassword()
+        {
+            if (App_Folders.UserIsAdmin) { return App_Folders.UserIsAdmin; }//уже верный пароль
+
+            using (var form = new PasswordForm())
+            {
+                var revitHandle = RevitAPI.UiApplication.MainWindowHandle;
+                var owner = new RevitWindowHandle(revitHandle);
+
+                var result = form.ShowDialog(owner);
+
+                if (result != DialogResult.OK)
+                    return false;
+                App_Folders.UserIsAdmin = IsPasswordCorrect(form.EnteredPassword);
+                // Пароль верный — продолжаем
+                TaskDialog.Show("OK", "Пароль принят.");
+                return App_Folders.UserIsAdmin;
+            }
+        }
+
+        private static bool IsPasswordCorrect(string entered)
+        {
+            if (string.IsNullOrEmpty(entered))
+                return false;
+
+            // Простейший вариант — сравнение с константой.
+            // Для продакшена используйте хеш (см. ниже).
+            return entered == App_Folders.Password;
         }
     }
 }

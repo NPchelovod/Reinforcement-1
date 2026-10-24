@@ -16,7 +16,29 @@ namespace Reinforcement
         None = 0,
         FromDocChanged=1,
         FromInvoker=2,
+        IsPereodicalHandler, // что уже обработана в процессе
     }
+    public class GroopCurrent
+    {
+        //эта текущая группа а может и не группа вовсе
+        //если эта группа то бывает вложенной тогда FatherGroopCurrent её отец
+        public DateTime InGroopTime =DateTime.MinValue;
+        public string Name;
+        public ElementId Id;
+        public bool InGroop=false;
+        public Document doc=null;
+        public GroopCurrent(DateTime inGroopTime,Document doc=null,bool inGroop=false, string name=null, ElementId elementId=null) 
+        {
+            InGroopTime = inGroopTime; InGroop = inGroop; Name = name; Id = elementId;
+        }
+        public GroopCurrent FatherGroopCurrent=null;
+        public void Clear()
+        {
+            // поидее все не так
+            FatherGroopCurrent = null; InGroop = false;
+        }
+    }
+
     public class SnapshotModificationElements
     {
         //Слепок измененных элементов
@@ -67,24 +89,37 @@ namespace Reinforcement
                 _addAndModifiedsElements.Add(element);
             }
         }
-        
+
+        public HashSet<ESnapshotMod> ESnapshotMods = new HashSet<ESnapshotMod>();
+
+
     }
 
     public partial class App
     {
-
+        //это от изменени ядокумента
         public static List<SnapshotModificationElements> SnapshotModificationElementsList = new List<SnapshotModificationElements>();
-        private readonly static int _maxCountTranzSave = 13;//не более стольки транзаций храним
+        public static SnapshotModificationElements CurrentSnapshotModificationElements =null;
+        //это от подписки на события, может совпадать с изменением от документа элементами
+        public static List<SnapshotModificationElements> SnapshotModificationElementsListFromInvoke = new List<SnapshotModificationElements>();
+        public static SnapshotModificationElements CurrentSnapshotModificationElementsFromInvoke = null;
+
+
+        private readonly static int _maxCountTranzSave = 6;//не более стольки транзаций храним
         private void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
         {
 
             IList<string> txNames = e.GetTransactionNames();
             // Пропускаем свою служебную транзакцию, иначе получим рекурсию:
             // SetParam -> Commit -> DocumentChanged -> снапшот -> SetParam -> ...
-            if (txNames.Any(n => string.Equals(n, PeriodicHandler.TransactionName,
-                                               StringComparison.OrdinalIgnoreCase)))
+            bool hasMatch = txNames.Any(n =>
+         n.StartsWith(TabName, StringComparison.OrdinalIgnoreCase));
+            if (hasMatch)
             {
+                //это наша собственная транзакция
                 return;
+                //txNames.Any(n => string.Equals(n, PeriodicHandler.TransactionName,
+                //StringComparison.OrdinalIgnoreCase))) как проверить что не равен а начинается с PeriodicHandler.TransactionName
             }
 
             string comand = txNames.FirstOrDefault();
@@ -104,7 +139,7 @@ namespace Reinforcement
             if (!added.Any() && !modified.Any()) {  return; }
 
             //0. - записываем в апдейтер нашу команду для статистики
-            App_Apdater_1.LookUsers.Update(comand, EDocStatsOptions.Invoker);
+            RevitAPI.LookUsers.Update(comand, EDocStatsOptions.Invoker);
 
             DateTime now = DateTime.Now;
             //1. запись прошлых команд
@@ -112,19 +147,7 @@ namespace Reinforcement
             SnapshotModificationElements snapshotModificationElements = CreateSnapshot(now,doc, added, modified,ESnapshotMod.FromDocChanged, comand);
 
             //2. === Магия: проверяем секретный паттерн ===
-            SecretCommandPossible(txNames, snapshotModificationElements);
-
-
-            //AnyChange.SeachCommandModificationElements();//теперь ищем сопоставление изменения и команды
-
-            if (snapshotModificationElements != null)
-            {
-                AnyChange.SecretComand(snapshotModificationElements);
-                AutoFillNoteUpdater.AvtorUpdater(snapshotModificationElements);
-            }
-            //запускаем запись автора
-            //AutoFillNoteUpdater.ProcessAvtorUpdate();
-            // Остальные транзакции — ничего не делают, состояние сохраняется
+            InOrOutGroopAndSecretCommandPossible(now,txNames, snapshotModificationElements);
         }
 
 
@@ -148,18 +171,38 @@ namespace Reinforcement
 
             lock (_syncSnapshot)
             {
-                if (SnapshotModificationElementsList.Count >= _maxCountTranzSave)
+                if (father == ESnapshotMod.FromDocChanged)
                 {
-                    SnapshotModificationElementsList.RemoveAt(0);//убираем самый старый элемент
+                    if (SnapshotModificationElementsList.Count >= _maxCountTranzSave)
+                    {
+                        SnapshotModificationElementsList.RemoveAt(0);//убираем самый старый элемент
+                    }
+                    CurrentSnapshotModificationElements = snapshotModificationElements;
+                    SnapshotModificationElementsList.Add(snapshotModificationElements);
+                    PeriodicHandler.ChangeModelFromDoc = true;//что модель изменилась за эту секунду
                 }
-                SnapshotModificationElementsList.Add(snapshotModificationElements);
+                else if(father == ESnapshotMod.FromInvoker)
+                {
+                    if (SnapshotModificationElementsListFromInvoke.Count >= _maxCountTranzSave)
+                    {
+                        SnapshotModificationElementsListFromInvoke.RemoveAt(0);//убираем самый старый элемент
+                    }
+                    CurrentSnapshotModificationElementsFromInvoke = snapshotModificationElements;
+                    SnapshotModificationElementsListFromInvoke.Add(snapshotModificationElements);
+
+                    PeriodicHandler.ChangeModelFromInvoke = true;//что модель изменилась за эту секунду
+                }
+
             }
 
             return snapshotModificationElements;
         }
 
-        private void SecretCommandPossible(IList<string> txNames, SnapshotModificationElements snapshotModificationElements)
+        private void InOrOutGroopAndSecretCommandPossible(DateTime now, IList<string> txNames, SnapshotModificationElements snapshotModificationElements)
         {
+            //проверка входа в группу и проверка на секретную команду
+
+            //1. проверка на секретную команду
             if (!string.IsNullOrEmpty(OnGroupCurrent.Name) && MatchesSecretPattern())
             {
                 InPendingSecret = true;//применение секрета
@@ -178,13 +221,13 @@ namespace Reinforcement
                     // Вариант 2: это тип группы (GroupType) — тоже валидный результат
                     if (elem is GroupType groupType)
                     {
-                        OnGroupCurrent = (groupType.Name, groupType.Id,true);
+                        CreateGroop(doc,now, groupType.Name, groupType.Id);
                         return;
                     }
                     // Вариант 1: это экземпляр группы (модельной или детальной)
                     if (elem is Group group)
                     {
-                        OnGroupCurrent = (group.Name, group.Id, true);
+                        CreateGroop(doc, now, group.Name, group.Id);
                         return;
                     }
 
@@ -194,7 +237,7 @@ namespace Reinforcement
                         Element parent = doc.GetElement(elem.GroupId);
                         if (parent is Group parentGroup)
                         {
-                            OnGroupCurrent = (parentGroup.Name, parentGroup.Id, true);
+                            CreateGroop(doc, now, parentGroup.Name, parentGroup.Id);
                             return;
                         }
                     }
@@ -202,16 +245,43 @@ namespace Reinforcement
                 }
 
                 // Если список пустой — фолбэк: берём группу из выделения
-                TryCaptureGroupFromSelection(doc);
+                TryCaptureGroupFromSelection(doc,now);
 
             }
-            else if (OnGroupCurrent.WeInGroop && txNames.Any(n => ExitGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
+            else if (OnGroupCurrent.InGroop && txNames.Any(n => ExitGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
             {
                 // --- Выход из режима редактирования группы ---
-                OnGroupCurrent = ("", null, false);
+                //вообще если мы во вложенной группе то выходя мы тоже в группе!!!!
+                if (OnGroupCurrent.FatherGroopCurrent != null)
+                {
+                    //значит мы в отце теперь, вышли из вложенной группы
+                    //боюсь что будут ситуации когда мы типо не вышли из группы поэтому может подстраховать как-то
+                    OnGroupCurrent = OnGroupCurrent.FatherGroopCurrent;
+                }
+                else
+                {
+                    OnGroupCurrent.Clear();
+                }
             }
         }
-        private static void TryCaptureGroupFromSelection(Document doc)
+        private static void CreateGroop(Document doc,DateTime now, string name, ElementId elementId)
+        {
+            bool inGroop=false;
+            if (!string.IsNullOrEmpty(name)) { inGroop = true; }
+            GroopCurrent groopCurrent = new GroopCurrent(now, doc, inGroop,name,elementId);
+            if (OnGroupCurrent.InGroop && doc== OnGroupCurrent.doc && elementId!= OnGroupCurrent.Id)
+            {
+                //значит мы во вложенной группе она становится основной группой
+                var father = OnGroupCurrent;
+                OnGroupCurrent = groopCurrent;
+                OnGroupCurrent.FatherGroopCurrent = father;
+            }
+            else
+            {
+                OnGroupCurrent = groopCurrent;
+            }
+        }
+        private static void TryCaptureGroupFromSelection(Document doc, DateTime now)
         {
             try // никогда не срабатывает
             {
@@ -222,7 +292,8 @@ namespace Reinforcement
                     if (doc.GetElement(id) is Group g)
                     {
                         string name = g.GroupType?.Name ?? g.Name;
-                        OnGroupCurrent = (name, g.Id, true);
+                        CreateGroop(doc,now,name, g.Id);
+                        
                         return;
                     }
                 }
@@ -259,9 +330,11 @@ namespace Reinforcement
             var span = last4[3].DateCreate - last4[0].DateCreate;
             return span.TotalMilliseconds <= PatternTimeWindowMs;
         }
-        
+
         //важная вещь показывает в группе ли мы находимся
-        public static (string Name, ElementId Id, bool WeInGroop) OnGroupCurrent = ("", null,false);
+        public static GroopCurrent OnGroupCurrent = new GroopCurrent(DateTime.MinValue);
+        
+
         // Имена транзакций входа/выхода из группы — в EN и RU локалях
         private static readonly string[] EnterGroupTxNames =
         {

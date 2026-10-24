@@ -16,11 +16,7 @@ namespace Reinforcement
         {
             TimeStat();
         }
-        // --- Контроль рабочего времени ---
-        public static string userTimeSourceDir =
-            @"Y:\ГОСТЕВЫЕ\КОНСТРУКТОРЫ\Ерухаева Ирина\Индивидуальный табель\контроль рабочего времени";
-
-        public static string userTimeProcessPrefix = "WpfControlUserTime";
+        
         public static void TimeStat()
         {
             if (App.EUserOtdel != EUserOtdel.KR)
@@ -31,14 +27,14 @@ namespace Reinforcement
             try
             {
                 // Сеть может быть недоступна — тихо выходим.
-                if (string.IsNullOrWhiteSpace(userTimeSourceDir) ||
-                    !Directory.Exists(userTimeSourceDir))
+                if (string.IsNullOrWhiteSpace(App_Folders.UserTimeSourceDir) ||
+                    !Directory.Exists(App_Folders.UserTimeSourceDir))
                     return;
 
                 // Все exe по маске WpfControlUserTime*.exe, отсортированы по дате (свежие сверху).
                 var files = Directory
-                    .EnumerateFiles(userTimeSourceDir,
-                                    userTimeProcessPrefix + "*.exe",
+                    .EnumerateFiles(App_Folders.UserTimeSourceDir,
+                                    App_Folders.UserTimeProcessPrefix + "*.exe",
                                     SearchOption.TopDirectoryOnly)
                     .Select(p => new FileInfo(p))
                     .Where(fi => fi.Exists)
@@ -75,7 +71,7 @@ namespace Reinforcement
                     File.Copy(newest.FullName, targetExe, overwrite: true);
                     // File.Copy переносит ADS из сетевой шары — снимаем метку,
                     // иначе пользователь увидит «Этот файл получен из другой зоны».
-                    App_Apdater_1.RemoveZoneIdentifier(targetExe);
+                    App_Folders.RemoveZoneIdentifier(targetExe);
                 }
                 catch
                 {
@@ -96,7 +92,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try { App_Apdater_1.AppErrors?.LogError(ex); } catch { }
+                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
             }
 
         }
@@ -118,7 +114,7 @@ namespace Reinforcement
                     if (p == null) continue;
                     try
                     {
-                        if (p.ProcessName.StartsWith(userTimeProcessPrefix,
+                        if (p.ProcessName.StartsWith(App_Folders.UserTimeProcessPrefix,
                                                     StringComparison.OrdinalIgnoreCase))
                             return true;
                     }

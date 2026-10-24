@@ -18,7 +18,7 @@ namespace Reinforcement
             catch (Exception error)
             {
                 message = error.Message;
-                try { App_Apdater_1.AppErrors.LogError(error); } catch { }
+                try { RevitAPI.AppErrors.LogError(error); } catch { }
                 return Result.Failed;
             }
         }

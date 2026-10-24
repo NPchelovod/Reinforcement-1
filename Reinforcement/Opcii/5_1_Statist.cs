@@ -38,7 +38,7 @@ namespace Reinforcement
 
             try
             {
-                if (!RequestPassword())
+                if (!RevitAPI.RequestPassword())
                 {
                     message = "Неверный пароль или отмена.";
                     return Result.Cancelled;
@@ -57,45 +57,15 @@ namespace Reinforcement
             }
             catch (Exception ex) 
             {
-               App_Apdater_1.AppErrors.LogError(ex);
+               RevitAPI.AppErrors.LogError(ex);
             }
 
             return Result.Succeeded;
         }
 
-        public const string CorrectPasswordHash = "kerulen"; // например, SHA256 от пароля
+       
 
-        public static bool vernPassword=false;
-
-        public static bool RequestPassword()
-        {
-            if (vernPassword) { return vernPassword; }//уже верный пароль
-
-            using (var form = new PasswordForm())
-            {
-                var revitHandle = RevitAPI.UiApplication.MainWindowHandle;
-                var owner = new RevitWindowHandle(revitHandle);
-
-                var result = form.ShowDialog(owner);
-
-                if (result != DialogResult.OK)
-                    return false;
-                vernPassword = IsPasswordCorrect(form.EnteredPassword);
-                // Пароль верный — продолжаем
-                TaskDialog.Show("OK", "Пароль принят.");
-                return vernPassword;
-            }
-        }
-
-        private static bool IsPasswordCorrect(string entered)
-        {
-            if (string.IsNullOrEmpty(entered))
-                return false;
-
-            // Простейший вариант — сравнение с константой.
-            // Для продакшена используйте хеш (см. ниже).
-            return entered == CorrectPasswordHash;
-        }
+        
     }
     internal class RevitWindowHandle : System.Windows.Forms.IWin32Window
     {
