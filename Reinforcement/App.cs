@@ -409,6 +409,9 @@ namespace Reinforcement
             RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
 
             RegisterAutoFillUpdater.Register();
+
+
+
             
         }
 
@@ -436,7 +439,8 @@ namespace Reinforcement
                 application.ControlledApplication.FailuresProcessing -= OnFailuresProcessing;
                 application.ControlledApplication.DocumentChanged -= OnDocumentChanged;
                 //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
-                StopPeriodicWork();
+                PeriodicHandler.IsPeriodicControl = false;
+                Detach(RevitAPI.UiApplication);
             }
             catch (Exception ex)
             {

@@ -59,8 +59,13 @@ namespace Reinforcement
         public static bool UserIsAvtor=false;
 
 
+
+
+
+
         public const string Password = "kerulen";
         public static bool UserIsAdmin=false;
+
 
 
         public static bool isInitialize =false;

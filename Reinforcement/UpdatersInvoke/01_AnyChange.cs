@@ -22,7 +22,8 @@ namespace Reinforcement
         public static AddInId addInId { get; set; }
 
         public static readonly HashSet<BuiltInCategory> BuiltInCategorys = new HashSet<BuiltInCategory>()
-        { BuiltInCategory.OST_Walls              ,    // Стены
+        {
+                BuiltInCategory.OST_Walls              ,    // Стены
                 BuiltInCategory.OST_Floors       ,          // Перекрытия
                 BuiltInCategory.OST_Ceilings     ,          // Потолки
                 BuiltInCategory.OST_StructuralColumns ,     // Несущие колонны
@@ -86,8 +87,8 @@ namespace Reinforcement
                 BuiltInCategory.OST_SharedBasePoint,
 
                 BuiltInCategory.OST_Viewports, // видовые экраны
-             BuiltInCategory.OST_Levels,
-             BuiltInCategory.OST_RevisionClouds //чудо облачко
+                 BuiltInCategory.OST_Levels,
+                 BuiltInCategory.OST_RevisionClouds //чудо облачко
         };
         public static void Register(bool forceReregister = false)
         {
@@ -101,48 +102,18 @@ namespace Reinforcement
                 //ElementClassFilter allElementsFilter = new ElementClassFilter(typeof(Element));
 
                 var categoryIds = BuiltInCategorys.Select(x => new ElementId(x)).ToList();
-
-                //метод второй для всех категорий
-
-                var allCategories = Enum.GetValues(typeof(BuiltInCategory)).Cast<BuiltInCategory>();
-                if (allCategories.Count() > categoryIds.Count)
-                {
-                    //очень много категорий так нельзя
-                    // categoryIds = allCategories.Select(x => new ElementId(x)).ToList();
-                }
-                //categoryIds = new List<ElementId>();
-                //foreach (BuiltInCategory bic in Enum.GetValues(typeof(BuiltInCategory)))
-                //{
-                //    // Пропускаем заведомо недопустимые или внутренние категории
-                //    if (bic == BuiltInCategory.INVALID || bic == BuiltInCategory.OST_IOSModelGroups)
-                //        continue;
-
-                //    try
-                //    {
-                //        categoryIds.Add(new ElementId(bic));
-                //    }
-                //    catch
-                //    {
-                //        // Некоторые категории могут быть недопустимы для ElementId — просто пропускаем
-                //    }
-                //}
-
-
-                // Фильтр: все элементы (или только нужные категории)
-                //ElementClassFilter classFilter = new ElementClassFilter(typeof(Element));
-
                 ElementMulticategoryFilter classFilter = new ElementMulticategoryFilter(categoryIds);
 
-
-                //ElementClassFilter classFilter = new ElementClassFilter(typeof(FamilyInstance));
-                // При необходимости можно ограничить категориями, где есть параметр ADSK_Примечание
+                //метод второй для всех категорий
 
                 // Триггер на добавление элементов
 
                 UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeAny()); //Element.GetChangeTypeElementAddition());
                 //Нет, Element.GetChangeTypeAny() не реагирует на создание (и удаление) Это частая ловушка в Revit API.
                 UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementAddition());
-                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
+                //UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
+                // Для отслеживания изменений геометрии
+                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeGeometry());
 
             }
             else if (forceReregister)

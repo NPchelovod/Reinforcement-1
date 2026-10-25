@@ -29,7 +29,7 @@ namespace Reinforcement
         public string GetAdditionalInformation() => string.Empty;
         public ChangePriority GetChangePriority() => ChangePriority.Annotations;
         public UpdaterId GetUpdaterId() => _updaterId;
-        public string GetUpdaterName() => "ENS_Updater всех процессов";
+        public string GetUpdaterName() => App.TabName+"_Updater всех процессов";
 
     }
     
@@ -39,11 +39,7 @@ namespace Reinforcement
 
         public static bool AllUpdater = true;
 
-        public static SnapshotModificationElements PastSnapshotModificationElements=null;
-        public static Queue<SnapshotModificationElements> SnapshotModificationElementsQueue = new Queue<SnapshotModificationElements>();
         
-        private static readonly TimeSpan _minimumInterval = TimeSpan.FromMilliseconds(200);
-        private static readonly int MaxHistory = 6;// 
         public static void Execute(UpdaterData data)
         {
             //сюда приходят от всех изменений элементы
@@ -51,18 +47,19 @@ namespace Reinforcement
             
             try
             {
+                if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию
+
                 Document doc = data.GetDocument();
                 if (doc == null) { return; }
                 var added = data.GetAddedElementIds().ToList();
                 var modified = data.GetModifiedElementIds().ToList();
 
-                //секретная команда
-                SnapshotModificationElements snapshotModificationElements = CreateOrReturnSnapshot(doc, added, modified);
 
-                if (snapshotModificationElements == null)
-                {
-                    return;
-                }
+                DateTime now = DateTime.Now;
+                //data.IsChangeTriggered();
+                SnapshotModificationElements snapshotModificationElements =App.CreateSnapshot(now , doc,data, added, modified, ESnapshotMod.FromInvoker,null);
+
+                //секретная команда
                 SecretComand(snapshotModificationElements);
 
                 if (!AllUpdater) { return; }

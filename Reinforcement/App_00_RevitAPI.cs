@@ -14,10 +14,18 @@ namespace Reinforcement
         public static LookUsers LookUsers = new LookUsers();//статистика пользователя по командам
 
         public static AppErrors AppErrors = new AppErrors();//ошибки пользователя
+
+        //предлагаемое имя транзакции чтобы мы могли найти что оно - наше
         public static string GetTranzactionName(string nameMethod)
         {
             return $"{App.TabName}_{nameMethod}";
         }
+        //предлагаемое имя процесса, чтобы мы могли потом узнать что оно - наше
+        public static string GetProcessName(string nameMethod)
+        {
+            return $"{App.TabName}_{nameMethod}";
+        }
+        //наша ли это транзакция
         public static bool OurTranzaction(string tranzactionName) { return tranzactionName.StartsWith(App.TabName); }
 
         private static UIApplication _uiApplication;

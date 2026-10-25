@@ -25,7 +25,13 @@ namespace Reinforcement
                 // Теперь можно работать с uiApp
                 // Например, сохранить в статическое свойство
                 RevitAPI.Initialize(uiApp);
-                StartPeriodicWork(uiApp);
+
+
+                RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
+                RegisterAutoFillUpdater.Register();
+                Attach(uiApp);
+                PeriodicHandler.IsPeriodicControl = true;
+                
                 //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
             }
         }
@@ -166,34 +172,7 @@ namespace Reinforcement
             e.SetProcessingResult(FailureProcessingResult.Continue);
         }
        
-        private ExternalEvent _exEvent;
-        private Timer _timer;
-
-        public void StartPeriodicWork(UIApplication uiapp)
-        {
-            try
-            {
-
-                var handler = new PeriodicHandler();
-                _exEvent = ExternalEvent.Create(handler);
-
-                // Таймер: первый вызов через 0 мс, затем каждые 1000 мс.
-                // В callback только Raise() — никакой работы с Revit API!
-                _timer = new Timer(_ => _exEvent.Raise(), null, 0, 1000);
-            }
-            catch (Exception ex)
-            {
-                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
-            }
-        }
-
-        public void StopPeriodicWork()
-        {
-            _timer?.Dispose();
-            _timer = null;
-            _exEvent?.Dispose(); // если версия Revit позволяет Dispose для ExternalEvent
-            _exEvent = null;
-        }
+        
     }
 
     
