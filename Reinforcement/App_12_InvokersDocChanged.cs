@@ -13,13 +13,7 @@ using System.Windows.Input;
 
 namespace Reinforcement
 {
-    public enum ESnapshotMod
-    {
-        None = 0,
-        FromDocChanged=1,
-        FromInvoker=2,
-        IsPereodicalHandler, // что уже обработана в процессе
-    }
+   
     public class GroopCurrent
     {
         //эта текущая группа а может и не группа вовсе
@@ -41,90 +35,14 @@ namespace Reinforcement
         }
     }
 
-    public class SnapshotModificationElements
-    {
-        //Слепок измененных элементов
-        public DateTime DateCreate=DateTime.MinValue;
-        public string CommandName=null;
-        public ESnapshotMod Father = ESnapshotMod.None;//происхождение
-        public SnapshotModificationElements(DateTime dateCreate, HashSet<ElementId> addedIds, HashSet<ElementId> modifiedIds, HashSet<ElementId> addAndModifiedsElementsId,  Document doc, UpdaterData data, ESnapshotMod father, string commandName)
-        {
-            DateCreate = dateCreate;
-            AddedIds = addedIds;
-            ModifiedIds = modifiedIds;
-            AddAndModifiedsElementsId = addAndModifiedsElementsId;
-            
-            Doc = doc;
-            Father = father;
-            CommandName = commandName;
-            if (data != null)
-            {
-                GMel(data);
-            }
-        }
-        public Document Doc = null;
-        public HashSet<ElementId> AddedIds = new HashSet<ElementId>();
-        public HashSet<ElementId> ModifiedIds = new HashSet<ElementId>();
-        public HashSet<ElementId> AddAndModifiedsElementsId = new HashSet<ElementId>();
-        public HashSet<ElementId> GeomModificationEl = new HashSet<ElementId>();//он и в  ModifiedIds, но он именно геом измененный
+    public readonly struct Command
+    { 
+        public string CommandName { get; }
+        public DateTime DateCreate { get; }
 
-        private List<Element> _addedElements = new List<Element>();
-        private List<Element> _modifiedElements = new List<Element>();
-        private List<Element> _addAndModifiedsElements = new List<Element>();
-        private List<Element> _geomModifiedElements = new List<Element>();
-        private bool _isElementInitializ = false;
-
-        public List<Element> AddedElements {  get { Initializaer(); return _addedElements; } }
-        public List<Element> ModifiedElements {  get { Initializaer(); return _modifiedElements; } }
-        public List<Element> AddAndModifiedsElements { get { Initializaer(); return _addAndModifiedsElements; } }
-
-        public List<Element> GeomModifiedElements { get { Initializaer(); return _geomModifiedElements; } }
-        private void Initializaer()
-        {
-            if (_isElementInitializ ||Doc==null) { return; }
-            _isElementInitializ= true;
-           
-            foreach (var id in AddedIds)
-            {
-                Element element = Doc.GetElement(id);
-                if (element == null) continue;
-                _addedElements.Add(element);
-                _addAndModifiedsElements.Add(element);
-                if (GeomModificationEl.Contains(id))
-                {
-                    //а может сюда надо всегда добавлять вновь созданные элементы??
-                    _geomModifiedElements.Add(element);
-                }
-            }
-            foreach (var id in ModifiedIds)
-            {
-                Element element = Doc.GetElement(id);
-                if (element == null) continue;
-                _modifiedElements.Add(element);
-                _addAndModifiedsElements.Add(element);
-                if(GeomModificationEl.Contains(id))
-                {
-                    _geomModifiedElements.Add(element);
-                }
-            }
-        }
-        private void GMel(UpdaterData data)
-        {
-            //модифицированные элементы ищет
-            foreach (var id in ModifiedIds)
-            {
-                
-                if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-                {
-                    GeomModificationEl.Add(id);
-                }
-            }
-        }
-
-        public HashSet<ESnapshotMod> ESnapshotMods = new HashSet<ESnapshotMod>();
-
-
+    
     }
+
 
     public partial class App
     {
@@ -155,15 +73,19 @@ namespace Reinforcement
             _exEvent?.Dispose(); _exEvent = null;
         }
 
+        public static Command CurentCommand = new Command();
+        public static List <Command> Commands = new List <Command>();
+
         private static void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
         {
             try
             {
                 
-
                 var txNames = e.GetTransactionNames();
                 if (txNames == null || txNames.Count == 0) return;
                 string comand = txNames.First();
+                if(string.IsNullOrEmpty(comand)) {return; }
+
                 //0. - записываем в апдейтер нашу команду для статистики
                 RevitAPI.LookUsers.Update(comand, EDocStatsOptions.Invoker);
 

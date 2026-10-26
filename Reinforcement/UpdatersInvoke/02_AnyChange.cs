@@ -21,7 +21,17 @@ namespace Reinforcement
         public void Execute(UpdaterData data)
         {
             // Делегируем главному диспетчеру (если так задумано)
-            AnyChange.Execute(data); // передаём главному методу распределения
+            try
+            {
+                AnyChange.Execute(data); // передаём главному методу распределения
+            }
+
+            catch (Exception ex)
+            {
+                RevitAPI.AppErrors.LogError(ex);
+                // Debug.WriteLine($"Ошибка в AnyChange: {ex.Message}");
+            }
+
         }
         private static AddInId _addInId => RegisterAutoFillUpdater.addInId;
 
@@ -39,73 +49,79 @@ namespace Reinforcement
 
         public static bool AllUpdater = true;
 
-        
+        private static readonly object _lock = new object();
+
+
         public static void Execute(UpdaterData data)
         {
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
             
-            try
-            {
-                if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию
-
-                Document doc = data.GetDocument();
-                if (doc == null) { return; }
-                var added = data.GetAddedElementIds().ToList();
-                var modified = data.GetModifiedElementIds().ToList();
-
-
-                DateTime now = DateTime.Now;
-                //data.IsChangeTriggered();
-                SnapshotModificationElements snapshotModificationElements =App.CreateSnapshot(now , doc,data, added, modified, ESnapshotMod.FromInvoker,null);
-
-                //секретная команда
-                SecretComand(snapshotModificationElements);
-
-                if (!AllUpdater) { return; }
-                
-                try
-                {
-
-                    //LookUsersUpdate(data);
-                    //не заходим в удаленные элементы!!!
-
-                    // if ( data.GetDeletedElementIds().Count > 0) { return; }
-                    //меняем автора элемента
-                    int c = 0;
-                    //логика вынесена в транзакцию и подписку
-                    //AutoFillNoteUpdater.AvtorUpdater(snapshotModificationElements);
-                }
-                catch (Exception ex)
-                {
-                    RevitAPI.AppErrors.LogError(ex);
-                    // Debug.WriteLine($"Ошибка в AnyChange: {ex.Message}");
-                }
-            }
-            catch (Exception ex)
-            {
-                RevitAPI.AppErrors.LogError(ex);
-                
-            }
             
+            if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию
+            Document doc = data.GetDocument();
+            if (doc == null) { return; }
+
+            var added = data.GetAddedElementIds().ToList();
+            var modified = data.GetModifiedElementIds().ToList();
+            
+
+            if (!added.Any() && !modified.Any()) { return; }
+            //секретная команда
+            SecretComand(doc, modified);//секретная команда внутри группы действующая
+            if (!AllUpdater) { return; }
+
+            DateTime now = DateTime.Now;
+            // Собираем как HashSet, чтобы дедуп и O(1) проверки
+            HashSet<ElementId> addedSet = new HashSet<ElementId>(added);
+            // modified = то, что изменено, НО НЕ добавлено
+            HashSet<ElementId> modifiedSet = modified.Where(id => !addedSet.Contains(id)).ToHashSet();
+            HashSet<ElementId> geomModificationEl = new HashSet<ElementId>();
+            foreach (var id in modifiedSet)
+            {
+                if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
+                {
+                    geomModificationEl.Add(id);
+                }
+            }
+            lock (_lock)
+            {
+                //могут сразу несколько раз заполняться
+                if(Doc!=doc)
+                {
+                    Doc = doc; ClearDataElements();
+                }
+                DateTimeChange = now;
+                AddedIds.UnionWith(addedSet);
+                ModifiedIds.UnionWith(modifiedSet);
+                GeomModificationEl.UnionWith(modifiedSet);
+            }
+
         }
 
-        public static void ProcessAllUpdeters()
+        public static void ClearDataElements()
         {
-            //процесс обновления всех элементов которых нам надо
+            lock (_lock)
+            {
+                AddedIds.Clear(); ModifiedIds.Clear(); GeomModificationEl.Clear();
+            }
         }
 
+        
+        public static DateTime DateTimeChange=DateTime.MinValue;
+        public static Document Doc = null;
+        public static HashSet<ElementId> AddedIds = new HashSet<ElementId>();
+        public static HashSet<ElementId> ModifiedIds = new HashSet<ElementId>();
+        public static HashSet<ElementId> GeomModificationEl = new HashSet<ElementId>();
 
 
-       
-
-
+        
         public static readonly TimeSpan ComandAndChangedMaxTime = TimeSpan.FromSeconds(2);
         //автопоиск соответствия команд
         
 
         private static int _inSecretComand;
-        public static void SecretComand(SnapshotModificationElements snapshotModificationElements)
+        public static void SecretComand(Document doc, List<ElementId> elementIds)
         {
             //команда срабатывает внутри группы
             if (!App.InPendingSecret)
@@ -123,23 +139,20 @@ namespace Reinforcement
                 if (string.IsNullOrEmpty(App.OnGroupCurrent.Name))
                 {
                     return;
-                }    
+                }
+                Element element = doc.GetElement(elementIds[0]);
 
-                   
-                Element elemGroup = snapshotModificationElements.AddAndModifiedsElements.FirstOrDefault();//элемент в группе
-                if (elemGroup == null) { return; }
-                ElementId groupId = elemGroup.GroupId;
+                if (element == null) { return; }
+                ElementId groupId = element.GroupId;
                 if (groupId == ElementId.InvalidElementId) { return; }
 
                 //лучше только выделенные, иначе если есть несколько групп на виде то ошибка будет
-                List<Element> elements = snapshotModificationElements.AddAndModifiedsElements;// ArmLengthEquels.SelectOrAllElements(false, false);
+                List<Element> elements = elementIds.Select(x => Doc.GetElement(x)).ToList();// ArmLengthEquels.SelectOrAllElements(false, false);
                 elements = elements.Where(el => el.GroupId == groupId).ToList();
                 //надо найти имеющие туже группу
 
                 //надо собрать все элементы которые принадлежат данной группе и находятся на виде
-                DeleteDublicateFamily.ReplacedProcess(snapshotModificationElements.Doc, elements, false, new HashSet<ElementId>(), false);
-                
-
+                DeleteDublicateFamily.ReplacedProcess(doc, elements, false, new HashSet<ElementId>(), false);
                 
             }
             catch (Exception ex)
@@ -151,35 +164,13 @@ namespace Reinforcement
                 App.InPendingSecret = false;
                 if (isChange)
                 {
-                    isChange=false;
                     Interlocked.Exchange(ref _inSecretComand, 0);
                 }
             }
 
         }
 
-        public static Element GetAnyElement(UpdaterData data)
-        {
-            Document doc = data.GetDocument();
-            if (doc == null)
-            {
-                return null;
-            }
-            // Получаем списки элементов
-            var addedIds = data.GetAddedElementIds();
-            var modifiedIds = data.GetModifiedElementIds();
-            if (addedIds.Count > 0)
-            {
-                Element element = doc.GetElement(addedIds.First());
-                return element;
-            }
-            if (modifiedIds.Count > 0)
-            {
-                Element element = doc.GetElement(modifiedIds.First());
-                return element;
-            }
-            return null;
-        }
+        
 
         
     }
