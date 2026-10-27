@@ -135,7 +135,15 @@ namespace Reinforcement
             UpdaterRegistry.AddTrigger(
                 updater.GetUpdaterId(),
                 filter,
+                Element.GetChangeTypeAny());
+            UpdaterRegistry.AddTrigger(
+                updater.GetUpdaterId(),
+                filter,
                 Element.GetChangeTypeElementAddition());
+            UpdaterRegistry.AddTrigger(
+                updater.GetUpdaterId(),
+                filter,
+                Element.GetChangeTypeGeometry());
         }
     }
 }

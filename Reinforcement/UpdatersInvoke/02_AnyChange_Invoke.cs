@@ -41,9 +41,10 @@ namespace Reinforcement
         public UpdaterId GetUpdaterId() => _updaterId;
         public string GetUpdaterName() => App.TabName+"_Updater всех процессов";
 
+        
     }
     
-    public static class AnyChange 
+    public  static partial class AnyChange 
     {
         //тут запиши какие хочешь действия на любые действия
 
@@ -51,21 +52,20 @@ namespace Reinforcement
 
         private static readonly object _lock = new object();
 
-
+        
         public static void Execute(UpdaterData data)
         {
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
             
-            
-            if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию
+            if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию мы итак в нашем изменении
+
             Document doc = data.GetDocument();
             if (doc == null) { return; }
 
-            var added = data.GetAddedElementIds().ToList();
-            var modified = data.GetModifiedElementIds().ToList();
+            var added = data.GetAddedElementIds();
+            var modified = data.GetModifiedElementIds();
             
-
             if (!added.Any() && !modified.Any()) { return; }
             //секретная команда
             SecretComand(doc, modified);//секретная команда внутри группы действующая
@@ -86,15 +86,16 @@ namespace Reinforcement
             }
             lock (_lock)
             {
-                //могут сразу несколько раз заполняться
+                //могут сразу несколько раз заполняться в данном логировании
                 if(Doc!=doc)
                 {
+                    //вдруг мы в другом документе оказались, крайне редко и лучше не нарваться
                     Doc = doc; ClearDataElements();
                 }
                 DateTimeChange = now;
                 AddedIds.UnionWith(addedSet);
                 ModifiedIds.UnionWith(modifiedSet);
-                GeomModificationEl.UnionWith(modifiedSet);
+                GeomModificationEl.UnionWith(geomModificationEl);
             }
 
         }
@@ -107,21 +108,18 @@ namespace Reinforcement
             }
         }
 
-        
+
         public static DateTime DateTimeChange=DateTime.MinValue;
         public static Document Doc = null;
         public static HashSet<ElementId> AddedIds = new HashSet<ElementId>();
         public static HashSet<ElementId> ModifiedIds = new HashSet<ElementId>();
+        //только модифицированная геометрия она может быть и в ModifiedIds
         public static HashSet<ElementId> GeomModificationEl = new HashSet<ElementId>();
 
-
-        
-        public static readonly TimeSpan ComandAndChangedMaxTime = TimeSpan.FromSeconds(2);
-        //автопоиск соответствия команд
-        
+        public static bool IsExistElementsChange => AddedIds.Any()|| ModifiedIds.Any();
 
         private static int _inSecretComand;
-        public static void SecretComand(Document doc, List<ElementId> elementIds)
+        public static void SecretComand(Document doc, ICollection<ElementId> elementIds)
         {
             //команда срабатывает внутри группы
             if (!App.InPendingSecret)
@@ -140,7 +138,7 @@ namespace Reinforcement
                 {
                     return;
                 }
-                Element element = doc.GetElement(elementIds[0]);
+                Element element = doc.GetElement(elementIds.First());
 
                 if (element == null) { return; }
                 ElementId groupId = element.GroupId;
