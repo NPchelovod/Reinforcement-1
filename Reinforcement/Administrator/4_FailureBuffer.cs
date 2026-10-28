@@ -25,7 +25,7 @@ namespace Reinforcement
         private static readonly List<FailureRecord> _records = new List<FailureRecord>();
         private static bool _dirty;
 
-        public static string FolderPath = Path.Combine(LookUsers.folderStatistics, "Failures"); 
+        public static string FolderPath = Path.Combine(App_Folders.FolderStatistics, "Failures"); 
 
         public static void Add(FailureRecord record)
         {

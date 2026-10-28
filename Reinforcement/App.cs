@@ -21,7 +21,6 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Updaters;
 using AW = Autodesk.Windows;
 //using Autodesk.Windows;
 
@@ -400,11 +399,11 @@ namespace Reinforcement
         {
             //var app = App.Application;//RevitAPI.UiApplication;
             
-            RegisterUpdater.addInId = app.ActiveAddInId;
-            RegisterUpdater.Register();
+            //RegisterUpdater.addInId = app.ActiveAddInId;
+            //RegisterUpdater.Register();
 
-            RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
-            RegisterZakladkaUpdater.Register();
+            //RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
+            //RegisterZakladkaUpdater.Register();
 
             RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
 
@@ -439,8 +438,7 @@ namespace Reinforcement
                 application.ControlledApplication.FailuresProcessing -= OnFailuresProcessing;
                 application.ControlledApplication.DocumentChanged -= OnDocumentChanged;
                 //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
-                PeriodicHandler.IsPeriodicControl = false;
-                Detach(RevitAPI.UiApplication);
+                UpdaterSubscriber.Shutdown();
             }
             catch (Exception ex)
             {

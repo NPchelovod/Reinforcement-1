@@ -18,7 +18,7 @@ namespace Reinforcement
             RevitAPI.Initialize(commandData);
             // панели которые должны быть видны
             //проверяем пароль
-            if (!Statist.RequestPassword())
+            if (!RevitAPI.RequestPassword())
             {
                 message = "Неверный пароль или отмена.";
                 return Result.Cancelled;

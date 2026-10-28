@@ -10,7 +10,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
-using Updaters;
+
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using static Autodesk.Revit.DB.SpecTypeId;
 
@@ -41,24 +41,53 @@ namespace Reinforcement
         public UpdaterId GetUpdaterId() => _updaterId;
         public string GetUpdaterName() => App.TabName+"_Updater всех процессов";
 
-        
     }
-    
-    public  static partial class AnyChange 
+    public class SnapShotElements
+    {
+        public HashSet<ElementId> AddedIds;// добавленный новый элемент
+        public HashSet<ElementId> GeomModificationIds;//не добавленный, геом измененный элемент
+        public HashSet<ElementId> ModifiedIdsProp;//не добавленные и не геометрически измененный
+        public DateTime DateTimeCreate;
+        public Document Doc;
+        public SnapShotElements(DateTime dateTimeCreate, Document doc, HashSet<ElementId> addedIds, HashSet<ElementId> geomModificationIds, HashSet<ElementId> modifiedIdsProp)
+        {
+            Doc = doc;
+            DateTimeCreate = dateTimeCreate;
+            AddedIds = new HashSet<ElementId>(addedIds);
+            GeomModificationIds = geomModificationIds.Where(x=> !addedIds.Contains(x)).ToHashSet();
+            ModifiedIdsProp = modifiedIdsProp.Where(x => !addedIds.Contains(x) && !GeomModificationIds.Contains(x)).ToHashSet();
+        }
+    }
+
+    public static partial class AnyChange 
     {
         //тут запиши какие хочешь действия на любые действия
 
         public static bool AllUpdater = true;
+        public static bool CorrectGroop =false;
 
         private static readonly object _lock = new object();
 
-        
+        internal static ExternalEvent ExternalEventRef;
+        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.2);
+
+        public static DateTime DateLastExecute = DateTime.MinValue;
+        public static volatile bool IsExistElementsChange = false;
+
+        private static Document Doc = null;
+        private static readonly HashSet<ElementId> AddedIds = new HashSet<ElementId>();
+        private static readonly HashSet<ElementId> GeomModificationIds = new HashSet<ElementId>();
+        private static readonly HashSet<ElementId> ModifiedIdsProp = new HashSet<ElementId>();
+
         public static void Execute(UpdaterData data)
         {
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
             
             if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию мы итак в нашем изменении
+                                                                 //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
+                                                                 // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
+            if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
 
             Document doc = data.GetDocument();
             if (doc == null) { return; }
@@ -72,51 +101,60 @@ namespace Reinforcement
             if (!AllUpdater) { return; }
 
             DateTime now = DateTime.Now;
-            // Собираем как HashSet, чтобы дедуп и O(1) проверки
-            HashSet<ElementId> addedSet = new HashSet<ElementId>(added);
-            // modified = то, что изменено, НО НЕ добавлено
-            HashSet<ElementId> modifiedSet = modified.Where(id => !addedSet.Contains(id)).ToHashSet();
-            HashSet<ElementId> geomModificationEl = new HashSet<ElementId>();
-            foreach (var id in modifiedSet)
+            // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
+            var geomSet = new HashSet<ElementId>();
+            foreach (var id in modified)
             {
                 if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-                {
-                    geomModificationEl.Add(id);
-                }
+                    geomSet.Add(id);
             }
             lock (_lock)
             {
-                //могут сразу несколько раз заполняться в данном логировании
-                if(Doc!=doc)
-                {
-                    //вдруг мы в другом документе оказались, крайне редко и лучше не нарваться
-                    Doc = doc; ClearDataElements();
-                }
-                DateTimeChange = now;
-                AddedIds.UnionWith(addedSet);
-                ModifiedIds.UnionWith(modifiedSet);
-                GeomModificationEl.UnionWith(geomModificationEl);
-            }
+                if (Doc != doc) ClearInternal();
+                Doc = doc;
+                DateLastExecute = now;
 
+                AddedIds.UnionWith(added);
+                GeomModificationIds.UnionWith(geomSet);
+                ModifiedIdsProp.UnionWith(modified.Where(x => !geomSet.Contains(x)));
+
+                IsExistElementsChange = true;
+            }
+        }
+        internal static void RequestProcessing()
+        {
+            var ev = ExternalEventRef;
+            if (ev == null) return;
+            if (!IsExistElementsChange) return;
+
+            try { ev.Raise(); } catch { /* Revit занят — таймер-страховка повторит */ }
         }
 
-        public static void ClearDataElements()
+        private static void ClearInternal()
+        {
+            AddedIds.Clear();
+            GeomModificationIds.Clear();
+            ModifiedIdsProp.Clear();
+            IsExistElementsChange = false;
+        }
+        public static SnapShotElements GetSnapShotElements(Document document)
         {
             lock (_lock)
             {
-                AddedIds.Clear(); ModifiedIds.Clear(); GeomModificationEl.Clear();
+                if (!IsExistElementsChange || document != Doc) return null;
+
+                var snap = new SnapShotElements(
+                    DateLastExecute, document,
+                    AddedIds,
+                    GeomModificationIds,
+                    ModifiedIdsProp);
+
+                ClearInternal();
+                return snap;
             }
         }
 
 
-        public static DateTime DateTimeChange=DateTime.MinValue;
-        public static Document Doc = null;
-        public static HashSet<ElementId> AddedIds = new HashSet<ElementId>();
-        public static HashSet<ElementId> ModifiedIds = new HashSet<ElementId>();
-        //только модифицированная геометрия она может быть и в ModifiedIds
-        public static HashSet<ElementId> GeomModificationEl = new HashSet<ElementId>();
-
-        public static bool IsExistElementsChange => AddedIds.Any()|| ModifiedIds.Any();
 
         private static int _inSecretComand;
         public static void SecretComand(Document doc, ICollection<ElementId> elementIds)

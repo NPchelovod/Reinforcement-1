@@ -439,7 +439,10 @@
     <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
-    <Compile Include="UpdatersInvoke\03_AnyChange_Process.cs" />
+    <Compile Include="UpdatersInvoke\03_PeriodicHandler_Process.cs" />
+    <Compile Include="UpdatersInvoke\04_PeriodicHandler_Avtor.cs" />
+    <Compile Include="UpdatersInvoke\05_PeriodicHandler_Cubic.cs" />
+    <Compile Include="UpdatersInvoke\06_PeriodicHandler_AnnotationWidth.cs" />
     <Compile Include="UpdatersInvoke\4_AvtorElement.cs" />
     <Compile Include="UpdatersInvoke\2_AutoHoleFloorPoint.cs" />
     <Compile Include="UpdatersInvoke\11_2_ChangeWidthAnnotationTag.cs" />

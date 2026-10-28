@@ -29,9 +29,8 @@ namespace Reinforcement
 
                 RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
                 RegisterAutoFillUpdater.Register();
-                Attach(uiApp);
-                PeriodicHandler.IsPeriodicControl = true;
-                
+                UpdaterSubscriber.Initialize(uiApp);
+
                 //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
             }
         }

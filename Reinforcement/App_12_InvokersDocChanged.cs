@@ -4,6 +4,7 @@ using Autodesk.Revit.DB.Visual;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -35,47 +36,20 @@ namespace Reinforcement
         }
     }
 
-    public readonly struct Command
+    public  struct Command
     { 
-        public string CommandName { get; }
-        public DateTime DateCreate { get; }
+        public string CommandName { get; set; }
+        public DateTime DateCreate { get; set; }
 
-    
     }
 
 
     public partial class App
     {
-        private static ExternalEvent _exEvent;
-        private static Timer _debounceTimer;
-        private static string _ownTxName;
-        private static readonly object _lock = new object();
-
-        public static void Attach(UIApplication uiapp)
-        {
-            _ownTxName = PeriodicHandler.TransactionName;
-
-            _exEvent = ExternalEvent.Create(new PeriodicHandler());
-
-            // Дебаунс: не дёргаем Raise() на каждое изменение подряд.
-            // 300 мс — разумный компромисс между отзывчивостью и нагрузкой.
-            _debounceTimer = new Timer(_ => TryRaise(), null,
-                Timeout.Infinite, Timeout.Infinite);
-
-            uiapp.Application.DocumentChanged += OnDocumentChanged;
-        }
-
-        public static void Detach(UIApplication uiapp)
-        {
-            if(uiapp == null) {  return; }
-            uiapp.Application.DocumentChanged -= OnDocumentChanged;
-            _debounceTimer?.Dispose(); _debounceTimer = null;
-            _exEvent?.Dispose(); _exEvent = null;
-        }
-
+        
         public static Command CurentCommand = new Command();
         public static List <Command> Commands = new List <Command>();
-
+        public static DateTime DateLastExecute = DateTime.MinValue;
         private static void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
         {
             try
@@ -86,129 +60,42 @@ namespace Reinforcement
                 string comand = txNames.First();
                 if(string.IsNullOrEmpty(comand)) {return; }
 
-                //0. - записываем в апдейтер нашу команду для статистики
-                RevitAPI.LookUsers.Update(comand, EDocStatsOptions.Invoker);
-
+                
                 // ⚠️ КЛЮЧЕВОЙ ФИЛЬТР: пропускаем свои транзакции.
                 // Здесь и рвётся потенциальная рекурсия.
                 bool ours = txNames.Any(n =>
                     !string.IsNullOrEmpty(n) &&
                     n.StartsWith(PeriodicHandler.TransactionName, StringComparison.OrdinalIgnoreCase));
                 if (ours) return;
+               
 
                 Document doc = e.GetDocument();
                 if (doc == null) return;
-                DateTime now = DateTime.Now;
+                //0. - записываем в апдейтер нашу команду для статистики
+                RevitAPI.LookUsers.Update(comand, EDocStatsOptions.Invoker);
 
+                DateTime now = DateTime.Now;
+                CurentCommand = new Command() { CommandName = comand, DateCreate = now };
+                Commands.Add(CurentCommand);
 
                 //2. === Магия: проверяем секретный паттерн ===
-                InOrOutGroopAndSecretCommandPossible(now, txNames, snapshotModificationElements);
+                InOrOutGroopAndSecretCommandPossible(now, txNames, doc, e.GetModifiedElementIds());
 
-
-
-                if (!PeriodicHandler.IsPeriodicControl) return;
-                if (PeriodicHandler.IsProcessingOwnChange) return;   // safety net
-
-                // 1. Достаём слепок, созданный IUpdater для этой же транзакции
-                if (!App.UpdaterQueue.TryDequeue(out var snap)) return;
-
-                // 2. Обогащаем именем команды (единственное, чего не хватало)
-                snap.CommandName = e.GetTransactionNames().FirstOrDefault();
-
-                // 3. Отдаём в обработку
-              
-                PeriodicHandler.WorkPending = true;
-              
-
-
-
-
-
-
-                var added = e.GetAddedElementIds().ToList();
-                var modified = e.GetModifiedElementIds().ToList();
-                if (!added.Any() && !modified.Any()) return;
-
-                // Слепок для статистики/истории (без геометрии — она уже в Updater)
-                App.CreateSnapshot(
-                    DateTime.Now, doc, null,
-                    added, modified,
-                    ESnapshotMod.FromDocChanged, txNames.FirstOrDefault());
-
-                // Взводим флаг и перезапускаем дебаунс
-                lock (_lock) { PeriodicHandler.WorkPending = true; }
-                _debounceTimer?.Change(300, Timeout.Infinite);
             }
             catch (Exception ex)
             {
                 RevitAPI.AppErrors?.LogError(ex);
             }
         }
-        private static void TryRaise()
-        {
-            if (_exEvent == null) return;
-
-            var req = _exEvent.Raise();
-            if (req == ExternalEventRequest.Denied || req == ExternalEventRequest.TimedOut)
-            {
-                // Revit занят — попробуем чуть позже
-                lock (_lock) { PeriodicHandler.WorkPending = true; }
-                _debounceTimer?.Change(300, Timeout.Infinite);
-            }
-        }
+        
 
 
         private readonly static int _maxCountTranzSave = 6;//не более стольки транзаций храним
         
 
-        private static readonly object _syncSnapshot = new object();
-        public static SnapshotModificationElements CreateSnapshot(DateTime now, Document doc, UpdaterData data, List<ElementId> added, List<ElementId> modified, ESnapshotMod father, string commandName)
-        {
-            // Собираем как HashSet, чтобы дедуп и O(1) проверки
-            var addedSet = new HashSet<ElementId>(added);
-            // modified = то, что изменено, НО НЕ добавлено
-            var modifiedSet = modified.Where(id => !addedSet.Contains(id)).ToHashSet();
+        
 
-            if (!addedSet.Any() && !modifiedSet.Any())
-            {
-                return null;
-            }
-
-            // Общий набор: added ∪ (modified \ added) = added ∪ modified, без дублей
-            var allSet = new HashSet<ElementId>(addedSet.Concat(modifiedSet));
-
-            SnapshotModificationElements snapshotModificationElements = new SnapshotModificationElements(now, addedSet, modifiedSet, allSet, doc, data, father, commandName);
-
-            lock (_syncSnapshot)
-            {
-                if (father == ESnapshotMod.FromDocChanged)
-                {
-                    if (SnapshotModificationElementsList.Count >= _maxCountTranzSave)
-                    {
-                        SnapshotModificationElementsList.RemoveAt(0);//убираем самый старый элемент
-                    }
-                    CurrentSnapshotModificationElements = snapshotModificationElements;
-                    SnapshotModificationElementsList.Add(snapshotModificationElements);
-                    PeriodicHandler.ChangeModelFromDoc = true;//что модель изменилась за эту секунду
-                }
-                else if(father == ESnapshotMod.FromInvoker)
-                {
-                    if (SnapshotModificationElementsListFromInvoke.Count >= _maxCountTranzSave)
-                    {
-                        SnapshotModificationElementsListFromInvoke.RemoveAt(0);//убираем самый старый элемент
-                    }
-                    CurrentSnapshotModificationElementsFromInvoke = snapshotModificationElements;
-                    SnapshotModificationElementsListFromInvoke.Add(snapshotModificationElements);
-
-                    PeriodicHandler.ChangeModelFromInvoke = true;//что модель изменилась за эту секунду
-                }
-
-            }
-
-            return snapshotModificationElements;
-        }
-
-        private void InOrOutGroopAndSecretCommandPossible(DateTime now, IList<string> txNames, SnapshotModificationElements snapshotModificationElements)
+        private static void InOrOutGroopAndSecretCommandPossible(DateTime now, IList<string> txNames, Document doc, ICollection<ElementId> elIds)
         {
             //проверка входа в группу и проверка на секретную команду
 
@@ -222,8 +109,8 @@ namespace Reinforcement
             if (txNames.Any(n => EnterGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
             {
                 
-                Document doc = snapshotModificationElements.Doc;
-                foreach (var id in snapshotModificationElements.AddAndModifiedsElementsId)
+                
+                foreach (var id in elIds)
                 {
                     Element elem = doc.GetElement(id);
                     if (elem == null) continue;
@@ -317,15 +204,15 @@ namespace Reinforcement
         public static bool InPendingSecret = false;
         private static bool MatchesSecretPattern()
         {
-            int count = SnapshotModificationElementsList.Count;
+            int count = Commands.Count;
             int take = 4;
             if (count < 4) return false;
 
             // Берём последние 4 записи в хронологическом порядке
             // (Queue выдаёт в порядке добавления — от старых к новым)
             var last4 = count <= take
-            ? SnapshotModificationElementsList.ToArray()
-            : SnapshotModificationElementsList.Skip(count - take).Take(take).ToArray();
+            ? Commands.ToArray()
+            : Commands.Skip(count - take).Take(take).ToArray();
             // last4[0] — старейшая из четвёрки, last4[3] — самая свежая
 
             // 1. Проверяем имена

@@ -10,7 +10,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
-using Updaters;
+
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using static Autodesk.Revit.DB.SpecTypeId;
 namespace Reinforcement
@@ -93,11 +93,11 @@ namespace Reinforcement
         public static void Register(bool forceReregister = false)
         {
             var updater = new AnyChangeClass();
-
-            if (!UpdaterRegistry.IsUpdaterRegistered(updater.GetUpdaterId()))
+            var updaterId = updater.GetUpdaterId();
+            if (!UpdaterRegistry.IsUpdaterRegistered(updaterId))
             {
                 UpdaterRegistry.RegisterUpdater(updater, true);
-                var updaterId = updater.GetUpdaterId();
+                //var updaterId = updater.GetUpdaterId();
 
                 //ElementClassFilter allElementsFilter = new ElementClassFilter(typeof(Element));
 
@@ -123,27 +123,33 @@ namespace Reinforcement
                 Register(false);
             }
         }
-        public static void RegisterUpdater()
+        public static void Unregister()
         {
-            AnyChangeClass updater = new AnyChangeClass();
-            UpdaterRegistry.RegisterUpdater(updater);
-
-            // Фильтр – все элементы (можно уточнить, если параметр есть только у определённых категорий)
-            ElementClassFilter filter = new ElementClassFilter(typeof(Element));
-
-            // Триггер на добавление элементов
-            UpdaterRegistry.AddTrigger(
-                updater.GetUpdaterId(),
-                filter,
-                Element.GetChangeTypeAny());
-            UpdaterRegistry.AddTrigger(
-                updater.GetUpdaterId(),
-                filter,
-                Element.GetChangeTypeElementAddition());
-            UpdaterRegistry.AddTrigger(
-                updater.GetUpdaterId(),
-                filter,
-                Element.GetChangeTypeGeometry());
+            var updaterId = new AnyChangeClass().GetUpdaterId();
+            if (UpdaterRegistry.IsUpdaterRegistered(updaterId))
+                UpdaterRegistry.UnregisterUpdater(updaterId);
         }
+        //public static void RegisterUpdater()
+        //{
+        //    AnyChangeClass updater = new AnyChangeClass();
+        //    UpdaterRegistry.RegisterUpdater(updater);
+
+        //    // Фильтр – все элементы (можно уточнить, если параметр есть только у определённых категорий)
+        //    ElementClassFilter filter = new ElementClassFilter(typeof(Element));
+
+        //    // Триггер на добавление элементов
+        //    UpdaterRegistry.AddTrigger(
+        //        updater.GetUpdaterId(),
+        //        filter,
+        //        Element.GetChangeTypeAny());
+        //    UpdaterRegistry.AddTrigger(
+        //        updater.GetUpdaterId(),
+        //        filter,
+        //        Element.GetChangeTypeElementAddition());
+        //    UpdaterRegistry.AddTrigger(
+        //        updater.GetUpdaterId(),
+        //        filter,
+        //        Element.GetChangeTypeGeometry());
+        //}
     }
 }

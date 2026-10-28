@@ -39,7 +39,7 @@ namespace Reinforcement
             if (string.IsNullOrEmpty(folderPath))
             {
                 //путь смотрим в каталоге нашем
-                folderPath = LookUsers.folderStatistics;
+                folderPath = App_Folders.FolderStatistics;
                 if (string.IsNullOrEmpty(folderPath))
                 { return false; }
             }

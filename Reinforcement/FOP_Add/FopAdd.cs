@@ -22,8 +22,8 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
 
-            RegParameter(commandData, AutoFillNoteUpdater.NameAvtor, BuiltInParameterGroup.PG_IDENTITY_DATA);
-            RegParameter(commandData, AutoFillNoteUpdater.NameSoAvtor, BuiltInParameterGroup.PG_IDENTITY_DATA);
+            RegParameter(commandData, PeriodicHandler.NameAvtor, BuiltInParameterGroup.PG_IDENTITY_DATA);
+            RegParameter(commandData, PeriodicHandler.NameSoAvtor, BuiltInParameterGroup.PG_IDENTITY_DATA);
             return Result.Succeeded;
         }
         public static Definition GetDifinition(ExternalCommandData commandData, string name)

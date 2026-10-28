@@ -17,13 +17,13 @@ namespace Reinforcement
         public static string GetDatePluginText => $"Плагин от: {App_Folders.DatePluginDll.ToLocalTime():d MMM yyyy, HH:mm}";
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            chkFillAuthor.IsChecked = AutoFillNoteUpdater.regWriterAvtor;
+            chkFillAuthor.IsChecked = PeriodicHandler.RegWriterAvtor;
             //chkFillAuthorADSK.IsChecked = AutoFillNoteUpdater.regWriterAvtorPrim;
-            chk_GroupPass.IsChecked = !AutoFillNoteUpdater.correctGroup;
-            AutoFillNoteUpdater.regWriterAvtorPrim = AnyChange.AllUpdater;
+            chk_GroupPass.IsChecked = !AnyChange.CorrectGroop;
+            
            
-            var buildDate = UpdaterPlagina.TargetLatestTime.ToLocalTime(); //локальное время
-            var version = UpdaterPlagina.VersionString; 
+            var buildDate = App_Folders.DatePluginDll.ToLocalTime(); //локальное время
+            var version = App_Folders.VersionString; 
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
@@ -37,11 +37,11 @@ namespace Reinforcement
             // При необходимости можно вызвать сохранение в файл/реестр
             //AddinSettings.Save();
 
-            AutoFillNoteUpdater.regWriterAvtor= chkFillAuthor.IsChecked == true;
+            PeriodicHandler.RegWriterAvtor = chkFillAuthor.IsChecked == true;
 
             //AutoFillNoteUpdater.regWriterAvtorPrim = chkFillAuthorADSK.IsChecked == true;
 
-            AutoFillNoteUpdater.correctGroup= chk_GroupPass.IsChecked != true;
+            AnyChange.CorrectGroop = chk_GroupPass.IsChecked != true;
 
 
             AnyChange.AllUpdater=chkUpdater.IsChecked == true;
@@ -53,7 +53,7 @@ namespace Reinforcement
 
             if (AnyChange.AllUpdater && rePodpiska.IsChecked == true)
             {
-                AnyChange.PodpiskaAll();//переподписываеся
+                //App.PodpiskaAll();//переподписываеся
             }
 
 
