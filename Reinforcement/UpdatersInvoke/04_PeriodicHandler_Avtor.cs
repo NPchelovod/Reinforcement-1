@@ -29,8 +29,8 @@ namespace Reinforcement
             {
                 string cn = eTypeChangeEl == ETypeChangeEl.AddedElements ? null : "доб";//добавочный ли автор
                 // Автор — это "кто создал", тип смены тут не нужен
-                if (eTypeChangeEl == ETypeChangeEl.AddedElements)
-                authorValue = new AuthorEntry(_userName, _nowDate,cn).ToString();
+                
+                string newAuthorValue = new AuthorEntry(_userName, _nowDate,cn).ToString();
                 SetParam(authorParam, authorValue);
 
             }
@@ -53,19 +53,13 @@ namespace Reinforcement
         /// </summary>
         public static bool SetParam(Parameter param, string value)
         {
-            if (param == null) { return false; }
+            
             string pastValue = param.AsString();
 
             if (!string.IsNullOrEmpty(pastValue) && pastValue == value) { return false; }
-            try
-            {
-                param.Set(value);
-            }
-            catch (Exception ex)
-            {
-                RevitAPI.AppErrors.LogError(ex);
-                return false;
-            }
+            
+            param.Set(value);
+            
             return true;
         }
         /// <summary>

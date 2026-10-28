@@ -39,7 +39,9 @@ namespace Reinforcement
                 {
                     // Для Yes/No: 0 = false, 1 = true
                     if (soglas.AsInteger() != 0)
+                    {
                         soglas.Set(0);
+                    }
                 }
             }
 
@@ -52,8 +54,8 @@ namespace Reinforcement
         static readonly List<string> Soglass = new List<string>() { "Согласовано АР", "Согласовано ИОС", "Согласовано КР" };
         private static void CubicWriterLevel(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
-            var cat = element.Category?.BuiltInCategory;
-            if (cat != builtInCategoryCubicAnnotation) { return; }
+            //var cat = element.Category?.BuiltInCategory;
+            //if (cat != builtInCategoryCubicAnnotation) { return; }
 
             if (!element.Name.Contains("Кубик_Стена_Прям") && !element.Name.Contains("Отверстие в стене"))
             { return; }
@@ -64,7 +66,9 @@ namespace Reinforcement
                 return;
             }
             if (!(element is FamilyInstance fi))
+            {
                 return; // это не экземпляр семейства, пропускаем
+            }
 
             var level = doc.GetElement(element.LevelId) as Level;
             var levelElevation = level.ProjectElevation;
@@ -72,10 +76,41 @@ namespace Reinforcement
             var elementHeight = element.get_Parameter(new Guid("60bf9b18-17f9-4b8f-b214-fc13bc7b357f")).AsDouble(); // ищем по гуиду
             var elementLowerElevation = levelElevation + elementElevationLevel;
             var elementUpperElevation = elementLowerElevation + elementHeight;
-            element.LookupParameter("Отметка пола").Set(levelElevation);
-            element.LookupParameter("Низ проема").Set(elementLowerElevation);
-            element.LookupParameter("Верх проема").Set(elementUpperElevation);
+            Parameter levelElevationP = element.LookupParameter("Отметка пола");
+            Parameter elementLowerElevationP = element.LookupParameter("Низ проема");
+            Parameter elementUpperElevationP = element.LookupParameter("Верх проема");
 
+            //как проверить старый параметр был таким же как сейчас??
+            SetIfChanged(levelElevationP, levelElevation);
+            SetIfChanged(elementLowerElevationP, elementLowerElevation);
+            SetIfChanged(elementUpperElevationP, elementUpperElevation);
+
+        }
+
+        public static bool SetIfChanged(Parameter param, double newValue, double tolerance = 1e-9)
+        {
+            if (param == null || param.IsReadOnly)
+                return false;
+
+            // Для параметров типа Double сравниваем с допуском
+            if (param.StorageType == StorageType.Double)
+            {
+                double oldValue = param.AsDouble();
+                // Сравниваем с допуском, чтобы избежать ложных срабатываний из-за плавающей точки
+                if (Math.Abs(oldValue - newValue) < tolerance)
+                    return false; // Значение практически не изменилось
+            }
+            else
+            {
+                // Для других типов можно использовать строковое представление
+                // (подходит для String, Integer, ElementId и т.д.)
+                if (param.AsValueString() == newValue.ToString())
+                    return false;
+            }
+
+            // Если дошли до сюда, значит, значение отличается — обновляем
+            param.Set(newValue);
+            return true;
         }
     }
 }

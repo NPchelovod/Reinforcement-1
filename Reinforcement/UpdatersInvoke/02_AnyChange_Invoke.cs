@@ -141,8 +141,15 @@ namespace Reinforcement
         {
             lock (_lock)
             {
-                if (!IsExistElementsChange || document != Doc) return null;
-
+                if (!IsExistElementsChange)// || document != Doc) return null;
+                {
+                    return null;
+                }
+                // Стало (логическое сравнение, true только для разных файлов):
+                if (!document.Equals(Doc))
+                {
+                    return null;
+                }
                 var snap = new SnapShotElements(
                     DateLastExecute, document,
                     AddedIds,

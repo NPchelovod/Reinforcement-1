@@ -75,7 +75,14 @@ namespace Reinforcement
 
         public void Execute(UIApplication app)
         {
-            if (IsProcessingOwnChange) return;
+            if (IsProcessingOwnChange)
+            {
+                return;
+            }
+            if (!AnyChange.IsExistElementsChange)
+            {
+                return;
+            }
 
             UIDocument uidoc = app.ActiveUIDocument;
             if (uidoc == null) return;
