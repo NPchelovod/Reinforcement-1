@@ -97,7 +97,7 @@ namespace Reinforcement
             
             if (!added.Any() && !modified.Any()) { return; }
             //секретная команда
-            SecretComand(doc, modified);//секретная команда внутри группы действующая
+           
             
 
             DateTime now = DateTime.Now;
@@ -120,7 +120,7 @@ namespace Reinforcement
                 ModifiedIdsProp.UnionWith(modifiedIdsPropt);
                 IsExistElementsChange = true;
             }
-            NotPeriodic_Process.Execute(new SnapShotElements(now, doc, added, geomSet, modifiedIdsPropt));
+            PeriodicHandler.Execute(Doc);
         }
         
 
@@ -166,55 +166,7 @@ namespace Reinforcement
 
 
 
-        private static int _inSecretComand;
-        public static void SecretComand(Document doc, ICollection<ElementId> elementIds)
-        {
-            //команда срабатывает внутри группы
-            if (!App.InPendingSecret)
-            { return; }
-            
-            bool isChange=false;
-            try
-            {
-                if (Interlocked.CompareExchange(ref _inSecretComand, 1, 0) != 0)
-                {
-                    return;
-                }
-                isChange=true;
-                App.InPendingSecret = false;
-                if (string.IsNullOrEmpty(App.OnGroupCurrent.Name))
-                {
-                    return;
-                }
-                Element element = doc.GetElement(elementIds.First());
-
-                if (element == null) { return; }
-                ElementId groupId = element.GroupId;
-                if (groupId == ElementId.InvalidElementId) { return; }
-
-                //лучше только выделенные, иначе если есть несколько групп на виде то ошибка будет
-                List<Element> elements = elementIds.Select(x => Doc.GetElement(x)).ToList();// ArmLengthEquels.SelectOrAllElements(false, false);
-                elements = elements.Where(el => el.GroupId == groupId).ToList();
-                //надо найти имеющие туже группу
-
-                //надо собрать все элементы которые принадлежат данной группе и находятся на виде
-                DeleteDublicateFamily.ReplacedProcess(doc, elements, false, new HashSet<ElementId>(), false);
-                
-            }
-            catch (Exception ex)
-            {
-                RevitAPI.AppErrors.LogError(ex);
-            }
-            finally
-            {
-                App.InPendingSecret = false;
-                if (isChange)
-                {
-                    Interlocked.Exchange(ref _inSecretComand, 0);
-                }
-            }
-
-        }
+        
 
         
 

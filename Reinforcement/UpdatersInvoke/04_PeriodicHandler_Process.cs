@@ -37,7 +37,7 @@ namespace Reinforcement
             {
                 if (!AnyChange.IsExistElementsChange) return;
                 try { _externalEvent?.Raise(); } catch { }
-            }, null, dueTime: 300, period: 300);//столько времени до следующей попытки 
+            }, null, dueTime: 5000, period: 5000);//столько времени до следующей попытки 10000 = 10секунд
         }
 
         public static void Shutdown()
