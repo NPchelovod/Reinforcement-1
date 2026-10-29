@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Autodesk.Revit.Attributes;
+
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Markup;
-using Autodesk.Revit.Attributes;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-using Newtonsoft.Json.Linq;
-
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using static Autodesk.Revit.DB.SpecTypeId;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace Reinforcement
 {
@@ -87,7 +87,10 @@ namespace Reinforcement
             if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию мы итак в нашем изменении
                                                                  //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
                                                                  // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
-            if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
+
+            //изменен я которые случились менее чем за 150 мс
+            // проверка не защищает от рекурсии, а глушит пользователя:
+            //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
 
             Document doc = data.GetDocument();
             if (doc == null) { return; }
@@ -111,10 +114,10 @@ namespace Reinforcement
             var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
             lock (_lock)
             {
-                if (Doc != doc) ClearInternal();
+                if (Doc == null || !doc.Equals(Doc)) ClearInternal();//Doc != doc — та же ловушка, что и раньше
+                
                 Doc = doc;
                 DateLastExecute = now;
-
                 AddedIds.UnionWith(added);
                 GeomModificationIds.UnionWith(geomSet);
                 ModifiedIdsProp.UnionWith(modifiedIdsPropt);

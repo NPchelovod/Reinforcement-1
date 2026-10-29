@@ -75,6 +75,9 @@ namespace Reinforcement
 
         public void Execute(UIApplication app)
         {
+            //Я решил что пока не надо иначе ctrl+z откатывает сначала эти изменения а затем только изм пользователя что нелепо
+
+            return;
             if (IsProcessingOwnChange)
             {
                 return;

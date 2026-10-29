@@ -36,7 +36,8 @@ namespace Reinforcement
             finally
             {
                 IsProcessingOwnChange = false;
-                
+                // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
+                Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
             }
         }
 
@@ -54,7 +55,10 @@ namespace Reinforcement
                 {
                     return;
                 }
-                Element element = doc.GetElement(snap.ModifiedIdsProp.FirstOrDefault());
+                var elIds = snap.ModifiedIdsProp;
+                if (elIds.Count == 0) { return; }
+
+                Element element = doc.GetElement(elIds.First());
 
                 if (element == null) { return; }
                 ElementId groupId = element.GroupId;
