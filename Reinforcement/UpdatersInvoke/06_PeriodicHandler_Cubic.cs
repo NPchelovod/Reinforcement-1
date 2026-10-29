@@ -27,15 +27,15 @@ namespace Reinforcement
             ElementType type = doc.GetElement(fi.GetTypeId()) as ElementType;
             if (type == null) { return; }
             string familyName = type.FamilyName;
-            if (string.IsNullOrEmpty(familyName) || !familyName.Contains("Закладная"))
+            if (string.IsNullOrEmpty(familyName))// || !familyName.Contains("Закладная"))
             { return; }
             // Ищем параметр "Согласовано" (или "Согласновано" с опечаткой)
 
             foreach (string soglasSeach in Soglass)
             {
                 Parameter soglas = fi.LookupParameter(soglasSeach);
-
-                if (soglas != null && soglas.StorageType == StorageType.Integer)
+                if (soglas == null) { return;}
+                if (soglas.StorageType == StorageType.Integer)
                 {
                     // Для Yes/No: 0 = false, 1 = true
                     if (soglas.AsInteger() != 0)
@@ -60,11 +60,11 @@ namespace Reinforcement
             if (!element.Name.Contains("Кубик_Стена_Прям") && !element.Name.Contains("Отверстие в стене"))
             { return; }
 
-            var check = element.get_Parameter(new Guid("467142a7-677d-439a-9bfc-4cadb8761797"));
-            if (check == null)
-            {
-                return;
-            }
+            //var check = element.get_Parameter(new Guid("467142a7-677d-439a-9bfc-4cadb8761797"));
+            //if (check == null)
+            //{
+            //    return;
+            //}
             if (!(element is FamilyInstance fi))
             {
                 return; // это не экземпляр семейства, пропускаем
@@ -72,8 +72,15 @@ namespace Reinforcement
 
             var level = doc.GetElement(element.LevelId) as Level;
             var levelElevation = level.ProjectElevation;
-            var elementElevationLevel = element.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM).AsDouble(); // относительная высота от отметки уровня (для стен и др HEIGHT_PARAM)
-            var elementHeight = element.get_Parameter(new Guid("60bf9b18-17f9-4b8f-b214-fc13bc7b357f")).AsDouble(); // ищем по гуиду
+            
+            var elementElevationLevel = element.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM).AsDouble(); // относительная высота от отметки уровня (для стен и др HEIGHT_PARAM) 
+
+            
+            //наверно это element.LookupParameter("Высота");
+            //var elementHeight = element.get_Parameter(new Guid("60bf9b18-17f9-4b8f-b214-fc13bc7b357f")).AsDouble(); // ищем по гуиду
+            var elementHeight = element.LookupParameter("Высота").AsDouble();
+
+
             var elementLowerElevation = levelElevation + elementElevationLevel;
             var elementUpperElevation = elementLowerElevation + elementHeight;
             Parameter levelElevationP = element.LookupParameter("Отметка пола");

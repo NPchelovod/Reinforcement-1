@@ -27,15 +27,26 @@ namespace Reinforcement
             // Для нового элемента записываем автора, если поле пустое
             if (string.IsNullOrEmpty(authorValue) || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
             {
-                string cn = eTypeChangeEl == ETypeChangeEl.AddedElements ? null : "доб";//добавочный ли автор
+                string cn = eTypeChangeEl == ETypeChangeEl.AddedElements ? "нов" : "доб";//добавочный ли автор
                 // Автор — это "кто создал", тип смены тут не нужен
                 
                 string newAuthorValue = new AuthorEntry(_userName, _nowDate,cn).ToString();
-                SetParam(authorParam, authorValue);
+                SetParam(authorParam, newAuthorValue);
 
             }
-
-            string commandName = ETypeChangeEl.GeomModifiedElements == eTypeChangeEl ? "гео" : "мод";
+            string commandName = null;
+            if(eTypeChangeEl == ETypeChangeEl.AddedElements)
+            {
+                commandName = "нов";//то что новые элемент
+            }
+            else if(ETypeChangeEl.GeomModifiedElements == eTypeChangeEl)
+            {
+                commandName = "гео";//изменилась геометрия
+            }
+            else
+            {
+                commandName = "мод";//изменился скорее всего параметр
+            }
 
             // 2. Параметр соавтора
             Parameter coAuthorParam = element.LookupParameter(NameSoAvtor);

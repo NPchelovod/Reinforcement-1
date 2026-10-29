@@ -146,6 +146,8 @@
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
     <Compile Include="CreateReinfTag.cs" />
+    <Compile Include="FilteredsColors\0_ViewFilterColorizer.cs" />
+    <Compile Include="FilteredsColors\2_ReinforcementColors.cs" />
     <Compile Include="General\2_2_Memory3D.cs" />
     <Compile Include="General\2_Memory.cs" />
     <Compile Include="General\3_HighOtm.cs" />
@@ -399,7 +401,7 @@
     <Compile Include="PickFilter\MainViewPickWithFilter.xaml.cs">
       <DependentUpon>MainViewPickWithFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="OpeningsColors.cs" />
+    <Compile Include="FilteredsColors\3_OpeningsColors.cs" />
     <Compile Include="ReinforceBasementWalls\DecorWallReinfViewSection.cs" />
     <Compile Include="ReinforceBasementWalls\ReinforceWall.cs" />
     <Compile Include="RenameLevels.cs" />
@@ -433,16 +435,16 @@
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
     <Compile Include="SPDS&amp;PS\RcAddCommand.cs" />
-    <Compile Include="ReinforcementColors.cs" />
     <Compile Include="SetFilterValue.cs" />
     <Compile Include="Test\SetDimensionTextPosition.cs" />
     <Compile Include="SelectAllElementsByFamilyName\CommandSelectAllElementsByFamilyName.cs" />
     <Compile Include="Test\TEST.cs" />
     <Compile Include="Test\TestmoveDims.cs" />
-    <Compile Include="UpdatersInvoke\03_PeriodicHandler_Process.cs" />
-    <Compile Include="UpdatersInvoke\04_PeriodicHandler_Avtor.cs" />
-    <Compile Include="UpdatersInvoke\05_PeriodicHandler_Cubic.cs" />
-    <Compile Include="UpdatersInvoke\06_PeriodicHandler_AnnotationWidth.cs" />
+    <Compile Include="UpdatersInvoke\03_NotPeriodic_Process.cs" />
+    <Compile Include="UpdatersInvoke\04_PeriodicHandler_Process.cs" />
+    <Compile Include="UpdatersInvoke\05_PeriodicHandler_Avtor.cs" />
+    <Compile Include="UpdatersInvoke\06_PeriodicHandler_Cubic.cs" />
+    <Compile Include="UpdatersInvoke\07_PeriodicHandler_AnnotationWidth.cs" />
     <Compile Include="UpdatersInvoke\4_AvtorElement.cs" />
     <Compile Include="UpdatersInvoke\2_AutoHoleFloorPoint.cs" />
     <Compile Include="UpdatersInvoke\11_2_ChangeWidthAnnotationTag.cs" />

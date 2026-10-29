@@ -46,7 +46,7 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Сваи по DWG", assemblyPath, "Reinforcement.SetPilesByDWG", "Сваи из DWG подложки \n\n на виде должны быть расчетная подложка DWG свай в виде точек", OV1);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Оси в 2D", assemblyPath, "Reinforcement.Grid3To2D",
+            App_Helper_Button.AddButtonToPullDownButton(item, "Оси перевести в 2D", assemblyPath, "Reinforcement.Grid3To2D",
                 "Перевод осей в 2Д", OV1);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Осей размеры", assemblyPath, "Reinforcement.GridSizes",
@@ -55,12 +55,12 @@ namespace Reinforcement
             App_Helper_Button.AddButtonToPullDownButton(item, "Дублирование геометрии", assemblyPath, "Reinforcement.SeachDublicateOnView",
                  "Поиск совпадающих объектов на активном виде\nрекомендую на 3D смотреть задвоение пилонов и тд", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "Арм погон", assemblyPath, "Reinforcement.ArmLengthEquels",
-                "Погонная арматура, запись её длины в длину стержня", OV1);
-            App_Helper_Button.AddButtonToPullDownButton(item, "Дубли семейств", assemblyPath, "Reinforcement.DeleteDublicateFamily",
+                "Погонная арматура, запись её длины в длину стержня\n"+"для старых семейств", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "!Дубли семейств", assemblyPath, "Reinforcement.DeleteDublicateFamily",
                 "Замена дублей семейств на ВИДЕ, если что-то выделено заменяет только выделенное\n" +
                 "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ", OV1);
 
-            App_Helper_Button.AddButtonToPullDownButton(item, "Дубли всех семейств", assemblyPath, "Reinforcement.ReplaceDuplicatesAllViews",
+            App_Helper_Button.AddButtonToPullDownButton(item, "!Дубли всех семейств", assemblyPath, "Reinforcement.ReplaceDuplicatesAllViews",
                 "Замена дублей семейств, во ВСЕМ проекте!!!\n"+ 
                 "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ\n"+
                 "если вы выделили семействоА2 то меняется только оно в проекте", OV1);
@@ -73,7 +73,7 @@ namespace Reinforcement
 
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Найти семейство", assemblyPath, "Reinforcement.SeachViewsFamily",
-              "Поиск листов и видов где семейство размещено, работает и в спецификации", OV1);
+              "Поиск листов и видов где семейство размещено, работает и в спецификации\n"+"таже кнопка что и Найти элемент", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

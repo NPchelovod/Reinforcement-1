@@ -37,7 +37,7 @@ namespace Reinforcement
             {
                 if (!AnyChange.IsExistElementsChange) return;
                 try { _externalEvent?.Raise(); } catch { }
-            }, null, dueTime: 300, period: 300);
+            }, null, dueTime: 300, period: 300);//столько времени до следующей попытки 
         }
 
         public static void Shutdown()
@@ -126,6 +126,8 @@ namespace Reinforcement
             }
         }
 
+
+
         private static string _userName = Environment.UserName.ToString();
         private static string _nowDate; // dd.MM.yy.HH
         private static void ProcessSnapshot(DateTime dateTime, SnapShotElements snapshot, Document doc)
@@ -155,7 +157,8 @@ namespace Reinforcement
         }
         private static void ProcessElement(DateTime dateTime, Document doc,Element element, ETypeChangeEl eTypeChangeEl )
         {
-            ElementId groupId = element.GroupId;
+            if (element == null) return;
+            ElementId groupId = element.GroupId; // ← NRE, если element == null
             if (groupId != ElementId.InvalidElementId)
             {
                 if (!AnyChange.CorrectGroop) { return; }
@@ -184,8 +187,9 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-
+                RevitAPI.AppErrors.LogError(ex);
             }
+
             try
             {
                 //сбрасываем кубики
@@ -195,7 +199,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-
+                RevitAPI.AppErrors.LogError(ex);
             }
             try
             {
@@ -203,7 +207,7 @@ namespace Reinforcement
             }
             catch(Exception ex)
             {
-
+                RevitAPI.AppErrors.LogError(ex);
             }
 
             try
@@ -212,7 +216,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-
+                RevitAPI.AppErrors.LogError(ex);
             }
 
         }

@@ -49,7 +49,7 @@ namespace Reinforcement
         public HashSet<ElementId> ModifiedIdsProp;//не добавленные и не геометрически измененный
         public DateTime DateTimeCreate;
         public Document Doc;
-        public SnapShotElements(DateTime dateTimeCreate, Document doc, HashSet<ElementId> addedIds, HashSet<ElementId> geomModificationIds, HashSet<ElementId> modifiedIdsProp)
+        public SnapShotElements(DateTime dateTimeCreate, Document doc, ICollection<ElementId> addedIds, ICollection<ElementId> geomModificationIds, ICollection<ElementId> modifiedIdsProp)
         {
             Doc = doc;
             DateTimeCreate = dateTimeCreate;
@@ -69,7 +69,7 @@ namespace Reinforcement
         private static readonly object _lock = new object();
 
         internal static ExternalEvent ExternalEventRef;
-        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.2);
+        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.15);//столько секунд ждем после обработки собственного изменения
 
         public static DateTime DateLastExecute = DateTime.MinValue;
         public static volatile bool IsExistElementsChange = false;
@@ -83,7 +83,7 @@ namespace Reinforcement
         {
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
-            
+            if (!AllUpdater) { return; }
             if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию мы итак в нашем изменении
                                                                  //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
                                                                  // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
@@ -98,7 +98,7 @@ namespace Reinforcement
             if (!added.Any() && !modified.Any()) { return; }
             //секретная команда
             SecretComand(doc, modified);//секретная команда внутри группы действующая
-            if (!AllUpdater) { return; }
+            
 
             DateTime now = DateTime.Now;
             // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
@@ -108,6 +108,7 @@ namespace Reinforcement
                 if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
                     geomSet.Add(id);
             }
+            var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
             lock (_lock)
             {
                 if (Doc != doc) ClearInternal();
@@ -116,11 +117,13 @@ namespace Reinforcement
 
                 AddedIds.UnionWith(added);
                 GeomModificationIds.UnionWith(geomSet);
-                ModifiedIdsProp.UnionWith(modified.Where(x => !geomSet.Contains(x)));
-
+                ModifiedIdsProp.UnionWith(modifiedIdsPropt);
                 IsExistElementsChange = true;
             }
+            NotPeriodic_Process.Execute(new SnapShotElements(now, doc, added, geomSet, modifiedIdsPropt));
         }
+        
+
         internal static void RequestProcessing()
         {
             var ev = ExternalEventRef;
