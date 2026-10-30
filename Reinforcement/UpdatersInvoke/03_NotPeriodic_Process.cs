@@ -28,16 +28,16 @@ namespace Reinforcement
                 ProcessSnapshot(snap.DateTimeCreate, snap, snap.Doc);
                 SecretComand(doc, snap); //секретная команда внутри группы действующая
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 RevitAPI.AppErrors?.LogError(ex);
-               
+
             }
             finally
             {
                 IsProcessingOwnChange = false;
                 // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
-                //Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
+                Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
             }
         }
 
@@ -49,7 +49,7 @@ namespace Reinforcement
 
             try
             {
-                
+
                 App.InPendingSecret = false;
                 if (string.IsNullOrEmpty(App.OnGroupCurrent.Name))
                 {
@@ -77,7 +77,7 @@ namespace Reinforcement
             {
                 RevitAPI.AppErrors.LogError(ex);
             }
-            
+
 
         }
     }

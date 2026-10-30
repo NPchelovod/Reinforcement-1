@@ -1,17 +1,27 @@
 ﻿#region Namespaces
-
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
-
+using Autodesk.Revit.UI.Events;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Windows.Controls;
+using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using AW = Autodesk.Windows;
 //using Autodesk.Windows;
 
 //using System.Windows.Controls;
@@ -68,7 +78,6 @@ namespace Reinforcement
 
     public partial class App : IExternalApplication
     {
-        
         public static readonly string TabName = "ЕС BIM"; // имя всей панели которая видна в ревите
 
         public static readonly Dictionary<EPanelSelf, (string Name, string Comand, string SurName, System.Drawing.Image image)> DConfigNames =
@@ -121,17 +130,14 @@ namespace Reinforcement
 
         public static EPanelSelf CurrentEPanel { get; set; } = EPanelSelf.KR;//текущая панель у пользователя
         public static UIControlledApplication Application { get; private set; }=null;
-        static App()
-        {
-            // Подписываемся на событие ДО того, как CLR начнет искать зависимости
-            //AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
-        }
+       
         public Result OnStartup(UIControlledApplication app)
     {
             // Апдейтер запускаем ДО основной инициализации — он только стартует
             // внешний процесс UpdaterENS.exe и сразу возвращается.
             // Лечим уже заражённую папку плагина до того, как Revit попытается
             // грузить её файлы.
+            
            
 
             TryStartUpdate(app);//пытаемся скачать обновления и начальные данные загружаем об окружении
@@ -144,16 +150,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try
-                {
-                    string logPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "RevitAddinsLogs", "ENSPlugin_startup.log");
-                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
-                    File.AppendAllText(logPath,
-                        $"\n=== {DateTime.Now} ===\n{ex}\n");
-                }
-                catch { }
+                ErrorException(ex, "OnStartup");
 
                 TaskDialog.Show($"{TabName}",
                     "Плагин не запустился. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
@@ -186,20 +183,11 @@ namespace Reinforcement
             //1. запускаем инициализацию путей и тд
             try
             {
-                App_Folders.Initializator();
+                App_Folders.Initializator(); //начальные данные - директории все
             }
             catch (Exception ex)
             {
-                try
-                {
-                    string logPath = Path.Combine(
-                       Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                       "RevitAddinsLogs", "ENSPlugin_startup.log");
-                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
-                    File.AppendAllText(logPath,
-                        $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
-                }
-                catch { }
+                ErrorException(ex, "AppInitializator");
             }
             //2. Запускаем сам апдейтер
             try
@@ -209,17 +197,29 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try
-                {
-                    string logPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "RevitAddinsLogs", "ENSPlugin_startup.log");
-                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
-                    File.AppendAllText(logPath,
-                        $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
-                }
-                catch { }
+                ErrorException(ex, "StartUpdateENS");
             }
+        }
+        public static void ErrorException(Exception ex, string method)
+        {
+            try
+            {
+                string nameFile = "ENSPlugin_startup";
+                if (method != null)
+                {
+                    nameFile += method;
+                }
+                nameFile += ".log";
+                //запись падения
+                //C:\Users\KVinogradov\AppData\Roaming\RevitAddinsLogs
+                string logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "RevitAddinsLogs", nameFile);
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+            File.AppendAllText(logPath,
+                $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
+            }
+            catch { }
         }
         public Result Startup(UIControlledApplication app)
         {
@@ -355,18 +355,23 @@ namespace Reinforcement
             try
             {
                 // подписка на все изменения элементов, возможно ненужна
-                PodpiskaAll(app);// подписка на все
-                                             // AutoFillNoteUpdater.RegisterUpdater();
+               // PodpiskaAll(app);// подписка на все
+                                 // AutoFillNoteUpdater.RegisterUpdater();
 
-                // Подписка на событие закрытия Revit
-                app.ApplicationClosing += OnRevitClosing;
+                RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
 
+                RegisterAutoFillUpdater.Register();
 
                 
-                var controlledApp = app.ControlledApplication;
 
                 //любое изменение внутри документа
                 app.ControlledApplication.DocumentChanged += OnDocumentChanged;
+
+                // Подписка на событие закрытия Revit
+                app.ApplicationClosing += OnRevitClosing;
+                var controlledApp = app.ControlledApplication;
+
+                
 
                 // Подписываемся на события сохранения моделей
                 controlledApp.DocumentSaving += OnDocumentSaving;
@@ -386,28 +391,28 @@ namespace Reinforcement
             {
                 RevitAPI.AppErrors.LogError(ex);
                 ExistPodpiskaOnChanged= false;
+                ErrorException(ex, "Podpiska");
             }
         }
         
-        public static void PodpiskaAll(UIControlledApplication app)
-        {
-            //var app = App.Application;//RevitAPI.UiApplication;
+        //public static void PodpiskaAll(UIControlledApplication app)
+        //{
+        //    //var app = App.Application;//RevitAPI.UiApplication;
+            
+        //    //RegisterUpdater.addInId = app.ActiveAddInId;
+        //    //RegisterUpdater.Register();
 
-            //RegisterUpdater.addInId = app.ActiveAddInId;
-            //RegisterUpdater.Register();
+        //    //RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
+        //    //RegisterZakladkaUpdater.Register();
 
-            //RegisterZakladkaUpdater.addInId = app.ActiveAddInId;
-            //RegisterZakladkaUpdater.Register();
+        //    RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
 
-            //RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+        //    RegisterAutoFillUpdater.Register();
 
-            //RegisterAutoFillUpdater.Register();
+
 
             
-
-
-
-        }
+        //}
 
 
         public Result OnShutdown(UIControlledApplication application)
@@ -463,29 +468,7 @@ namespace Reinforcement
         public static double secondSaveModel = 0;
 
 
-        //private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
-        //{
-            
-        //    var name = new AssemblyName(args.Name).Name;
-        //    if (name != "System.Text.Json" &&
-        //        name != "System.Text.Encodings.Web" &&
-        //        name != "Microsoft.Bcl.AsyncInterfaces" &&
-        //        name != "System.IO.Pipelines" &&
-        //        name != "System.Buffers" &&
-        //        name != "System.Memory" &&
-        //        name != "System.ValueTuple" &&
-        //        name != "System.Runtime.CompilerServices.Unsafe")
-        //        return null;
-
-        //    var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        //    var path = Path.Combine(dir, name + ".dll");
-        //    if (File.Exists(path))
-        //    {
-        //        try { return Assembly.LoadFrom(path); }
-        //        catch { return null; }
-        //    }
-        //    return null;
-        //}
+      
 
     }
 }

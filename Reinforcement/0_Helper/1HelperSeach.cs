@@ -81,7 +81,7 @@ namespace Reinforcement
         public static bool ResetNamesParam;
         public static void ClearCache(Document document = null)
         {
-            Utilit_1_1_Depth_Seach.ClearCache(document);
+           
             if (document == null)
             {
                 PastElements.Clear();

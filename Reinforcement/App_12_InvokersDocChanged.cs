@@ -194,10 +194,10 @@ namespace Reinforcement
             catch { /* selection может быть недоступен — игнорируем */ }
         }
 
-        
 
 
-        public static bool InPendingSecret = false;
+
+        public static volatile bool InPendingSecret = false;
         private static bool MatchesSecretPattern()
         {
             int count = Commands.Count;

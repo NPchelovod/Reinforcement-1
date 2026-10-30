@@ -6,17 +6,10 @@ using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Markup;
-using static Autodesk.Revit.DB.SpecTypeId;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace Reinforcement
 {
-    public  class AnyChangeClass : IUpdater
+    public class AnyChangeClass : IUpdater
     {
         public void Execute(UpdaterData data)
         {
@@ -39,7 +32,7 @@ namespace Reinforcement
         public string GetAdditionalInformation() => string.Empty;
         public ChangePriority GetChangePriority() => ChangePriority.Annotations;
         public UpdaterId GetUpdaterId() => _updaterId;
-        public string GetUpdaterName() => App.TabName+"_Updater всех процессов";
+        public string GetUpdaterName() => App.TabName + "_Updater всех процессов";
 
     }
     public class SnapShotElements
@@ -54,22 +47,23 @@ namespace Reinforcement
             Doc = doc;
             DateTimeCreate = dateTimeCreate;
             AddedIds = new HashSet<ElementId>(addedIds);
-            GeomModificationIds = geomModificationIds.Where(x=> !addedIds.Contains(x)).ToHashSet();
+            GeomModificationIds = geomModificationIds.Where(x => !addedIds.Contains(x)).ToHashSet();
             ModifiedIdsProp = modifiedIdsProp.Where(x => !addedIds.Contains(x) && !GeomModificationIds.Contains(x)).ToHashSet();
         }
     }
 
-    public static partial class AnyChange 
+    public static partial class AnyChange
     {
         //тут запиши какие хочешь действия на любые действия
 
         public static bool AllUpdater = true;
-        public static bool CorrectGroop =false;
+        public static bool CorrectGroop = false;
 
         private static readonly object _lock = new object();
 
         internal static ExternalEvent ExternalEventRef;
-        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.15);//столько секунд ждем после обработки собственного изменения
+        //Обычный пользователь: совершает 3–6 кликов в секунду, что соответствует интервалу в 160–330 мс между кликами.
+        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.125);//столько секунд ждем после обработки собственного изменения
 
         public static DateTime DateLastExecute = DateTime.MinValue;
         public static volatile bool IsExistElementsChange = false;
@@ -78,6 +72,8 @@ namespace Reinforcement
         private static readonly HashSet<ElementId> AddedIds = new HashSet<ElementId>();
         private static readonly HashSet<ElementId> GeomModificationIds = new HashSet<ElementId>();
         private static readonly HashSet<ElementId> ModifiedIdsProp = new HashSet<ElementId>();
+        // Список ID элементов, которые мы изменили сами
+        internal static readonly HashSet<ElementId> SelfModifiedIds = new HashSet<ElementId>();
 
         public static volatile bool IsProcessingOwnChange = false;
         public static void Execute(UpdaterData data)
@@ -96,7 +92,7 @@ namespace Reinforcement
             {
                 //изменен я которые случились менее чем за 150 мс
                 // проверка не защищает от рекурсии, а глушит пользователя:
-                //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
+                if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
 
                 Document doc = data.GetDocument();
                 if (doc == null) { return; }
@@ -137,10 +133,10 @@ namespace Reinforcement
             }
             finally
             {
-                IsProcessingOwnChange=false;
+                IsProcessingOwnChange = false;
             }
         }
-        
+
 
         internal static void RequestProcessing()
         {
@@ -184,10 +180,10 @@ namespace Reinforcement
 
 
 
-        
 
-        
 
-        
+
+
+
     }
 }

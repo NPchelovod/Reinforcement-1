@@ -26,6 +26,7 @@ namespace Reinforcement
         public static void Initialize(UIApplication app)
         {
             RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+
             RegisterAutoFillUpdater.Register();
 
             _externalEvent = ExternalEvent.Create(new PeriodicHandler());
@@ -37,7 +38,7 @@ namespace Reinforcement
             {
                 if (!AnyChange.IsExistElementsChange) return;
                 try { _externalEvent?.Raise(); } catch { }
-            }, null, dueTime: 5000, period: 5000);//столько времени до следующей попытки 10000 = 10секунд
+            }, null, dueTime: 10000, period: 10000);//столько времени до следующей попытки 
         }
 
         public static void Shutdown()
@@ -75,8 +76,6 @@ namespace Reinforcement
 
         public void Execute(UIApplication app)
         {
-            //Я решил что пока не надо иначе ctrl+z откатывает сначала эти изменения а затем только изм пользователя что нелепо
-
             return;
             if (IsProcessingOwnChange)
             {
