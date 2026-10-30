@@ -2,7 +2,7 @@
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,51 +79,66 @@ namespace Reinforcement
         private static readonly HashSet<ElementId> GeomModificationIds = new HashSet<ElementId>();
         private static readonly HashSet<ElementId> ModifiedIdsProp = new HashSet<ElementId>();
 
+        public static volatile bool IsProcessingOwnChange = false;
         public static void Execute(UpdaterData data)
         {
+            if (!AllUpdater) { return; }
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
-            if (!AllUpdater) { return; }
-            if (PeriodicHandler.IsProcessingOwnChange) return;   // ⬅️ рвёт рекурсию мы итак в нашем изменении
-                                                                 //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
-                                                                 // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
-
-            //изменен я которые случились менее чем за 150 мс
-            // проверка не защищает от рекурсии, а глушит пользователя:
-            //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
-
-            Document doc = data.GetDocument();
-            if (doc == null) { return; }
-
-            var added = data.GetAddedElementIds();
-            var modified = data.GetModifiedElementIds();
-            
-            if (!added.Any() && !modified.Any()) { return; }
-            //секретная команда
-           
-            
-
-            DateTime now = DateTime.Now;
-            // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
-            var geomSet = new HashSet<ElementId>();
-            foreach (var id in modified)
+            if (IsProcessingOwnChange)// || PeriodicHandler.IsProcessingOwnChange)
             {
-                if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-                    geomSet.Add(id);
-            }
-            var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
-            lock (_lock)
+                return;
+            }// ⬅️ рвёт рекурсию мы итак в нашем изменении
+            //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
+            // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
+            IsProcessingOwnChange = true;
+            try
             {
-                if (Doc == null || !doc.Equals(Doc)) ClearInternal();//Doc != doc — та же ловушка, что и раньше
-                
-                Doc = doc;
-                DateLastExecute = now;
-                AddedIds.UnionWith(added);
-                GeomModificationIds.UnionWith(geomSet);
-                ModifiedIdsProp.UnionWith(modifiedIdsPropt);
-                IsExistElementsChange = true;
+                //изменен я которые случились менее чем за 150 мс
+                // проверка не защищает от рекурсии, а глушит пользователя:
+                //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
+
+                Document doc = data.GetDocument();
+                if (doc == null) { return; }
+
+                var added = data.GetAddedElementIds();
+                var modified = data.GetModifiedElementIds();
+
+                if (!added.Any() && !modified.Any()) { return; }
+                //секретная команда
+
+
+
+                DateTime now = DateTime.Now;
+                // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
+                var geomSet = new HashSet<ElementId>();
+                foreach (var id in modified)
+                {
+                    if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
+                        geomSet.Add(id);
+                }
+                var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
+                lock (_lock)
+                {
+                    if (Doc == null || !doc.Equals(Doc)) ClearInternal();//Doc != doc — та же ловушка, что и раньше
+
+                    Doc = doc;
+                    DateLastExecute = now;
+                    AddedIds.UnionWith(added);
+                    GeomModificationIds.UnionWith(geomSet);
+                    ModifiedIdsProp.UnionWith(modifiedIdsPropt);
+                    IsExistElementsChange = true;
+                }
+                PeriodicHandler.Execute(Doc);
             }
-            PeriodicHandler.Execute(Doc);
+            catch (Exception ex)
+            {
+                RevitAPI.AppErrors.LogError(ex);
+            }
+            finally
+            {
+                IsProcessingOwnChange=false;
+            }
         }
         
 

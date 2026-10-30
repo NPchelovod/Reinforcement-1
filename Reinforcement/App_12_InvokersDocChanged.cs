@@ -1,16 +1,12 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Events;
-using Autodesk.Revit.DB.Visual;
+
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
+
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Input;
+
 
 namespace Reinforcement
 {

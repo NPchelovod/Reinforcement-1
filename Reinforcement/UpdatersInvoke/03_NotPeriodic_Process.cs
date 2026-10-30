@@ -37,7 +37,7 @@ namespace Reinforcement
             {
                 IsProcessingOwnChange = false;
                 // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
-                Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
+                //Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
             }
         }
 
