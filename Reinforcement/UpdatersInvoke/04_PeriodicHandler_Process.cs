@@ -26,6 +26,7 @@ namespace Reinforcement
         public static void Initialize(UIApplication app)
         {
             RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+
             RegisterAutoFillUpdater.Register();
 
             _externalEvent = ExternalEvent.Create(new PeriodicHandler());
@@ -37,7 +38,7 @@ namespace Reinforcement
             {
                 if (!AnyChange.IsExistElementsChange) return;
                 try { _externalEvent?.Raise(); } catch { }
-            }, null, dueTime: 300, period: 300);//столько времени до следующей попытки 
+            }, null, dueTime: 10000, period: 10000);//столько времени до следующей попытки 
         }
 
         public static void Shutdown()
@@ -75,6 +76,7 @@ namespace Reinforcement
 
         public void Execute(UIApplication app)
         {
+            return;
             if (IsProcessingOwnChange)
             {
                 return;

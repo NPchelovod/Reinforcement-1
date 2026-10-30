@@ -16,24 +16,28 @@ namespace Reinforcement
        
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
         {
-            // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
-            var app = sender as Autodesk.Revit.ApplicationServices.Application;
-            if (app == null) { return; }
-            
-            // Получаем UIApplication
-            UIApplication uiApp = new UIApplication(app);
-            if (uiApp == null) { return; }
+            try
+            {
+                // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
+                var app = sender as Autodesk.Revit.ApplicationServices.Application;
+                if (app == null) { return; }
 
-            // Теперь можно работать с uiApp
-            // Например, сохранить в статическое свойство
-            RevitAPI.Initialize(uiApp);
+                // Получаем UIApplication
+                UIApplication uiApp = new UIApplication(app);
+                if (uiApp == null) { return; }
+
+                // Теперь можно работать с uiApp
+                // Например, сохранить в статическое свойство
+                RevitAPI.Initialize(uiApp);
 
 
-            RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
-            RegisterAutoFillUpdater.Register();
-            UpdaterSubscriber.Initialize(uiApp);
-            uiApp.Idling += OnIdling;
-            //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
+                //RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
+                //RegisterAutoFillUpdater.Register();
+                UpdaterSubscriber.Initialize(uiApp);
+                uiApp.Idling += OnIdling;
+                //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
+            }
+            catch (Exception ex) { ErrorException(ex, "OnApplicationInitialized"); }
 
         }
         private static void OnIdling(object sender, IdlingEventArgs e)

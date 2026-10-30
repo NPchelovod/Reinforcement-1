@@ -22,24 +22,17 @@ namespace Reinforcement
             // 1. Параметр для автора (или запасной)
             Parameter authorParam = element.LookupParameter(NameAvtor);
             if (authorParam == null || authorParam.IsReadOnly) return; // нет нужного параметра – пропускаем
+
+            Parameter coAuthorParam = element.LookupParameter(NameSoAvtor);
+
             string authorValue = authorParam.AsString();
 
-            // Для нового элемента записываем автора, если поле пустое
-            if (string.IsNullOrEmpty(authorValue) || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
-            {
-                string cn = eTypeChangeEl == ETypeChangeEl.AddedElements ? "нов" : "доб";//добавочный ли автор
-                // Автор — это "кто создал", тип смены тут не нужен
-                
-                string newAuthorValue = new AuthorEntry(_userName, _nowDate,cn).ToString();
-                SetParam(authorParam, newAuthorValue);
-
-            }
             string commandName = null;
-            if(eTypeChangeEl == ETypeChangeEl.AddedElements)
+            if (eTypeChangeEl == ETypeChangeEl.AddedElements)
             {
                 commandName = "нов";//то что новые элемент
             }
-            else if(ETypeChangeEl.GeomModifiedElements == eTypeChangeEl)
+            else if (ETypeChangeEl.GeomModifiedElements == eTypeChangeEl)
             {
                 commandName = "гео";//изменилась геометрия
             }
@@ -48,9 +41,20 @@ namespace Reinforcement
                 commandName = "мод";//изменился скорее всего параметр
             }
 
-            // 2. Параметр соавтора
-            Parameter coAuthorParam = element.LookupParameter(NameSoAvtor);
-            if (coAuthorParam != null)
+            // Для нового элемента записываем автора, если поле пустое
+            if (string.IsNullOrEmpty(authorValue) || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
+            {
+               //добавочный ли автор
+                // Автор — это "кто создал", тип смены тут не нужен
+                string newAuthorValue = new AuthorEntry(_userName, _nowDate, commandName).ToString();
+                SetParam(authorParam, newAuthorValue);
+
+                if (coAuthorParam != null)
+                {
+                    SetParam(coAuthorParam, newAuthorValue);
+                }
+            }
+            else if(coAuthorParam != null)
             {
                 // Если параметр соавтора существует, обновляем его
                 string pastCoAuthors = coAuthorParam.AsString();
@@ -92,6 +96,14 @@ namespace Reinforcement
                     if (AuthorEntry.TryParse(part, out var e))
                         entries.Add(e);
                 }
+            }
+            // 2) ГЛАВНАЯ ЗАЩИТА ОТ РЕКУРСИИ:
+            // Если в списке уже есть запись этого пользователя с точно такой же датой (вплоть до часа),
+            // мы возвращаем строку без изменений. Команда (нов/мод/гео) при этом игнорируется.
+            // Так как строка не меняется, SetParam вернет false и не вызовет param.Set().
+            if (entries.Any(e => e.Name == newEntry.Name && e.Date == newEntry.Date))
+            {
+                return pastValue;
             }
 
             // 2) Убираем дубликат "имя+дата" (правка в тот же час)
