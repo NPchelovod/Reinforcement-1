@@ -7,6 +7,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.UI;
 using System.Threading;
+using System.IO;
 namespace Reinforcement
 {
     
@@ -16,56 +17,73 @@ namespace Reinforcement
        
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
         {
-            try
-            {
-                // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
-                var app = sender as Autodesk.Revit.ApplicationServices.Application;
-                if (app == null) { return; }
-
-                // Получаем UIApplication
-                UIApplication uiApp = new UIApplication(app);
-                if (uiApp == null) { return; }
+            // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
+            var app = sender as Autodesk.Revit.ApplicationServices.Application;
+            if (app == null) { return; }
+            
+            // Получаем UIApplication
+            UIApplication uiApp = new UIApplication(app);
+            if (uiApp == null) { return; }
 
                 // Теперь можно работать с uiApp
                 // Например, сохранить в статическое свойство
                 RevitAPI.Initialize(uiApp);
 
 
-                //RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
-                //RegisterAutoFillUpdater.Register();
-                UpdaterSubscriber.Initialize(uiApp);
-                uiApp.Idling += OnIdling;
-                //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
+            RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
+            RegisterAutoFillUpdater.Register();
+            UpdaterSubscriber.Initialize(uiApp);
+            uiApp.Idling += OnIdling;
+            //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
+
+            //RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
+            //RegisterAutoFillUpdater.Register();
+
+
+            //UpdaterSubscriber.Initialize(uiApp);
+            //uiApp.Idling += OnIdling;
+            //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
             }
-            catch (Exception ex) { ErrorException(ex, "OnApplicationInitialized"); }
-
+            catch (Exception ex)
+            {
+                try
+                {
+                    var logPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "RevitAddinsLogs", "ENSPlugin_startup.log");
+                    Directory.CreateDirectory(Path.GetDirectoryName(logPath));
+                    File.AppendAllText(logPath, $"\n=== {DateTime.Now} OnApplicationInitialized ===\n{ex}\n");
+                }
+                catch { }
+            }
         }
-        private static void OnIdling(object sender, IdlingEventArgs e)
-        {
-            // Здесь будет ваша логика
-            //запуск после каждого освобожения ревита
-            //В обработчике OnIdling вы проверяете, есть ли необработанные изменения, и если да — инициируете их обработку через ExternalEvent
-            int c = 0;
-            // 1. Если изменений нет, или уже идет обработка — ничего не делаем
-            //if (!AnyChange.IsExistElementsChange) return;
-            //if (PeriodicHandler.IsProcessingOwnChange) return;
+        //private static void OnIdling(object sender, IdlingEventArgs e)
+        //{
+        //    // Здесь будет ваша логика
+        //    //запуск после каждого освобожения ревита
+        //    //В обработчике OnIdling вы проверяете, есть ли необработанные изменения, и если да — инициируете их обработку через ExternalEvent
+        //    int c = 0;
+        //    return;
+        //    // 1. Если изменений нет, или уже идет обработка — ничего не делаем
+        //    //if (!AnyChange.IsExistElementsChange) return;
+        //    //if (PeriodicHandler.IsProcessingOwnChange) return;
 
-            //// 2. (Опционально, но рекомендуется) Проверяем, не истек ли "кулдаун"
-            ////    после нашей последней обработки, чтобы не ловить "хвосты" от самих себя
-            //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
+        //    //// 2. (Опционально, но рекомендуется) Проверяем, не истек ли "кулдаун"
+        //    ////    после нашей последней обработки, чтобы не ловить "хвосты" от самих себя
+        //    //if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
 
-            //// 3. Если все условия выполнены — инициируем внешнее событие
-            //try
-            //{
-            //    // ExternalEventRef - это ваш статический ExternalEvent из AnyChange
-            //    AnyChange.ExternalEventRef?.Raise();
-            //}
-            //catch
-            //{
-            //    // Revit может быть занят, но в контексте Idling это маловероятно.
-            //    // Если Raise() не сработал, следующее событие Idling попробует снова.
-            //}
-        }
+        //    //// 3. Если все условия выполнены — инициируем внешнее событие
+        //    //try
+        //    //{
+        //    //    // ExternalEventRef - это ваш статический ExternalEvent из AnyChange
+        //    //    AnyChange.ExternalEventRef?.Raise();
+        //    //}
+        //    //catch
+        //    //{
+        //    //    // Revit может быть занят, но в контексте Idling это маловероятно.
+        //    //    // Если Raise() не сработал, следующее событие Idling попробует снова.
+        //    //}
+        //}
 
         private void OnRevitClosing(object sender, ApplicationClosingEventArgs e)
         {
