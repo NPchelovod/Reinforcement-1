@@ -28,7 +28,7 @@ namespace Reinforcement
         public void Clear()
         {
             // поидее все не так
-            FatherGroopCurrent = null; InGroop = false;
+            FatherGroopCurrent = null; InGroop = false; 
         }
     }
 
@@ -96,7 +96,7 @@ namespace Reinforcement
             //проверка входа в группу и проверка на секретную команду
 
             //1. проверка на секретную команду
-            if (!string.IsNullOrEmpty(OnGroupCurrent.Name) && MatchesSecretPattern())
+            if (OnGroupCurrent.InGroop && MatchesSecretPattern())
             {
                 InPendingSecret = true;//применение секрета
             }

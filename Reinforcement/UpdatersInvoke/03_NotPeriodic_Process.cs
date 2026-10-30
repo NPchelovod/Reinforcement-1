@@ -19,7 +19,7 @@ namespace Reinforcement
             {
                 return;
             }
-            SnapShotElements snap = AnyChange.GetSnapShotElements(doc);
+            SnapShotElements snap = AnyChangeClass.GetSnapShotElements(doc);
             if (snap == null) return;
 
             IsProcessingOwnChange = true;

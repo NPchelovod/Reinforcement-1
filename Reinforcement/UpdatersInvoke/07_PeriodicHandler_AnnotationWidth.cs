@@ -64,7 +64,8 @@ namespace Reinforcement
                     Parameter paramW = element.LookupParameter(wid);
                     if (paramW != null)
                     {
-                        paramW.Set(width);
+                        SetIfChanged(paramW, width);
+                        //paramW.Set(width);
                         break;
                     }
                 }
@@ -72,10 +73,15 @@ namespace Reinforcement
                 Parameter param = element.LookupParameter("ЕС_Ширина текста верх");
                 if (param != null && !param.IsReadOnly)
                 {
-                    param.Set(width1);
+                    //param.Set(width1);
+                    SetIfChanged(param, width1);
                     param = element.LookupParameter("ЕС_Ширина текста низ");
                     if (param != null && !param.IsReadOnly)
-                    { param.Set(width2); }
+                    {
+                        SetIfChanged(param, width2);
+                        //param.Set(width2); 
+                    
+                    }
                 }
 
                 
@@ -117,7 +123,7 @@ namespace Reinforcement
                 { len_text = 28; }
                 k_sg = -0.00005 * len_text * len_text + 0.0062 * len_text + 0.6176;
             }
-            if (H_size == 2.5f)
+            else if (H_size == 2.5f)
             {
                 if (len_text > 30) // для большей длины не корректно
                 { len_text = 28; }

@@ -204,7 +204,7 @@ namespace Reinforcement
         {
             try
             {
-                string nameFile = "ENSPlugin_startup";
+                string nameFile = "ENSPlugin_";
                 if (method != null)
                 {
                     nameFile += method;
@@ -362,8 +362,6 @@ namespace Reinforcement
 
                 RegisterAutoFillUpdater.Register();
 
-                
-
                 //любое изменение внутри документа
                 app.ControlledApplication.DocumentChanged += OnDocumentChanged;
 
@@ -444,6 +442,7 @@ namespace Reinforcement
             {
                 RevitAPI.AppErrors.LogError(ex);
             }
+
             try
             {
                 RevitAPI.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);

@@ -30,13 +30,13 @@ namespace Reinforcement
             RegisterAutoFillUpdater.Register();
 
             _externalEvent = ExternalEvent.Create(new PeriodicHandler());
-            AnyChange.ExternalEventRef = _externalEvent;
+            AnyChangeClass.ExternalEventRef = _externalEvent;
 
             // Страховка: если Raise() из AnyChange был отклонён,
             // а новых изменений нет — таймер добьёт обработку.
             _fallbackTimer = new Timer(_ =>
             {
-                if (!AnyChange.IsExistElementsChange) return;
+                if (!AnyChangeClass.IsExistElementsChange) return;
                 try { _externalEvent?.Raise(); } catch { }
             }, null, dueTime: 10000, period: 10000);//столько времени до следующей попытки 
         }
@@ -45,7 +45,7 @@ namespace Reinforcement
         {
             _fallbackTimer?.Dispose(); _fallbackTimer = null;
             _externalEvent?.Dispose(); _externalEvent = null;
-            AnyChange.ExternalEventRef = null;
+            AnyChangeClass.ExternalEventRef = null;
             RegisterAutoFillUpdater.Unregister();
         }
     }
@@ -76,12 +76,12 @@ namespace Reinforcement
 
         public void Execute(UIApplication app)
         {
-            return;
+            return;// может когда-то пригодится
             if (IsProcessingOwnChange)
             {
                 return;
             }
-            if (!AnyChange.IsExistElementsChange)
+            if (!AnyChangeClass.IsExistElementsChange)
             {
                 return;
             }
@@ -95,7 +95,7 @@ namespace Reinforcement
             // Revit занят другой транзакцией — выйдем, таймер-страховка повторит Raise()
             if (doc.IsModifiable) return;
 
-            SnapShotElements snap = AnyChange.GetSnapShotElements(doc);
+            SnapShotElements snap = AnyChangeClass.GetSnapShotElements(doc);
             if (snap == null) return;
 
             IsProcessingOwnChange = true;
@@ -163,7 +163,7 @@ namespace Reinforcement
             ElementId groupId = element.GroupId; // ← NRE, если element == null
             if (groupId != ElementId.InvalidElementId)
             {
-                if (!AnyChange.CorrectGroop) { return; }
+                if (!AnyChangeClass.CorrectGroop) { return; }
                 //пытаемся определить группу
                 // Получаем экземпляр группы по GroupId элемента
                 Group instanceGroup = doc.GetElement(groupId) as Group;

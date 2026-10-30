@@ -19,7 +19,7 @@ namespace Reinforcement
         {
             chkFillAuthor.IsChecked = PeriodicHandler.RegWriterAvtor;
             //chkFillAuthorADSK.IsChecked = AutoFillNoteUpdater.regWriterAvtorPrim;
-            chk_GroupPass.IsChecked = !AnyChange.CorrectGroop;
+            chk_GroupPass.IsChecked = !AnyChangeClass.CorrectGroop;
             
            
             var buildDate = App_Folders.DatePluginDll.ToLocalTime(); //локальное время
@@ -27,7 +27,7 @@ namespace Reinforcement
             txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
-            chkUpdater.IsChecked = AnyChange.AllUpdater;
+            chkUpdater.IsChecked = AnyChangeClass.AllUpdater;
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
@@ -41,19 +41,19 @@ namespace Reinforcement
 
             //AutoFillNoteUpdater.regWriterAvtorPrim = chkFillAuthorADSK.IsChecked == true;
 
-            AnyChange.CorrectGroop = chk_GroupPass.IsChecked != true;
+            AnyChangeClass.CorrectGroop = chk_GroupPass.IsChecked != true;
 
 
-            AnyChange.AllUpdater=chkUpdater.IsChecked == true;
+            AnyChangeClass.AllUpdater=chkUpdater.IsChecked == true;
 
 
             AppErrors.LookErrorsAdmin= logErrorsShow.IsChecked == true;
 
 
 
-            if (AnyChange.AllUpdater && rePodpiska.IsChecked == true)
+            if (AnyChangeClass.AllUpdater && rePodpiska.IsChecked == true)
             {
-                //App.PodpiskaAll();//переподписываеся
+                App.InitializedInvoker(RevitAPI.UiApplication);//переподписываеся
             }
 
 
