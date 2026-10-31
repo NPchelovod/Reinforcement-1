@@ -359,7 +359,6 @@ namespace Reinforcement
                                  // AutoFillNoteUpdater.RegisterUpdater();
 
                 RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
-
                 RegisterAutoFillUpdater.Register();
 
                 //любое изменение внутри документа

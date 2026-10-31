@@ -17,6 +17,8 @@ namespace Reinforcement
         public static string NameSoAvtor = "ЕС_Посл Автор";
         public const int MaxCoAuthorsLength = 180;     // лимит строки соавторов
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
+
+        
         private static void AuthorWriter(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             // 1. Параметр для автора (или запасной)
@@ -172,6 +174,8 @@ namespace Reinforcement
     /// </summary>
     public class AuthorEntry
     {
+        // Максимальная длина команды (например, 10 символов)
+        //public const int MaxChangeTypeLength = 10;
         public string Name { get; set; }
         public string Date { get; set; }   // dd.MM.yy.HH
         public string ChangeType { get; set; }   // может быть null/пусто

@@ -21,23 +21,22 @@ namespace Reinforcement
         {
             var param = element.LookupParameter("Семейство и типоразмер");
             if(param == null) { return; }
-            string name= param.AsValueString();
-            if (!name.Contains("Выноска") && !name.Contains("выноска")) { return; }
+            string name= param.AsValueString().ToLower();
+            if (!name.Contains("выноска")) { return; }
             var paramTop = element.LookupParameter("Текст верх");
             if (paramTop == null) { return; }
 
-            
+            lookWidth(doc, element, name, paramTop);
 
-            shrift(doc, element, name, paramTop);
         }
         private readonly static List<string> nameWidths = new List<string> { "ЕС_Ширина полки", "Ширина полки" };
-        private static bool shrift(Document doc, Element element, string name, Parameter paramTop)
+        private static bool lookWidth(Document doc, Element element, string name, Parameter paramTop)
         {
             try
             {
 
                 string firstText = paramTop.AsString();
-                string secondText = element.LookupParameter("Текст низ").AsString();
+                string secondText = element.LookupParameter("Текст низ")?.AsString();
 
                 if (!IsFontInstalled("ISOCPEUR"))
                 {
@@ -104,6 +103,7 @@ namespace Reinforcement
 
         static double GetCharacterWidth(Document doc, string text, Single H_size = 3.5f)
         {
+            //вычисление ширины текста
             double width = 0;
             if (string.IsNullOrEmpty(text))
             { return width; }

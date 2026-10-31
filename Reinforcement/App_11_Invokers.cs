@@ -37,8 +37,6 @@ namespace Reinforcement
                 // Например, сохранить в статическое свойство
                 RevitAPI.Initialize(uiApp);
 
-
-
                 UpdaterSubscriber.Initialize(uiApp);
                 uiApp.Idling += OnIdling;
                 //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;

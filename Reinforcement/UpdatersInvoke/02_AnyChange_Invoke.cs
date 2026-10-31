@@ -75,7 +75,10 @@ namespace Reinforcement
                 var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
                 lock (_lock)
                 {
-                    if (Doc == null || !doc.Equals(Doc)) ClearInternal();//Doc != doc — та же ловушка, что и раньше
+                    if (Doc == null || !doc.Equals(Doc))
+                    {
+                        ClearInternal();//Doc != doc — та же ловушка, что и раньше
+                    }
 
                     Doc = doc;
                     DateLastExecute = now;
