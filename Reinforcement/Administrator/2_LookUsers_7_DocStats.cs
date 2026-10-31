@@ -65,8 +65,8 @@ namespace Reinforcement
             TotalOps += other.TotalOps;
             SaveCount += other.SaveCount;
             SyncCount += other.SyncCount;
-            LastSyncSeconds += other.LastSyncSeconds;
-            LastSaveSeconds += other.LastSaveSeconds;
+            LastSyncSeconds = Math.Max(LastSyncSeconds,other.LastSyncSeconds);
+            LastSaveSeconds = Math.Max(LastSaveSeconds,other.LastSaveSeconds);
             TotalWorkSeconds += other.TotalWorkSeconds;
 
             if (other.MaxSyncSeconds > MaxSyncSeconds)
@@ -144,6 +144,7 @@ namespace Reinforcement
                 ActiveViews = viewsCopy,
                 Warnings= Warnings,
                 CountActiveDoc= CountActiveDoc,
+                CloseRevit= CloseRevit,
             };
         }
     }
@@ -224,6 +225,7 @@ namespace Reinforcement
                 ViewId= ViewId  ,
                 CountActiveView= CountActiveView,
                 CommandHitsHours = new Dictionary<int, (int cliks, double time)>(CommandHitsHours),
+               
             };
         }
     }

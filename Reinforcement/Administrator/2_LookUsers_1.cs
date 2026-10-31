@@ -50,12 +50,12 @@ namespace Reinforcement
         public void Update(string explicitCommandName = null, EDocStatsOptions commandType = 0)
         {
             bool acquired = false;
-            
+            // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
+            if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
+                return;
             try
             {
-                // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
-                if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
-                    return;
+                
                 acquired = true;
                 lock (_lock)
                 {
@@ -196,11 +196,18 @@ namespace Reinforcement
         //по времени ограничение на действие
         private bool OnlyOneCommand()
         {
-
+            //если команды слишком частые значит это не человек
             bool isThrottled = ((Now - _lastThrottleTime) < ThrottleWindow);
             _lastThrottleTime = Now;
             return isThrottled;
         }
+        //private bool OnlyOneCommand()
+        //{
+        //    //31.10.2026
+        //    if ((Now - _lastThrottleTime) < ThrottleWindow) return true;
+        //    _lastThrottleTime = Now;
+        //    return false;
+        //}
         /// <summary>
         /// true — повтор в пределах окна, обработку надо пропустить.
         /// Save/Sync/CloseRevit не глушим — они редкие и важные.
@@ -232,19 +239,23 @@ namespace Reinforcement
                 viewName = activeView.Name;
                 existView = true;
             }
+            else
+            {
+                return;
+            }
 
             //добавка активного вида для статистики оч полезно знать сколько времени надо для создания вида и тд
-            if (!docStat.ActiveViews.TryGetValue(viewName, out var viewData))
+            if (!docStat.ActiveViews.TryGetValue(viewName, out var viewData) && viewData != null)
             {
                 ElementId viewId = activeView.Id;
                 int ViewId = (int)viewId.Value;
                 viewData = new ViewStat
                 {
                     NameView = viewName,
-                    ViewId=ViewId,
+                    ViewId = ViewId,
                     FirstSeen = Now,
                     LastSeen = Now,
-                    
+
                 };
                 docStat.ActiveViews[viewName] = viewData;
             }
@@ -268,7 +279,7 @@ namespace Reinforcement
             pastViewStat = viewData;
 
             //попытка найти активный лист
-            if (existView && (string.IsNullOrEmpty(viewData.NameSheet) || viewData.NameSheet == None))
+            if (string.IsNullOrEmpty(viewData.NameSheet) || viewData.NameSheet == None)
             {
                 //попытка найти лист
                 string sheetName = None;
@@ -390,11 +401,13 @@ namespace Reinforcement
                         docStat.SaveCount++;
                         docStat.LastSaveSeconds = App.secondSaveModel;
                         docStat.LastSave = DateTime.Now;
+                        
                         break;
                     case (EDocStatsOptions.Sync):
                         docStat.SyncCount++;
                         docStat.LastSaveSeconds = App.secondSaveModel;
                         docStat.LastSync = DateTime.Now;
+                        docStat.MaxSyncSeconds = Math.Max(docStat.MaxSyncSeconds,App.secondSaveModel);
                         break;
                     case (EDocStatsOptions.CloseRevit):
                         docStat.CloseRevit = true;

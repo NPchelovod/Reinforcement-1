@@ -300,17 +300,20 @@ namespace Reinforcement
                             .OrderByDescending(x => x.TotalVisits)
                             .Take(3)
                             .ToList();
-                            int totalFiles = user.DictDateDocStats.Values.Sum(d => d.Count);
+                            int totalFiles = user.DictDateDocStats
+                            .SelectMany(d => d.Value.Keys)
+                            .Distinct()
+                            .Count();
                             int totalClicks = user.DictDateDocStats.Values.Sum(d => d.Values.Select(x=>x.TotalOps).Sum());
 
                             var element = new StringSortElement
                             {
                                 ValSort1 = totalClicks, // по этому полю будем сортировать
                                 Text = $"Пользователь: {user.UserName}\n" +
-               $"  Дней: {user.DictDateDocStats.Count}\n" +
-               $"  Файлов: {totalFiles}\n" +
-               $"  Кликов: {totalClicks}\n" +
-               "  Целевые объекты:\n"
+                               $"  Дней: {user.DictDateDocStats.Count}\n" +
+                               $"  Файлов: {totalFiles}\n" +
+                               $"  Кликов: {totalClicks}\n" +
+                               "  Целевые объекты:\n"
                             };
 
                             if (top3Houses.Count == 0)
@@ -437,7 +440,7 @@ namespace Reinforcement
         private void DaysOutBackBox_LostFocus(object sender, RoutedEventArgs e)
         {
             if (!int.TryParse(DaysBackBox.Text, out int n) || n < 1)
-                DaysBackBox.Text = "0";
+                DaysFreshBackBox.Text = "0";// DaysBackBox.Text = "0";
             else if (n > 3650)
                 DaysBackBox.Text = "3650";
         }

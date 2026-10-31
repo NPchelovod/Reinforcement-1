@@ -159,6 +159,8 @@ namespace Reinforcement
 
                 // Успешно — обнуляем накопленное, чтобы не записать повторно
                 DictDateDocStats = new Dictionary<DateTime, Dictionary<string, DocStats>>();
+                pastDocStat = null;
+                pastViewStat = null;
 
             }
             else
