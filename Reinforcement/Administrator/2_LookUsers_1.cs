@@ -113,9 +113,8 @@ namespace Reinforcement
                 }
             }
 
-            UIDocument uiDoc = RevitAPI.UiDocument;
-            if (uiDoc == null) { return false; }
-            Document doc = uiDoc.Document;
+           
+            Document doc = RevitAPI.Document;
             if (doc == null) { return false; }
 
             DateDay = Now.Date;   // ← добавить

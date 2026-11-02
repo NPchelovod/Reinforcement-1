@@ -82,7 +82,8 @@ namespace Reinforcement
 
                 BuiltInCategory.OST_Viewports, // видовые экраны
                  BuiltInCategory.OST_Levels,
-                 BuiltInCategory.OST_RevisionClouds //чудо облачко
+                 BuiltInCategory.OST_RevisionClouds, //чудо облачко
+                 BuiltInCategory.OST_ScheduleGraphics,//спецуха
         };
         public static void Register(bool forceReregister = false)
         {
