@@ -178,11 +178,11 @@ namespace Reinforcement
             if (other.LastSeen > LastSeen)
                 LastSeen = other.LastSeen;
 
-            if (DateInSheet != DateTime.MinValue && DateInSheet < other.DateInSheet)
+            if (other.DateInSheet != DateTime.MinValue &&
+            (DateInSheet == DateTime.MinValue || other.DateInSheet < DateInSheet))
             {
-
+                DateInSheet = other.DateInSheet;
             }
-            else { DateInSheet = other.DateInSheet; }
 
             TotalWorkSeconds += other.TotalWorkSeconds;
             // обновляем имя листа, если у нас его ещё нет, а там есть

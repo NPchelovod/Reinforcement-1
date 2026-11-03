@@ -17,19 +17,25 @@ namespace Reinforcement
         //если эта группа то бывает вложенной тогда FatherGroopCurrent её отец
         public DateTime InGroopTime =DateTime.MinValue;
         public string Name;
-        public ElementId Id;
+        public ElementId Id;//id группы
         public bool InGroop=false;
         public Document doc=null;
+        
         public GroopCurrent(DateTime inGroopTime,Document doc=null,bool inGroop=false, string name=null, ElementId elementId=null) 
         {
+           
             InGroopTime = inGroopTime; InGroop = inGroop; Name = name; Id = elementId;
         }
-        public GroopCurrent FatherGroopCurrent=null;
+        //public GroopCurrent FatherGroopCurrent=null;
         public void Clear()
         {
             // поидее все не так
-            FatherGroopCurrent = null; InGroop = false; 
+            //FatherGroopCurrent = null; 
+            InGroop = false; 
         }
+
+        public static int inGroop = 0;//сколько входов в группы
+        public static int outGroop = 0;// сколько выходов из групп
     }
 
     public  struct Command
@@ -73,7 +79,10 @@ namespace Reinforcement
                 DateTime now = DateTime.Now;
                 CurentCommand = new Command() { CommandName = comand, DateCreate = now };
                 Commands.Add(CurentCommand);
-
+                if(Commands.Count> _maxCountTranzSave)
+                {
+                    Commands.RemoveAt(0);
+                }
                 //2. === Магия: проверяем секретный паттерн ===
                 InOrOutGroopAndSecretCommandPossible(now, txNames, doc, e.GetModifiedElementIds());
 
@@ -86,7 +95,7 @@ namespace Reinforcement
         
 
 
-        private readonly static int _maxCountTranzSave = 6;//не более стольки транзаций храним
+        private readonly static int _maxCountTranzSave = 10;//не более стольки транзаций храним
         
 
         
@@ -104,8 +113,8 @@ namespace Reinforcement
             //3. --- распознаем Вход в режим редактирования группы ---
             if (txNames.Any(n => EnterGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
             {
-                
-                
+                GroopCurrent.inGroop++;
+
                 foreach (var id in elIds)
                 {
                     Element elem = doc.GetElement(id);
@@ -145,16 +154,16 @@ namespace Reinforcement
             {
                 // --- Выход из режима редактирования группы ---
                 //вообще если мы во вложенной группе то выходя мы тоже в группе!!!!
-                if (OnGroupCurrent.FatherGroopCurrent != null)
-                {
-                    //значит мы в отце теперь, вышли из вложенной группы
-                    //боюсь что будут ситуации когда мы типо не вышли из группы поэтому может подстраховать как-то
-                    OnGroupCurrent = OnGroupCurrent.FatherGroopCurrent;
-                }
-                else
-                {
-                    OnGroupCurrent.Clear();
-                }
+                //if (OnGroupCurrent.FatherGroopCurrent != null)
+                //{
+                //    //значит мы в отце теперь, вышли из вложенной группы
+                //    //боюсь что будут ситуации когда мы типо не вышли из группы поэтому может подстраховать как-то
+                //    OnGroupCurrent = OnGroupCurrent.FatherGroopCurrent;
+                //}
+                //else
+                GroopCurrent.outGroop++;
+                OnGroupCurrent.Clear();
+                
             }
         }
         private static void CreateGroop(Document doc,DateTime now, string name, ElementId elementId)
@@ -162,17 +171,19 @@ namespace Reinforcement
             bool inGroop=false;
             if (!string.IsNullOrEmpty(name)) { inGroop = true; }
             GroopCurrent groopCurrent = new GroopCurrent(now, doc, inGroop,name,elementId);
-            if (OnGroupCurrent.InGroop && doc== OnGroupCurrent.doc && elementId!= OnGroupCurrent.Id)
-            {
-                //значит мы во вложенной группе она становится основной группой
-                var father = OnGroupCurrent;
-                OnGroupCurrent = groopCurrent;
-                OnGroupCurrent.FatherGroopCurrent = father;
-            }
-            else
-            {
-                OnGroupCurrent = groopCurrent;
-            }
+           
+           OnGroupCurrent = groopCurrent;
+            //if (OnGroupCurrent.InGroop && doc== OnGroupCurrent.doc && elementId!= OnGroupCurrent.Id)
+            //{
+            //    //значит мы во вложенной группе она становится основной группой
+            //    var father = OnGroupCurrent;
+            //    OnGroupCurrent = groopCurrent;
+            //    OnGroupCurrent.FatherGroopCurrent = father;
+            //}
+            //else
+            //{
+            //    OnGroupCurrent = groopCurrent;
+            //}
         }
         private static void TryCaptureGroupFromSelection(Document doc, DateTime now)
         {

@@ -227,6 +227,9 @@ namespace Reinforcement
                 long sizeBytes = new FileInfo(filePath).Length;
                 if (sizeBytes > hardFileSizeBytes)
                 {
+                    // Не смогли архивировать — НЕ трогаем файл, не затираем
+                    RevitAPI.AppErrors.LogError(new Exception(
+                        "Hard-limit file could not be archived; skipping read."));
                     //выполняем перемещение
                     MoveToHistory(DateDay, DateDay, "hardSize");
                     return new LookUsers();

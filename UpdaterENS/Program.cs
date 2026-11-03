@@ -17,7 +17,7 @@ namespace UpdaterENS
 
         // Максимальное число строк, которое хранится в лог-файле.
         private const int MaxLogLines = 200;
-
+        const string mainDllName = "Reinforcement.dll";
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -180,8 +180,8 @@ namespace UpdaterENS
             if (!adminOk) return mainDir;
             if (!mainOk) return adminDir;
 
-            DateTime mainTime = GetDateTimeFolder(mainDir);
-            DateTime adminTime = GetDateTimeFolder(adminDir);
+            DateTime mainTime = GetMaxFileTimeUtc(mainDir);//GetDateTimeFolder
+            DateTime adminTime = GetMaxFileTimeUtc(adminDir);
 
             return adminTime > mainTime ? adminDir : mainDir;
         }
@@ -323,39 +323,50 @@ namespace UpdaterENS
             targetDir = Path.GetFullPath(targetDir);
             backupDir = Path.GetFullPath(backupDir);
 
+
             CleanupOldTempFolders(targetDir, logFile);
 
-            // 1. Триггер обновления — только DLL.
+
+            // 1. Гейт на уровне папки: обновляемся ТОЛЬКО если target-плагин СТАРЕЕ источника.
+            // 1.dll/exe; отбор файлов — по !=. Раньше было: Триггер обновления — только DLL.
             //    Если хоть одна .dll в source новее (или её нет в target) — обновляем ВСЁ.
             //    Если все .dll одинаковые/старые — не делаем ничего.
-            bool shouldUpdate = false;
-            string triggerReason = null;
+           
+            // Требуем, чтобы source был новее НЕ ТОЛЬКО по максимуму,
+            // но и по "главной" dll плагина — это надёжнее от случайных touch'ей.
+           
+            DateTime sourceMaxUtc = GetMaxFileTimeUtc(sourceDir);
+            DateTime targetMaxUtc = GetMaxFileTimeUtc(targetDir);
 
-            foreach (var sourceDll in Directory.GetFiles(sourceDir, "*.dll", SearchOption.AllDirectories))
+            // Гейт 1: плагин в source должен быть новее по максимуму.
+            if (sourceMaxUtc <= targetMaxUtc)
             {
-                string relative = GetRelativePath(sourceDir, sourceDll);
-                string targetDll = Path.Combine(targetDir, relative);
-
-                if (!File.Exists(targetDll))
-                {
-                    shouldUpdate = true;
-                    triggerReason = $"new dll: {relative}";
-                    break;
-                }
-
-                if (File.GetLastWriteTimeUtc(sourceDll) > File.GetLastWriteTimeUtc(targetDll))
-                {
-                    shouldUpdate = true;
-                    triggerReason = $"newer dll: {relative}";
-                    break;
-                }
-            }
-
-            if (!shouldUpdate)
-            {
-                Log(logFile, "No dll is newer than in target. Nothing to update.");
+                Log(logFile,
+                    $"No update needed: target plugin ({targetMaxUtc:u}) " +
+                    $"is not older than source ({sourceMaxUtc:u}).");
                 return 0;
             }
+
+            // Гейт 2 (страховка от случайного touch): если главная dll есть в source —
+            // она тоже должна быть новее, иначе считаем, что это не реальное обновление.
+            string srcMain = Path.Combine(sourceDir, mainDllName);
+            string dstMain = Path.Combine(targetDir, mainDllName);
+
+            if (File.Exists(srcMain))
+            {
+                bool mainDllNewer =
+                    !File.Exists(dstMain) ||
+                    File.GetLastWriteTimeUtc(srcMain) > File.GetLastWriteTimeUtc(dstMain);
+
+                if (!mainDllNewer)
+                {
+                    Log(logFile,
+                        $"No update needed: main dll is not newer " +
+                        $"(src={File.GetLastWriteTimeUtc(srcMain):u}, dst={File.GetLastWriteTimeUtc(dstMain):u}).");
+                    return 0;
+                }
+            }
+            // srcMain отсутствует → не блокируем, доверяем гейту по максимуму.
             // Сразу после проверки shouldUpdate = true, до стейджинга.
             // Снимаем зону с источника, если есть права. Не критично, если не получится —
             // staging всё равно вычистится по ходу.
@@ -375,7 +386,6 @@ namespace UpdaterENS
             }
 
 
-            Log(logFile, $"Update triggered by {triggerReason}. Copying all files.");
 
             // 2. Раз обновляемся — берём ВСЕ файлы, но в список замены попадут
             //    только те, у которых дата модификации отличается от целевой
@@ -397,7 +407,7 @@ namespace UpdaterENS
                 DateTime dstTime = File.GetLastWriteTimeUtc(targetFilePath);
 
                 // Даты совпадают — считаем файл идентичным, пропускаем.
-                if (srcTime == dstTime)
+                if (srcTime == dstTime)//if (srcTime > dstTime)
                     continue;
 
                 filesToUpdate.Add(relative);
@@ -444,7 +454,7 @@ namespace UpdaterENS
 
             // Главная сборка плагина — первой. Остальные — по алфавиту,
             // чтобы порядок замены был стабильным и предсказуемым.
-            const string mainDllName = "Reinforcement.dll";
+            
             dllFiles = dllFiles
             .OrderBy(f => string.Equals(Path.GetFileName(f), mainDllName,
                                         StringComparison.OrdinalIgnoreCase) ? 0 : 1)
@@ -960,7 +970,18 @@ namespace UpdaterENS
 
             return max;
         }
+        private static DateTime GetMaxFileTimeUtc(string dir)
+        {
+            if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
+                return DateTime.MinValue;
 
-        
+            return new[] { "*.dll", "*.exe" }
+                .SelectMany(mask => Directory.EnumerateFiles(dir, mask, SearchOption.AllDirectories))
+                .Select(File.GetLastWriteTimeUtc)
+                .DefaultIfEmpty(DateTime.MinValue)
+                .Max();
+        }
+
+
     }
 }

@@ -26,8 +26,8 @@ namespace Reinforcement
 
         public static string TempUpdaterDir = null;//временная папка с апдейтером плагина
         public static string TempUpdaterExe=null;
-        public static string UserName = null;
-        public static string MachineName = null;
+        public static string UserName = Environment.UserName;
+        public static string MachineName = Environment.MachineName;
         public static string UserName_MachineName = null;//имя пользователя ПК
 
         public static string TargetPluginDir;// текущая папка плагина)

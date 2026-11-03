@@ -52,7 +52,9 @@ namespace Reinforcement
             bool acquired = false;
             // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
             if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
+            {
                 return;
+            }
             try
             {
                 
@@ -62,12 +64,21 @@ namespace Reinforcement
                     Now = DateTime.Now;//от этой даты всё и считаем чтобы было надежно
                     //hourAligned = new DateTime(Now.Year, Now.Month, Now.Day, Now.Hour, 0, 0);//кратно часу дата
                     _hour = Now.Hour;
-                    if (ProcessWriter(explicitCommandName, commandType))
+                    bool pw = false;
+
+                    try
                     {
-                        if (Now - PassDateWrite > FlushInterval)
-                        {
-                            FlushInternalLock();
-                        }
+                        pw = ProcessWriter(explicitCommandName, commandType);
+                    }
+                    catch (Exception ex)
+                    {
+                        RevitAPI.AppErrors?.LogError(ex);
+                    }
+
+                    if (pw && Now - PassDateWrite > FlushInterval)
+                    {
+                        FlushInternalLock();
+                        
                     }
                 }
 
@@ -142,8 +153,6 @@ namespace Reinforcement
                 }
             }
 
-            
-
             //команды кликов
             if (!DictDateDocStats.TryGetValue(DateDay, out var docStats))
             {
@@ -157,7 +166,7 @@ namespace Reinforcement
 
                 //заполняем даты открытия данной модели
                 docStat.FirstSeen = Now;
-                docStat.LastSeen = Now;
+                
                
                 docStat.Name = System.IO.Path.GetFileNameWithoutExtension(nameDoc);
                 ProjectInfo info = doc.ProjectInformation;
@@ -182,9 +191,9 @@ namespace Reinforcement
                 docStat.Warnings= warnings;
             }
 
-            ProcessWriterViewStat(docStat,doc);//статистика по виду
+            
             ProcessWriterDocStat(docStat, key, commandType);//статистика всего документа для пользователя
-
+            ProcessWriterViewStat(docStat, doc);//статистика по виду
             return true;
         }
        
@@ -232,11 +241,10 @@ namespace Reinforcement
 
             string viewName = None;
 
-            bool existView = false;
+            
             if (activeView != null && !string.IsNullOrEmpty(activeView.Name))
             {
                 viewName = activeView.Name;
-                existView = true;
             }
             else
             {
@@ -244,7 +252,7 @@ namespace Reinforcement
             }
 
             //добавка активного вида для статистики оч полезно знать сколько времени надо для создания вида и тд
-            if (!docStat.ActiveViews.TryGetValue(viewName, out var viewData) && viewData != null)
+            if (!docStat.ActiveViews.TryGetValue(viewName, out var viewData) || viewData == null)
             {
                 ElementId viewId = activeView.Id;
                 int ViewId = (int)viewId.Value;
@@ -390,7 +398,7 @@ namespace Reinforcement
 
             docStat.CommandHitsHours.TryGetValue(_hour, out var cmdHitsH);
             docStat.CommandHitsHours[_hour] = (cmdHitsH.cliks + 1, cmdHitsH.time+ stepTime);//почасовая характеристика для оценки
-           
+            
 
             if (commandType !=0)
             {
