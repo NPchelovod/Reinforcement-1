@@ -20,7 +20,7 @@ namespace Reinforcement
             ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
-            RevitAPI.LookUsers.ForceFlush(closeRevit: false);
+            StatUsers.Flush();
             return Result.Succeeded;
         }
     }

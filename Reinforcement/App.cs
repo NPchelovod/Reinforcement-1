@@ -444,8 +444,8 @@ namespace Reinforcement
 
             try
             {
-                RevitAPI.LookUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
-                RevitAPI.LookUsers.ForceFlush(closeRevit: true);
+                StatUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
+                StatUsers.Flush();
             }
             catch { /* уже нечего терять */ }
             // Пытаемся сохранить накопленные ошибки самого revit

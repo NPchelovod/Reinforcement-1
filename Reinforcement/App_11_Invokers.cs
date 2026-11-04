@@ -133,7 +133,7 @@ namespace Reinforcement
             {
                 secondSaveModel = 0;
             }
-            RevitAPI.LookUsers.Update("OnDocumentSaved", EDocStatsOptions.Save);
+            StatUsers.Update("OnDocumentSaved", EDocStatsOptions.Save);
         }
         private void OnDocumentSynchronized(object sender, DocumentSynchronizedWithCentralEventArgs e)
         {
@@ -152,7 +152,7 @@ namespace Reinforcement
                 secondSaveModel = 0;
             }
 
-            RevitAPI.LookUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
+            StatUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
         }
 
         

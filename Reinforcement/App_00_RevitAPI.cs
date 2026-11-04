@@ -11,7 +11,7 @@ namespace Reinforcement
     /// </summary>
     public static class RevitAPI
     {
-        public static LookUsers LookUsers = new LookUsers();//статистика пользователя по командам
+        //public static LookUsers LookUsers = new LookUsers();//статистика пользователя по командам
 
         public static AppErrors AppErrors = new AppErrors();//ошибки пользователя
 
@@ -71,7 +71,7 @@ namespace Reinforcement
                 throw new ArgumentNullException(nameof(commandData));
 
             _uiApplication = commandData.Application;
-            RevitAPI.LookUsers.Update();
+            StatUsers.Update();
         }
         public static void Initialize(UIApplication uIApplication)
         {

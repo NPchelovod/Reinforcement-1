@@ -48,7 +48,7 @@ namespace Reinforcement
         /// </summary>
         public static bool Flush()
         {
-            if (!LookUsers.IsStorageAvailable()) { return false; }
+            //if (!LookUsers.IsStorageAvailable()) { return false; }
             List<FailureRecord> snapshot;
             lock (_lock)
             {
@@ -60,9 +60,10 @@ namespace Reinforcement
             {
                 if (!Directory.Exists(FolderPath))
                     Directory.CreateDirectory(FolderPath);
-
+                if (!Directory.Exists(FolderPath))
+                { return false; }
                 string name = $"{Environment.UserName}_{Environment.MachineName}_" +
-                              $"{DateTime.Now:yyyyMMdd_HHmmss}.json";
+                            $"{DateTime.Now:yyyyMMdd_HHmmss}.json";
                 string path = Path.Combine(FolderPath, name);
 
                 var options = new JsonSerializerOptions

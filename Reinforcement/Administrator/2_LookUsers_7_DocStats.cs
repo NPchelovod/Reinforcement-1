@@ -36,6 +36,8 @@ namespace Reinforcement
         public double LastSaveSeconds { get; set; }
 
         public double TotalWorkSeconds { get; set; }
+
+        public double AverSecondsBetweenCommands { get; set; } // среднее время между командами
         public double MaxSyncSeconds { get; set; }
         public DateTime FirstSeen { get; set; }
         public DateTime LastSeen { get; set; }
@@ -62,12 +64,25 @@ namespace Reinforcement
         {
             if (other == null) return;
 
+            // Взвешенное среднее ДО TotalOps +=
+            if (AverSecondsBetweenCommands <= 0)
+                AverSecondsBetweenCommands = other.AverSecondsBetweenCommands;
+            else if (other.AverSecondsBetweenCommands > 0)
+            {
+                long n1 = Math.Max(1, TotalOps);
+                long n2 = Math.Max(1, other.TotalOps);
+                AverSecondsBetweenCommands =
+                    (AverSecondsBetweenCommands * n1 + other.AverSecondsBetweenCommands * n2) / (n1 + n2);
+            }
+
             TotalOps += other.TotalOps;
             SaveCount += other.SaveCount;
             SyncCount += other.SyncCount;
             LastSyncSeconds = Math.Max(LastSyncSeconds,other.LastSyncSeconds);
             LastSaveSeconds = Math.Max(LastSaveSeconds,other.LastSaveSeconds);
             TotalWorkSeconds += other.TotalWorkSeconds;
+
+           
 
             if (other.MaxSyncSeconds > MaxSyncSeconds)
                 MaxSyncSeconds = other.MaxSyncSeconds;
@@ -131,6 +146,7 @@ namespace Reinforcement
                 LastSyncSeconds = LastSyncSeconds,
                 LastSaveSeconds = LastSaveSeconds,
                 TotalWorkSeconds = TotalWorkSeconds,
+                AverSecondsBetweenCommands= AverSecondsBetweenCommands, 
                 MaxSyncSeconds = MaxSyncSeconds,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen,

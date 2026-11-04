@@ -74,7 +74,7 @@ namespace Reinforcement
                 Document doc = e.GetDocument();
                 if (doc == null) return;
                 //0. - записываем в апдейтер нашу команду для статистики
-                RevitAPI.LookUsers.Update(comand, EDocStatsOptions.Invoker);
+                StatUsers.Update(comand, EDocStatsOptions.Invoker);
 
                 DateTime now = DateTime.Now;
                 CurentCommand = new Command() { CommandName = comand, DateCreate = now };

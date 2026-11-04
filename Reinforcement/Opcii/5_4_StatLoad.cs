@@ -11,7 +11,7 @@ namespace Reinforcement
 {
     public partial class StatLoad
     {
-        public List<LookUsers> LookUsersList { get; set; } = new List<LookUsers>();
+        public List<StatElement> LookUsersList { get; set; } = new List<StatElement>();
         public bool ServerOnly { get; set; }=true;
         public  int DaysBack { get; set; } = 100;
         public int DaysFreshBack { get; set; } = 0;
@@ -35,7 +35,7 @@ namespace Reinforcement
         public string FolderPathStatistics;
         public bool LoadFiles(string folderPath = null)
         {
-            LookUsersList = new List<LookUsers>();
+            LookUsersList = new List<StatElement>();
             if (string.IsNullOrEmpty(folderPath))
             {
                 //путь смотрим в каталоге нашем
@@ -47,7 +47,7 @@ namespace Reinforcement
                 return false;
             FolderPathStatistics = folderPath;
 
-            var options = LookUsers.Options;
+            var options = StatUsers.Options;
             foreach (var file in Directory.EnumerateFiles(folderPath, "*.json", SearchOption.TopDirectoryOnly))
             {
                 try
@@ -56,7 +56,7 @@ namespace Reinforcement
                     if (string.IsNullOrWhiteSpace(json))
                         continue;
 
-                    var data = JsonSerializer.Deserialize<LookUsers>(json, options);
+                    var data = JsonSerializer.Deserialize<StatElement>(json, options);
                     if (data != null)
                     {
                         LookUsersList.Add(data);
