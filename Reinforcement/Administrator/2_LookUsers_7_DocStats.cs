@@ -36,6 +36,7 @@ namespace Reinforcement
         public double LastSaveSeconds { get; set; }
 
         public double TotalWorkSeconds { get; set; }
+        public double TotalProstoiSeconds { get; set; }
 
         public double AverSecondsBetweenCommands { get; set; } // среднее время между командами
         public double MaxSyncSeconds { get; set; }
@@ -81,8 +82,9 @@ namespace Reinforcement
             LastSyncSeconds = Math.Max(LastSyncSeconds,other.LastSyncSeconds);
             LastSaveSeconds = Math.Max(LastSaveSeconds,other.LastSaveSeconds);
             TotalWorkSeconds += other.TotalWorkSeconds;
+            TotalProstoiSeconds += other.TotalProstoiSeconds;
 
-           
+
 
             if (other.MaxSyncSeconds > MaxSyncSeconds)
                 MaxSyncSeconds = other.MaxSyncSeconds;
@@ -146,7 +148,8 @@ namespace Reinforcement
                 LastSyncSeconds = LastSyncSeconds,
                 LastSaveSeconds = LastSaveSeconds,
                 TotalWorkSeconds = TotalWorkSeconds,
-                AverSecondsBetweenCommands= AverSecondsBetweenCommands, 
+                TotalProstoiSeconds = TotalProstoiSeconds,
+                AverSecondsBetweenCommands = AverSecondsBetweenCommands, 
                 MaxSyncSeconds = MaxSyncSeconds,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen,

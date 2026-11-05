@@ -28,7 +28,7 @@ namespace Reinforcement
         public void Merge(StatElement other)
         {
             //прошлый словарь данных
-            var pastDict = other.DictDateDocStats;
+            var pastDict = other.DictDateDocStats;// этот словарь маленький в сравнении с текущим тут только 2.5 часа памяти
             if (pastDict == null || !pastDict.Any()) {return; }
                        
 
@@ -178,7 +178,6 @@ namespace Reinforcement
                 //заполняем даты открытия данной модели
                 docStat.FirstSeen = Now;
 
-
                 docStat.Name = System.IO.Path.GetFileNameWithoutExtension(nameDoc);
                 ProjectInfo info = doc.ProjectInformation;
 
@@ -207,6 +206,7 @@ namespace Reinforcement
 
         }
         private const int _secondsRazbrosTimeCommandMax = 20;
+        private const double _kratProstoiTime = 3.0;//во сколько раз больше по времени между командами чтобы считать за простой
         private static void ProcessWriterDocStat(DocStats docStat, string key, EDocStatsOptions commandType)
         {
             //запись характеристик документа
@@ -221,6 +221,11 @@ namespace Reinforcement
                 if(Math.Abs(stepTime-asp)< _secondsRazbrosTimeCommandMax)
                 {
                     docStat.AverSecondsBetweenCommands = (stepTime + asp) / 2;
+                }
+                else if(stepTime> _kratProstoiTime * docStat.AverSecondsBetweenCommands)
+                {
+                    //вообще правильнее простой учитывать если и вид один и тот же, но не факт, после обеда можем сначала вид сменить затем команду сделать
+                    docStat.TotalProstoiSeconds += stepTime;
                 }
             }
             else
@@ -443,15 +448,26 @@ namespace Reinforcement
                     {
                         past = new StatElement();
                     }
-                    //читаем также файл из временной папки если isFolderNotTemp==true
-                    //if (_isFolderNotTemp)
-                    //{
-                    //    StatElement past2 = ReadFileAndControlSize(filePathTemp);
-                    //    //удаление файлф
-                    //    File.Delete(filePathTemp);  
-                    //    past.Merge(past2);
-                    //}
-
+                    if (!App_Folders.IsTempFolders)
+                    {
+                        //мы не в сеансе временных файлов
+                        //во временной папке могли храниться старые данные пока диск был недоступен
+                        if(Directory.Exists(App_Folders.FolderStatisticsTemp))
+                        {
+                            string filePathTemp= Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
+                            if(File.Exists(filePathTemp))
+                            {
+                                StatElement past2 = ReadFileAndControlSize(filePathTemp);
+                                if(past2!=null)
+                                {
+                                    //удаляем прошлый файл
+                                    File.Delete(filePathTemp);
+                                    past.Merge(past2);
+                                }
+                            }
+                        }
+                    }
+                    
                     //в этот элемент мы копируем наши данные текущие
                     past.Merge(_statElement);
 

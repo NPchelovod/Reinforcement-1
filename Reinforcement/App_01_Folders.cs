@@ -42,7 +42,12 @@ namespace Reinforcement
         public static string LogUpdaterFile;
         public static string UpdaterNameProcess = "UpdaterENS";
 
-        public static string FolderStatistics = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\_statistics";
+
+        public static string FolderMain = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику";
+        public static string FolderStatistics = Path.Combine(FolderMain, "_statistics");
+        public static volatile bool IsTempFolders = false;
+        public static string FolderTemp = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        public static string FolderStatisticsTemp = Path.Combine(FolderTemp, "_statistics");
 
         // --- Контроль рабочего времени ---
         public static string UserTimeSourceDir =
@@ -78,10 +83,22 @@ namespace Reinforcement
                 TargetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             }
             DatePluginDll = GetLatestFileTime(TargetPluginDir);
+
             TempFolder = Path.GetTempPath();
             TempUpdaterDir = Path.Combine(TempFolder, "ENS_Updater");
             TempUpdaterExe = Path.Combine(TempUpdaterDir, "UpdaterENS.exe");
             LogUpdaterFile = Path.Combine(BackupDir, $"{UserName_MachineName}_log.txt");
+
+            //Для статистики
+            if (!Directory.Exists(FolderMain))
+            {
+                //будем статистику хранить в папке
+                IsTempFolders=true;
+                FolderStatistics = FolderStatisticsTemp;
+            }
+
+
+            
             // Версия сборки
             Version = Assembly.GetExecutingAssembly().GetName().Version;
             VersionString = Assembly.GetExecutingAssembly()
