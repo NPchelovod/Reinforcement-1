@@ -457,7 +457,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                   RevitAPI.AppErrors.LogError(ex);
+                   AppErrors.LogError(ex);
                     //Код в случае ошибки
                     form.MessageBox.Show("Чет пошло не так (скорее стена Дж не отдельно стоит а вместе с кем-то углом)!\n" + ex.Message);
                     return Result.Failed;
@@ -466,7 +466,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 return Result.Failed;
             }
         }

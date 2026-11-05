@@ -37,7 +37,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 return Result.Failed;
             }
             return Result.Succeeded;

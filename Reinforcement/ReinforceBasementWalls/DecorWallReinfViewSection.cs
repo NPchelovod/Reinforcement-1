@@ -503,7 +503,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
 
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 //Код в случае ошибки
                 form.MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;

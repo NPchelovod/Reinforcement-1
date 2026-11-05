@@ -36,9 +36,12 @@ namespace Reinforcement
                 // Теперь можно работать с uiApp
                 // Например, сохранить в статическое свойство
                 RevitAPI.Initialize(uiApp);
+                RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;
 
-                UpdaterSubscriber.Initialize(uiApp);
-                uiApp.Idling += OnIdling;
+                RegisterAutoFillUpdater.Register();
+
+                //UpdaterSubscriber.Initialize(uiApp);
+                //uiApp.Idling += OnIdling;
                 //uiApp.Application.GroupEditModeChanged += OnGroupEditModeChanged;
 
                 //RegisterAutoFillUpdater.addInId = uiApp.ActiveAddInId;

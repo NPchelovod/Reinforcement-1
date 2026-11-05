@@ -98,7 +98,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
                 TaskDialog.Show("Ошибка запуска обновления", ex.Message);
             }
         }

@@ -61,7 +61,7 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //                Debug.WriteLine($"ForceFlush failed: {ex.Message}");
 
 //            }
@@ -87,7 +87,7 @@
 //            catch (Exception ex)
 //            {
 //                MarkStorageUnavailable();
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //                Debug.WriteLine($"FlushInternalLock failed: {ex.Message}");
 //            }
 //            finally
@@ -254,7 +254,7 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //                return new LookUsers();
 //            }
 //        }
@@ -333,14 +333,14 @@
 
 //                File.Copy(filePath, historyPath, overwrite: true);
 //                try { File.Delete(filePath); }
-//                catch (Exception ex) { RevitAPI.AppErrors.LogError(ex); }
+//                catch (Exception ex) { AppErrors.LogError(ex); }
 
 //                return File.Exists(historyPath);
 //            }
 //            catch (Exception ex)
 //            {
 //                MarkStorageUnavailable();
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //                return false;
 //            }
 //        }
@@ -397,7 +397,7 @@
 //                               swIo.Elapsed.TotalMilliseconds);
 
 //                // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
-//                RevitAPI.AppErrors?.FlushErrorsToLog();
+//                AppErrors.FlushErrorsToLog();
 
 //                return true;
 //            }
@@ -405,8 +405,8 @@
 //            {
 //                // Любая IO-ошибка → диск считается недоступным до следующей проверки
 //                MarkStorageUnavailable();
-//                RevitAPI.AppErrors?.LogError(ex);
-//                RevitAPI.AppErrors?.FlushErrorsToLog();
+//                AppErrors.LogError(ex);
+//                AppErrors.FlushErrorsToLog();
 //                return false;
 //            }
 //        }

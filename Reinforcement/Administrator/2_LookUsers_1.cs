@@ -72,7 +72,7 @@
 //                    }
 //                    catch (Exception ex)
 //                    {
-//                        RevitAPI.AppErrors?.LogError(ex);
+//                        AppErrors.LogError(ex);
 //                    }
 
 //                    if (pw && Now - PassDateWrite > FlushInterval)

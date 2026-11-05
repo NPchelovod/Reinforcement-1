@@ -42,9 +42,10 @@ namespace Reinforcement
         public static string LogUpdaterFile;
         public static string UpdaterNameProcess = "UpdaterENS";
 
-
+        //Для статистики
         public static string FolderMain = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику";
         public static string FolderStatistics = Path.Combine(FolderMain, "_statistics");
+
         public static volatile bool IsTempFolders = false;
         public static string FolderTemp = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string FolderStatisticsTemp = Path.Combine(FolderTemp, "_statistics");
@@ -56,8 +57,8 @@ namespace Reinforcement
         public static string UserTimeProcessPrefix = "WpfControlUserTime";
 
 
-
-        public static string FolderErrors = Path.Combine(FolderStatistics, "Errors");
+        //Для статистики ошибок
+        public static string FolderErrors => Path.Combine(FolderStatistics, "Errors");
 
         public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina" };
 
@@ -155,7 +156,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
+                try { AppErrors.LogError(ex); } catch { }
             }
         }
         public static bool IsExistProcessCurent(string updaterNameProcess)

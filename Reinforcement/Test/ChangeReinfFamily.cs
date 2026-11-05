@@ -131,7 +131,7 @@ namespace Reinforcement.Test
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 //Код в случае ошибки
                 MessageBox.Show("Чет пошло не так!\n" + ex.Message);
                 return Result.Failed;

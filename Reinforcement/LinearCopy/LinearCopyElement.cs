@@ -81,7 +81,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 MessageBox.Show("Не создано ни одного элемента!" + ex.Message);
                 return Result.Failed;
             }

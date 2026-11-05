@@ -36,7 +36,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 // В случае ошибки выводим сообщение
                 MessageBox.Show("Не удалось открыть папку: " + ex.Message);
                 return Result.Failed;

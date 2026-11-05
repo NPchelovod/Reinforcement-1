@@ -80,7 +80,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                   RevitAPI.AppErrors.LogError(ex);
+                   AppErrors.LogError(ex);
                     trans2.RollBack();
                     TaskDialog.Show("Ошибка транзакции", $"Ошибка при установке марок: {ex.Message}");
 

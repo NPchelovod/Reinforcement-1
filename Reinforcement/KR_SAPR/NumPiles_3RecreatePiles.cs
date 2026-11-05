@@ -67,7 +67,7 @@ namespace Reinforcement
                 }
                 catch (Exception ex)
                 {
-                   RevitAPI.AppErrors.LogError(ex);
+                   AppErrors.LogError(ex);
                     recreateTrans.RollBack();
                     TaskDialog.Show("Ошибка", $"Ошибка обработки свай: {ex.Message}");
                     return Result.Failed;

@@ -34,7 +34,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
                 message = $"Adm_GenError: {ex.GetType().Name}: {ex.Message}";
                 return Result.Failed;
             }

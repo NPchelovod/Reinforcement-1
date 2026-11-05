@@ -70,7 +70,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 StatusTextBlock.Text = $"Ошибка загрузки спецификаций: {ex.Message}";
             }
         }
@@ -130,7 +130,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 StatusTextBlock.Text = $"Ошибка чтения файла: {ex.Message}";
               
             }
@@ -169,7 +169,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 StatusTextBlock.Text = $"Ошибка импорта данных: {ex.Message}";
 
             }

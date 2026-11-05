@@ -13,32 +13,30 @@ namespace Reinforcement
 {
     public partial class PeriodicHandler
     {
-        public static void Execute(Document doc)
+        public static bool Execute(SnapShotElements snap)
         {
             if (IsProcessingOwnChange)
             {
-                return;
+                return false;
             }
-            SnapShotElements snap = AnyChangeClass.GetSnapShotElements(doc);
-            if (snap == null) return;
-
-            IsProcessingOwnChange = true;
+           
             try
             {
+                IsProcessingOwnChange = true;
                 ProcessSnapshot(snap.DateTimeCreate, snap, snap.Doc);
-                SecretComand(doc, snap); //секретная команда внутри группы действующая
+                SecretComand(snap.Doc, snap); //секретная команда внутри группы действующая
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors?.LogError(ex);
-
+                AppErrors.LogError(ex);
+                return false;
             }
             finally
             {
                 IsProcessingOwnChange = false;
-                // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
-                Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
+                
             }
+            return true;
         }
 
 
@@ -46,11 +44,11 @@ namespace Reinforcement
         {
             //секретная команда внутри группы действующая
             if (!App.InPendingSecret) { return; }
-
+            App.InPendingSecret = false;
             try
             {
 
-                App.InPendingSecret = false;
+                
                 if (string.IsNullOrEmpty(App.OnGroupCurrent.Name))
                 {
                     return;
@@ -75,7 +73,10 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
+            }
+            finally
+            {
             }
 
 

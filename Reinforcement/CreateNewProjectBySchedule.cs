@@ -77,7 +77,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 // В случае ошибки выводим сообщение
                 TaskDialog.Show("Ошибка", "Не удалось создать или открыть новый файл: " + ex.Message);
                 return Result.Failed;

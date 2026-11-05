@@ -101,7 +101,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors?.LogError(ex);
+                AppErrors.LogError(ex);
             }
             finally
             {
@@ -448,24 +448,22 @@ namespace Reinforcement
                     {
                         past = new StatElement();
                     }
-                    if (!App_Folders.IsTempFolders)
+                    if (filePath!= App_Folders.FolderStatisticsTemp && Directory.Exists(App_Folders.FolderStatisticsTemp))
                     {
                         //мы не в сеансе временных файлов
                         //во временной папке могли храниться старые данные пока диск был недоступен
-                        if(Directory.Exists(App_Folders.FolderStatisticsTemp))
+                        string filePathTemp= Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
+                        if(File.Exists(filePathTemp))
                         {
-                            string filePathTemp= Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
-                            if(File.Exists(filePathTemp))
+                            StatElement past2 = ReadFileAndControlSize(filePathTemp);
+                            if(past2!=null)
                             {
-                                StatElement past2 = ReadFileAndControlSize(filePathTemp);
-                                if(past2!=null)
-                                {
-                                    //удаляем прошлый файл
-                                    File.Delete(filePathTemp);
-                                    past.Merge(past2);
-                                }
+                                //удаляем прошлый файл
+                                File.Delete(filePathTemp);
+                                past.Merge(past2);
                             }
                         }
+                        
                     }
                     
                     //в этот элемент мы копируем наши данные текущие
@@ -484,14 +482,14 @@ namespace Reinforcement
                     else
                     {
                         
-                        RevitAPI.AppErrors?.LogError(new Exception("WriteFile failed, state rolled back"));
+                        AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
                     }
                     
                 }
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors?.LogError(ex);
+                AppErrors.LogError(ex);
             }
             finally
             {
@@ -573,7 +571,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors?.LogError(ex);
+                AppErrors.LogError(ex);
                 return null;
             }
         }
@@ -622,15 +620,15 @@ namespace Reinforcement
                                swIo.Elapsed.TotalMilliseconds);
 
                 // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
-                RevitAPI.AppErrors?.FlushErrorsToLog();
+                AppErrors.FlushErrorsToLog();
 
                 return true;
             }
             catch (Exception ex)
             {
                 // Любая IO-ошибка → диск считается недоступным до следующей проверки
-                RevitAPI.AppErrors?.LogError(ex);
-                RevitAPI.AppErrors?.FlushErrorsToLog();
+                AppErrors.LogError(ex);
+                AppErrors.FlushErrorsToLog();
                 return false;
             }
         }
@@ -683,14 +681,14 @@ namespace Reinforcement
 
                 File.Copy(filePath, historyPath, overwrite: true);
                 try { File.Delete(filePath); }
-                catch (Exception ex) { RevitAPI.AppErrors?.LogError(ex); }
+                catch (Exception ex) { AppErrors.LogError(ex); }
 
                 return File.Exists(historyPath);
             }
             catch (Exception ex)
             {
                 
-                RevitAPI.AppErrors?.LogError(ex);
+                AppErrors.LogError(ex);
                 return false;
             }
         }

@@ -61,7 +61,7 @@ namespace Reinforcement
             {
                 output_json();
             }
-            catch (Exception ex) {RevitAPI.AppErrors.LogError(ex); }
+            catch (Exception ex) {AppErrors.LogError(ex); }
 
         }
 

@@ -25,9 +25,7 @@ namespace Reinforcement
 
         public static void Initialize(UIApplication app)
         {
-            RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
-
-            RegisterAutoFillUpdater.Register();
+            
 
             _externalEvent = ExternalEvent.Create(new PeriodicHandler());
             AnyChangeClass.ExternalEventRef = _externalEvent;
@@ -118,7 +116,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors?.LogError(ex);
+                AppErrors.LogError(ex);
             }
             finally
             {
@@ -189,7 +187,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
 
             try
@@ -201,7 +199,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
             try
             {
@@ -209,7 +207,7 @@ namespace Reinforcement
             }
             catch(Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
 
             try
@@ -218,7 +216,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
 
         }

@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 namespace Reinforcement
 {
   
-    public partial class AppErrors
+    public static partial class AppErrors
     {
         /// <summary>
         /// Ошибки, накопленные за сессию. Попадут в JSON при следующем WriteFile.
         /// </summary>
         /// //запись ошибок
         
-        private List<string> Errors { get; set; } = new List<string>();
+        private static List<string> Errors { get; set; } = new List<string>();
         private const int MaxErrors = 100; // чтобы файл не разрастался
         private static int _inLogError;
         private static readonly object _errorsLock = new object();
@@ -25,7 +25,7 @@ namespace Reinforcement
         public static volatile bool LookErrorsAdmin = false; // можно будет отлаживать ошибку и ловить
         
        
-        public void LogError(Exception ex)
+        public static void LogError(Exception ex)
         {
             if (ex == null) return;
             if (Interlocked.CompareExchange(ref _inLogError, 1, 0) != 0) return;
@@ -149,7 +149,7 @@ namespace Reinforcement
         /// Дописывает Errors в .errors.log с fallback на %TEMP%, если основная папка недоступна.
         /// После успешной записи очищает Errors.
         /// </summary>
-        public void FlushErrorsToLog()
+        public static void FlushErrorsToLog()
         {
             List<string> toWrite;
 

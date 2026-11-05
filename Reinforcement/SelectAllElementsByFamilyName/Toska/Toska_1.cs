@@ -31,7 +31,7 @@ namespace Reinforcement
             }
             catch (System.Exception ex)
             {
-               RevitAPI.AppErrors.LogError(ex);
+               AppErrors.LogError(ex);
                 message = $"Ошибка: {ex.Message}";
                 return Result.Failed;
             }

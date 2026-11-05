@@ -168,7 +168,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                try { RevitAPI.AppErrors?.LogError(ex); } catch { }
+                try { AppErrors.LogError(ex); } catch { }
             }
             return result;
 
@@ -386,7 +386,7 @@ namespace Reinforcement
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
                 ExistPodpiskaOnChanged= false;
                 ErrorException(ex, "Podpiska");
             }
@@ -435,11 +435,11 @@ namespace Reinforcement
                 application.ControlledApplication.FailuresProcessing -= OnFailuresProcessing;
                 application.ControlledApplication.DocumentChanged -= OnDocumentChanged;
                 //Но есть и практический смысл. OnShutdown вызывается, когда Revit закрывается штатно. Это последний момент, когда ваш код ещё может что-то сделать
-                UpdaterSubscriber.Shutdown();
+                //UpdaterSubscriber.Shutdown();
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
 
             try

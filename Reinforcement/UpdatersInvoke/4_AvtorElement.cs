@@ -98,7 +98,7 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //            }
 //            finally
 //            {
@@ -141,7 +141,7 @@
 //            }
 //            catch(Exception ex) 
 //            {
-//                RevitAPI.AppErrors.LogError(ex);
+//                AppErrors.LogError(ex);
 //            }
 //            finally
 //            {
@@ -196,7 +196,7 @@
 //            }
 //            catch (Exception ex)
 //            {
-//               RevitAPI.AppErrors.LogError(ex);
+//               AppErrors.LogError(ex);
 //                return false;
 //            }
 //            return true;

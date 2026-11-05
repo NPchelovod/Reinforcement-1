@@ -35,24 +35,31 @@ namespace Reinforcement
         public UpdaterId GetUpdaterId() => _updaterId;
         public string GetUpdaterName() => App.TabName + "_Updater всех процессов";
 
+        private readonly double TimeOutMilliseconds = 200;
+
         public void Execute(UpdaterData data)
         {
             if (!AllUpdater) { return; }
             //сюда приходят от всех изменений элементы
             //бывает приходят пустные
-            if (IsProcessingOwnChange || PeriodicHandler.IsProcessingOwnChange)
+            if (IsProcessingOwnChange)
             {
                 return;
+
             }// ⬅️ рвёт рекурсию мы итак в нашем изменении
+            DateTime now = DateTime.Now;
+            if ((now-DateLastExecute).TotalMilliseconds< TimeOutMilliseconds)
+            {
+                return;
+            }
             //наверно надо еще и задержку по времени добавить в 0.1 - 0.2 секунды чтобы после нашего вмешательства не срабатывало повторно
-            // 2. Наш PeriodicHandler отработал < 0.2 с назад — «хвосты» от него
-            IsProcessingOwnChange = true;
+
             try
             {
+                IsProcessingOwnChange = true;
                 //изменен я которые случились менее чем за 150 мс
                 // проверка не защищает от рекурсии, а глушит пользователя:
-                if (PeriodicHandler.IsRecentlyExecuted(CooldownAfterProcessing)) return;
-
+                
                 Document doc = data.GetDocument();
                 if (doc == null) { return; }
 
@@ -62,9 +69,7 @@ namespace Reinforcement
                 if (!added.Any() && !modified.Any()) { return; }
                 //секретная команда
 
-
-
-                DateTime now = DateTime.Now;
+                
                 // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
                 var geomSet = new HashSet<ElementId>();
                 foreach (var id in modified)
@@ -73,41 +78,39 @@ namespace Reinforcement
                         geomSet.Add(id);
                 }
                 var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
-                lock (_lock)
-                {
-                    if (Doc == null || !doc.Equals(Doc))
-                    {
-                        ClearInternal();//Doc != doc — та же ловушка, что и раньше
-                    }
+                //lock (_lock)
+                //{
+                //    if (Doc == null || !doc.Equals(Doc))
+                //    {
+                //        ClearInternal();//Doc != doc — та же ловушка, что и раньше
+                //    }
+                //    Doc = doc;
+                //    DateLastExecute = now;
+                //    AddedIds.UnionWith(added);
+                //    GeomModificationIds.UnionWith(geomSet);
+                //    ModifiedIdsProp.UnionWith(modifiedIdsPropt);
+                //    IsExistElementsChange = true;
+                //}
+                var snap = new SnapShotElements(
+                    now, doc,
+                    added,
+                    geomSet,
+                    modifiedIdsPropt);
 
-                    Doc = doc;
-                    DateLastExecute = now;
-                    AddedIds.UnionWith(added);
-                    GeomModificationIds.UnionWith(geomSet);
-                    ModifiedIdsProp.UnionWith(modifiedIdsPropt);
-                    IsExistElementsChange = true;
-                }
                 //я думал насчет того чтобы сделать чтобы и этот не срабатывал очень часто а через раз, но это нарушит логику железную
-                PeriodicHandler.Execute(Doc);
+                if(PeriodicHandler.Execute(snap))
+                {
+                    DateLastExecute = now;
+                }
             }
             catch (Exception ex)
             {
-                RevitAPI.AppErrors.LogError(ex);
+                AppErrors.LogError(ex);
             }
             finally
             {
                 IsProcessingOwnChange = false;
             }
-        }
-
-
-        internal static void RequestProcessing()
-        {
-            var ev = ExternalEventRef;
-            if (ev == null) return;
-            if (!IsExistElementsChange) return;
-
-            try { ev.Raise(); } catch { /* Revit занят — таймер-страховка повторит */ }
         }
 
         private static void ClearInternal()

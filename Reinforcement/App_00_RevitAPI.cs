@@ -11,9 +11,7 @@ namespace Reinforcement
     /// </summary>
     public static class RevitAPI
     {
-        //public static LookUsers LookUsers = new LookUsers();//статистика пользователя по командам
-
-        public static AppErrors AppErrors = new AppErrors();//ошибки пользователя
+       
 
         //предлагаемое имя транзакции чтобы мы могли найти что оно - наше
         public static string GetTranzactionName(string nameMethod)

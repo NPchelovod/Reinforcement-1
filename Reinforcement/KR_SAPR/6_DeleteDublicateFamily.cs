@@ -302,7 +302,7 @@ namespace Reinforcement
                     }
                     catch (Exception ex)
                     {
-                        RevitAPI.AppErrors.LogError(ex);
+                        AppErrors.LogError(ex);
                         continue;
                     }
                 }
