@@ -44,7 +44,10 @@ namespace Reinforcement
 
         //Для статистики
         public static string FolderMain = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику";
+
         public static string FolderStatistics = Path.Combine(FolderMain, "_statistics");
+
+        public static string FolderStatisticsDelIds => Path.Combine(FolderStatistics, "_delElements");
 
         public static volatile bool IsTempFolders = false;
         public static string FolderTemp = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

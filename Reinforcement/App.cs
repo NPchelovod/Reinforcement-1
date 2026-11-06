@@ -448,6 +448,16 @@ namespace Reinforcement
                 StatUsers.Flush();
             }
             catch { /* уже нечего терять */ }
+
+            try
+            {
+                //удаленные элементы записываем
+                PeriodicHandler.FlushDeleteIds(DateTime.Now);
+            }
+            catch { /* уже нечего терять */ }
+
+
+
             // Пытаемся сохранить накопленные ошибки самого revit
             try
             {

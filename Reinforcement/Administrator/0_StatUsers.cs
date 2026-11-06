@@ -411,10 +411,10 @@ namespace Reinforcement
 
 
 
-
+        
 
         private static DateTime _pastDateFlush = DateTime.MinValue;
-        private static readonly TimeSpan _flushInterval = TimeSpan.FromHours(2.5);
+        private static readonly TimeSpan _flushInterval = TimeSpan.FromHours(3.5);
         private static int _inFlush;
         public static void Flush()
         {
@@ -434,34 +434,53 @@ namespace Reinforcement
                     if (!Directory.Exists(folderStat))
                     {
                         Directory.CreateDirectory(folderStat);
+                        // Быстрый отказ, если диск недоступен — не ждём таймауты SMB
+                        if (!Directory.Exists(folderStat))
+                        {
+                            return;
+                        }
                     }
-                    // Быстрый отказ, если диск недоступен — не ждём таймауты SMB
-                    if (!Directory.Exists(folderStat))
-                    {
-                        return;
-                    }
+                    
 
 
                     // 1. Читаем прошлый файл
-                    StatElement past = ReadFileAndControlSize(filePath);
+                    StatElement past = ReadFileAndControlSize(filePath, false);
                     if(past==null)
                     {
                         past = new StatElement();
                     }
-                    if (filePath!= App_Folders.FolderStatisticsTemp && Directory.Exists(App_Folders.FolderStatisticsTemp))
+                    bool consumed = false;
+                    StatElement past2=null;
+                    if (filePath != tempPath && File.Exists(tempPath))
                     {
                         //мы не в сеансе временных файлов
                         //во временной папке могли храниться старые данные пока диск был недоступен
-                        string filePathTemp= Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
-                        if(File.Exists(filePathTemp))
+                        
+                       
+                        past2 = ReadFileAndControlSize(tempPath,true);
+                        if (past2 != null)
                         {
-                            StatElement past2 = ReadFileAndControlSize(filePathTemp);
-                            if(past2!=null)
+                            try
                             {
-                                //удаляем прошлый файл
-                                File.Delete(filePathTemp);
+                                File.Delete(tempPath);
+                                consumed = true;   // ← диск больше не наш «источник правды»
+                                
+                            }
+                            catch (Exception ex)
+                            {
+                                AppErrors.LogError(ex);
+                            }
+                            if(consumed)
+                            {
                                 past.Merge(past2);
                             }
+                        }
+                        else
+                        {
+                            long size = -1;
+                            try { size = new FileInfo(tempPath).Length; } catch { }
+                            AppErrors.LogError(new Exception(
+                                $"[Stats] temp file exists but failed to read/parse: {size} bytes"));
                         }
                         
                     }
@@ -474,14 +493,19 @@ namespace Reinforcement
                     {
 
                         // Успешно — обнуляем накопленное, чтобы не записать повторно
-                        _statElement=new StatElement();
+                        _statElement = new StatElement();
                         _pastDocStat = null;
                         _pastViewStat = null;
 
                     }
                     else
                     {
-                        
+                        if (consumed && past2 != null)
+                        {
+                            //последний шанс, временно храним у себя жн
+                            _statElement.Merge(past2);
+                        }
+                       
                         AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
                     }
                     
@@ -498,55 +522,60 @@ namespace Reinforcement
 
         }
 
-        private static volatile bool _isFolderNotTemp = true;
+        
         public static string folderStat => App_Folders.FolderStatistics;
 
-        // Временная — по образцу ErrorException
-        public static string folderStatTemp => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "RevitAddinsLogs",
-            "Statistics");
-
+        
 
         //запись  архива
-        public static string folderStatisticsHistory = Path.Combine(folderStat, "Архив");
+        public static string folderStatisticsHistory => Path.Combine(folderStat, "Архив");
         public static string fileName => $"{Environment.UserName}_{Environment.MachineName}.json";
         public static string filePath => Path.Combine(folderStat, fileName);
-        public static string filePathTemp=> Path.Combine(folderStatTemp, fileName);
 
+        private static string tempPath => Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
+       
 
         private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
-        private const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ Жёсткий порог — на такой файл лучше даже не замахиваться парсером
-        private static StatElement ReadFileAndControlSize(string filePath)
+        public const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ Жёсткий порог — на такой файл лучше даже не замахиваться парсером
+        private static StatElement ReadFileAndControlSize(string path, bool isTemp)
         {
             try
             {
 
                 
-                if (!File.Exists(filePath))
+                if (!File.Exists(path))
                 {
                     return null;
                 }
 
                 //првоерка размера до парсига
-                long sizeBytes = new FileInfo(filePath).Length;
+                long sizeBytes = new FileInfo(path).Length;
                 if (sizeBytes > hardFileSizeBytes)
                 {
-                    MoveToHistory(Now, Now, "hardSize");
+                    if (!isTemp)
+                    {
+                        MoveToHistory(path,Now, Now, "hardSize");
+                    }
                     return null;
                 }
 
-                string json = File.ReadAllText(filePath);
+                string json = File.ReadAllText(path);
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    MoveToHistory(Now, Now, "jsonError");
+                    if (!isTemp)
+                    {
+                        MoveToHistory(path, Now, Now, "jsonError");
+                    }
                     return null;
                 }
 
                 var data = JsonSerializer.Deserialize<StatElement>(json, Options);
                 if (data == null)
                 {
-                    MoveToHistory(Now, Now, "dataError");
+                    if (!isTemp)
+                    {
+                        MoveToHistory(path, Now, Now, "dataError");
+                    }
                     return null;
                 }
 
@@ -560,7 +589,10 @@ namespace Reinforcement
                         from = data.DictDateDocStats.Keys.Min();
                         to= data.DictDateDocStats.Keys.Max();
                     }
-                    MoveToHistory(from, to, "maxSize");
+                    if (!isTemp)
+                    {
+                        MoveToHistory(path,from, to, "maxSize");
+                    }
                     return null;
                 }
 
@@ -640,14 +672,7 @@ namespace Reinforcement
             var frames = st.GetFrames();
             if (frames == null || frames.Length < 5)
                 return null;
-            if (commandType == EDocStatsOptions.Invoker)
-            {
-                int cc = 0;
-            }
-            else
-            {
-
-            }
+           
             var caller = frames[4].GetMethod();
             var typeName = caller?.DeclaringType?.Name;
             var methodName = caller?.Name;
@@ -656,11 +681,11 @@ namespace Reinforcement
 
             return $"{typeName}.{methodName}";
         }
-        private static bool MoveToHistory(DateTime from, DateTime to, string rizon)
+        private static bool MoveToHistory(string sourcePath, DateTime from, DateTime to, string rizon)
         {
             if (!Directory.Exists(folderStat))
                 return false;
-
+             
             try
             {
                 // Создаём папку «Архив», если её нет
@@ -679,9 +704,8 @@ namespace Reinforcement
                         $"{baseName}_{suffix++}.json");
                 }
 
-                File.Copy(filePath, historyPath, overwrite: true);
-                try { File.Delete(filePath); }
-                catch (Exception ex) { AppErrors.LogError(ex); }
+                File.Copy(sourcePath, historyPath, overwrite: true);
+                try { File.Delete(sourcePath); } catch (Exception ex) { AppErrors.LogError(ex); }
 
                 return File.Exists(historyPath);
             }

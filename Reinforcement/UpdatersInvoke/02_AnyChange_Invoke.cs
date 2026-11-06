@@ -16,13 +16,13 @@ namespace Reinforcement
         public HashSet<ElementId> ModifiedIdsProp;//не добавленные и не геометрически измененный
         public DateTime DateTimeCreate;
         public Document Doc;
-        public SnapShotElements(DateTime dateTimeCreate, Document doc, ICollection<ElementId> addedIds, ICollection<ElementId> geomModificationIds, ICollection<ElementId> modifiedIdsProp)
+        public SnapShotElements(DateTime dateTimeCreate, Document doc, HashSet<ElementId> addedIds, HashSet<ElementId> geomModificationIds, HashSet<ElementId> modifiedIdsProp)
         {
             Doc = doc;
             DateTimeCreate = dateTimeCreate;
-            AddedIds = new HashSet<ElementId>(addedIds);
-            GeomModificationIds = geomModificationIds.Where(x => !addedIds.Contains(x)).ToHashSet();
-            ModifiedIdsProp = modifiedIdsProp.Where(x => !addedIds.Contains(x) && !GeomModificationIds.Contains(x)).ToHashSet();
+            AddedIds = addedIds;
+            GeomModificationIds = geomModificationIds;
+            ModifiedIdsProp = modifiedIdsProp;
         }
     }
     public class AnyChangeClass : IUpdater
@@ -65,43 +65,59 @@ namespace Reinforcement
 
                 var added = data.GetAddedElementIds();
                 var modified = data.GetModifiedElementIds();
+                var deleted = data.GetDeletedElementIds();
+                if (added.Count == 0 && modified.Count == 0 && deleted.Count == 0) { return; }
 
-                if (!added.Any() && !modified.Any()) { return; }
-                //секретная команда
 
-                
-                // Геометрию вычисляем ЗДЕСЬ, пока UpdaterData валиден
-                var geomSet = new HashSet<ElementId>();
-                foreach (var id in modified)
+                // === Строим попарно непересекающиеся множества ===
+                // Приоритет: added > deleted > modified/geom.
+                // Если элемент и добавлен, и удалён — считаем «добавленным» (transient),
+                // в ExecuteDelete не пускаем. Если после этого в doc его нет —
+                // ProcessSnapshot отфильтрует по null.
+                var addHash = new HashSet<ElementId>(added);
+                var modifHash = new HashSet<ElementId>(modified);
+                var delHash = new HashSet<ElementId>(deleted);
+
+                delHash.ExceptWith(addHash);          // added «побеждает» deleted
+                addHash.ExceptWith(delHash);          // уже disjoint, страховка
+                modifHash.ExceptWith(addHash);
+                modifHash.ExceptWith(delHash);
+
+                // geom из оставшегося modif
+                var geomHash = new HashSet<ElementId>();
+                foreach (var id in modifHash.ToList())
                 {
                     if (data.IsChangeTriggered(id, Element.GetChangeTypeGeometry()))
-                        geomSet.Add(id);
+                    {
+                        geomHash.Add(id);
+                        modifHash.Remove(id);
+                    }
                 }
-                var modifiedIdsPropt = modified.Where(x => !geomSet.Contains(x)).ToList();
-                //lock (_lock)
-                //{
-                //    if (Doc == null || !doc.Equals(Doc))
-                //    {
-                //        ClearInternal();//Doc != doc — та же ловушка, что и раньше
-                //    }
-                //    Doc = doc;
-                //    DateLastExecute = now;
-                //    AddedIds.UnionWith(added);
-                //    GeomModificationIds.UnionWith(geomSet);
-                //    ModifiedIdsProp.UnionWith(modifiedIdsPropt);
-                //    IsExistElementsChange = true;
-                //}
-                var snap = new SnapShotElements(
-                    now, doc,
-                    added,
-                    geomSet,
-                    modifiedIdsPropt);
 
-                //я думал насчет того чтобы сделать чтобы и этот не срабатывал очень часто а через раз, но это нарушит логику железную
-                if(PeriodicHandler.Execute(snap))
+                bool anyProcessed = false;
+
+                if (addHash.Count > 0 || geomHash.Count > 0 || modifHash.Count > 0)
+                {
+                    var snap = new SnapShotElements(now, doc, addHash, geomHash, modifHash);
+                    if (PeriodicHandler.Execute(snap))
+                    {
+                        anyProcessed = true;
+                    }
+                }
+
+                if (delHash.Count > 0)
+                {
+                    PeriodicHandler.ExecuteDelete(now, doc, delHash);
+                    anyProcessed = true;
+                }
+
+                if (anyProcessed)
                 {
                     DateLastExecute = now;
                 }
+
+
+
             }
             catch (Exception ex)
             {

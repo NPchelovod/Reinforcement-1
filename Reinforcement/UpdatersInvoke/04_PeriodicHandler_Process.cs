@@ -25,7 +25,7 @@ namespace Reinforcement
 
         public static void Initialize(UIApplication app)
         {
-            
+
 
             _externalEvent = ExternalEvent.Create(new PeriodicHandler());
             AnyChangeClass.ExternalEventRef = _externalEvent;
@@ -143,19 +143,19 @@ namespace Reinforcement
                 Element element = doc.GetElement(addIds);
                 ProcessElement(dateTime, doc, element, ETypeChangeEl.AddedElements);
             }
-            foreach(var geomIds in snapshot.GeomModificationIds)//тут измененная геометрия, но не добавленные элементы
+            foreach (var geomIds in snapshot.GeomModificationIds)//тут измененная геометрия, но не добавленные элементы
             {
                 Element element = doc.GetElement(geomIds);
                 ProcessElement(dateTime, doc, element, ETypeChangeEl.GeomModifiedElements);
             }
-            foreach(var propIds in snapshot.ModifiedIdsProp) // теоретически тут с измененным параметром, но не добавленные элементы
+            foreach (var propIds in snapshot.ModifiedIdsProp) // теоретически тут с измененным параметром, но не добавленные элементы
             {
                 Element element = doc.GetElement(propIds);
                 ProcessElement(dateTime, doc, element, ETypeChangeEl.ModifiedElements);
             }
 
         }
-        private static void ProcessElement(DateTime dateTime, Document doc,Element element, ETypeChangeEl eTypeChangeEl )
+        private static void ProcessElement(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             if (element == null) return;
             ElementId groupId = element.GroupId; // ← NRE, если element == null
@@ -194,7 +194,7 @@ namespace Reinforcement
             {
                 //сбрасываем кубики
                 CubicWriter(dateTime, doc, element, eTypeChangeEl);
-                
+
                 //меняем длину выноски
             }
             catch (Exception ex)
@@ -205,7 +205,7 @@ namespace Reinforcement
             {
                 CubicWriterLevel(dateTime, doc, element, eTypeChangeEl);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 AppErrors.LogError(ex);
             }
@@ -221,11 +221,13 @@ namespace Reinforcement
 
         }
 
-
        
 
-       
+
+
+
     }
+
 
 
 }

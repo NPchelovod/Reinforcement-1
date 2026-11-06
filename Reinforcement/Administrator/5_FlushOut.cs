@@ -21,6 +21,7 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             StatUsers.Flush();
+            PeriodicHandler.FlushDeleteIds(DateTime.Now);
             return Result.Succeeded;
         }
     }

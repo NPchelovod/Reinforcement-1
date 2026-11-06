@@ -109,6 +109,7 @@ namespace Reinforcement
                 //UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
                 // Для отслеживания изменений геометрии
                 UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeGeometry());
+                UpdaterRegistry.AddTrigger(updaterId, classFilter, Element.GetChangeTypeElementDeletion());
 
             }
             else if (forceReregister)
