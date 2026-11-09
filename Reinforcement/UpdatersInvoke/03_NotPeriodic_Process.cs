@@ -58,7 +58,7 @@ namespace Reinforcement
 
                 Element element = doc.GetElement(elIds.First());
 
-                if (element == null) { return; }
+                if (element == null || !element.IsValidObject) { return; }
                 ElementId groupId = element.GroupId;
                 if (groupId == ElementId.InvalidElementId) { return; }
 

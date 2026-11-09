@@ -19,83 +19,83 @@ namespace Reinforcement
         public Guid DefinitionId { get; set; }
         public List<int> FailingElementIds { get; set; } = new List<int>();
     }
+
+    public class FailureRecords : IJsonStorable<FailureRecords>
+    {
+        public  List<FailureRecord> Records = new List<FailureRecord>();
+        public int Count()
+        {
+            return Records.Count;
+        }
+        public void Merge(FailureRecords other)
+        {
+            if (other?.Records == null || other.Records.Count == 0) return;
+            Records.AddRange(other.Records);
+        }
+        public DateTime DateStart() => Records.Count > 0 ? Records.Min(r => r.Time) : DateTime.MinValue;
+        public DateTime DateEnd() => Records.Count > 0 ? Records.Max(r => r.Time) : DateTime.MinValue;
+
+    }
+
     public static class FailureBuffer
     {
-        private static readonly object _lock = new object();
-        private static readonly List<FailureRecord> _records = new List<FailureRecord>();
-        private static bool _dirty;
 
-        public static string FolderPath = Path.Combine(App_Folders.FolderStatistics, "Failures"); 
+        public static FailureRecords Records = new FailureRecords();
+        private static readonly object _lock = new object();
+        
+        
+
+        
 
         public static void Add(FailureRecord record)
         {
             if (record == null) return;
             lock (_lock)
             {
-                _records.Add(record);
-                _dirty = true;
+                Records.Records.Add(record);
+                
             }
         }
 
-        public static bool HasData
+        private static WriteAndRead<FailureRecords> writeAndRead = null;
+        private static void EnsureCurrentFile(DateTime now)
         {
-            get { lock (_lock) return _dirty && _records.Count > 0; }
-        }
+           
+            if (writeAndRead != null) return;
 
+            string name = $"{Environment.UserName}_{Environment.MachineName}_" +
+                             $"{DateTime.Now:yyyyMMdd_HHmmss}";
+
+            writeAndRead = new WriteAndRead<FailureRecords>(
+                App_Folders.FolderStatisticsErrors,
+                App_Folders.FolderStatisticsErrorsTemp,
+                $"{name}.json");
+        }
+        public static DateTime pastExport = DateTime.MinValue;
         /// <summary>
         /// Сохраняет накопленное в файл сессии и очищает буфер.
         /// Возвращает true при успешной записи.
         /// </summary>
         public static bool Flush()
         {
-            //if (!LookUsers.IsStorageAvailable()) { return false; }
-            List<FailureRecord> snapshot;
+            DateTime now = DateTime.Now;
+            EnsureCurrentFile(now);
+            if (writeAndRead == null) { AppErrors.LogError(new Exception("InitializationWriteAndRead()")); return false; }
+
+            bool ok;
             lock (_lock)
             {
-                if (!_dirty || _records.Count == 0) return true;
-                snapshot = new List<FailureRecord>(_records);
-            }
-
-            try
-            {
-                if (!Directory.Exists(FolderPath))
-                    Directory.CreateDirectory(FolderPath);
-                if (!Directory.Exists(FolderPath))
-                { return false; }
-                string name = $"{Environment.UserName}_{Environment.MachineName}_" +
-                            $"{DateTime.Now:yyyyMMdd_HHmmss}.json";
-                string path = Path.Combine(FolderPath, name);
-
-                var options = new JsonSerializerOptions
+                pastExport = now;//пусть будет тут, чтобы повторно часто не вызываться при неудачи
+                ok = writeAndRead.Flush(Records);
+                if (ok)
                 {
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                    WriteIndented = true
-                };
+                    Records = new FailureRecords();
 
-                string json = JsonSerializer.Serialize(snapshot, options);
-
-                // Атомарная запись через tmp
-                string tmp = path + ".tmp";
-                File.WriteAllText(tmp, json);
-                if (File.Exists(path))
-                    File.Replace(tmp, path, null, true);
-                else
-                    File.Move(tmp, path);
-
-                // Успех — очищаем буфер
-                lock (_lock)
-                {
-                    _records.Clear();
-                    _dirty = false;
                 }
-                return true;
             }
-            catch
-            {
-                // Не удалось — оставляем данные в памяти,
-                // попробуем при следующем Flush (или при закрытии Revit)
-                return false;
-            }
+            if (!ok) { /* лог */ }
+
+            return ok;
         }
     }
 }

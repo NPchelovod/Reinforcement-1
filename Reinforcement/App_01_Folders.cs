@@ -39,19 +39,31 @@ namespace Reinforcement
         public static string SourcePluginDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин_Admin";
 
         public static string BackupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
-        public static string LogUpdaterFile;
+        public static string LogUpdaterFile= $"{Environment.UserName}_{Environment.MachineName}_log.txt";
         public static string UpdaterNameProcess = "UpdaterENS";
 
         //Для статистики
         public static string FolderMain = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику";
 
         public static string FolderStatistics = Path.Combine(FolderMain, "_statistics");
-
-        public static string FolderStatisticsDelIds => Path.Combine(FolderStatistics, "_delElements");
-
-        public static volatile bool IsTempFolders = false;
         public static string FolderTemp = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string FolderStatisticsTemp = Path.Combine(FolderTemp, "_statistics");
+
+
+        //статистика удаленных элеметов
+        public static string FolderStatisticsDelIds => Path.Combine(FolderStatistics, "_delElements");
+        public static string FolderStatisticsDelIdsTemp => Path.Combine(FolderStatisticsTemp, "_delElements");
+
+        //статистика ошибок Error
+        public static string FolderStatisticsErrors=> Path.Combine(FolderStatistics, "_failures");
+        public static string FolderStatisticsErrorsTemp => Path.Combine(FolderStatisticsTemp, "_failures");
+
+
+
+
+
+        public static volatile bool IsTempFolders = false;
+        
 
         // --- Контроль рабочего времени ---
         public static string UserTimeSourceDir =
@@ -61,14 +73,12 @@ namespace Reinforcement
 
 
         //Для статистики ошибок
-        public static string FolderErrors => Path.Combine(FolderStatistics, "Errors");
+        public static string FolderErrorsLog => Path.Combine(FolderStatistics, "_errors");
+        public static string FolderErrorsLogTemp => Path.Combine(FolderStatisticsTemp, "_errors");
 
         public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina" };
 
         public static bool UserIsAvtor=false;
-
-
-
 
 
 
@@ -81,68 +91,101 @@ namespace Reinforcement
         public static void Initializator()
         {
             InitialTimeCurrentSessia = DateTime.Now;
-            // Вычисляем дату самого свежего файла в текущей папке плагина (необязательно)
-            if (string.IsNullOrEmpty(TargetPluginDir))
+
+            // 1. Дата плагина (может упасть на EnumerateFiles)
+            try
             {
-                TargetPluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                if (string.IsNullOrEmpty(TargetPluginDir))
+                {
+                    var loc = Assembly.GetExecutingAssembly().Location;
+                    if (!string.IsNullOrEmpty(loc))
+                        TargetPluginDir = Path.GetDirectoryName(loc);
+                }
+                DatePluginDll = GetLatestFileTime(TargetPluginDir);
             }
-            DatePluginDll = GetLatestFileTime(TargetPluginDir);
-
-            TempFolder = Path.GetTempPath();
-            TempUpdaterDir = Path.Combine(TempFolder, "ENS_Updater");
-            TempUpdaterExe = Path.Combine(TempUpdaterDir, "UpdaterENS.exe");
-            LogUpdaterFile = Path.Combine(BackupDir, $"{UserName_MachineName}_log.txt");
-
-            //Для статистики
-            if (!Directory.Exists(FolderMain))
+            catch (Exception ex)
             {
-                //будем статистику хранить в папке
-                IsTempFolders=true;
-                FolderStatistics = FolderStatisticsTemp;
+                AppErrors.LogError(ex);
+                DatePluginDll = DateTime.MinValue;
             }
 
-
-            
-            // Версия сборки
-            Version = Assembly.GetExecutingAssembly().GetName().Version;
-            VersionString = Assembly.GetExecutingAssembly()
-                .GetCustomAttribute<AssemblyFileVersionAttribute>()
-                ?.Version;
-
-
-            UserName = Environment.UserName;
-            MachineName = Environment.MachineName;
-            UserName_MachineName = $"{UserName}_{MachineName}";
-
-            if (Avtors.Contains(UserName))
+            // 2. Пути temp / updater
+            try
             {
-                UserIsAvtor = true;
+                TempFolder = Path.GetTempPath();
+                TempUpdaterDir = Path.Combine(TempFolder, "ENS_Updater");
+                TempUpdaterExe = Path.Combine(TempUpdaterDir, "UpdaterENS.exe");
+                LogUpdaterFile = Path.Combine(BackupDir,
+                    $"{Environment.UserName}_{Environment.MachineName}_log.txt");
             }
+            catch (Exception ex) { AppErrors.LogError(ex); }
 
-            isInitialize=true;
+            // 3. Проверка доступности Y:
+            try
+            {
+                if (!FastDirectoryChecker.DirectoryExistsFast(FolderMain))
+                    IsTempFolders = true;
+            }
+            catch (Exception ex) { AppErrors.LogError(ex); IsTempFolders = true; }
+
+            // 4. Версия (безопасно, но пусть будет)
+            try
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                Version = asm.GetName().Version;
+                VersionString = asm.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+            }
+            catch (Exception ex) { AppErrors.LogError(ex); }
+
+            // 5. Пользователь/машина/автор
+            try
+            {
+                UserName = Environment.UserName;
+                MachineName = Environment.MachineName;
+                UserName_MachineName = $"{UserName}_{MachineName}";
+                if (Avtors.Contains(UserName)) UserIsAvtor = true;
+            }
+            catch (Exception ex) { AppErrors.LogError(ex); }
+
+            isInitialize = true;   // ← выставляем всегда в конце
         }
 
 
 
         public static DateTime GetLatestFileTime(string directoryPath)
         {
-            //самая свежая дата
-            if (!Directory.Exists(directoryPath))
+            if (string.IsNullOrEmpty(directoryPath) || !Directory.Exists(directoryPath))
                 return DateTime.MinValue;
 
-            var extensions = new[] { ".dll", ".exe" };
+            try
+            {
+                var extensions = new[] { ".dll", ".exe" };
+                var max = DateTime.MinValue;
 
-            var paths = Directory.EnumerateFiles(directoryPath, "*", SearchOption.TopDirectoryOnly)
-                                 .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase));
+                foreach (var p in Directory.EnumerateFiles(directoryPath, "*",
+                                                           SearchOption.TopDirectoryOnly))
+                {
+                    if (!extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase))
+                        continue;
 
-            if (!paths.Any())
+                    try
+                    {
+                        var t = File.GetLastWriteTimeUtc(p);
+                        if (t > max) max = t;
+                    }
+                    catch { /* файл исчез между итерациями — пропускаем */ }
+                }
+                return max;
+            }
+            catch (Exception ex)
+            {
+                AppErrors.LogError(ex);
                 return DateTime.MinValue;
-
-            return paths.Max(p => File.GetLastWriteTimeUtc(p));
+            }
         }
 
         //возврат рекомендуемого имени транзакции
-       
+
 
         /// <summary>
         /// Разовая очистка целевой папки плагина от альтернативного потока Zone.Identifier.

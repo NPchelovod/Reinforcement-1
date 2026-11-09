@@ -113,7 +113,7 @@ namespace Reinforcement
 
                 if (anyProcessed)
                 {
-                    DateLastExecute = now;
+                    DateLastExecute = now;//возможно надо в начало??
                 }
 
 

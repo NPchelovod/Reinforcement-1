@@ -50,6 +50,9 @@ namespace Reinforcement
 
                 App_Helper_Button.AddButtonToSplitButton(item1, "ВосстанВид", assemblyPath,
                     "Reinforcement.MemoryViewCorrect", "Восстановить вид", OV1);
+                App_Helper_Button.AddButtonToSplitButton(item1, "ВосстанВидыЛиста", assemblyPath,
+                    "Reinforcement.MemoryViewCorrectSheet", "Восстановить виды на листе", OV1);
+
             }
 
             // ===== 3. Память 3D границ =====

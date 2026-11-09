@@ -13,17 +13,20 @@ using System.Threading.Tasks;
 
 namespace Reinforcement
 {
-    public class StatElement
+    public class StatElement: IJsonStorable<StatElement>
     {
         // ==== Данные ==== они идут в файл записи
         public string UserName = Environment.UserName;
         public string VersionName => SettingsWindow.GetDatePluginText;
-        public DateTime DateDay { get; set; } = DateTime.Now.Date;//дата текущего дня
+        public DateTime DateDay { get; set; } = DateTime.Now;//дата текущего дня
         public Dictionary<DateTime, Dictionary<string, DocStats>> DictDateDocStats { get; set; }
             = new Dictionary<DateTime, Dictionary<string, DocStats>>();
         public WritePerfStats WriteStats { get; set; } = new WritePerfStats();
 
-
+        public int Count()
+        {
+            return DictDateDocStats.Count;
+        }
 
         public void Merge(StatElement other)
         {
@@ -61,13 +64,37 @@ namespace Reinforcement
             if (other.WriteStats != null)
                 WriteStats.Merge(other.WriteStats);
         }
+
+        public DateTime DateStart()
+        {
+            if(DictDateDocStats.Count>0)
+            {
+                return DictDateDocStats.Keys.Min();
+            }
+            return DateTime.Now;
+        }
+        public DateTime DateEnd()
+        {
+            if (DictDateDocStats.Count > 0)
+            {
+                return DictDateDocStats.Keys.Max();
+            }
+            return DateTime.Now;
+        }
     }
 
     public  static class StatUsers
     {
         public static StatElement _statElement = new StatElement();
+        private static WriteAndRead<StatElement> writeAndRead=null;
 
-        private static int secondsProstoi = 12; // после скольки секунд считать что простой у нас - что мы ничего не делали
+        private static void InitializationWriteAndRead()
+        {
+            if (writeAndRead != null) { return; }
+            writeAndRead = new WriteAndRead<StatElement> (App_Folders.FolderStatistics, App_Folders.FolderStatisticsTemp, $"{Environment.UserName}_{Environment.MachineName}.json");
+        }
+
+
         private static int _inUpdate;
         // Защита от гонок в рамках одной сессии
         private static readonly object _lock = new object();
@@ -97,6 +124,7 @@ namespace Reinforcement
                 if (Now - _pastDateFlush > _flushInterval)
                 {
                     Flush();
+                    
                 }
             }
             catch (Exception ex)
@@ -207,6 +235,8 @@ namespace Reinforcement
         }
         private const int _secondsRazbrosTimeCommandMax = 20;
         private const double _kratProstoiTime = 3.0;//во сколько раз больше по времени между командами чтобы считать за простой
+
+        private static int pastComDoc = 0;//для расчета среднего времени 
         private static void ProcessWriterDocStat(DocStats docStat, string key, EDocStatsOptions commandType)
         {
             //запись характеристик документа
@@ -220,7 +250,16 @@ namespace Reinforcement
                 //вообще надо чтобы от среднего квадратичного с 90% вероятностью квантилью не отличалось время
                 if(Math.Abs(stepTime-asp)< _secondsRazbrosTimeCommandMax)
                 {
-                    docStat.AverSecondsBetweenCommands = (stepTime + asp) / 2;
+                    if (asp == 0)
+                    {
+                        docStat.AverSecondsBetweenCommands = stepTime; 
+                        pastComDoc = 0;
+                    }
+                    else
+                    {
+                        docStat.AverSecondsBetweenCommands = (stepTime + asp* pastComDoc) / (pastComDoc+1);
+                        pastComDoc++;
+                    }
                 }
                 else if(stepTime> _kratProstoiTime * docStat.AverSecondsBetweenCommands)
                 {
@@ -232,6 +271,7 @@ namespace Reinforcement
             {
                 _pastDocStat = docStat;
                 docStat.CountActiveDoc++;
+                pastComDoc = 0;
             }
 
             //всегда может оказаться последним сеансом
@@ -419,252 +459,32 @@ namespace Reinforcement
         public static void Flush()
         {
             //при закрытии ревита эта команда вызывается напрямую
-            if (Interlocked.CompareExchange(ref _inFlush, 1, 0) != 0)
+            
+            
+            InitializationWriteAndRead();
+            if (writeAndRead == null) { AppErrors.LogError(new Exception("InitializationWriteAndRead()")); return; }
+            bool ok;
+            lock (_lock)
             {
-                return;
-            }
-            try
-            {
-                lock (_lock)
+                _pastDateFlush = DateTime.Now;//пусть будет тут, чтобы повторно часто не вызываться при неудачи
+                ok = writeAndRead.Flush(_statElement);
+                if (ok)
                 {
-                    Now = DateTime.Now;                 // ← на случай внешнего вызова
-                    _pastDateFlush = Now;//можно это перенести в if (WriteFile(past)), но пусть будет так чтобы не стучаться часто
-
-                    //универсально - обрубаем здесь сохранение
-                    if (!Directory.Exists(folderStat))
-                    {
-                        Directory.CreateDirectory(folderStat);
-                        // Быстрый отказ, если диск недоступен — не ждём таймауты SMB
-                        if (!Directory.Exists(folderStat))
-                        {
-                            return;
-                        }
-                    }
-                    
-
-
-                    // 1. Читаем прошлый файл
-                    StatElement past = ReadFileAndControlSize(filePath, false);
-                    if(past==null)
-                    {
-                        past = new StatElement();
-                    }
-                    bool consumed = false;
-                    StatElement past2=null;
-                    if (filePath != tempPath && File.Exists(tempPath))
-                    {
-                        //мы не в сеансе временных файлов
-                        //во временной папке могли храниться старые данные пока диск был недоступен
-                        
-                       
-                        past2 = ReadFileAndControlSize(tempPath,true);
-                        if (past2 != null)
-                        {
-                            try
-                            {
-                                File.Delete(tempPath);
-                                consumed = true;   // ← диск больше не наш «источник правды»
-                                
-                            }
-                            catch (Exception ex)
-                            {
-                                AppErrors.LogError(ex);
-                            }
-                            if(consumed)
-                            {
-                                past.Merge(past2);
-                            }
-                        }
-                        else
-                        {
-                            long size = -1;
-                            try { size = new FileInfo(tempPath).Length; } catch { }
-                            AppErrors.LogError(new Exception(
-                                $"[Stats] temp file exists but failed to read/parse: {size} bytes"));
-                        }
-                        
-                    }
-                    
-                    //в этот элемент мы копируем наши данные текущие
-                    past.Merge(_statElement);
-
-                    //и пытаемся его записать
-                    if (WriteFile(past))
-                    {
-
-                        // Успешно — обнуляем накопленное, чтобы не записать повторно
-                        _statElement = new StatElement();
-                        _pastDocStat = null;
-                        _pastViewStat = null;
-
-                    }
-                    else
-                    {
-                        if (consumed && past2 != null)
-                        {
-                            //последний шанс, временно храним у себя жн
-                            _statElement.Merge(past2);
-                        }
-                       
-                        AppErrors.LogError(new Exception("WriteFile failed, state rolled back"));
-                    }
-                    
+                    _statElement = new StatElement();
+                    _pastDocStat = null;
+                    _pastViewStat = null;
                 }
             }
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _inFlush, 0);
-            }
+            if (!ok) { /* лог */ }
 
+            //так же ошибки выгружаем
+            AppErrors.FlushErrorsToLog();
         }
 
         
-        public static string folderStat => App_Folders.FolderStatistics;
-
-        
-
-        //запись  архива
-        public static string folderStatisticsHistory => Path.Combine(folderStat, "Архив");
-        public static string fileName => $"{Environment.UserName}_{Environment.MachineName}.json";
-        public static string filePath => Path.Combine(folderStat, fileName);
-
-        private static string tempPath => Path.Combine(App_Folders.FolderStatisticsTemp, fileName);
+       
        
 
-        private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
-        public const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ Жёсткий порог — на такой файл лучше даже не замахиваться парсером
-        private static StatElement ReadFileAndControlSize(string path, bool isTemp)
-        {
-            try
-            {
-
-                
-                if (!File.Exists(path))
-                {
-                    return null;
-                }
-
-                //првоерка размера до парсига
-                long sizeBytes = new FileInfo(path).Length;
-                if (sizeBytes > hardFileSizeBytes)
-                {
-                    if (!isTemp)
-                    {
-                        MoveToHistory(path,Now, Now, "hardSize");
-                    }
-                    return null;
-                }
-
-                string json = File.ReadAllText(path);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    if (!isTemp)
-                    {
-                        MoveToHistory(path, Now, Now, "jsonError");
-                    }
-                    return null;
-                }
-
-                var data = JsonSerializer.Deserialize<StatElement>(json, Options);
-                if (data == null)
-                {
-                    if (!isTemp)
-                    {
-                        MoveToHistory(path, Now, Now, "dataError");
-                    }
-                    return null;
-                }
-
-                //если размер большой и надо в иторию вложить уже
-                if (sizeBytes > maxFileSizeBytes)
-                {
-                    DateTime from = Now;
-                    DateTime to = Now; 
-                    if(data.DictDateDocStats!=null)
-                    {
-                        from = data.DictDateDocStats.Keys.Min();
-                        to= data.DictDateDocStats.Keys.Max();
-                    }
-                    if (!isTemp)
-                    {
-                        MoveToHistory(path,from, to, "maxSize");
-                    }
-                    return null;
-                }
-
-                //проверка данных
-                
-                //и возврат данных
-                return data;
-            }
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-                return null;
-            }
-        }
-        private static bool WriteFile(StatElement statElement)
-        {
-            try
-            {
-
-
-               
-                // --- 1. Замер сериализации ---
-                var swSerialize = Stopwatch.StartNew();
-
-                string json = JsonSerializer.Serialize(statElement, Options);
-                swSerialize.Stop();
-                // Пишем во временный файл рядом с целевым (в той же папке —
-                // это важно: File.Replace/File.Move работают атомарно только
-                // в пределах одного тома)
-                string tmp = filePath + ".tmp";
-                // --- 2. Замер I/O ---
-                var swIo = Stopwatch.StartNew();
-
-                // 2. Потом пишем новый
-                File.WriteAllText(tmp, json);
-                if (File.Exists(filePath))
-                {
-                    // Атомарная замена существующего файла:
-                    // в целевой путь попадает tmp, старый файл удаляется.
-                    // Третий параметр — путь для бэкапа (null — бэкап не нужен).
-                    File.Replace(tmp, filePath, destinationBackupFileName: null,
-                                 ignoreMetadataErrors: true);
-
-                }
-                else
-                {
-                    // Файла ещё нет — просто переносим.
-                    File.Move(tmp, filePath);
-                }
-                swIo.Stop();
-
-                // --- 3. Записываем метрики в объект ---
-                // ВАЖНО: эти цифры попадут в JSON только при СЛЕДУЮЩЕЙ записи,
-                // потому что текущий json уже сериализован выше. Это нормально —
-                // одна итерация задержки не критична.
-                statElement.WriteStats.Add(swSerialize.Elapsed.TotalMilliseconds,
-                               swIo.Elapsed.TotalMilliseconds);
-
-                // --- 2. Сбрасываем накопленные ошибки в .errors.log ---
-                AppErrors.FlushErrorsToLog();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                // Любая IO-ошибка → диск считается недоступным до следующей проверки
-                AppErrors.LogError(ex);
-                AppErrors.FlushErrorsToLog();
-                return false;
-            }
-        }
-        
         private static string GetCallerName(EDocStatsOptions commandType)
         {
             // 0 — GetCallerName, 1 — Update, 2 — вызывающий команду
@@ -681,47 +501,7 @@ namespace Reinforcement
 
             return $"{typeName}.{methodName}";
         }
-        private static bool MoveToHistory(string sourcePath, DateTime from, DateTime to, string rizon)
-        {
-            if (!Directory.Exists(folderStat))
-                return false;
-             
-            try
-            {
-                // Создаём папку «Архив», если её нет
-                if (!Directory.Exists(folderStatisticsHistory))
-                    Directory.CreateDirectory(folderStatisticsHistory);
-
-                string historyName = $"{Environment.UserName}_{Environment.MachineName}_" +
-                                     $"{from.Year}_{from.Month}_{from.Day}To" +
-                                     $"{to.Year}_{to.Month}_{to.Day}_{rizon}.json";
-                string baseName = Path.GetFileNameWithoutExtension(historyName);
-                string historyPath = Path.Combine(folderStatisticsHistory, historyName);
-                int suffix = 1;
-                while (File.Exists(historyPath))
-                {
-                    historyPath = Path.Combine(folderStatisticsHistory,
-                        $"{baseName}_{suffix++}.json");
-                }
-
-                File.Copy(sourcePath, historyPath, overwrite: true);
-                try { File.Delete(sourcePath); } catch (Exception ex) { AppErrors.LogError(ex); }
-
-                return File.Exists(historyPath);
-            }
-            catch (Exception ex)
-            {
-                
-                AppErrors.LogError(ex);
-                return false;
-            }
-        }
-        public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            IncludeFields = true,
-            WriteIndented = true
-        };
+       
 
 
     }

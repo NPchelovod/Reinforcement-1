@@ -9,11 +9,19 @@ using Autodesk.Revit.DB;
 using System.Text.Json;
 namespace Reinforcement
 {
-    public class StatIdDeletes
+    public class StatIdDeletes : IJsonStorable<StatIdDeletes>
     {
+        public DateTime DateTime { get; set; } = DateTime.MinValue;
         public Dictionary<string, HashSet<int>> DeleteIds { get; set; }
             = new Dictionary<string, HashSet<int>>();
-
+        public int Count()
+        {
+            return DeleteIds.Count;
+        }
+        public StatIdDeletes() 
+        {
+            DateTime = DateTime.Now;
+        }
 
         public void Merge(StatIdDeletes other)
         {
@@ -36,6 +44,14 @@ namespace Reinforcement
                 }
             }
         }
+        public DateTime DateStart()
+        {
+            return DateTime;
+        }
+        public DateTime DateEnd()
+        {
+            return DateTime;
+        }
     }
 
     public partial class PeriodicHandler
@@ -45,155 +61,75 @@ namespace Reinforcement
         public static void ExecuteDelete(DateTime now, Document doc, ICollection<ElementId> deletes)
         {
             if (deletes == null || deletes.Count == 0) return;
-            string name = doc.PathName;
-            if (string.IsNullOrEmpty(name))
+            try
             {
-                name = doc.Title;
-            }
-            lock (_lockDelete)
-            {
-                if (!_statIdDeletes.DeleteIds.TryGetValue(name, out var hd))
+                string name = doc.PathName;
+                if (string.IsNullOrEmpty(name))
                 {
-                    hd = new HashSet<int>();
-                    _statIdDeletes.DeleteIds[name] = hd;
+                    name = doc.Title;
                 }
-                foreach (ElementId id in deletes)
+                lock (_lockDelete)
                 {
-                    hd.Add(id.IntegerValue);   // ← ElementId → int
+                    if (!_statIdDeletes.DeleteIds.TryGetValue(name, out var hd))
+                    {
+                        hd = new HashSet<int>();
+                        _statIdDeletes.DeleteIds[name] = hd;
+                    }
+                    foreach (ElementId id in deletes)
+                    {
+                        hd.Add(id.IntegerValue);   // ← ElementId → int
+                    }
+                }
+                if (now - pastExportIdDeletes > _flushInterval)
+                {
+                    FlushDeleteIds(now);
                 }
             }
-            if (now-pastExportIdDeletes> _flushInterval)
+            catch (Exception ex)
             {
-                FlushDeleteIds(now);
+                //AppErrors.LogError(ex);
             }
             
         }
         private static readonly TimeSpan _flushInterval = TimeSpan.FromHours(3.5);
-        private static int _maxCountDelElements = 2500;
         public static DateTime pastExportIdDeletes = DateTime.MinValue;
 
-        private static int _inFlush;
-        private static string folderStatisticsDelIds => App_Folders.FolderStatisticsDelIds;
-        private static string fileName =>
-    $"{Environment.UserName}_{pastExportIdDeletes.ToString("yyyyMM")}.json";
+        
+
+        private static string _currentFileMonth = null;
         public static void FlushDeleteIds(DateTime now)
         {
-            pastExportIdDeletes = now;
+
             //при закрытии ревита эта команда вызывается напрямую
-            if (Interlocked.CompareExchange(ref _inFlush, 1, 0) != 0)
+
+            EnsureCurrentFile(now);
+            if (writeAndRead == null) { AppErrors.LogError(new Exception("InitializationWriteAndRead()")); return; }
+            bool ok;
+            lock (_lockDelete)
             {
-                return;
-            }
-            
-            try
-            {
-                
-                string fsd = folderStatisticsDelIds;
-                //универсально - обрубаем здесь сохранение
-                if (!Directory.Exists(fsd))
+                pastExportIdDeletes = now;//пусть будет тут, чтобы повторно часто не вызываться при неудачи
+                ok = writeAndRead.Flush(_statIdDeletes);
+                if (ok)
                 {
-                    Directory.CreateDirectory(fsd);
-                    if (!Directory.Exists(fsd))
-                    {
-                        return;
-                    }
+                    _statIdDeletes = new StatIdDeletes();
+                    
                 }
-                // Быстрый отказ, если диск недоступен — не ждём таймауты SMB
-                
-                
-
-                
-                string path = Path.Combine(folderStatisticsDelIds, fileName);
-                //пытаемся прочитать старый файл
-                StatIdDeletes past = ReadPastFile(path);
-                if(past==null)
-                {
-                    past = new StatIdDeletes();
-                }
-                lock (_lockDelete)
-                {
-                    past.Merge(_statIdDeletes);
-
-                    if (WriteFile(path, past))
-                    {
-
-                        _statIdDeletes = new StatIdDeletes();
-                    }
-                }
-
             }
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-            }
-            finally
-            {
-                
-                Interlocked.Exchange(ref _inFlush, 0);
-               
-            }
-
-        }
-        private static StatIdDeletes ReadPastFile(string path)
-        {
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-            try
-            {
-                //првоерка размера до парсига
-                long sizeBytes = new FileInfo(path).Length;
-                if (sizeBytes >StatUsers.hardFileSizeBytes)
-                {
-                    return null;
-                }
-                string json = File.ReadAllText(path);
-                if (string.IsNullOrWhiteSpace(json))
-                { return null; }
-                var data = JsonSerializer.Deserialize<StatIdDeletes>(json,  StatUsers.Options);
-                if (data == null)
-                    { return null; }
-                return data;
-            }
-
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-                return null;
-            }
+            if (!ok) { /* лог */ }
             
         }
+        private static WriteAndRead<StatIdDeletes> writeAndRead = null;
 
-        private static bool WriteFile(string path, StatIdDeletes statIdDeletes)
+        private static void EnsureCurrentFile(DateTime now)
         {
-            try
-            {
-                string json = JsonSerializer.Serialize(statIdDeletes, StatUsers.Options);
-                string tmp = path + ".tmp";
+            string month = now.ToString("yyyyMM");
+            if (writeAndRead != null && _currentFileMonth == month) return;
 
-                File.WriteAllText(tmp, json);
-                if (File.Exists(path))
-                {
-                    // Атомарная замена существующего файла:
-                    // в целевой путь попадает tmp, старый файл удаляется.
-                    // Третий параметр — путь для бэкапа (null — бэкап не нужен).
-                    File.Replace(tmp, path, destinationBackupFileName: null,
-                                 ignoreMetadataErrors: true);
-
-                }
-                else
-                {
-                    // Файла ещё нет — просто переносим.
-                    File.Move(tmp, path);
-                }
-            }
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-                return false;
-            }
-            return true;
+            _currentFileMonth = month;
+            writeAndRead = new WriteAndRead<StatIdDeletes>(
+                App_Folders.FolderStatisticsDelIds,
+                App_Folders.FolderStatisticsDelIdsTemp,
+                $"{Environment.UserName}_{Environment.MachineName}_{month}.json");
         }
 
     }

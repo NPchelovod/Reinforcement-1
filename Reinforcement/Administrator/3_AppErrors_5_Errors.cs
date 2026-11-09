@@ -3,28 +3,56 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Reinforcement
 {
-  
     public static partial class AppErrors
     {
-        /// <summary>
-        /// Ошибки, накопленные за сессию. Попадут в JSON при следующем WriteFile.
-        /// </summary>
-        /// //запись ошибок
-        
-        private static List<string> Errors { get; set; } = new List<string>();
-        private const int MaxErrors = 100; // чтобы файл не разрастался
+        // ================== Буфер ==================
+        private static List<string> Errors = new List<string>(MaxErrors);
+        private const int MaxErrors = 100;
+
+        // ================== Троттлинг ==================
+        private const int TimeOutMilliseconds = 200;
+
+        // Ключ без аллокаций: тип + сообщение
+        private struct ThrottleKey : IEquatable<ThrottleKey>
+        {
+            public readonly Type Type;
+            public readonly string Message;
+            public ThrottleKey(Type t, string m) { Type = t; Message = m; }
+            public bool Equals(ThrottleKey o) => ReferenceEquals(Type, o.Type)
+                                               && string.Equals(Message, o.Message);
+            public override bool Equals(object o) => o is ThrottleKey k && Equals(k);
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int h = Type?.GetHashCode() ?? 0;
+                    return (h * 397) ^ (Message?.GetHashCode() ?? 0);
+                }
+            }
+        }
+
+        private struct ThrottleEntry
+        {
+            public int LastTick;    // Environment.TickCount
+            public int Suppressed;  // сколько раз подавили
+        }
+
+        private static readonly Dictionary<ThrottleKey, ThrottleEntry> _throttle
+            = new Dictionary<ThrottleKey, ThrottleEntry>(64);
+
+        // ================== Синхронизация ==================
         private static int _inLogError;
         private static readonly object _errorsLock = new object();
 
-        public static volatile bool LookErrorsAdmin = false; // можно будет отлаживать ошибку и ловить
-        
-       
+        public static volatile bool LookErrorsAdmin = false;
+
+        // ================== Основной вход ==================
+
         public static void LogError(Exception ex)
         {
             if (ex == null) return;
@@ -32,182 +60,185 @@ namespace Reinforcement
 
             try
             {
-                string stack = ex.StackTrace;
-                string place = ExtractFirstFrame(stack);
+                // ---- fast path: троттлинг без аллокаций ----
+                var type = ex.GetType();
+                var msg = ex.Message ?? string.Empty;   // Message обычно кэширован в exception
+                var key = new ThrottleKey(type, msg);
+                int nowTick = Environment.TickCount;
 
-                string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {place} | {ex.GetType().Name}: {ex.Message}";
+                int suppressed = 0;
+                if (_throttle.TryGetValue(key, out var entry))
+                {
+                    int delta = unchecked(nowTick - entry.LastTick);
+                    // delta >= 0 — защита от переполнения TickCount (~раз в 24.9 дней)
+                    if (delta >= 0 && delta < TimeOutMilliseconds)
+                    {
+                        entry.Suppressed++;
+                        _throttle[key] = entry;
+                        return;                        // ← выходим без DateTime.Now, без форматирования
+                    }
+                    suppressed = entry.Suppressed;
+                }
+
+                // ---- slow path: реально пишем ----
+                string place = ExtractPlace(ex);           // только для новой/прошедшей ошибки
+                DateTime now = DateTime.Now;
+
+                string line = $"{now:yyyy-MM-dd HH:mm:ss.fff} | {place} | {type.Name}: {msg}";
+                if (suppressed > 0)
+                    line += $" | (x{suppressed + 1})";     // показываем «всего было N+1»
 
                 lock (_errorsLock)
                 {
+                    entry.LastTick = nowTick;
+                    entry.Suppressed = 0;
+                    _throttle[key] = entry;
+
                     Errors.Add(line);
                     if (Errors.Count > MaxErrors)
                         Errors.RemoveRange(0, Errors.Count - MaxErrors);
                 }
 
-                // Если включён админ-режим — показываем окно.
-                // _inLogError уже == 1, поэтому повторный LogError из ShowErrorDialog
-                // не зациклится: CompareExchange вернёт 1 и просто выйдет.
                 if (LookErrorsAdmin && ShouldShowDialog(line))
                 {
-                    bool disable = ShowErrorDialog(line);
-                    if (disable)
-                    {
+                    if (ShowErrorDialog(line))
                         LookErrorsAdmin = false;
-                    }
                 }
             }
-            catch { }
+            catch (Exception logEx)
+            {
+                Debug.WriteLine($"LogError failed: {logEx}");
+            }
             finally
             {
                 Interlocked.Exchange(ref _inLogError, 0);
             }
         }
-        
-        private static string ExtractFirstFrame(string stack)
+
+        // ================== Извлечение места ошибки ==================
+        // Раньше был сплит ex.StackTrace по '\n' + StartsWith("at "/"в ") + IndexOf.
+        // Теперь — TargetSite (O(1)) и, если не наш — StackTrace.Frames без сериализации в строку.
+
+        private static string ExtractPlace(Exception ex)
         {
-            if (string.IsNullOrEmpty(stack)) return "no stack";
-
-            var lines = stack.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            string firstUserWithLine = null;
-            string firstUser = null;
-            string firstAny = null;
-
-            const string userPrefix = "Reinforcement.";
-
-            foreach (var raw in lines)
+            try
             {
-                string line = raw.Trim();
+                // 1) TargetSite — метод, где выброшено (самое быстрое)
+                var ts = ex.TargetSite;
+                if (ts?.DeclaringType != null)
+                {
+                    string ns = ts.DeclaringType.FullName ?? string.Empty;
+                    if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
+                        return $"{ts.DeclaringType.Name}.{ts.Name}";
+                }
 
-                // В русской локали префикс "в ", в английской — "at ".
-                // Учитываем оба, иначе весь стек теряется.
-                if (line.StartsWith("at "))
-                    line = line.Substring(3);
-                else if (line.StartsWith("в "))
-                    line = line.Substring(2);
-                else
-                    continue;
+                // 2) Ищем первый фрейм нашего пространства имён
+                var st = new StackTrace(ex, false);
+                int n = st.FrameCount;
+                for (int i = 0; i < n; i++)
+                {
+                    var m = st.GetFrame(i)?.GetMethod();
+                    var dt = m?.DeclaringType;
+                    if (dt == null) continue;
 
-                if (firstAny == null) firstAny = line;
+                    string ns = dt.FullName ?? string.Empty;
+                    if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
+                        return $"{dt.Name}.{m.Name}";
+                }
 
-                if (!line.StartsWith(userPrefix, StringComparison.Ordinal))
-                    continue;
-
-                bool hasLineInfo =
-                    line.IndexOf(":line ", StringComparison.Ordinal) >= 0 ||
-                    line.IndexOf(" in ", StringComparison.Ordinal) >= 0 ||
-                    line.IndexOf(" в ", StringComparison.Ordinal) >= 0; // русский вариант
-
-                if (hasLineInfo && firstUserWithLine == null)
-                    firstUserWithLine = line;
-                if (firstUser == null)
-                    firstUser = line;
+                // 3) fallback — хоть что-то
+                return ts != null ? $"{ts.DeclaringType?.Name}.{ts.Name}" : "no stack";
             }
-
-            return firstUserWithLine ?? firstUser ?? firstAny ?? "no stack";
+            catch
+            {
+                return "stack error";
+            }
         }
-        /// <summary>
-        /// Возвращает первую строку стека в виде "Type.Method at File.cs:line N".
-        /// Если стека нет — null.
-        /// </summary>
-        //private static string ExtractFirstFrame(string stack)
-        //{
-        //    if (string.IsNullOrEmpty(stack)) return "no stack";
-        //    int nl = stack.IndexOf('\n');
-        //    string first = (nl >= 0 ? stack.Substring(0, nl) : stack).Trim();
-        //    // Убираем "at " в начале — так читабельнее
-        //    if (first.StartsWith("at ")) first = first.Substring(3);
-        //    return first;
-        //}
-        private static string GetCommandName(Exception ex)
+
+        // ================== Запись на диск ==================
+
+        public static string NameFile { get; } =
+            $"{Environment.UserName}_{Environment.MachineName}.errors.log";
+
+        public static string errorLogPath
         {
-            if (ex == null) return null;
-
-            var st = new StackTrace(ex, fNeedFileInfo: false);
-            var frames = st.GetFrames();
-            if (frames == null) return null;
-
-            foreach (var frame in frames)
+            get
             {
-                var method = frame.GetMethod();
-                var type = method?.DeclaringType;
-                if (type == null) continue;
-
-                if (typeof(Autodesk.Revit.UI.IExternalCommand).IsAssignableFrom(type))
-                    return type.Name;
-
-                if (typeof(Autodesk.Revit.UI.IExternalApplication).IsAssignableFrom(type))
-                    return type.Name + " (app)";
+                string folder = App_Folders.IsTempFolders
+                    ? App_Folders.FolderErrorsLogTemp
+                    : App_Folders.FolderErrorsLog;
+                return Path.Combine(folder, NameFile);
             }
-            return null;
         }
-        public static string errorLogPath =>
-        Path.Combine(App_Folders.FolderErrors, $"{Environment.UserName}_{Environment.MachineName}.errors.log");
-        
-        private const int MaxLogLines = 200;
-        /// <summary>
-        /// Дописывает Errors в .errors.log с fallback на %TEMP%, если основная папка недоступна.
-        /// После успешной записи очищает Errors.
-        /// </summary>
+
+        private const int MaxLogLines = 1000;
+        private const long TrimThresholdBytes = 200_000;
+
         public static void FlushErrorsToLog()
         {
+            // --- ownership transfer: I/O ВНЕ lock, LogError не блокируется ---
             List<string> toWrite;
-
             lock (_errorsLock)
             {
                 if (Errors.Count == 0) return;
-                toWrite = new List<string>(Errors);
+                toWrite = Errors;
+                Errors = new List<string>(MaxErrors);
             }
 
             bool written = TryAppendLines(errorLogPath, toWrite);
 
+            if (!written && !App_Folders.IsTempFolders)
+                written = TryAppendLines(
+                    Path.Combine(App_Folders.FolderErrorsLogTemp, NameFile), toWrite);
+
+            if (!written && App_Folders.IsTempFolders)
+                written = TryAppendLines(
+                    Path.Combine(Path.GetTempPath(), NameFile), toWrite);
+
             if (!written)
             {
-                // Fallback — только если основная запись не удалась
-                written = TryAppendLines(
-                    Path.Combine(Path.GetTempPath(), "LookUsers.errors.log"),
-                    toWrite);
-            }
-
-            if (written)
-            {
-                // Очищаем только если действительно записали куда-то
+                // вернуть в буфер, порядок сохраняется
                 lock (_errorsLock)
                 {
-                    Errors.Clear();
+                    Errors.InsertRange(0, toWrite);
+                    if (Errors.Count > MaxErrors)
+                        Errors.RemoveRange(0, Errors.Count - MaxErrors);
                 }
+                return;
             }
-            // если оба провалились — оставляем Errors, попробуем при следующем WriteFile
+
+            TrimThrottle();   // флаш = хороший момент почистить словарь
         }
-        /// <summary>
-        /// Дописывает строки в файл, обрезая его до последних MaxLogLines.
-        /// Возвращает true при успехе.
-        /// </summary>
+
         private static bool TryAppendLines(string path, List<string> lines)
         {
             if (lines == null || lines.Count == 0) return true;
-
             try
             {
                 string dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
+                if (string.IsNullOrEmpty(dir)) return false;
 
-                // Просто дописываем — быстро, не читаем файл целиком
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                    if (!Directory.Exists(dir)) return false;
+                }
+
                 File.AppendAllLines(path, lines);
 
-                // Обрезаем только если файл стал заметно большим.
-                // Проверка через размер файла — одна операция, дешёвая.
-                var fi = new FileInfo(path);
-                if (fi.Length > 200_000)   // ~200 КБ — это примерно 2000+ строк
+                // Trim — best effort: lines уже записаны, падение trim не должно ронять запись
+                try
                 {
-                    TrimLogFile(path);
+                    var fi = new FileInfo(path);
+                    if (fi.Length > TrimThresholdBytes) TrimLogFile(path);
                 }
+                catch (Exception trimEx) { Debug.WriteLine(trimEx); }
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine(ex);
                 return false;
             }
         }
@@ -216,14 +247,29 @@ namespace Reinforcement
         {
             try
             {
-                var lines = File.ReadAllLines(path);
-                if (lines.Length > MaxLogLines)
-                {
-                    var last = lines.Skip(lines.Length - MaxLogLines).ToArray();
-                    File.WriteAllLines(path, last);
-                }
+                var all = File.ReadAllLines(path);
+                if (all.Length > MaxLogLines)
+                    File.WriteAllLines(path, all.Skip(all.Length - MaxLogLines).ToArray());
             }
-            catch { }
+            catch (Exception ex) { Debug.WriteLine(ex); }
+        }
+
+        private static void TrimThrottle()
+        {
+            if (_throttle.Count < 200) return;
+
+            int nowTick = Environment.TickCount;
+            lock (_errorsLock)
+            {
+                var stale = new List<ThrottleKey>();
+                foreach (var kv in _throttle)
+                {
+                    int delta = unchecked(nowTick - kv.Value.LastTick);
+                    if (delta < 0 || delta > 60_000)     // >60с или переполнение
+                        stale.Add(kv.Key);
+                }
+                foreach (var k in stale) _throttle.Remove(k);
+            }
         }
     }
 }

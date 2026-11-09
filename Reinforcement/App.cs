@@ -461,8 +461,7 @@ namespace Reinforcement
             // Пытаемся сохранить накопленные ошибки самого revit
             try
             {
-                if (FailureBuffer.HasData)
-                    FailureBuffer.Flush();
+                FailureBuffer.Flush();
             }
             catch { /* уже нечего терять */ }
 

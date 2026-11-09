@@ -1,6 +1,8 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace Reinforcement
@@ -121,6 +123,12 @@ namespace Reinforcement
             // Для продакшена используйте хеш (см. ниже).
             return entered == App_Folders.Password;
         }
+        public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            IncludeFields = true,
+            WriteIndented = true
+        };
     }
 }
 

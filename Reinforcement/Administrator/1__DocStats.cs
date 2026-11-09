@@ -131,6 +131,8 @@ namespace Reinforcement
                 else
                     ActiveViews[kv.Key] = kv.Value.Clone();
             }
+            if (other.Warnings > 0) Warnings = Math.Max(Warnings,other.Warnings);  // или Math.Max
+            if (string.IsNullOrEmpty(Name)) Name = other.Name;
         }
 
         /// <summary>Полная копия (нужна для откатов).</summary>

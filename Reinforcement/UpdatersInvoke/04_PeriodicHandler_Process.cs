@@ -154,32 +154,41 @@ namespace Reinforcement
                 ProcessElement(dateTime, doc, element, ETypeChangeEl.ModifiedElements);
             }
 
+           
         }
+       
         private static void ProcessElement(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
-            if (element == null) return;
-            ElementId groupId = element.GroupId; // ← NRE, если element == null
-            if (groupId != ElementId.InvalidElementId)
+            if (element == null || !element.IsValidObject) return;
+            
+            try
             {
-                if (!AnyChangeClass.CorrectGroop) { return; }
-                //пытаемся определить группу
-                // Получаем экземпляр группы по GroupId элемента
-                Group instanceGroup = doc.GetElement(groupId) as Group;
-                if (instanceGroup == null)
+                ElementId groupId = element.GroupId; // ← NRE, если element == null
+                if (groupId != ElementId.InvalidElementId)
                 {
-                    // Странная ситуация — GroupId есть, а Group нет. Пропускаем.
+                    if (!AnyChangeClass.CorrectGroop) { return; }
+                    //пытаемся определить группу
+                    // Получаем экземпляр группы по GroupId элемента
+                    Group instanceGroup = doc.GetElement(groupId) as Group;
+                    if (instanceGroup == null)
+                    {
+                        // Странная ситуация — GroupId есть, а Group нет. Пропускаем.
+                        { return; }
+                    }
+                    ElementId groupTypeId = instanceGroup.GetTypeId();
+                    // Сравниваем по значению, а не по ссылке
+                    bool sameGroupType =
+                        groupTypeId != null
+                        && App.OnGroupCurrent.Id != null
+                        && groupTypeId.Equals(App.OnGroupCurrent.Id);
+                    if (!sameGroupType)
                     { return; }
                 }
-                ElementId groupTypeId = instanceGroup.GetTypeId();
-                // Сравниваем по значению, а не по ссылке
-                bool sameGroupType =
-                    groupTypeId != null
-                    && App.OnGroupCurrent.Id != null
-                    && groupTypeId.Equals(App.OnGroupCurrent.Id);
-                if (!sameGroupType)
-                { return; }
             }
-
+            catch (Exception ex)
+            {
+                AppErrors.LogError(ex);
+            }
             //записываем автора
             try
             {

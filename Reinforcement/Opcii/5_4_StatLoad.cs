@@ -47,7 +47,7 @@ namespace Reinforcement
                 return false;
             FolderPathStatistics = folderPath;
 
-            var options = StatUsers.Options;
+            var options = RevitAPI.Options;
             foreach (var file in Directory.EnumerateFiles(folderPath, "*.json", SearchOption.TopDirectoryOnly))
             {
                 try

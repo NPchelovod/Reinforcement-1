@@ -19,36 +19,54 @@ namespace Reinforcement
         void Merge(T other);
         DateTime DateStart();
         DateTime DateEnd();
+
+        int Count();
+        
     }
 
     public class WriteAndRead<T> where T : class, IJsonStorable<T>, new()
     {
-        public string FileName;
-        public string FileHistoryName;
-
-        public string FolderPath;
-        public string FolderPathTemp;
+        
+        public string FileName;//основное имя файла .json!
+        public string FileNameWithoutExtension => Path.GetFileNameWithoutExtension(FileName);
+        public string FolderPath;//основная папка
+        public string FolderPathTemp;//временная папка
+        
+        
         public string RelativeFolderHistory = "_history";
-        public string FolderPathHistory(string path) => Path.Combine(path, RelativeFolderHistory);
-        public string historyName(DateTime from, DateTime to, string rizon, int i)
+
+        public WriteAndRead(string folderPath,string folderPathTemp, string fileName)
         {
-            string hn=$"{Environment.UserName}_{Environment.MachineName}_" +
+            FolderPath = folderPath;
+            FolderPathTemp = folderPathTemp;
+            FileName = fileName;
+
+        }
+
+       
+
+        
+        public string HistoryName(DateTime from, DateTime to, string rizon, int i)
+        {
+            //имя для записи в историю
+            string hn=$"{FileNameWithoutExtension}_" +
                                      $"{from.Year}_{from.Month}_{from.Day}To" +
-                                     $"{to.Year}_{to.Month}_{to.Day}_{rizon}.json";
+                                     $"{to.Year}_{to.Month}_{to.Day}_{rizon}";
             if(i>0)
             {
-                hn += $"{i}";
+                hn += $"_{i}";
             }
             hn += ".json";
             return hn;
         }
 
-        public DateTime Now=DateTime.MinValue;
+        
 
         public string GetFileName(string path)=> Path.Combine(path, FileName);
         //public string GetPathHistory(string path) => Path.Combine(path, FileName);
 
-        private static int _inFlush;
+        private  int _inFlush;
+        private  readonly object _lock = new object();
         public bool Flush(T sc)
         {
             //при закрытии ревита эта команда вызывается напрямую
@@ -58,57 +76,76 @@ namespace Reinforcement
             }
             try
             {
-                Now = DateTime.Now.Date;
-                T pastT = null;
-                bool existF1=false;
-                string filepath = GetFileName(FolderPath);
-                if (FastDirectoryChecker.DirectoryExistsFast(FolderPath))
+               
+                lock (_lock)
                 {
-                    existF1 = true;
-                    pastT = ReadFileAndControlSize(filepath);
-                    
-                }
-                if (pastT == null)
-                {
-                    pastT = new T();    
-                }
+                    if (sc.Count() == 0) { return false; }//пустой значит
 
-                T pastT2 = null;
-                bool existF2 = false;
-                string filepath2 = GetFileName(FolderPathTemp);
-                if (FolderPath!= FolderPathTemp && FastDirectoryChecker.DirectoryExistsFast(FolderPathTemp))
-                {
-                    existF2= true;
-                    pastT2 = ReadFileAndControlSize(filepath2);
-
-                    if (pastT2 != null)
+                    T pastT = null;
+                    bool existF1 = false;
+                    string filepath = GetFileName(FolderPath);
+                    if (FastDirectoryChecker.DirectoryExistsFast(FolderPath))
                     {
-                        bool isDel = false;
-                        try
+                        //основная директория существует
+                        existF1 = true;
+                        //читаем прошлый файл
+                        pastT = ReadFileAndControlSize(filepath, FolderPath);
+
+                    }
+                    if (pastT == null)
+                    {
+                        pastT = new T();
+                    }
+
+                    T pastT2 = null;
+                    
+                    string filepath2 = GetFileName(FolderPathTemp);
+                    if (!string.Equals(Path.GetFullPath(FolderPath), Path.GetFullPath(FolderPathTemp),
+                   StringComparison.OrdinalIgnoreCase) && FastDirectoryChecker.DirectoryExistsFast(FolderPathTemp))
+                    {
+                        //возможно в temp есть файл когда диск основной был недоступен, надо его прочитать, и удалить
+                        
+                        pastT2 = ReadFileAndControlSize(filepath2, FolderPathTemp);
+
+                        if (pastT2 != null)
                         {
-                            File.Delete(filepath2);//удаляем временный файл
-                            isDel = true;
-                        }
-                        catch { }
-                        if (isDel)
-                        {
-                            pastT.Merge(pastT2);
+                            bool isDel = false;
+                            if (existF1)
+                            {
+                                try
+                                {
+                                    //удаляем файл чтобы не складывать дубли в  статистику в следующий раз
+                                    File.Delete(filepath2);//удаляем временный файл
+                                    isDel = true;
+                                }
+                                catch { }
+
+                                if (isDel)
+                                {
+                                    pastT.Merge(pastT2);
+                                }
+                            }
+                            else
+                            {
+                                //значит temp - наша основная директория
+                                pastT = pastT2;
+                            }
                         }
                     }
-                }
-                
 
-                pastT.Merge(sc);
-                string folder = FolderPath;
-                if (!existF1)
-                {
-                    filepath = filepath2;
-                    folder = FolderPathTemp;
-                }
-                //теперь запись файла
-                if(!Writer(pastT, filepath, folder))
-                {
-                    return false;
+
+                    pastT.Merge(sc);//соединяем с нашей статистикой за время t
+                    string folder = FolderPath;
+                    if (!existF1)
+                    {
+                        filepath = filepath2;
+                        folder = FolderPathTemp;
+                    }
+                    //теперь запись файла
+                    if (!Writer(pastT, filepath, folder))
+                    {
+                        return false;
+                    }
                 }
                 
 
@@ -127,32 +164,26 @@ namespace Reinforcement
         {
             try
             {
-                Directory.CreateDirectory(folder);
+                Directory.CreateDirectory(folder);//если создана - не создастся
                 if (!Directory.Exists(folder)) { return false; }
-                string json = JsonSerializer.Serialize(sc, Options);
+                string json = JsonSerializer.Serialize(sc, RevitAPI.Options);
 
                 // Пишем во временный файл рядом с целевым (в той же папке —
                 // это важно: File.Replace/File.Move работают атомарно только
                 // в пределах одного тома)
                 string tmp = filePath + ".tmp";
                 // --- 2. Замер I/O ---
-                var swIo = Stopwatch.StartNew();
+               
 
                 // 2. Потом пишем новый
                 File.WriteAllText(tmp, json);
-                if (File.Exists(filePath))
+                try
                 {
-                    // Атомарная замена существующего файла:
-                    // в целевой путь попадает tmp, старый файл удаляется.
-                    // Третий параметр — путь для бэкапа (null — бэкап не нужен).
-                    File.Replace(tmp, filePath, destinationBackupFileName: null,
-                                 ignoreMetadataErrors: true);
-
+                    File.Replace(tmp, filePath, null, true);
                 }
-                else
+                catch (FileNotFoundException)
                 {
-                    // Файла ещё нет — просто переносим.
-                    File.Move(tmp, filePath);
+                    File.Move(tmp, filePath);  // файла не было — просто переносим
                 }
             }
             catch (Exception ex)
@@ -166,7 +197,7 @@ namespace Reinforcement
 
         private const long maxFileSizeBytes = 5L * 1024 * 1024;   // 5 МБ
         public const long hardFileSizeBytes = 20L * 1024 * 1024; // 20 МБ Жёсткий порог — на такой файл лучше даже не замахиваться парсером
-        private T ReadFileAndControlSize(string path)
+        private T ReadFileAndControlSize(string path, string folder)
         {
             try
             {
@@ -175,28 +206,28 @@ namespace Reinforcement
                 {
                     return null;
                 }
-
-                //првоерка размера до парсига
+                DateTime NowDay = DateTime.Now.Date;//обрезанная дата
+                                                           //првоерка размера до парсига
                 long sizeBytes = new FileInfo(path).Length;
                 if (sizeBytes > hardFileSizeBytes)
                 {
                     
-                    MoveToHistory(path, Now, Now, "hardSize");
-                    
-                   
+                    MoveToHistory(path, folder, NowDay, NowDay, "hardSize");
+                    return null;
+
                 }
 
                 string json = File.ReadAllText(path);
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    MoveToHistory(path, Now, Now, "jsonError");
+                    MoveToHistory(path, folder, NowDay, NowDay, "jsonError");
                     return null;
                 }
 
-                var data = JsonSerializer.Deserialize<T>(json, Options);
+                var data = JsonSerializer.Deserialize<T>(json, RevitAPI.Options);
                 if (data == null)
                 {
-                    MoveToHistory(path, Now, Now, "dataError");
+                    MoveToHistory(path, folder, NowDay, NowDay, "dataError");
                     return null;
                 }
 
@@ -207,14 +238,14 @@ namespace Reinforcement
                     DateTime to = data.DateEnd();
                     if(from==DateTime.MinValue)
                     {
-                        from = Now;
+                        from = NowDay;
                     }
                     if (to == DateTime.MinValue)
                     {
-                        to = Now;
+                        to = NowDay;
                     }
                     
-                    MoveToHistory(path, from, to, "maxSize");
+                    MoveToHistory(path, folder, from, to, "maxSize");
                     return null;
                 }
 
@@ -229,49 +260,37 @@ namespace Reinforcement
                 return null;
             }
         }
-        private bool MoveToHistory(string sourcePath, DateTime from, DateTime to, string rizon)
+        private bool MoveToHistory(string filePath, string folder, DateTime from, DateTime to, string rizon)
         {
-            string folderStatisticsHistory = FolderPathHistory(sourcePath);
-
+            
+            string historyFolder = Path.Combine(folder, RelativeFolderHistory);
             try
             {
-                // Создаём папку «Архив», если её нет
-                if (!Directory.Exists(folderStatisticsHistory))
-                    Directory.CreateDirectory(folderStatisticsHistory);
+                Directory.CreateDirectory(historyFolder);
                 int suffix = 0;
                 string historyPath;
                 while (true)
                 {
-
-                   string hn= historyName(from,to,rizon,suffix);
-                    historyPath = Path.Combine(folderStatisticsHistory, hn);
-                   if(!File.Exists(historyPath))
-                    {
-                        break;
-                    }
+                    string hn = HistoryName(from, to, rizon, suffix);
+                    historyPath = Path.Combine(historyFolder, hn);
+                    if (!File.Exists(historyPath)) break;
                     suffix++;
                 }
-                File.Copy(sourcePath, historyPath, overwrite: true);
-                try { File.Delete(sourcePath); } catch (Exception ex) { AppErrors.LogError(ex); }
-
+                File.Copy(filePath, historyPath, overwrite: false);
+                try { File.Delete(filePath); } catch (Exception ex) { AppErrors.LogError(ex); }
                 return File.Exists(historyPath);
             }
             catch (Exception ex)
             {
-
                 AppErrors.LogError(ex);
                 return false;
             }
         }
-        public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            IncludeFields = true,
-            WriteIndented = true
-        };
+        
     }
     public static class FastDirectoryChecker
     {
+        //быстрый способ чтобы если нет диска Y/ то не зависала на 30+ секунд
         private const int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
         private const uint INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
 

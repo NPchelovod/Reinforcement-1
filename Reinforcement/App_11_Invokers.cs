@@ -8,6 +8,7 @@ using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.UI;
 using System.Threading;
 using System.IO;
+using System.Windows.Controls;
 namespace Reinforcement
 {
     
@@ -179,16 +180,21 @@ namespace Reinforcement
             try
             {
                 Document doc = fa.GetDocument();
-                if (doc != null)
+
+                if (doc == null) return;
+
+                var central = doc.GetWorksharingCentralModelPath();
+                docPath = central != null
+                    ? ModelPathUtils.ConvertModelPathToUserVisiblePath(central)
+                    : doc.PathName;
+                if (string.IsNullOrEmpty(docPath))
                 {
-                    var central = doc.GetWorksharingCentralModelPath();
-                    docPath = central != null
-                        ? ModelPathUtils.ConvertModelPathToUserVisiblePath(central)
-                        : doc.PathName;
+                    docPath = doc.Title;
                 }
             }
             catch { /* не критично */ }
 
+            
             string user = Environment.UserName;
             DateTime now = DateTime.Now;
 

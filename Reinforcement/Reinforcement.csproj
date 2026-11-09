@@ -160,6 +160,7 @@
     <Compile Include="FilteredsColors\2_ReinforcementColors.cs" />
     <Compile Include="General\2_2_Memory3D.cs" />
     <Compile Include="General\2_Memory.cs" />
+    <Compile Include="General\2_MemoryOnList.cs" />
     <Compile Include="General\3_HighOtm.cs" />
     <Compile Include="General\4_HorVert3DView.cs" />
     <Compile Include="General\51_ViewPositionTime.cs" />
