@@ -133,7 +133,7 @@ namespace Reinforcement
             em.Snapshots.Add(new MemorySnapshot
             {
                 Date = DateTime.Now,
-                UserName = Environment.UserName,
+                UserName = App_Folders.UserName,
                 NameDocument = doc.Title,
                 Label = label,
                 ElementIds = currentIds

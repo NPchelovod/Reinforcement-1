@@ -195,7 +195,7 @@ namespace Reinforcement
             catch { /* не критично */ }
 
             
-            string user = Environment.UserName;
+            string user = App_Folders.UserName;
             DateTime now = DateTime.Now;
 
             foreach (FailureMessageAccessor failure in failList)

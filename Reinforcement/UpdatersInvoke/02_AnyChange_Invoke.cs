@@ -104,9 +104,9 @@ namespace Reinforcement
                         anyProcessed = true;
                     }
                 }
-
-                if (delHash.Count > 0)
+                else if(delHash.Count > 0)
                 {
+                    //так лучше - тогда известно что только удаление было
                     PeriodicHandler.ExecuteDelete(now, doc, delHash);
                     anyProcessed = true;
                 }
@@ -115,8 +115,6 @@ namespace Reinforcement
                 {
                     DateLastExecute = now;//возможно надо в начало??
                 }
-
-
 
             }
             catch (Exception ex)

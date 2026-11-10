@@ -19,6 +19,7 @@ namespace Reinforcement
         
         public static void TimeStat()
         {
+
             if (App.EUserOtdel != EUserOtdel.KR)
             {
                 //только для КР акция
@@ -26,9 +27,10 @@ namespace Reinforcement
             }
             try
             {
+                string path = App_Folders.UserTimeSourceDir;
                 // Сеть может быть недоступна — тихо выходим.
-                if (string.IsNullOrWhiteSpace(App_Folders.UserTimeSourceDir) ||
-                    !Directory.Exists(App_Folders.UserTimeSourceDir))
+                if (string.IsNullOrWhiteSpace(path) ||
+                    !FastDirectoryChecker.DirectoryExistsFast(path))
                     return;
 
                 // Все exe по маске WpfControlUserTime*.exe, отсортированы по дате (свежие сверху).

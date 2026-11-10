@@ -52,12 +52,30 @@ namespace Reinforcement
 
         public ChangePriority GetChangePriority() => ChangePriority.FloorsRoofsStructuralWalls; // приоритет не принципиален
         static readonly List<string> Soglass = new List<string>() { "Согласовано АР", "Согласовано ИОС", "Согласовано КР" };
+
+        static readonly List<string> _familyCubicNames=new List<string>() { "кубик", "отвер", "перфорац" };
+
+        public static bool ExistName(ICollection<string> names, string name)
+        {
+            foreach (string s in names)
+            {
+                if (name.Contains(s))
+                {
+                  return true;
+                }
+            }
+            return false;
+        }
+
         private static void CubicWriterLevel(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             //var cat = element.Category?.BuiltInCategory;
             //if (cat != builtInCategoryCubicAnnotation) { return; }
-
-            if (!element.Name.Contains("Кубик_Стена_Прям") && !element.Name.Contains("Отверстие в стене"))
+            string name = element.Name;
+            if (name == null) { return; }
+            name =name.ToLower();
+           
+            if (!ExistName(_familyCubicNames, name))
             { return; }
 
             //var check = element.get_Parameter(new Guid("467142a7-677d-439a-9bfc-4cadb8761797"));

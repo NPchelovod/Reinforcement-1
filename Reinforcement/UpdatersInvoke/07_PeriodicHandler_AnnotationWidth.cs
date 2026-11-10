@@ -17,8 +17,21 @@ namespace Reinforcement
 {
     public partial class PeriodicHandler
     {
+        static readonly List<string> _familyVinoska = new List<string>() { "выноска",  };
         private static void AnnotationWriter(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
+            string name1 = element.Name;
+            if (name1 == null) { return; }//может это лучше чем "Семейство и типоразмер"
+            name1 = name1.ToLower();
+
+            //string name = element.Name;
+            //if (name == null) { return; }
+            //name = name.ToLower();
+
+            //if (!ExistName(_familyVinoska, name))
+            //{ return; }
+
+
             var param = element.LookupParameter("Семейство и типоразмер");
             if(param == null) { return; }
             string name= param.AsValueString().ToLower();

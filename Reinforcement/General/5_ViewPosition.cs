@@ -221,7 +221,7 @@ namespace Reinforcement
                 ViewPositionBuffer.SourceViewName = view.Name;
                 ViewPositionBuffer.SourceViewId = (int)view.Id.Value;
                 ViewPositionBuffer.SavedAt = DateTime.Now;
-                ViewPositionBuffer.SavedBy = Environment.UserName;
+                ViewPositionBuffer.SavedBy = App_Folders.UserName;
 
                 // Если явно передан targetViewId — фиксируем цель.
                 // Если нет — оставляем уже установленную цель (если была),

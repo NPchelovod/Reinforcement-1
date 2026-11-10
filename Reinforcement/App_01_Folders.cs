@@ -28,7 +28,7 @@ namespace Reinforcement
         public static string TempUpdaterExe=null;
         public static string UserName = Environment.UserName;
         public static string MachineName = Environment.MachineName;
-        public static string UserName_MachineName = null;//имя пользователя ПК
+        public static string UserName_MachineName = $"{Environment.UserName}_{Environment.MachineName}";//имя пользователя ПК
 
         public static string TargetPluginDir;// текущая папка плагина)
 
@@ -39,7 +39,7 @@ namespace Reinforcement
         public static string SourcePluginDirAvtor = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\ES_BIM_Плагин_Admin";
 
         public static string BackupDir = @"Y:\Revit\_ЕС BIM_Плагин\0_Разработчику\RezervCopy";
-        public static string LogUpdaterFile= $"{Environment.UserName}_{Environment.MachineName}_log.txt";
+        public static string LogUpdaterFile;
         public static string UpdaterNameProcess = "UpdaterENS";
 
         //Для статистики
@@ -108,6 +108,15 @@ namespace Reinforcement
                 AppErrors.LogError(ex);
                 DatePluginDll = DateTime.MinValue;
             }
+            // 5. Пользователь/машина/автор
+            try
+            {
+                UserName = Environment.UserName;
+                MachineName = Environment.MachineName;
+                UserName_MachineName = $"{UserName}_{MachineName}";
+                if (Avtors.Contains(UserName)) UserIsAvtor = true;
+            }
+            catch (Exception ex) { AppErrors.LogError(ex); }
 
             // 2. Пути temp / updater
             try
@@ -137,15 +146,7 @@ namespace Reinforcement
             }
             catch (Exception ex) { AppErrors.LogError(ex); }
 
-            // 5. Пользователь/машина/автор
-            try
-            {
-                UserName = Environment.UserName;
-                MachineName = Environment.MachineName;
-                UserName_MachineName = $"{UserName}_{MachineName}";
-                if (Avtors.Contains(UserName)) UserIsAvtor = true;
-            }
-            catch (Exception ex) { AppErrors.LogError(ex); }
+            
 
             isInitialize = true;   // ← выставляем всегда в конце
         }

@@ -161,7 +161,7 @@ namespace Reinforcement
             mem.Snapshots.Add(new SectionBoxSnapshot
             {
                 Date = DateTime.Now,
-                UserName = Environment.UserName,
+                UserName = App_Folders.UserName,
                 Label = labelResult.Label,
                 IsActive = view3D.IsSectionBoxActive,
                 Min = SectionBoxMemory.ToArray(box.Min),

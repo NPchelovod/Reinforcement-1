@@ -146,12 +146,12 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
-    <Compile Include="Administrator\0_StatUsers.cs" />
+    <Compile Include="Administrator\01_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="App_01_Folders.cs" />
     <Compile Include="App_11_Invokers.cs" />
     <Compile Include="App_12_InvokersDocChanged.cs" />
-    <Compile Include="App_OtherExe.cs" />
+    <Compile Include="App_31_OtherExe.cs" />
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
     <Compile Include="Aspirant\01_Asp_Parameters.cs" />

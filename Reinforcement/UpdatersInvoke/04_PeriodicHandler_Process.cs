@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -159,8 +160,17 @@ namespace Reinforcement
        
         private static void ProcessElement(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
-            if (element == null || !element.IsValidObject) return;
-            
+            if (element == null || !element.IsValidObject || !element.IsModifiable) return;
+
+            /*В IUpdater.Execute IsModifiable обычно возвращает true, но в некоторых состояниях(например, при вложенных транзакциях или при работе с элементами внутри редактируемой группы) может *///вернуть false.Это не ошибка — просто вы отсекаете лишние срабатывания.Вреда от этого нет.
+
+            // НОВАЯ ПРОВЕРКА: можем ли мы вообще редактировать этот элемент?
+            if (!CanEditElement(doc, element))
+            {
+                // Элемент в чужом рабочем наборе или занят другим пользователем —
+                // пропускаем, чтобы не вызвать конфликт и не заблокировать сохранение.
+                return;
+            }
             try
             {
                 ElementId groupId = element.GroupId; // ← NRE, если element == null
@@ -229,8 +239,39 @@ namespace Reinforcement
             }
 
         }
+        private static bool CanEditElement(Document doc, Element element)
+        {
+            // Если документ не использует worksharing, ограничений нет
+            if (!doc.IsWorkshared)
+                return true;
 
-       
+            // 1. Проверяем, редактируется ли рабочий набор элемента
+            //WorksetId worksetId = element.WorksetId;
+            //if (worksetId != WorksetId.InvalidWorksetId)
+            //{
+            //    WorksetTable worksetTable = doc.GetWorksetTable();
+            //    Workset workset = worksetTable.GetWorkset(worksetId);
+            //    if (workset != null && !workset.IsEditable)
+            //    {
+            //        // Рабочий набор не принадлежит текущему пользователю
+            //        return false;
+            //    }
+            //}
+
+            // 2. Проверяем, не занят ли элемент другим пользователем
+            //CheckoutStatus checkoutStatus = WorksharingUtils.GetCheckoutStatus(doc, element.Id);
+            //if (checkoutStatus == CheckoutStatus.OwnedByOtherUser)
+            //{
+            //    return false;
+            //}
+            // 1. Быстрая предварительная проверка (может быть неточной из-за кэша)
+            CheckoutStatus status = WorksharingUtils.GetCheckoutStatus(doc, element.Id);
+            if (status == CheckoutStatus.OwnedByOtherUser)
+                return false; // Точно занят другим — пропускаем
+            // В остальных случаях (OwnedByCurrentUser или NotOwned) можно пытаться редактировать
+            return true;
+        }
+
 
 
 

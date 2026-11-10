@@ -63,7 +63,7 @@ namespace Reinforcement
            
             if (writeAndRead != null) return;
 
-            string name = $"{Environment.UserName}_{Environment.MachineName}_" +
+            string name = $"{App_Folders.UserName_MachineName}_" +
                              $"{DateTime.Now:yyyyMMdd_HHmmss}";
 
             writeAndRead = new WriteAndRead<FailureRecords>(

@@ -16,6 +16,8 @@ namespace Reinforcement
     public static class UpdaterPlagina
     {
         //Запуск автообновления
+
+        
         public static void StartUpdateENS()
         {
             try
@@ -75,7 +77,7 @@ namespace Reinforcement
                 Directory.CreateDirectory(App_Folders.BackupDir);
 
                 int pid = Process.GetCurrentProcess().Id;
-                string logFile = Path.Combine(App_Folders.BackupDir, $"{App_Folders.UserName_MachineName}_log.txt");
+                
 
                 // pid, mainSource, adminSource, target, backup, logFile, isAuthor
                 string arguments = string.Join(" ",

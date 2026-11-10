@@ -16,7 +16,7 @@ namespace Reinforcement
     public class StatElement: IJsonStorable<StatElement>
     {
         // ==== Данные ==== они идут в файл записи
-        public string UserName = Environment.UserName;
+        public string UserName = App_Folders.UserName;
         public string VersionName => SettingsWindow.GetDatePluginText;
         public DateTime DateDay { get; set; } = DateTime.Now;//дата текущего дня
         public Dictionary<DateTime, Dictionary<string, DocStats>> DictDateDocStats { get; set; }
@@ -91,7 +91,7 @@ namespace Reinforcement
         private static void InitializationWriteAndRead()
         {
             if (writeAndRead != null) { return; }
-            writeAndRead = new WriteAndRead<StatElement> (App_Folders.FolderStatistics, App_Folders.FolderStatisticsTemp, $"{Environment.UserName}_{Environment.MachineName}.json");
+            writeAndRead = new WriteAndRead<StatElement> (App_Folders.FolderStatistics, App_Folders.FolderStatisticsTemp, $"{App_Folders.UserName_MachineName}.json");
         }
 
 
@@ -168,65 +168,30 @@ namespace Reinforcement
             if (doc == null) { return ; }
 
             var dateDay = Now.Date;   // ← добавить
+            DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
+            
+            string pathDoc = documentInfo.FullPath;
 
-
-            string nameDoc = doc.PathName;
-
-            ModelPath centralModelPath = doc.GetWorksharingCentralModelPath();
-            if (centralModelPath != null)
-            {
-                string centralPath = ModelPathUtils.ConvertModelPathToUserVisiblePath(centralModelPath);
-                // centralPath — это и есть путь к центральной модели string centralPath = BasicFileInfo.Extract(doc.PathName).CentralPath;
-                if (!string.IsNullOrEmpty(centralPath))
-                {
-                    nameDoc = centralPath;
-                }
-            }
-            if (string.IsNullOrEmpty(nameDoc))
-            {
-                //значит документ не сохранен просто возвращаем его имя
-                nameDoc = doc.Title;
-                if (string.IsNullOrEmpty(nameDoc))
-                {
-                    return;
-                }
-            }
-
+            
             //команды кликов
             if (!_statElement.DictDateDocStats.TryGetValue(dateDay, out var docStats))
             {
                 docStats = new Dictionary<string, DocStats>();
                 _statElement.DictDateDocStats[dateDay] = docStats;
             }
-            if (!docStats.TryGetValue(nameDoc, out var docStat))
+            if (!docStats.TryGetValue(pathDoc, out var docStat))
             {
                 docStat = new DocStats();
-                docStats[nameDoc] = docStat;
+                docStats[pathDoc] = docStat;
 
                 //заполняем даты открытия данной модели
                 docStat.FirstSeen = Now;
 
-                docStat.Name = System.IO.Path.GetFileNameWithoutExtension(nameDoc);
-                ProjectInfo info = doc.ProjectInformation;
+                docStat.Name = documentInfo.Name;
 
-                if (info != null)
-                {
-                    string documentGuid = info.UniqueId; // Уникальный GUID проекта совпадает если шаблон один
-
-                    if (!string.IsNullOrEmpty(documentGuid))
-                    {
-                        docStat.Guid = documentGuid;
-                    }
-                }
-                // Получаем 
-                string creationGUID = doc.CreationGUID.ToString();
-                if (!string.IsNullOrEmpty(creationGUID))
-                {
-                    docStat.CreationGUID = creationGUID;
-                }
-
-                int warnings = doc.GetWarnings().Count();//ошибок в документе
-                docStat.Warnings = warnings;
+                docStat.Guid = documentInfo.ProjectUniqueId;
+                docStat.CreationGUID = documentInfo.CreationGuid;
+                docStat.Warnings = documentInfo.WarningsCount;
             }
 
             ProcessWriterDocStat(docStat, key, commandType);//статистика всего документа для пользователя

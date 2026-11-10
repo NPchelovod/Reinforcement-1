@@ -452,7 +452,7 @@ namespace Reinforcement
             try
             {
                 //удаленные элементы записываем
-                PeriodicHandler.FlushDeleteIds(DateTime.Now);
+                PeriodicHandler.FlushDeleteIdsUser(DateTime.Now);
             }
             catch { /* уже нечего терять */ }
 

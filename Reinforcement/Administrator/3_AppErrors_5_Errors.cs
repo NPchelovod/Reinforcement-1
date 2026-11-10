@@ -157,8 +157,8 @@ namespace Reinforcement
 
         // ================== Запись на диск ==================
 
-        public static string NameFile { get; } =
-            $"{Environment.UserName}_{Environment.MachineName}.errors.log";
+        public static string NameFile  =>
+            $"{App_Folders.UserName_MachineName}.errors.log";
 
         public static string errorLogPath
         {
