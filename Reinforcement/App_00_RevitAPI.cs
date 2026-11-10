@@ -30,7 +30,7 @@ namespace Reinforcement
         //наша ли это транзакция
         public static bool OurTranzaction(string tranzactionName) { return tranzactionName.StartsWith(App.TabName); }
 
-        private static UIApplication _uiApplication;
+        private static UIApplication _uiApplication=null;
 
         /// <summary>
         /// Проверяет, был ли класс инициализирован через Initialize().
@@ -102,7 +102,7 @@ namespace Reinforcement
 
             using (var form = new PasswordForm())
             {
-                var revitHandle = RevitAPI.UiApplication.MainWindowHandle;
+                var revitHandle = UiApplication.MainWindowHandle;
                 var owner = new RevitWindowHandle(revitHandle);
 
                 var result = form.ShowDialog(owner);

@@ -90,6 +90,7 @@ namespace Reinforcement
         public static bool isInitialize =false;
         public static void Initializator()
         {
+            if(isInitialize) { return; }
             InitialTimeCurrentSessia = DateTime.Now;
 
             // 1. Дата плагина (может упасть на EnumerateFiles)
@@ -114,7 +115,13 @@ namespace Reinforcement
                 UserName = Environment.UserName;
                 MachineName = Environment.MachineName;
                 UserName_MachineName = $"{UserName}_{MachineName}";
-                if (Avtors.Contains(UserName)) UserIsAvtor = true;
+                if (!string.IsNullOrEmpty(UserName))
+                {
+                    if (Avtors.Contains(UserName))
+                    {
+                        UserIsAvtor = true;
+                    }
+                }
             }
             catch (Exception ex) { AppErrors.LogError(ex); }
 
@@ -133,7 +140,9 @@ namespace Reinforcement
             try
             {
                 if (!FastDirectoryChecker.DirectoryExistsFast(FolderMain))
+                {
                     IsTempFolders = true;
+                }
             }
             catch (Exception ex) { AppErrors.LogError(ex); IsTempFolders = true; }
 

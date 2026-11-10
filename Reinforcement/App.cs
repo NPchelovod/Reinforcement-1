@@ -137,10 +137,38 @@ namespace Reinforcement
             // внешний процесс UpdaterENS.exe и сразу возвращается.
             // Лечим уже заражённую папку плагина до того, как Revit попытается
             // грузить её файлы.
-            
-           
 
+            //самое главное с самого начала подписаться 
+            try
+            {
+                Application = app; // Сохраняем app в статическое свойство
+                                   //самое главное - подписаться на инициализацию
+                app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
+            }
+            catch (Exception ex)
+            {
+                ErrorException(ex, "OnStartupOnApplicationInitialized");
+
+                TaskDialog.Show($"{TabName}",
+                    "OnApplicationInitialized ошибка подписки. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
+                    ex.Message);
+                return Result.Failed;
+            }
+
+            //1. запускаем инициализацию путей и тд
+            try
+            {
+                App_Folders.Initializator(); //начальные данные - директории все, запускается также в  TryStartUpdate(app)
+            }
+            catch (Exception ex)
+            {
+                ErrorException(ex, "AppInitializator");
+            }
+
+
+            //2. пытаемся 
             TryStartUpdate(app);//пытаемся скачать обновления и начальные данные загружаем об окружении
+
 
             Result result = Result.Succeeded;
             try
@@ -151,6 +179,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 ErrorException(ex, "OnStartup");
+                try { AppErrors.LogError(ex); } catch { }
 
                 TaskDialog.Show($"{TabName}",
                     "Плагин не запустился. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
@@ -179,16 +208,7 @@ namespace Reinforcement
         /// </summary>
         private static void TryStartUpdate(UIControlledApplication app)
         {
-            Application = app; // Сохраняем app в статическое свойство
-            //1. запускаем инициализацию путей и тд
-            try
-            {
-                App_Folders.Initializator(); //начальные данные - директории все
-            }
-            catch (Exception ex)
-            {
-                ErrorException(ex, "AppInitializator");
-            }
+           
             //2. Запускаем сам апдейтер
             try
             {
@@ -198,6 +218,7 @@ namespace Reinforcement
             catch (Exception ex)
             {
                 ErrorException(ex, "StartUpdateENS");
+                try { AppErrors.LogError(ex); } catch { }
             }
         }
         public static void ErrorException(Exception ex, string method)
@@ -219,13 +240,11 @@ namespace Reinforcement
             File.AppendAllText(logPath,
                 $"\n=== {DateTime.Now} update-start failed ===\n{ex}\n");
             }
-            catch { }
+            catch { try { AppErrors.LogError(ex); } catch { } }
         }
         public Result Startup(UIControlledApplication app)
         {
-            Application = app; // Сохраняем app в статическое свойство
-            //самое главное - подписаться на инициализацию
-            app.ControlledApplication.ApplicationInitialized += OnApplicationInitialized;
+            
 
             HelperSeach.ClearCache();
             //app.ControlledApplication.DocumentChanged += FamilyCacheEvents.DocumentChanged;
