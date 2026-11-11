@@ -157,6 +157,7 @@
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
     <Compile Include="Aspirant\01_Asp_Parameters.cs" />
+    <Compile Include="Aspirant\02_AdaptiveBeamPlacer.cs" />
     <Compile Include="CreateReinfTag.cs" />
     <Compile Include="FilteredsColors\0_ViewFilterColorizer.cs" />
     <Compile Include="FilteredsColors\2_ReinforcementColors.cs" />
