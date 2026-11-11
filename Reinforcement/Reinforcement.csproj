@@ -141,6 +141,7 @@
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.ValueTuple" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
@@ -148,6 +149,7 @@
     <Reference Include="WindowsFormsIntegration" />
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
+    <Compile Include="Administrator\8_SyncError.cs" />
     <Compile Include="App_01_Folders.cs" />
     <Compile Include="App_11_Invokers.cs" />
     <Compile Include="App_12_InvokersDocChanged.cs" />
@@ -165,6 +167,7 @@
     <Compile Include="General\4_HorVert3DView.cs" />
     <Compile Include="General\51_ViewPositionTime.cs" />
     <Compile Include="General\5_ViewPosition.cs" />
+    <Compile Include="General\NaborsConfig.cs" />
     <Compile Include="Infrastructure\FamilyCacheEvents.cs" />
     <Compile Include="Infrastructure\ParameterHelper.cs" />
     <Compile Include="Infrastructure\RibbonImageHelper.cs" />

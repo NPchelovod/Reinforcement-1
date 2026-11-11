@@ -16,7 +16,7 @@ namespace Reinforcement
         {
             TimeStat();
         }
-        
+
         public static void TimeStat()
         {
 
@@ -28,20 +28,46 @@ namespace Reinforcement
             try
             {
                 string path = App_Folders.UserTimeSourceDir;
-                // Сеть может быть недоступна — тихо выходим.
-                if (string.IsNullOrWhiteSpace(path) ||
-                    !FastDirectoryChecker.DirectoryExistsFast(path))
-                    return;
+                string tempDir = Path.Combine(Path.GetTempPath(), "ENS_UserTime");
 
-                // Все exe по маске WpfControlUserTime*.exe, отсортированы по дате (свежие сверху).
-                var files = Directory
-                    .EnumerateFiles(App_Folders.UserTimeSourceDir,
-                                    App_Folders.UserTimeProcessPrefix + "*.exe",
-                                    SearchOption.TopDirectoryOnly)
-                    .Select(p => new FileInfo(p))
-                    .Where(fi => fi.Exists)
-                    .OrderByDescending(fi => fi.LastWriteTimeUtc)
-                    .ToList();
+                // Кандидаты: сначала свежие exe с шары (если она доступна),
+                // иначе — ранее скопированный в темп плагин из прошлых сессий.
+                var files = new List<FileInfo>();
+
+                // Сеть может быть недоступна — тихо пропускаем шару.
+                if (!string.IsNullOrWhiteSpace(path) &&
+                    FastDirectoryChecker.DirectoryExistsFast(path))
+                {
+                    try
+                    {
+                        files = Directory
+                            .EnumerateFiles(path,
+                                            App_Folders.UserTimeProcessPrefix + "*.exe",
+                                            SearchOption.TopDirectoryOnly)
+                            .Select(p => new FileInfo(p))
+                            .Where(fi => fi.Exists)
+                            .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                            .ToList();
+                    }
+                    catch { }
+                }
+
+                // Если на шаре ничего нет — смотрим в темп.
+                if (files.Count == 0 && FastDirectoryChecker.DirectoryExistsFast(tempDir))
+                {
+                    try
+                    {
+                        files = Directory
+                            .EnumerateFiles(tempDir,
+                                            App_Folders.UserTimeProcessPrefix + "*.exe",
+                                            SearchOption.TopDirectoryOnly)
+                            .Select(p => new FileInfo(p))
+                            .Where(fi => fi.Exists)
+                            .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                            .ToList();
+                    }
+                    catch { }
+                }
 
                 if (files.Count == 0) return;
 
@@ -64,22 +90,25 @@ namespace Reinforcement
 
                 FileInfo newest = files[0];
 
-                string tempDir = Path.Combine(Path.GetTempPath(), "ENS_UserTime");
                 Directory.CreateDirectory(tempDir);
                 string targetExe = Path.Combine(tempDir, newest.Name);
 
-                try
+                // Если файл уже лежит в темпе (взят оттуда) — копирование не нужно.
+                if (!string.Equals(newest.FullName, targetExe, StringComparison.OrdinalIgnoreCase))
                 {
-                    File.Copy(newest.FullName, targetExe, overwrite: true);
-                    // File.Copy переносит ADS из сетевой шары — снимаем метку,
-                    // иначе пользователь увидит «Этот файл получен из другой зоны».
-                    App_Folders.RemoveZoneIdentifier(targetExe);
-                }
-                catch
-                {
-                    // Не удалось скопировать (нет доступа / файл занят) —
-                    // пробуем запустить прямо из шары.
-                    targetExe = newest.FullName;
+                    try
+                    {
+                        File.Copy(newest.FullName, targetExe, overwrite: true);
+                        // File.Copy переносит ADS из сетевой шары — снимаем метку,
+                        // иначе пользователь увидит «Этот файл получен из другой зоны».
+                        App_Folders.RemoveZoneIdentifier(targetExe);
+                    }
+                    catch
+                    {
+                        // Не удалось скопировать (нет доступа / файл занят) —
+                        // пробуем запустить прямо из шары.
+                        targetExe = newest.FullName;
+                    }
                 }
 
                 if (!File.Exists(targetExe)) return;

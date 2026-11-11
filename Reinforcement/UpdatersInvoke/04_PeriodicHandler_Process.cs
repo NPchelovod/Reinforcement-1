@@ -136,6 +136,7 @@ namespace Reinforcement
             //прежде записи для автора нужно записать дату
             _nowDate = dateTime.ToString("dd.MM.yy.HH");
 
+            //наверно надо ограничение на количество элементов, представь у тебя 10000 будет элементов
 
             // Вся разветвлённая логика здесь.
             // snapshot.AddedIds / GeomModificationIds / ModifiedIdsProp уже разделены.

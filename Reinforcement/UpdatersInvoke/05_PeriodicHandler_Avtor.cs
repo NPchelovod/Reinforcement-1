@@ -42,7 +42,7 @@ namespace Reinforcement
             {
                 commandName = "мод";//изменился скорее всего параметр
             }
-
+            bool setSoavt=false;
             // Для нового элемента записываем автора, если поле пустое
             if (string.IsNullOrEmpty(authorValue) || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
             {
@@ -51,12 +51,14 @@ namespace Reinforcement
                 string newAuthorValue = new AuthorEntry(_userName, _nowDate, commandName).ToString();
                 SetParam(authorParam, newAuthorValue);
 
-                if (coAuthorParam != null)
+                if ( eTypeChangeEl == ETypeChangeEl.AddedElements && coAuthorParam != null)
                 {
                     SetParam(coAuthorParam, newAuthorValue);
+                    setSoavt = true;
                 }
             }
-            else if(coAuthorParam != null)
+
+            if(!setSoavt && coAuthorParam != null)
             {
                 // Если параметр соавтора существует, обновляем его
                 string pastCoAuthors = coAuthorParam.AsString();

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 
 namespace Reinforcement
@@ -118,42 +119,163 @@ namespace Reinforcement
         // ================== Извлечение места ошибки ==================
         // Раньше был сплит ex.StackTrace по '\n' + StartsWith("at "/"в ") + IndexOf.
         // Теперь — TargetSite (O(1)) и, если не наш — StackTrace.Frames без сериализации в строку.
-
         private static string ExtractPlace(Exception ex)
         {
             try
             {
-                // 1) TargetSite — метод, где выброшено (самое быстрое)
-                var ts = ex.TargetSite;
-                if (ts?.DeclaringType != null)
-                {
-                    string ns = ts.DeclaringType.FullName ?? string.Empty;
-                    if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
-                        return $"{ts.DeclaringType.Name}.{ts.Name}";
-                }
+                // fNeedFileInfo: true — нужны PDB рядом с DLL, иначе номера строк = 0.
+                var frames = new StackTrace(ex, fNeedFileInfo: true).GetFrames();
+                if (frames == null || frames.Length == 0)
+                    return ShortFormat(ex.TargetSite) ?? "no stack";
 
-                // 2) Ищем первый фрейм нашего пространства имён
-                var st = new StackTrace(ex, false);
-                int n = st.FrameCount;
-                for (int i = 0; i < n; i++)
+                var sb = new StringBuilder(160);
+
+                // 1. Throw site — всегда.
+                sb.Append(FormatFrame(frames[0]));
+
+                // 2. Первые N фреймов в нашем namespace.
+                int userCount = 0, userShown = 0;
+                const int MaxUserShown = 3;
+
+                for (int i = 1; i < frames.Length; i++)
                 {
-                    var m = st.GetFrame(i)?.GetMethod();
+                    var m = frames[i].GetMethod();
                     var dt = m?.DeclaringType;
                     if (dt == null) continue;
-
                     string ns = dt.FullName ?? string.Empty;
-                    if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
-                        return $"{dt.Name}.{m.Name}";
+                    if (!ns.StartsWith("Reinforcement.", StringComparison.Ordinal)) continue;
+
+                    userCount++;
+                    if (userShown >= MaxUserShown) continue;
+
+                    sb.Append(" <- ").Append(FormatFrame(frames[i]));
+                    userShown++;
                 }
 
-                // 3) fallback — хоть что-то
-                return ts != null ? $"{ts.DeclaringType?.Name}.{ts.Name}" : "no stack";
+                if (userCount > userShown)
+                    sb.Append($" (+{userCount - userShown} more user)");
+
+                // 3. Пользовательских фреймов нет — покажем пару ближайших не-System,
+                //    чтобы видеть, откуда Revit/BCL нас дёрнул.
+                if (userCount == 0)
+                {
+                    sb.Append(" [no user frame]");
+                    int shown = 0;
+                    for (int i = 1; i < frames.Length && shown < 3; i++)
+                    {
+                        var m = frames[i].GetMethod();
+                        var dt = m?.DeclaringType;
+                        if (dt == null) continue;
+                        string ns = dt.FullName ?? string.Empty;
+                        if (ns.StartsWith("System.", StringComparison.Ordinal)) continue;
+
+                        sb.Append(" <- ").Append(FormatFrame(frames[i]));
+                        shown++;
+                    }
+                }
+
+                return sb.ToString();
             }
-            catch
+            catch (Exception e)
             {
-                return "stack error";
+                return "stack error: " + e.GetType().Name;
             }
         }
+        private static string FormatFrame(StackFrame frame)
+        {
+            var m = frame?.GetMethod();
+            if (m?.DeclaringType == null) return "?";
+
+            string typeName = m.DeclaringType.FullName ?? m.DeclaringType.Name;
+            if (typeName.StartsWith("Reinforcement.", StringComparison.Ordinal))
+                typeName = typeName.Substring("Reinforcement.".Length);   // чуть короче в логе
+
+            string result = $"{typeName}.{m.Name}";
+
+            int line = frame.GetFileLineNumber();
+            if (line > 0)
+            {
+                string file = frame.GetFileName();
+                if (!string.IsNullOrEmpty(file))
+                    result += $"({Path.GetFileName(file)}:{line})";
+            }
+
+            return result;
+        }
+
+        private static string ShortFormat(System.Reflection.MethodBase m)
+        {
+            if (m?.DeclaringType == null) return null;
+            string full = m.DeclaringType.FullName ?? m.DeclaringType.Name;
+            if (full.StartsWith("Reinforcement.", StringComparison.Ordinal))
+                full = full.Substring("Reinforcement.".Length);
+            return $"{full}.{m.Name}";
+        }
+        //private static string FormatFrame(StackFrame frame)
+        //{
+        //    var m = frame?.GetMethod();
+        //    if (m?.DeclaringType == null) return "?";
+
+        //    string typeName = m.DeclaringType.FullName ?? m.DeclaringType.Name;
+        //    if (typeName.StartsWith("Reinforcement.", StringComparison.Ordinal))
+        //        typeName = typeName.Substring("Reinforcement.".Length);   // чуть короче в логе
+
+        //    string result = $"{typeName}.{m.Name}";
+
+        //    int line = frame.GetFileLineNumber();
+        //    if (line > 0)
+        //    {
+        //        string file = frame.GetFileName();
+        //        if (!string.IsNullOrEmpty(file))
+        //            result += $"({Path.GetFileName(file)}:{line})";
+        //    }
+
+        //    return result;
+        //}
+
+        //private static string ShortFormat(System.Reflection.MethodBase m)
+        //{
+        //    if (m?.DeclaringType == null) return null;
+        //    string full = m.DeclaringType.FullName ?? m.DeclaringType.Name;
+        //    if (full.StartsWith("Reinforcement.", StringComparison.Ordinal))
+        //        full = full.Substring("Reinforcement.".Length);
+        //    return $"{full}.{m.Name}";
+        //}
+        //private static string ExtractPlace(Exception ex)
+        //{
+        //    try
+        //    {
+        //        // 1) TargetSite — метод, где выброшено (самое быстрое)
+        //        var ts = ex.TargetSite;
+        //        if (ts?.DeclaringType != null)
+        //        {
+        //            string ns = ts.DeclaringType.FullName ?? string.Empty;
+        //            if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
+        //                return $"{ts.DeclaringType.Name}.{ts.Name}";
+        //        }
+
+        //        // 2) Ищем первый фрейм нашего пространства имён
+        //        var st = new StackTrace(ex, false);
+        //        int n = st.FrameCount;
+        //        for (int i = 0; i < n; i++)
+        //        {
+        //            var m = st.GetFrame(i)?.GetMethod();
+        //            var dt = m?.DeclaringType;
+        //            if (dt == null) continue;
+
+        //            string ns = dt.FullName ?? string.Empty;
+        //            if (ns.StartsWith("Reinforcement.", StringComparison.Ordinal))
+        //                return $"{dt.Name}.{m.Name}";
+        //        }
+
+        //        // 3) fallback — хоть что-то
+        //        return ts != null ? $"{ts.DeclaringType?.Name}.{ts.Name}" : "no stack";
+        //    }
+        //    catch
+        //    {
+        //        return "stack error";
+        //    }
+        //}
 
         // ================== Запись на диск ==================
 

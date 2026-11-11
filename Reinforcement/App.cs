@@ -373,12 +373,32 @@ namespace Reinforcement
         {
             try
             {
+                RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
+                RegisterAutoFillUpdater.Register();
+            }
+            catch(Exception ex)
+            {
+                ErrorException(ex, "PodpiskaRegister");
+                AppErrors.LogError(ex);
+            }
+
+            try
+            {
+                //подписка на этапы синхронизиции
+                app.ControlledApplication.WorksharedOperationProgressChanged += OnWorksharedProgress;
+            }
+            catch (Exception ex)
+            {
+                ErrorException(ex, "PodpiskaOnWorksharedProgress");
+                AppErrors.LogError(ex);
+            }
+            try
+            {
                 // подписка на все изменения элементов, возможно ненужна
                // PodpiskaAll(app);// подписка на все
                                  // AutoFillNoteUpdater.RegisterUpdater();
 
-                RegisterAutoFillUpdater.addInId = app.ActiveAddInId;
-                RegisterAutoFillUpdater.Register();
+               
 
                 //любое изменение внутри документа
                 app.ControlledApplication.DocumentChanged += OnDocumentChanged;
@@ -399,8 +419,10 @@ namespace Reinforcement
                 // Подписываемся на событие ошибок через ControlledApplication
                 app.ControlledApplication.FailuresProcessing +=
                     new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
+               
 
-                ExistPodpiskaOnChanged= true;
+                
+                ExistPodpiskaOnChanged = true;
 
             }
             catch (Exception ex)
@@ -461,9 +483,21 @@ namespace Reinforcement
                 AppErrors.LogError(ex);
             }
 
+            ExportStat(true);
+
+            IsShuttingDown = true;//закрылся
+            return Result.Succeeded;
+        }
+        
+
+        public static void ExportStat(bool closeR=false)
+        {
             try
             {
-                StatUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
+                if (closeR)
+                {
+                    StatUsers.Update("OnShutdownRevit", EDocStatsOptions.CloseRevit);
+                }
                 StatUsers.Flush();
             }
             catch { /* уже нечего терять */ }
@@ -483,11 +517,11 @@ namespace Reinforcement
                 FailureBuffer.Flush();
             }
             catch { /* уже нечего терять */ }
-
-            IsShuttingDown = true;//закрылся
-            return Result.Succeeded;
         }
-        
+
+
+
+
         public static volatile bool IsShuttingDown = false;
         // Словарь: документ -> время начала синхронизации
         private static readonly ConcurrentDictionary<Document, DateTime> _syncStartTimes = new ConcurrentDictionary<Document, DateTime>();

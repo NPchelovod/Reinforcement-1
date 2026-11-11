@@ -18,6 +18,7 @@ namespace Reinforcement
         public string Severity { get; set; }         // "Warning" / "Error" / ...
         public Guid DefinitionId { get; set; }
         public List<int> FailingElementIds { get; set; } = new List<int>();
+        public string FailureType { get; set; } // или "Synchronization"
     }
 
     public class FailureRecords : IJsonStorable<FailureRecords>

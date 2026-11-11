@@ -43,6 +43,9 @@ namespace Reinforcement
             App_Helper_Button.AddButtonToPullDownButton(item, "ФОП_Users", assemblyPath, "Reinforcement.FopAddUsers", "Пользовательский набор добавить в параметры", OV3);
 
 
+            App_Helper_Button.AddButtonToPullDownButton(item, "ErrorOut", assemblyPath, "Reinforcement.FlushOut", "Выгрузить ошибки", OV3);
+            
+            App_Helper_Button.AddButtonToPullDownButton(item, "!Sync", assemblyPath, "Reinforcement.SyncError", "Синхронизироваться, для поиска ошибок", OV3);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Разраб", assemblyPath, "Reinforcement.Statist", $"Кнопка Разработчика\n {SettingsWindow.GetDatePluginText}", OV1);
 
 

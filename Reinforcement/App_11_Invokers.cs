@@ -120,7 +120,19 @@ namespace Reinforcement
             string docPath = doc.PathName;
             // Запоминаем время начала синхронизации
             _syncStartTimes[doc] = DateTime.Now;
-
+            //if (args.Status != RevitAPIEventStatus.Succeeded)
+            //{
+            //    // Фиксируем ошибку. Деталей нет, но есть факт сбоя и документ.
+            //    // Сюда можно добавить запись в ваш FailureBuffer или отдельный лог.
+            //    // Например:
+            //    FailureBuffer.Add(new FailureRecord
+            //    {
+            //        Time = DateTime.Now,
+            //        DocPath = e.Document?.PathName,
+            //        Description = $"Синхронизация с центральным файлом завершилась со статусом: {e.Status}",
+            //        Severity = "SyncError"
+            //    });
+            //}
         }
         private void OnDocumentSaved(object sender, DocumentSavedEventArgs e)
         {
@@ -155,15 +167,53 @@ namespace Reinforcement
             {
                 secondSaveModel = 0;
             }
-
+            if (e.Status != RevitAPIEventStatus.Succeeded)
+            {
+                // Фиксируем ошибку. Деталей нет, но есть факт сбоя и документ.
+                // Сюда можно добавить запись в ваш FailureBuffer или отдельный лог.
+                // Например:
+                FailureBuffer.Add(new FailureRecord
+                {
+                    Time = DateTime.Now,
+                    DocPath = e.Document?.PathName,
+                    Description = $"Синхронизация с центральным файлом завершилась со статусом: {e.Status}",
+                    Severity = "SyncError"
+                });
+            }
             StatUsers.Update("OnDocumentSynchronized", EDocStatsOptions.Sync);
         }
 
-        
-       
+        private void OnWorksharedProgress(object sender, WorksharedOperationProgressChangedEventArgs e)
+        {
+            // e.Location — путь к центральной модели (может быть полезен для лога)
 
-       
-        
+            // Нас интересует этап "Save to central" (отправка данных на сервер)
+            if (e is DocumentSaveToCentralProgressChangedEventArgs saveArgs)
+            {
+                // Если сбой вызван конфликтом (кто-то другой синхронизировался первым)
+                if (saveArgs.FailureDueToConflicts)
+                {
+                    // Фиксируем факт конфликта. Это очень ценная информация!
+                    FailureBuffer.Add(new FailureRecord
+                    {
+                        Time = DateTime.Now,
+                        DocPath = e.Location,
+                        Description = "Синхронизация не удалась из-за конфликта: другой пользователь сохранил изменения раньше.",
+                        Severity = "SyncConflict"
+                    });
+                }
+
+                // Также можно отслеживать прогресс передачи данных
+                // saveArgs.FinishedSize — размер переданных данных в байтах
+            }
+
+            // Можно также отслеживать и другие этапы, например, ReloadLatest
+            // if (e is DocumentReloadLatestProgressChangedEventArgs reloadArgs) { ... }
+        }
+
+
+
+
         private void OnFailuresProcessing(object sender, FailuresProcessingEventArgs e)
         {
             FailuresAccessor fa = e.GetFailuresAccessor();

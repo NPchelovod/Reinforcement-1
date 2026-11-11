@@ -20,9 +20,10 @@ namespace Reinforcement
             ElementSet elements)
         {
             RevitAPI.Initialize(commandData);
-            StatUsers.Flush();
-            PeriodicHandler.FlushDeleteIdsUser(DateTime.Now);
+            App.ExportStat(false);
+
             return Result.Succeeded;
         }
     }
+
 }
