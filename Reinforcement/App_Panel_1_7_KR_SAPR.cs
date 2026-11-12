@@ -53,11 +53,18 @@ namespace Reinforcement
                  "Размеры между осями", OV1);
             App_Helper_Button.AddButtonToPullDownButton(item, "ОкруглитьЭлементы", assemblyPath, "Reinforcement.RoundElementPositions",
                  "Округляет координаты выделенных элементов", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "ОшибкиСтенДж", assemblyPath, "Reinforcement.CheckWallsMarkaJ",
+                 "Если длины Дж или друг над другом Дж разного размеры, то выделит их на виде", OV1);
+
+
+
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Дублирование геометрии", assemblyPath, "Reinforcement.SeachDublicateOnView",
                  "Поиск совпадающих объектов на активном виде\nрекомендую на 3D смотреть задвоение пилонов и тд", OV1);
+
             App_Helper_Button.AddButtonToPullDownButton(item, "Арм погон", assemblyPath, "Reinforcement.ArmLengthEquels",
                 "Погонная арматура, запись её длины в длину стержня\n"+"для старых семейств", OV1);
+
             App_Helper_Button.AddButtonToPullDownButton(item, "!Дубли семейств", assemblyPath, "Reinforcement.DeleteDublicateFamily",
                 "Замена дублей семейств на ВИДЕ, если что-то выделено заменяет только выделенное\n" +
                 "семействоА2 типоразмерБ3 меняет на семействоА типоразмерБ", OV1);

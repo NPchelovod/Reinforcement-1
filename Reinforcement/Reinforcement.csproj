@@ -233,6 +233,7 @@
     <Compile Include="KR_SAPR\8_ListDuplicateFamiliesByView.cs" />
     <Compile Include="KR_SAPR\91_App_Dimensions_MultipleOf100.cs" />
     <Compile Include="KR_SAPR\93_MoveElementRound.cs" />
+    <Compile Include="KR_SAPR\95_InCorrectWallDJ.cs" />
     <Compile Include="KR_SAPR\9_App_Dimensions_MultipleOf200.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />

@@ -11,6 +11,14 @@ using System.Windows.Media;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+//Ваши промежуточные точки разбиения — это Shape Handle Points 
+
+//GetInstancePlacementPointElementRefIds — только размещаемые точки (их у вас две).
+
+//GetInstancePointElementRefIds — все точки: размещаемые плюс Shape Handle Points.
+
+//GetInstanceShapeHandlePointElementRefIds — только Shape Handle Points (промежуточные точки разбиения).
+
 
 namespace Reinforcement
 {
@@ -64,6 +72,17 @@ namespace Reinforcement
                     sb.AppendLine();
                     continue;
                 }
+                // После получения pts (размещаемых точек)
+                IList<ElementId> shapePointIds = null;
+                try
+                {
+                    if (AdaptiveComponentInstanceUtils.IsAdaptiveComponentInstance(fi))
+                    {
+                        // Получаем промежуточные точки (Shape Handle Points)
+                        shapePointIds = AdaptiveComponentInstanceUtils.GetInstanceShapeHandlePointElementRefIds(fi);
+                    }
+                }
+                catch (Exception ex) { AppErrors.LogError(ex); }
 
                 adaptive++;
                 string family = fi.Symbol?.Family?.Name ?? "?";
@@ -86,6 +105,19 @@ namespace Reinforcement
                         $"  {i + 1,-3} {p.X * FtToMm,12:F1} {p.Y * FtToMm,12:F1} {p.Z * FtToMm,12:F1}");
                 }
                 sb.AppendLine();
+
+                if (shapePointIds != null && shapePointIds.Count > 0)
+                {
+                    sb.AppendLine($"  Промежуточных точек (Shape Handle): {shapePointIds.Count}");
+                    for (int i = 0; i < shapePointIds.Count; i++)
+                    {
+                        var rp = doc.GetElement(shapePointIds[i]) as ReferencePoint;
+                        if (rp == null) continue;
+                        XYZ p = rp.Position ?? XYZ.Zero;
+                        sb.AppendLine($"    {i + 1,-3} {p.X * FtToMm,12:F1} {p.Y * FtToMm,12:F1} {p.Z * FtToMm,12:F1}");
+                    }
+                    sb.AppendLine();
+                }
             }
 
             if (sb.Length == 0)
