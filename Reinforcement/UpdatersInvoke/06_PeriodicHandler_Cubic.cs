@@ -14,7 +14,7 @@ namespace Reinforcement
     {
         //"Сброс согласования при перемещении закладных";
         //"При перемещении элемента семейства, содержащего 'Закладная', сбрасывает параметр 'Согласовано'.";
-        private static void CubicWriter(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
+        private static void CubicWriter(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             var cat = element.Category?.BuiltInCategory;
             if (cat != builtInCategoryCubic) { return; }
@@ -67,7 +67,7 @@ namespace Reinforcement
             return false;
         }
 
-        private static void CubicWriterLevel(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
+        private static void CubicWriterLevel(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             //var cat = element.Category?.BuiltInCategory;
             //if (cat != builtInCategoryCubicAnnotation) { return; }

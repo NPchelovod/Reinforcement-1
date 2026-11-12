@@ -47,7 +47,8 @@ namespace Reinforcement
         EL,
         General,
         Test,
-        Admin
+        Admin,
+        Asper,
     }
     public enum EPanels //все панели внутри которых кнопки, в порядке инициализации
     {
@@ -67,6 +68,7 @@ namespace Reinforcement
         ЭЛпанель,
         ОбщаяПанель,
         Разработчик,
+        Асп,
         Опции,
         Сюрприз
     }
@@ -91,6 +93,8 @@ namespace Reinforcement
             { EPanelSelf.General, ("Общее",  "Reinforcement.App_Panel_6_1_Configuration_General",           "Общее",                  Properties.Resources.KR_config) },
             { EPanelSelf.Test,    ("тест",   "Reinforcement.App_Panel_8_1_Configuration_Test","не трогать",             Properties.Resources.Test_config) },
             { EPanelSelf.Admin,   ("разраб", "Reinforcement.App_Panel_9_1_Configuration_Admin","не трогать",             Properties.Resources.Properties) },
+            { EPanelSelf.Asper,   ("тест2", "Reinforcement.App_Panel_92_1_Configuration_Asp","не трогать",             Properties.Resources.Test_config) },
+
         };
 
         //все панели в порядке пребывания
@@ -116,6 +120,7 @@ namespace Reinforcement
             { EPanels.ЭЛпанель, "ЭЛ панель" },
             { EPanels.ОбщаяПанель, "Общая панель" },
             { EPanels.Разработчик, "Разработчик" },
+            { EPanels.Асп, "Асп" },
             { EPanels.Опции, "Опции" },
             { EPanels.Сюрприз, "Сюрприз" }
         };
@@ -265,75 +270,86 @@ namespace Reinforcement
 
                 var panel = app.CreateRibbonPanel(TabName, panelName);
                 PanelVisibility.Panels[ePanelName] = panel;
-
-                switch (ePanelName)
+                try
                 {
-                    case EPanels.Конфигурация:// управление всеми панелями
-                        App_Panel_1_1_Configuration.AddSplitButton(panel, TabName);
-                        break;
+                    switch (ePanelName)
+                    {
+                        case EPanels.Конфигурация:// управление всеми панелями
+                            App_Panel_1_1_Configuration.AddSplitButton(panel, TabName);
+                            break;
 
-                    case EPanels.СПДС:
-                        App_Panel_1_2_KR_SPDS.KR_SPDS(panel, TabName);
-                        break;
-                    case EPanels.СхематичноеАрмирование:
-                        App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, TabName);
-                        break;
-                    case EPanels.ДетальноеАрмирование:
-                        App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, TabName);
-                        break;
-                    case EPanels.Оформление:
-                        App_Panel_1_5_KR_Drawing.KR_Drawing(panel, TabName);
-                        break;
-                    case EPanels.Выбор:
-                        App_Panel_1_6_KR_Selection.KR_Selection(panel, TabName);
-                        break;
-                    case EPanels.САПР:
-                        App_Panel_1_7_KR_SAPR.KR_SAPR(panel, TabName);
-                        break;
+                        case EPanels.СПДС:
+                            App_Panel_1_2_KR_SPDS.KR_SPDS(panel, TabName);
+                            break;
+                        case EPanels.СхематичноеАрмирование:
+                            App_Panel_1_3_KR_SketchReinf.KR_SketchReinf(panel, TabName);
+                            break;
+                        case EPanels.ДетальноеАрмирование:
+                            App_Panel_1_4_KR_DetailReinf.KR_DetailReinf(panel, TabName);
+                            break;
+                        case EPanels.Оформление:
+                            App_Panel_1_5_KR_Drawing.KR_Drawing(panel, TabName);
+                            break;
+                        case EPanels.Выбор:
+                            App_Panel_1_6_KR_Selection.KR_Selection(panel, TabName);
+                            break;
+                        case EPanels.САПР:
+                            App_Panel_1_7_KR_SAPR.KR_SAPR(panel, TabName);
+                            break;
 
-                    case EPanels.КРвставки:
-                        App_Panel_1_71_KR_vstavka.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.КРвставки:
+                            App_Panel_1_71_KR_vstavka.AddSplitButton(panel, TabName);
+                            break;
 
-                    case EPanels.CopyКубики:
-                        App_Panel_1_8_KR_Task.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.CopyКубики:
+                            App_Panel_1_8_KR_Task.AddSplitButton(panel, TabName);
+                            break;
 
-                    case EPanels.ИмпортЭкспорт:
-                        App_Panel_1_81_KR_Export.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.ИмпортЭкспорт:
+                            App_Panel_1_81_KR_Export.AddSplitButton(panel, TabName);
+                            break;
 
 
-                    case EPanels.ОВплит:
-                        App_Panel_1_9_KR_to_OV.AddSplitButton(panel, TabName);
-                        break;
-                    case EPanels.АРпанель:
-                        App_Panel_2_2_AR_utilit.AR_utilit(panel, TabName);
-                        break;
+                        case EPanels.ОВплит:
+                            App_Panel_1_9_KR_to_OV.AddSplitButton(panel, TabName);
+                            break;
+                        case EPanels.АРпанель:
+                            App_Panel_2_2_AR_utilit.AR_utilit(panel, TabName);
+                            break;
 
-                    case EPanels.ОВпанель:
-                        App_Panel_3_2_OV_utilit.OV_utilit(panel, TabName);
-                        break;
+                        case EPanels.ОВпанель:
+                            App_Panel_3_2_OV_utilit.OV_utilit(panel, TabName);
+                            break;
 
-                    case EPanels.ЭЛпанель:
-                        App_Panel_5_2_EL_utilit.EL_utilit(panel, TabName);
-                        break;
-                    case EPanels.ОбщаяПанель:
-                        App_Panel_6_2_General_panel.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.ЭЛпанель:
+                            App_Panel_5_2_EL_utilit.EL_utilit(panel, TabName);
+                            break;
+                        case EPanels.ОбщаяПанель:
+                            App_Panel_6_2_General_panel.AddSplitButton(panel, TabName);
+                            break;
 
-                    case EPanels.Разработчик:
-                        App_Panel_9_2_AdminPanel.Admin_utilit(panel, TabName);
-                        break;
+                        case EPanels.Разработчик:
+                            App_Panel_9_2_AdminPanel.Admin_utilit(panel, TabName);
+                            break;
 
-                    case EPanels.Опции:
-                        App_Panel_1_92_Opcii.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.Асп:
+                            App_Panel_92_2_Asp_Utilit.Asp_utilit(panel, TabName);
+                            break;
 
-                    case EPanels.Сюрприз:
-                        App_Panel_1_91_Toska.AddSplitButton(panel, TabName);
-                        break;
+                        case EPanels.Опции:
+                            App_Panel_1_92_Opcii.AddSplitButton(panel, TabName);
+                            break;
 
+                        case EPanels.Сюрприз:
+                            App_Panel_1_91_Toska.AddSplitButton(panel, TabName);
+                            break;
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ErrorException(ex, "PodpiskaSwitch (ePanelName)");
+                    AppErrors.LogError(ex);
                 }
 
             }
@@ -362,9 +378,9 @@ namespace Reinforcement
             //все подписки реализуем
             Podpiska(app);
 
-            //секретный набор команд
+            //произошел запуск
 
-
+            AppActive=true;
             return Result.Succeeded;
         }
 
@@ -521,7 +537,7 @@ namespace Reinforcement
 
 
 
-
+        public static volatile bool AppActive = false;//активно ли
         public static volatile bool IsShuttingDown = false;
         // Словарь: документ -> время начала синхронизации
         private static readonly ConcurrentDictionary<Document, DateTime> _syncStartTimes = new ConcurrentDictionary<Document, DateTime>();

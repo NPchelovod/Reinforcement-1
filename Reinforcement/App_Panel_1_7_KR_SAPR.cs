@@ -51,6 +51,8 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Осей размеры", assemblyPath, "Reinforcement.GridSizes",
                  "Размеры между осями", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "ОкруглитьЭлементы", assemblyPath, "Reinforcement.RoundElementPositions",
+                 "Округляет координаты выделенных элементов", OV1);
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Дублирование геометрии", assemblyPath, "Reinforcement.SeachDublicateOnView",
                  "Поиск совпадающих объектов на активном виде\nрекомендую на 3D смотреть задвоение пилонов и тд", OV1);

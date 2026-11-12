@@ -15,7 +15,7 @@ namespace Reinforcement
 
     public partial class App
     {
-
+        public static volatile bool IsOnApplicationInitialized = false;
         private void OnApplicationInitialized(object sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)
         {
             // Здесь sender — это Autodesk.Revit.ApplicationServices.Application
@@ -24,6 +24,7 @@ namespace Reinforcement
             // Получаем UIApplication
             UIApplication uiApp = new UIApplication(app);
             if (uiApp == null) { return; }
+            IsOnApplicationInitialized=true;
             InitializedInvoker(uiApp);
           
         }

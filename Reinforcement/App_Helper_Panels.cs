@@ -77,6 +77,12 @@ namespace Reinforcement
              EPanels.Разработчик,
             EPanels.Опции,
         };
+        public static HashSet<EPanels> AspPanel { get; set; } = new HashSet<EPanels>()
+        {
+            EPanels.Конфигурация,
+             EPanels.Асп,
+            EPanels.Опции,
+        };
         public static HashSet<EPanels> Defaultpanel { get; set; } = new HashSet<EPanels>()
         {
             EPanels.Конфигурация,
@@ -112,6 +118,10 @@ namespace Reinforcement
                     return TestPanel;
                 case (EPanelSelf.Admin):
                     return AdminPanel;
+                case (EPanelSelf.Asper):
+                    return AspPanel;
+                default:
+                    return Defaultpanel;
 
             }
             return Defaultpanel;

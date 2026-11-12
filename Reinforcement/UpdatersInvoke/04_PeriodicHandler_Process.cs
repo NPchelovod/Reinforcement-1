@@ -135,7 +135,7 @@ namespace Reinforcement
         {
             //прежде записи для автора нужно записать дату
             _nowDate = dateTime.ToString("dd.MM.yy.HH");
-
+            ProcessNabor(dateTime, snapshot, doc);
             //наверно надо ограничение на количество элементов, представь у тебя 10000 будет элементов
 
             // Вся разветвлённая логика здесь.
@@ -156,9 +156,16 @@ namespace Reinforcement
                 ProcessElement(dateTime, doc, element, ETypeChangeEl.ModifiedElements);
             }
 
-           
         }
-       
+        private static void ProcessNabor(DateTime dateTime, SnapShotElements snapshot, Document doc)
+        {
+            //захват в рабочие наборы
+        }
+
+
+
+
+
         private static void ProcessElement(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             if (element == null || !element.IsValidObject || !element.IsModifiable) return;
@@ -210,10 +217,16 @@ namespace Reinforcement
                 AppErrors.LogError(ex);
             }
 
+            BuiltInCategory bic=BuiltInCategory.INVALID;
+            if (element.Category != null)
+            {
+                bic = element.Category.BuiltInCategory;
+            }
+
             try
             {
                 //сбрасываем кубики
-                CubicWriter(dateTime, doc, element, eTypeChangeEl);
+                CubicWriter(dateTime,bic, doc, element, eTypeChangeEl);
 
                 //меняем длину выноски
             }
@@ -223,7 +236,7 @@ namespace Reinforcement
             }
             try
             {
-                CubicWriterLevel(dateTime, doc, element, eTypeChangeEl);
+                CubicWriterLevel(dateTime,bic, doc, element, eTypeChangeEl);
             }
             catch (Exception ex)
             {
@@ -232,7 +245,7 @@ namespace Reinforcement
 
             try
             {
-                AnnotationWriter(dateTime, doc, element, eTypeChangeEl);
+                AnnotationWriter(dateTime,bic, doc, element, eTypeChangeEl);
             }
             catch (Exception ex)
             {
@@ -273,7 +286,44 @@ namespace Reinforcement
             return true;
         }
 
+        private static bool TryBecomeBorrower(Document doc, Element element)
+        {
+            if (!doc.IsWorkshared)
+                return true; // Не worksharing-модель, ограничений нет
 
+            // 1. Пытаемся явно стать заемщиком элемента.
+            // Это самый надежный способ получить актуальный статус.
+            ICollection<ElementId> checkedOutIds;
+            try
+            {
+                checkedOutIds = WorksharingUtils.CheckoutElements(doc, new[] { element.Id });
+            }
+            catch (Exception ex)
+            {
+                // Обработка исключений: CentralModelException и др.
+                // Например, если центральная модель недоступна.
+                return false;
+            }
+
+            // 2. Проверяем, удалось ли захватить именно наш элемент.
+            if (checkedOutIds == null || !checkedOutIds.Contains(element.Id))
+            {
+                // Элемент занят другим пользователем или захватить не удалось.
+                return false;
+            }
+
+            // 3. (Опционально, но рекомендуется) Проверяем, что элемент не устарел.
+            // Захват мог произойти, но элемент в центральной модели был обновлен.
+            ModelUpdatesStatus updatesStatus = WorksharingUtils.GetModelUpdatesStatus(doc, element.Id);
+            if (updatesStatus == ModelUpdatesStatus.DeletedInCentral ||
+                updatesStatus == ModelUpdatesStatus.UpdatedInCentral)
+            {
+                // Элемент захвачен, но неактуален. Его нужно обновить перед изменением.
+                return false;
+            }
+
+            return true;
+        }
 
 
 

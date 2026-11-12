@@ -13,11 +13,11 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 namespace Reinforcement
 {
-    public static class UpdaterPlagina
+    public static partial class UpdaterPlagina
     {
         //Запуск автообновления
 
-        
+        public static bool UpdaterIsStart = false;//запущен ли апдейтер
         public static void StartUpdateENS()
         {
             try
@@ -26,6 +26,7 @@ namespace Reinforcement
                 {
                     App_Folders.Initializator();
                 }
+
                 if (!AutomaticUpdatesEnabled) return;
                 // Разово вылечиваем текущую папку плагина от Zone.Identifier —
                 // на случай, если предыдущее обновление оставило метки.
@@ -97,6 +98,7 @@ namespace Reinforcement
                     CreateNoWindow = true,
                     UseShellExecute = false
                 });
+                UpdaterIsStart=true;
             }
             catch (Exception ex)
             {
@@ -171,7 +173,7 @@ namespace Reinforcement
 
                 // Копируем, если файл отсутствует или источник новее
                 if (!File.Exists(targetFilePath) ||
-                    File.GetLastWriteTimeUtc(filePath) > File.GetLastWriteTimeUtc(targetFilePath))
+                    File.GetLastWriteTime(filePath) > File.GetLastWriteTime(targetFilePath))
                 {
                     File.Copy(filePath, targetFilePath, overwrite: true);
 

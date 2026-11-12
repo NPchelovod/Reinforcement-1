@@ -18,7 +18,7 @@ namespace Reinforcement
     public partial class PeriodicHandler
     {
         static readonly List<string> _familyVinoska = new List<string>() { "выноска",  };
-        private static void AnnotationWriter(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
+        private static void AnnotationWriter(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
           
            

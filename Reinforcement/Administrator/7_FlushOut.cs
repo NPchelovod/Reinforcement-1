@@ -21,7 +21,7 @@ namespace Reinforcement
         {
             RevitAPI.Initialize(commandData);
             App.ExportStat(false);
-
+            UpdaterCheck.GetResult(true);
             return Result.Succeeded;
         }
     }

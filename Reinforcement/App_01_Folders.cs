@@ -180,7 +180,7 @@ namespace Reinforcement
 
                     try
                     {
-                        var t = File.GetLastWriteTimeUtc(p);
+                        var t = File.GetLastWriteTime(p);
                         if (t > max) max = t;
                     }
                     catch { /* файл исчез между итерациями — пропускаем */ }

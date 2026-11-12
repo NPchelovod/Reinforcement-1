@@ -153,12 +153,15 @@
     <Compile Include="App_01_Folders.cs" />
     <Compile Include="App_11_Invokers.cs" />
     <Compile Include="App_12_InvokersDocChanged.cs" />
+    <Compile Include="App_23_UpdaterPlagina.cs" />
     <Compile Include="App_31_OtherExe.cs" />
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
+    <Compile Include="App_Panel_92_1_Configuration_Asp.cs" />
     <Compile Include="Aspirant\01_Asp_Parameters.cs" />
     <Compile Include="Aspirant\02_AdaptiveBeamPlacer.cs" />
     <Compile Include="Aspirant\03_оо.cs" />
+    <Compile Include="Aspirant\04_AnalizBeam.cs" />
     <Compile Include="CreateReinfTag.cs" />
     <Compile Include="FilteredsColors\0_ViewFilterColorizer.cs" />
     <Compile Include="FilteredsColors\2_ReinforcementColors.cs" />
@@ -229,6 +232,7 @@
     <Compile Include="KR_SAPR\81_SeachViewsFamily.cs" />
     <Compile Include="KR_SAPR\8_ListDuplicateFamiliesByView.cs" />
     <Compile Include="KR_SAPR\91_App_Dimensions_MultipleOf100.cs" />
+    <Compile Include="KR_SAPR\93_MoveElementRound.cs" />
     <Compile Include="KR_SAPR\9_App_Dimensions_MultipleOf200.cs" />
     <Compile Include="KR_SAPR\ArmLengthEquels.cs" />
     <Compile Include="KR_SAPR\GroupSpecification\GroupSpecification.cs" />
@@ -313,6 +317,7 @@
     <Compile Include="App_Panel_5_2_EL_utilit.cs" />
     <Compile Include="App_Panel_8_1_Configuration_Test.cs" />
     <Compile Include="App_Panel_9_1_Configuration_Admin.cs" />
+    <Compile Include="App_Panel_92_2_Asp_Utilit.cs" />
     <Compile Include="App_Panel_9_2_AdminPanel.cs" />
     <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Command\CalculateReinforcementArchitectureWallsCommand.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />

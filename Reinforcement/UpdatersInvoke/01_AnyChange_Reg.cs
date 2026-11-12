@@ -32,7 +32,7 @@ namespace Reinforcement
                 BuiltInCategory.OST_TextNotes              ,// Текстовые примечания
                 BuiltInCategory.OST_Stairs                 ,// Лестницы
                 BuiltInCategory.OST_DetailComponents,// например узлы или область маскировки
-                BuiltInCategory.OST_Dimensions,
+                BuiltInCategory.OST_Dimensions,//размеры
                 BuiltInCategory.OST_SpotCoordinates,//координаты
                 // === ВАШИ НОВЫЕ КАТЕГОРИИ (ИНЖЕНЕРИЯ) ===
                 BuiltInCategory.OST_PipeCurves     ,        // Трубы

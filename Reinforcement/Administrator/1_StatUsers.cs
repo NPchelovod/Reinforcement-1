@@ -60,6 +60,7 @@ namespace Reinforcement
                     
                 }
             }
+            DictDateDocStats = ReorderByDateDesc(DictDateDocStats);
             // при слиянии past с текущим — после основного merge
             if (other.WriteStats != null)
                 WriteStats.Merge(other.WriteStats);
@@ -80,6 +81,21 @@ namespace Reinforcement
                 return DictDateDocStats.Keys.Max();
             }
             return DateTime.Now;
+        }
+        /// <summary>
+        /// Пересобирает словарь так, чтобы ключи-даты шли по убыванию.
+        /// В .NET Framework Dictionary перечисляется в порядке вставки,
+        /// поэтому JSON получит «сегодня → прошлое».
+        /// </summary>
+        private static Dictionary<DateTime, Dictionary<string, DocStats>> ReorderByDateDesc(
+            Dictionary<DateTime, Dictionary<string, DocStats>> source)
+        {
+            if (source == null || source.Count <= 1) return source;
+
+            var ordered = new Dictionary<DateTime, Dictionary<string, DocStats>>(source.Count);
+            foreach (var kv in source.OrderByDescending(x => x.Key))
+                ordered[kv.Key] = kv.Value;   // значения не клонируем — ссылки те же
+            return ordered;
         }
     }
 
@@ -439,6 +455,8 @@ namespace Reinforcement
                     _pastDocStat = null;
                     _pastViewStat = null;
                 }
+
+                UpdaterCheck.GetResult();
             }
             if (!ok) { /* лог */ }
 
