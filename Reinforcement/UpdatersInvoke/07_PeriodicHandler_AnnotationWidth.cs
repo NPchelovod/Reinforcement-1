@@ -18,10 +18,12 @@ namespace Reinforcement
     public partial class PeriodicHandler
     {
         static readonly List<string> _familyVinoska = new List<string>() { "выноска",  };
+        static readonly BuiltInCategory _builtInCategoryvinoska = BuiltInCategory.OST_GenericAnnotation;
         private static void AnnotationWriter(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
-          
-           
+
+            if (bic != _builtInCategoryvinoska) { return; }
+
             var param = element.LookupParameter("Семейство и типоразмер");
             if(param == null) { return; }
             string name = param.AsValueString();                 // может быть null

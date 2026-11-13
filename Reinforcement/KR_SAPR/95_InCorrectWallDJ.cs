@@ -37,7 +37,9 @@ namespace Reinforcement
             //    .ToList();
             // 1. Собираем стены с маркой "Дж" на виде.
             //    Если в выделении есть стены — берём только их, иначе весь вид.
-            IEnumerable<Wall> candidateWalls=null;
+            // 1. Собираем стены с маркой "Дж" на виде.
+            //    Если в выделении есть стены — берём только их, иначе весь вид.
+            IEnumerable<Wall> candidateWalls = null;
 
             var preselectedIds = uidoc.Selection.GetElementIds();
             bool hasSelection = preselectedIds != null && preselectedIds.Count > 0;
@@ -50,15 +52,16 @@ namespace Reinforcement
                         try { return doc.GetElement(id) as Wall; }
                         catch { return null; }
                     })
-                    .Where(w => w != null);
+                    .Where(w => w != null)
+                    .ToList();   // материализуем — чтобы Select/GetElement не выполнялись повторно
             }
-            if (candidateWalls == null && !candidateWalls.Any())
+
+            if (candidateWalls == null || !candidateWalls.Any())
             {
                 candidateWalls = new FilteredElementCollector(doc, view.Id)
                     .OfClass(typeof(Wall))
                     .Cast<Wall>();
             }
-            
 
             var walls = candidateWalls
                 .Where(w => string.Equals(GetMarka(w), MarkaValue, StringComparison.OrdinalIgnoreCase))

@@ -16,8 +16,8 @@ namespace Reinforcement
         //"При перемещении элемента семейства, содержащего 'Закладная', сбрасывает параметр 'Согласовано'.";
         private static void CubicWriter(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
-            var cat = element.Category?.BuiltInCategory;
-            if (cat != builtInCategoryCubic) { return; }
+            
+            if (bic != _builtInCategoryCubic) { return; }
 
             if (eTypeChangeEl != ETypeChangeEl.GeomModifiedElements && eTypeChangeEl != ETypeChangeEl.AddedElements) { return; }
 
@@ -34,7 +34,7 @@ namespace Reinforcement
             foreach (string soglasSeach in Soglass)
             {
                 Parameter soglas = fi.LookupParameter(soglasSeach);
-                if (soglas == null) { return;}
+                if (soglas == null) { continue;}//можно return
                 if (soglas.StorageType == StorageType.Integer)
                 {
                     // Для Yes/No: 0 = false, 1 = true
@@ -46,7 +46,7 @@ namespace Reinforcement
             }
 
         }
-        static readonly BuiltInCategory builtInCategoryCubic = BuiltInCategory.OST_GenericModel;
+        static readonly BuiltInCategory _builtInCategoryCubic = BuiltInCategory.OST_GenericModel;
 
         static readonly BuiltInCategory builtInCategoryCubicAnnotation = BuiltInCategory.OST_GenericAnnotation;
 
@@ -69,10 +69,11 @@ namespace Reinforcement
 
         private static void CubicWriterLevel(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
+            if (bic != _builtInCategoryCubic) { return; }
             //var cat = element.Category?.BuiltInCategory;
             //if (cat != builtInCategoryCubicAnnotation) { return; }
             string name = element.Name;
-            if (name == null) { return; }
+            if (string.IsNullOrEmpty(name)) { return; }
             name =name.ToLower();
            
             if (!ExistName(_familyCubicNames, name))
@@ -89,14 +90,21 @@ namespace Reinforcement
             }
 
             var level = doc.GetElement(element.LevelId) as Level;
+            if( level ==null) { return; }
             var levelElevation = level.ProjectElevation;
-            
-            var elementElevationLevel = element.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM).AsDouble(); // относительная высота от отметки уровня (для стен и др HEIGHT_PARAM) 
 
-            
+            // 1) Отметка экземпляра относительно уровня
+            var elevationParam = element.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM);
+            if (elevationParam == null || elevationParam.StorageType != StorageType.Double) { return; }
+            var elementElevationLevel = elevationParam.AsDouble(); // относительная высота от отметки уровня (для стен и др HEIGHT_PARAM) 
+
+
             //наверно это element.LookupParameter("Высота");
             //var elementHeight = element.get_Parameter(new Guid("60bf9b18-17f9-4b8f-b214-fc13bc7b357f")).AsDouble(); // ищем по гуиду
-            var elementHeight = element.LookupParameter("Высота").AsDouble();
+            // 2) "Высота" — пользовательский параметр, может отсутствовать
+            var heightParam = element.LookupParameter("Высота");
+            if (heightParam == null || heightParam.StorageType != StorageType.Double) { return; }
+            var elementHeight = heightParam.AsDouble();
 
 
             var elementLowerElevation = levelElevation + elementElevationLevel;

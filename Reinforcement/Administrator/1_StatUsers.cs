@@ -177,18 +177,31 @@ namespace Reinforcement
                 if (_pastDocStat != null)
                 {
                     _pastDocStat.CloseRevit = true;
-                    _pastDocStat.LastSeen = DateTime.Now;
+                    _pastDocStat.LastSeen = Now;
                 }
+                return;
             }
-            Document doc = RevitAPI.Document;
-            if (doc == null) { return ; }
+            // ActiveUIDocument == null — это штатная ситуация (между документами,
+            // в событиях открытия/закрытия). Не считаем её ошибкой.
+            if (!RevitAPI.IsInitialized) return;
+            UIDocument uidoc = RevitAPI.UiApplication.ActiveUIDocument;
+            if (uidoc == null) return;
+            Document doc = uidoc.Document;
+            if (doc == null) return;
+           
 
             var dateDay = Now.Date;   // ← добавить
             DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
             
             string pathDoc = documentInfo.FullPath;
+            // Несохранённый документ — ключа нет. Даём стабильный fallback-ключ,
+            // чтобы статистика по нему тоже велась (и не сливалась с другими).
+            if (string.IsNullOrEmpty(pathDoc))
+            {
+                // ProjectUniqueId (guid документа) есть всегда, даже у несохранённого
+                pathDoc = "unsaved:" + (documentInfo?.ProjectUniqueId ?? documentInfo?.Name ?? "no-guid");
+            }
 
-            
             //команды кликов
             if (!_statElement.DictDateDocStats.TryGetValue(dateDay, out var docStats))
             {
@@ -211,7 +224,7 @@ namespace Reinforcement
             }
 
             ProcessWriterDocStat(docStat, key, commandType);//статистика всего документа для пользователя
-            ProcessWriterViewStat(docStat, doc);//статистика по виду
+            ProcessWriterViewStat(docStat, doc, uidoc);//статистика по виду
 
         }
         private const int _secondsRazbrosTimeCommandMax = 20;
@@ -291,13 +304,11 @@ namespace Reinforcement
             }
         }
         private const string None = "None";
-        private static void ProcessWriterViewStat(DocStats docStat, Document doc)
+        private static void ProcessWriterViewStat(DocStats docStat, Document doc, UIDocument uiDoc)
         {
             //запись характеристик вида
 
-            UIDocument uiDoc = RevitAPI.UiDocument;
-            if (uiDoc == null) { return; }
-            Autodesk.Revit.DB.View activeView = uiDoc.ActiveView;
+           View activeView = uiDoc.ActiveView;
 
             string viewName = None;
 

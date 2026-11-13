@@ -14,6 +14,7 @@ namespace Reinforcement
 
         public static void Execute()
         {
+            return;
             TimeStat();
         }
 

@@ -72,7 +72,8 @@ namespace Reinforcement
             if (commandData == null)
                 throw new ArgumentNullException(nameof(commandData));
 
-            _uiApplication = commandData.Application;
+            
+            Initialize(commandData.Application);
             StatUsers.Update();
         }
         public static void Initialize(UIApplication uIApplication)

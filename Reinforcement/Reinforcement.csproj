@@ -153,7 +153,7 @@
     <Compile Include="App_01_Folders.cs" />
     <Compile Include="App_11_Invokers.cs" />
     <Compile Include="App_12_InvokersDocChanged.cs" />
-    <Compile Include="App_23_UpdaterPlagina.cs" />
+    <Compile Include="App_23_UpdaterPlaginaNewExist.cs" />
     <Compile Include="App_31_OtherExe.cs" />
     <Compile Include="App_Panel_6_1_Configuration_General.cs" />
     <Compile Include="App_Panel_6_2_General_panel.cs" />
