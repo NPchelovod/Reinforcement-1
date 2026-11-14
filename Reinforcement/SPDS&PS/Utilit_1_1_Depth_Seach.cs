@@ -25,19 +25,16 @@ namespace Reinforcement
         public static bool GetResult(
             HashSet<string> famNames,
             ElementTypeOrSymbol mode,
-            HashSet<string> typeNames = null)
+            HashSet<string> typeNames = null, bool userShow=true)
         {
             if (famNames == null || famNames.Count == 0)
                 return false;
 
             
-            Element element = null;
-
             
-
             //расстановка по модели элемента
-            
-            element = typeNames == null ? HelperSeach.GetExistFamily(famNames, mode) : HelperSeach.GetExistFamily(famNames, typeNames, mode);
+            Element element = HelperSeach.SeachElement(famNames, typeNames, mode, userShow);//надо протестить будет
+            //element = typeNames == null ? HelperSeach.GetExistFamily(famNames, mode) : HelperSeach.GetExistFamily(famNames, typeNames, mode);
             if (element == null) { return false; }
             
 
@@ -59,8 +56,7 @@ namespace Reinforcement
             return true;
 
         }
-        static string ToKey(HashSet<string> set)
-         => string.Join("|", set.OrderBy(x => x ?? ""));
+      
 
        
     }

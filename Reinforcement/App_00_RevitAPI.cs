@@ -266,6 +266,25 @@ namespace Reinforcement
 
         // Время снимка warnings — полезно, чтобы понимать «свежесть»
         public DateTime WarningsSnapshotUtc { get; set; }
+
+
+        public string GetKey()
+        {
+            string key =FullPath;
+            if (string.IsNullOrEmpty(key))
+            {
+                key = Title;
+                if (string.IsNullOrEmpty(key))
+                {
+                    key = Name;
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        return null;
+                    }
+                }
+            }
+            return key;
+        }
     }
 
 }

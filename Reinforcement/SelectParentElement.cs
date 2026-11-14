@@ -1139,12 +1139,24 @@ namespace Reinforcement
             grid.Children.Add(label);
             grid.Children.Add(input);
 
-            TextBlock hint = new TextBlock
+            //TextBlock hint = new TextBlock
+            //{
+            //    Text = "Нумерация строк начинается с 1 (как видно в теле спецификации).",
+            //    TextWrapping = TextWrapping.Wrap,
+            //    Opacity = 0.7,
+            //    Margin = new Thickness(0, 4, 0, 4)
+            //};
+            System.Windows.Controls.TextBox hint = new System.Windows.Controls.TextBox
             {
                 Text = "Нумерация строк начинается с 1 (как видно в теле спецификации).",
                 TextWrapping = TextWrapping.Wrap,
+                IsReadOnly = true,
+                BorderThickness = new Thickness(0),
+                Background = System.Windows.Media.Brushes.Transparent,
                 Opacity = 0.7,
-                Margin = new Thickness(0, 4, 0, 4)
+                Margin = new Thickness(0, 4, 0, 4),
+                IsTabStop = false,
+                Cursor = System.Windows.Input.Cursors.IBeam
             };
             System.Windows.Controls.Grid.SetRow(hint, 1);
             System.Windows.Controls.Grid.SetColumn(hint, 0);
@@ -1211,7 +1223,7 @@ namespace Reinforcement
             Window window = new Window
             {
                 Title = "Поиск семейства на видах",
-                Width = 460,
+                Width = 520,
                 Height = 210,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 ResizeMode = ResizeMode.NoResize
@@ -1257,12 +1269,18 @@ namespace Reinforcement
             grid.Children.Add(typeLabel);
             grid.Children.Add(typeBox);
 
-            TextBlock hint = new TextBlock
+            // ── Копируемая подсказка (TextBox вместо TextBlock) ──
+            System.Windows.Controls.TextBox hint = new System.Windows.Controls.TextBox
             {
                 Text = "Типоразмер можно оставить пустым — будут показаны все типы семейства.",
                 TextWrapping = TextWrapping.Wrap,
+                IsReadOnly = true,
+                BorderThickness = new Thickness(0),
+                Background = System.Windows.Media.Brushes.Transparent,
                 Opacity = 0.7,
-                Margin = new Thickness(0, 4, 0, 4)
+                Margin = new Thickness(0, 4, 0, 4),
+                IsTabStop = false,
+                Cursor = System.Windows.Input.Cursors.IBeam
             };
             System.Windows.Controls.Grid.SetRow(hint, 2);
             System.Windows.Controls.Grid.SetColumn(hint, 0);
@@ -1282,6 +1300,12 @@ namespace Reinforcement
                 Margin = new Thickness(4),
                 IsDefault = true
             };
+            Button toTxt = new Button
+            {
+                Content = "Выдать в txt",
+                Width = 120,
+                Margin = new Thickness(4)
+            };
             Button cancel = new Button
             {
                 Content = "Отмена",
@@ -1299,12 +1323,46 @@ namespace Reinforcement
                 };
                 window.DialogResult = true;
             };
+
+            // ── Новая кнопка: пишет EC_BIM.txt на рабочий стол и открывает блокнотом ──
+            toTxt.Click += (s, e) =>
+            {
+                try
+                {
+                    string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    string path = System.IO.Path.Combine(desktop, "EC_BIM.txt");
+
+                    string content =
+                        "Поиск семейства на видах" + Environment.NewLine +
+                        "Семейство: " + (familyBox.Text ?? string.Empty) + Environment.NewLine +
+                        "Типоразмер: " + (typeBox.Text ?? string.Empty) + Environment.NewLine +
+                        "Время: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + Environment.NewLine;
+
+                    System.IO.File.WriteAllText(path, content, System.Text.Encoding.UTF8);
+
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = path,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Не удалось записать файл: " + ex.Message,
+                        "Ошибка",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
+            };
+
             cancel.Click += (s, e) =>
             {
                 window.DialogResult = false;
             };
 
             buttons.Children.Add(ok);
+            buttons.Children.Add(toTxt);
             buttons.Children.Add(cancel);
             System.Windows.Controls.Grid.SetRow(buttons, 3);
             System.Windows.Controls.Grid.SetColumn(buttons, 0);
@@ -1315,5 +1373,116 @@ namespace Reinforcement
             window.ShowDialog();
             return result;
         }
+        //public static FamilySearchRequest Show()
+        //{
+        //    FamilySearchRequest result = null;
+
+        //    Window window = new Window
+        //    {
+        //        Title = "Поиск семейства на видах",
+        //        Width = 460,
+        //        Height = 210,
+        //        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+        //        ResizeMode = ResizeMode.NoResize
+        //    };
+
+        //    System.Windows.Controls.Grid grid =
+        //        new System.Windows.Controls.Grid { Margin = new Thickness(12) };
+        //    grid.ColumnDefinitions.Add(
+        //        new ColumnDefinition { Width = GridLength.Auto });
+        //    grid.ColumnDefinitions.Add(
+        //        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        //    for (int i = 0; i < 4; i++)
+        //        grid.RowDefinitions.Add(
+        //            new RowDefinition { Height = GridLength.Auto });
+
+        //    TextBlock familyLabel = new TextBlock
+        //    {
+        //        Text = "Семейство:",
+        //        VerticalAlignment = VerticalAlignment.Center,
+        //        Margin = new Thickness(0, 4, 8, 4)
+        //    };
+        //    System.Windows.Controls.TextBox familyBox =
+        //        new System.Windows.Controls.TextBox { Margin = new Thickness(0, 4, 0, 4) };
+        //    System.Windows.Controls.Grid.SetRow(familyLabel, 0);
+        //    System.Windows.Controls.Grid.SetColumn(familyLabel, 0);
+        //    System.Windows.Controls.Grid.SetRow(familyBox, 0);
+        //    System.Windows.Controls.Grid.SetColumn(familyBox, 1);
+        //    grid.Children.Add(familyLabel);
+        //    grid.Children.Add(familyBox);
+
+        //    TextBlock typeLabel = new TextBlock
+        //    {
+        //        Text = "Типоразмер:",
+        //        VerticalAlignment = VerticalAlignment.Center,
+        //        Margin = new Thickness(0, 4, 8, 4)
+        //    };
+        //    System.Windows.Controls.TextBox typeBox =
+        //        new System.Windows.Controls.TextBox { Margin = new Thickness(0, 4, 0, 4) };
+        //    System.Windows.Controls.Grid.SetRow(typeLabel, 1);
+        //    System.Windows.Controls.Grid.SetColumn(typeLabel, 0);
+        //    System.Windows.Controls.Grid.SetRow(typeBox, 1);
+        //    System.Windows.Controls.Grid.SetColumn(typeBox, 1);
+        //    grid.Children.Add(typeLabel);
+        //    grid.Children.Add(typeBox);
+
+        //    TextBlock hint = new TextBlock
+        //    {
+        //        Text = "Типоразмер можно оставить пустым — будут показаны все типы семейства.",
+        //        TextWrapping = TextWrapping.Wrap,
+        //        Opacity = 0.7,
+        //        Margin = new Thickness(0, 4, 0, 4)
+        //    };
+        //    System.Windows.Controls.Grid.SetRow(hint, 2);
+        //    System.Windows.Controls.Grid.SetColumn(hint, 0);
+        //    System.Windows.Controls.Grid.SetColumnSpan(hint, 2);
+        //    grid.Children.Add(hint);
+
+        //    StackPanel buttons = new StackPanel
+        //    {
+        //        Orientation = Orientation.Horizontal,
+        //        HorizontalAlignment = HorizontalAlignment.Right,
+        //        Margin = new Thickness(0, 8, 0, 0)
+        //    };
+        //    Button ok = new Button
+        //    {
+        //        Content = "Найти",
+        //        Width = 100,
+        //        Margin = new Thickness(4),
+        //        IsDefault = true
+        //    };
+        //    Button cancel = new Button
+        //    {
+        //        Content = "Отмена",
+        //        Width = 80,
+        //        Margin = new Thickness(4),
+        //        IsCancel = true
+        //    };
+
+        //    ok.Click += (s, e) =>
+        //    {
+        //        result = new FamilySearchRequest
+        //        {
+        //            FamilyName = familyBox.Text,
+        //            TypeName = typeBox.Text
+        //        };
+        //        window.DialogResult = true;
+        //    };
+        //    cancel.Click += (s, e) =>
+        //    {
+        //        window.DialogResult = false;
+        //    };
+
+        //    buttons.Children.Add(ok);
+        //    buttons.Children.Add(cancel);
+        //    System.Windows.Controls.Grid.SetRow(buttons, 3);
+        //    System.Windows.Controls.Grid.SetColumn(buttons, 0);
+        //    System.Windows.Controls.Grid.SetColumnSpan(buttons, 2);
+        //    grid.Children.Add(buttons);
+
+        //    window.Content = grid;
+        //    window.ShowDialog();
+        //    return result;
+        //}
     }
 }

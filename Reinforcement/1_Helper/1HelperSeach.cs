@@ -1,13 +1,153 @@
-﻿using System;
+﻿using Autodesk.Revit.DB;
+using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
-using Autodesk.Revit.DB;
 namespace Reinforcement
 {
     // Compatibility facade: existing command signatures are retained.
     public class HelperSeach
     {
+
+        public static Dictionary<Document, Dictionary<string, Element>> DictElements
+             = new Dictionary<Document, Dictionary<string, Element>>();
+        //от 14,11,2026
+        public static Element SeachElement(HashSet<string> PossibleNamesFamily,
+                                     HashSet<string> PossibleNamesType,
+                                     ElementTypeOrSymbol Type_seach, bool userShow)//показывать ли пользователю
+        {
+            bool exNamesFamily = PossibleNamesFamily != null && PossibleNamesFamily.Count > 0;
+            bool exNamesType = PossibleNamesType != null && PossibleNamesType.Count > 0;
+            if (!exNamesFamily && !exNamesType) { return null; }
+
+            Document doc = RevitAPI.Document;
+            if (doc == null) { return null; }
+            //получаем информацию о документе
+            //DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
+            //if (documentInfo == null) { return null; }
+
+            string key = BuildKey(PossibleNamesFamily, PossibleNamesType, Type_seach);
+            Element element = null;
+            if (!DictElements.TryGetValue(doc, out var dictsElements))
+            {
+                dictsElements = new Dictionary<string, Element>();
+                DictElements[doc] = dictsElements;
+            }
+            else if (dictsElements.TryGetValue(key, out element) && element != null)
+            {
+                return element;
+            }
+
+            //иначе ищем подходящий элемент
+            var candidates = Collect(doc, Type_seach);
+            if (candidates.Count == 0) return null;
+
+            // Работаем с копией, чтобы не мутировать исходный HashSet
+            var possibleNamesTypeIter = new HashSet<string>(
+                PossibleNamesType ?? Enumerable.Empty<string>());
+
+            double maxSim = (exNamesFamily && exNamesType) ? 1.99 : 0.99;
+
+            Func<ElementType, string> primary = t =>
+            Type_seach == ElementTypeOrSymbol.ElementType && !exNamesFamily
+                ? t.Name
+                : t.FamilyName;
+
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                var pool = candidates;
+                List<(double similar, ElementType candidat)> similarities = new List<(double similar, ElementType candidat)>();
+                foreach (var candidat in candidates)
+                {
+                    double sim = Score(PossibleNamesFamily, primary(candidat))
+                     + Score(possibleNamesTypeIter, candidat.Name);
+
+                    if (sim > maxSim)
+                    {
+                        //100% совпадение
+                        //возможно таких есть несколько, и тебе может надо тот который первее в PossibleNamesFamily, тогда надо итерацию по нему делать сначала
+                        element = candidat;
+                        dictsElements[key] = candidat;
+                        return element;
+                    }
+                    if (sim > 0.4)
+                    {
+                        //чтобы ускорить берем не все
+                        similarities.Add((sim, candidat));
+                    }
+
+                }
+
+                var showCandidat = similarities.OrderByDescending(x => x.similar).Take(6).Select(x => x.candidat).ToList();
+
+
+                if (!userShow)//значит это внутри како-го то алгоритма поэтому мы не тревожим пользователя
+                {
+                    if (showCandidat.Count == 0) return null;
+
+                    element = showCandidat.FirstOrDefault();
+                    break;
+                }
+                else
+                {
+                    
+                    string title = "Точное семейство не найдено";
+                    element = ShowCandidateSelection(showCandidat, title);
+                    if (element == null)
+                    {
+                        // Отказались от окна — ручной ввод имени типоразмера.
+                        var input = HelperPrivateStatic.GetUserInputWithForm(possibleNamesTypeIter.FirstOrDefault());
+                        if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
+
+                        possibleNamesTypeIter.Add(input.Item1.Trim());
+
+                        continue;
+                    }
+                }
+                break;
+            }
+
+
+            //запоминаем в словарь
+            if (element != null)
+            {
+                dictsElements[key] = element;
+            }
+
+            return element;
+        }
+
+        public static string BuildKey(HashSet<string> possibleNamesFamily,
+                              HashSet<string> possibleNamesType, ElementTypeOrSymbol Type_seach)
+        {
+            return string.Join("|",
+                SortedPart(possibleNamesFamily),
+                SortedPart(possibleNamesType) + "|" + Type_seach);
+        }
+
+        private static string SortedPart(HashSet<string> set)
+        {
+            if (set == null || set.Count == 0)
+                return "∅"; // маркер «нет данных»
+
+            var sorted = set
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n, StringComparer.OrdinalIgnoreCase);
+
+            return string.Join(",", sorted);
+        }
+
+
+
+
+
+
+
+
+
         public static Dictionary<Document, Dictionary<string, Element>> PastElements = new Dictionary<Document, Dictionary<string, Element>>();
         // Переопределённые (эффективные) наборы имён.
         // Исходные HashSet'ы, которые передаёт вызывающий код, НИКОГДА не мутируются.
@@ -94,6 +234,7 @@ namespace Reinforcement
                
                 _overriddenNames.Remove(document);
             }
+            DictElements.Clear();
         }
         public static HashSet<string> PereopPossibleNamesType(HashSet<string> names)
         {
@@ -146,8 +287,10 @@ namespace Reinforcement
         }
         private static double Score(HashSet<string> names, string actual)
         {
-            var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
-            return usable.Count == 0 ? 1 : usable.Max(n => StringSimilarity.Calculate(n, actual));
+            //var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+            //return usable.Count == 0 ? 1 : usable.Max(n => StringSimilarity.Calculate(n, actual));
+            if (names == null || names.Count == 0) return 0;
+            return names.Max(n => StringSimilarity.Calculate(n, actual));
         }
         private static bool Exact(HashSet<string> names, string actual)
         {
