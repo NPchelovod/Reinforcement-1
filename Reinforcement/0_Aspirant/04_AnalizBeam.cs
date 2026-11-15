@@ -56,10 +56,12 @@ namespace Reinforcement
 
                 var fi = el as FamilyInstance;
                 if (fi == null) { skipped++; continue; }
-
+               
                 // ── 1. Один раз проверяем адаптивность ──
                 bool isAdaptive = false;
-                try { isAdaptive = AdaptiveComponentInstanceUtils.IsAdaptiveComponentInstance(fi); }
+                try { isAdaptive = AdaptiveComponentInstanceUtils.IsAdaptiveComponentInstance(fi); 
+                
+                }
                 catch (Exception ex) { AppErrors.LogError(ex); }
 
                 if (!isAdaptive)
@@ -69,6 +71,41 @@ namespace Reinforcement
                     sb.AppendLine();
                     continue;
                 }
+
+                adaptive++;   // ← сначала инкремент
+
+                // ── ДИАГНОСТИКА: что реально видит API ──
+                try
+                {
+                    var allPointIds = AdaptiveComponentInstanceUtils.GetInstancePointElementRefIds(fi)
+                        ?? new List<ElementId>();
+
+                    sb.AppendLine($"● [{id.IntegerValue}] {fi.Symbol?.Family?.Name ?? "?"} / {fi.Name ?? "?"}");
+                    sb.AppendLine($"  Всего точек GetInstancePointElementRefIds: {allPointIds.Count}");
+
+                    foreach (var ptId in allPointIds)
+                    {
+                        var rp = doc.GetElement(ptId) as ReferencePoint;
+                        if (rp == null)
+                        {
+                            sb.AppendLine($"    [{ptId.IntegerValue}] — не ReferencePoint");
+                            continue;
+                        }
+                        XYZ p = rp.Position ?? XYZ.Zero;
+                        bool isPlacement = AdaptiveComponentFamilyUtils.IsAdaptivePlacementPoint(doc, ptId);
+                        bool isShapeHandle = AdaptiveComponentFamilyUtils.IsAdaptiveShapeHandlePoint(doc, ptId);
+                        bool isAdaptivePt = AdaptiveComponentFamilyUtils.IsAdaptivePoint(doc, ptId);
+                        sb.AppendLine($"    [{ptId.IntegerValue}] ({p.X * FtToMm:F1}, {p.Y * FtToMm:F1}, {p.Z * FtToMm:F1}) мм  " +
+                                      $"Adaptive={isAdaptivePt}, Placement={isPlacement}, ShapeHandle={isShapeHandle}");
+                    }
+                    sb.AppendLine();
+                }
+                catch (Exception ex)
+                {
+                    AppErrors.LogError(ex);
+                    sb.AppendLine($"  ⚠ Ошибка диагностики: {ex.Message}");
+                }
+
 
                 adaptive++;
 

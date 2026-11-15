@@ -76,14 +76,14 @@ namespace Reinforcement
         public static string FolderErrorsLog => Path.Combine(FolderStatistics, "_errors");
         public static string FolderErrorsLogTemp => Path.Combine(FolderStatisticsTemp, "_errors");
 
-        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina" };
+        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina", "Npchelovod" };
 
         public static bool UserIsAvtor=false;
 
 
 
         public const string Password = "kerulen";
-        public static bool UserIsAdmin=false;
+        public static bool UserIsAdmin=false;//введен ли Пароль
 
 
 

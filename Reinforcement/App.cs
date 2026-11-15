@@ -533,6 +533,15 @@ namespace Reinforcement
                 FailureBuffer.Flush();
             }
             catch { /* уже нечего терять */ }
+
+            try
+            {
+                if (App_Folders.UserIsAdmin)//введен пароль ли
+                {
+                    ErrorAnalyse.GetMessageErrors();
+                }
+            }
+            catch { /* уже нечего терять */ }
         }
 
 
