@@ -117,7 +117,110 @@ namespace Reinforcement
 
             return element;
         }
+        public static Element SeachElement(string PossibleNamesFamily,
+                                     string PossibleNamesType,
+                                     ElementTypeOrSymbol Type_seach, bool userShow)//показывать ли пользователю
+        {
+            bool exNamesFamily =!string.IsNullOrEmpty( PossibleNamesFamily);
+            bool exNamesType = !string.IsNullOrEmpty(PossibleNamesType);
+            if (!exNamesFamily && !exNamesType) { return null; }
 
+            Document doc = RevitAPI.Document;
+            if (doc == null) { return null; }
+            //получаем информацию о документе
+            //DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
+            //if (documentInfo == null) { return null; }
+
+            string key = BuildKey(PossibleNamesFamily, PossibleNamesType, Type_seach);
+            Element element = null;
+            if (!DictElements.TryGetValue(doc, out var dictsElements))
+            {
+                dictsElements = new Dictionary<string, Element>();
+                DictElements[doc] = dictsElements;
+            }
+            else if (dictsElements.TryGetValue(key, out element) && element != null)
+            {
+                return element;
+            }
+
+            //иначе ищем подходящий элемент
+            var candidates = Collect(doc, Type_seach);
+            if (candidates.Count == 0) return null;
+
+            // Работаем с копией, чтобы не мутировать исходный HashSet
+            var possibleNamesTypeIter = PossibleNamesType;
+
+            double maxSim = (exNamesFamily && exNamesType) ? 1.99 : 0.99;
+
+            Func<ElementType, string> primary = t =>
+            Type_seach == ElementTypeOrSymbol.ElementType && !exNamesFamily
+                ? t.Name
+                : t.FamilyName;
+
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                var pool = candidates;
+                List<(double similar, ElementType candidat)> similarities = new List<(double similar, ElementType candidat)>();
+                foreach (var candidat in candidates)
+                {
+                    double sim = Score(PossibleNamesFamily, primary(candidat))
+                     + Score(possibleNamesTypeIter, candidat.Name);
+
+                    if (sim > maxSim)
+                    {
+                        //100% совпадение
+                        //возможно таких есть несколько, и тебе может надо тот который первее в PossibleNamesFamily, тогда надо итерацию по нему делать сначала
+                        element = candidat;
+                        dictsElements[key] = candidat;
+                        return element;
+                    }
+                    if (sim > 0.4)
+                    {
+                        //чтобы ускорить берем не все
+                        similarities.Add((sim, candidat));
+                    }
+
+                }
+
+                var showCandidat = similarities.OrderByDescending(x => x.similar).Take(6).Select(x => x.candidat).ToList();
+
+
+                if (!userShow)//значит это внутри како-го то алгоритма поэтому мы не тревожим пользователя
+                {
+                    if (showCandidat.Count == 0) return null;
+
+                    element = showCandidat.FirstOrDefault();
+                    break;
+                }
+                else
+                {
+
+                    string title = "Точное семейство не найдено";
+                    element = ShowCandidateSelection(showCandidat, title);
+                    if (element == null)
+                    {
+                        // Отказались от окна — ручной ввод имени типоразмера.
+                        var input = HelperPrivateStatic.GetUserInputWithForm(possibleNamesTypeIter);
+                        if (!input.Item2 || string.IsNullOrWhiteSpace(input.Item1)) return null;
+
+
+                        possibleNamesTypeIter=input.Item1.Trim();
+
+                        continue;
+                    }
+                }
+                break;
+            }
+
+
+            //запоминаем в словарь
+            if (element != null)
+            {
+                dictsElements[key] = element;
+            }
+
+            return element;
+        }
         public static string BuildKey(HashSet<string> possibleNamesFamily,
                               HashSet<string> possibleNamesType, ElementTypeOrSymbol Type_seach)
         {
@@ -125,7 +228,13 @@ namespace Reinforcement
                 SortedPart(possibleNamesFamily),
                 SortedPart(possibleNamesType) + "|" + Type_seach);
         }
-
+        public static string BuildKey(string possibleNamesFamily,
+                              string possibleNamesType, ElementTypeOrSymbol Type_seach)
+        {
+            string answer = string.Join("|", possibleNamesFamily, possibleNamesType, Type_seach);
+           return answer;
+        }
+        
         private static string SortedPart(HashSet<string> set)
         {
             if (set == null || set.Count == 0)
@@ -292,6 +401,15 @@ namespace Reinforcement
             if (names == null || names.Count == 0) return 0;
             return names.Max(n => StringSimilarity.Calculate(n, actual));
         }
+        private static double Score(string name, string actual)
+        {
+            //var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+            //return usable.Count == 0 ? 1 : usable.Max(n => StringSimilarity.Calculate(n, actual));
+           
+            return StringSimilarity.Calculate(name, actual);
+        }
+
+
         private static bool Exact(HashSet<string> names, string actual)
         {
             var usable = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();

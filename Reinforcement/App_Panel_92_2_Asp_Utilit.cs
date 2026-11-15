@@ -30,6 +30,12 @@ namespace Reinforcement
                 "аааа",
                panel);
 
+            App_Helper_Button.CreateButton("EC_СоздБалка", "Создать", "Reinforcement.Aspirant.GetInitialData", OV1,
+               "нннн",
+               "аааа",
+              panel);
+
+
         }
 
 

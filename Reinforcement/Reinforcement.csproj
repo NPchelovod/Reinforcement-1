@@ -147,6 +147,19 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Compile Include="0_Aspirant\00_Helper\01_ConvertXYZListExtensions.cs" />
+    <Compile Include="0_Aspirant\00_Helper\02_ConvertXYZGetOptimum.cs" />
+    <Compile Include="0_Aspirant\00_Helper\03_XYZListCircularSort.cs" />
+    <Compile Include="0_Aspirant\00_Helper\5_ErrorAnalyse.cs" />
+    <Compile Include="0_Aspirant\02_BaseClasses\01_PlaceData.cs" />
+    <Compile Include="0_Aspirant\02_BaseClasses\04_Beam.cs" />
+    <Compile Include="0_Aspirant\02_BaseClasses\08_ContourData.cs" />
+    <Compile Include="0_Aspirant\03_GetPlace\01_GetPlaceData.cs" />
+    <Compile Include="0_Aspirant\02_BaseClasses\02_FloorContourData.cs" />
+    <Compile Include="0_Aspirant\02_BaseClasses\03_ColumnContourData.cs" />
+    <Compile Include="0_Aspirant\03_GetPlace\04_GetIntersectColumns.cs" />
+    <Compile Include="0_Aspirant\03_GetPlace\05_GetOpors.cs" />
+    <Compile Include="0_Aspirant\04_GetInitialData\01_GetInitialData.cs" />
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
@@ -641,7 +654,9 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="0_Aspirant\01_Test\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent Condition="'$(SignPlugin)' != 'false'">powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(ProjectDir)Sign-Plugin.ps1" -TargetPath "$(TargetPath)"</PostBuildEvent>

@@ -61,6 +61,10 @@ namespace Reinforcement
         /// </summary>
         public static Document Document => UiDocument.Document;
 
+
+        public static Autodesk.Revit.DB.View GetActiveView()=> UiDocument.ActiveView;
+       
+
         /// <summary>
         /// Инициализация класса контекстом команды Revit.
         /// Вызывается один раз из IExternalCommand.Execute().
@@ -83,19 +87,20 @@ namespace Reinforcement
         /// <summary>
         /// Перевод из внутренних единиц Revit (футы) в миллиметры.
         /// </summary>
-        public static double ToMm(double number)
-        {
-            return UnitUtils.ConvertFromInternalUnits(number, UnitTypeId.Millimeters);
-        }
+        public static double ToMm(double number) => FtToMm * number;
+        //{
+        //    return UnitUtils.ConvertFromInternalUnits(number, UnitTypeId.Millimeters);
+        //}
 
         /// <summary>
         /// Перевод из миллиметров в футы (внутренние единицы Revit).
         /// </summary>
-        public static double ToFoot(double number)
-        {
-            return UnitUtils.ConvertToInternalUnits(number, UnitTypeId.Millimeters);
-        }
-
+        public static double ToFoot(double number) => number / FtToMm;
+        //{
+        //    return UnitUtils.ConvertToInternalUnits(number, UnitTypeId.Millimeters);
+        //}
+        private const double FtToMm = 304.8;
+        
 
         public static bool RequestPassword()
         {
