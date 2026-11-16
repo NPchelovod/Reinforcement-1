@@ -14,7 +14,7 @@ namespace Reinforcement
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
-        public static string GetDatePluginText => $"Плагин от: {App_Folders.DatePluginDll.ToLocalTime():d MMM yyyy, HH:mm}";
+        public static string GetDatePluginText => $"Плагин от: {App_Folders.DatePluginDll.ToLocalTime():d MMM yyyy, HH:mm}, ПК_{App_Folders.UserName_MachineName}";
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             chkFillAuthor.IsChecked = PeriodicHandler.RegWriterAvtor;

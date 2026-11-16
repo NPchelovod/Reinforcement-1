@@ -237,7 +237,7 @@ namespace Reinforcement
                 }
                 nameFile += ".log";
                 //запись падения
-                //C:\Users\KVinogradov\AppData\Roaming\RevitAddinsLogs
+                //C:\Users\KVinogradov\AppData\Roaming\RevitAddinsLogs  
                 string logPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "RevitAddinsLogs", nameFile);

@@ -83,6 +83,12 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Найти семейство", assemblyPath, "Reinforcement.SeachViewsFamily",
               "Поиск листов и видов где семейство размещено, работает и в спецификации\n"+"таже кнопка что и Найти элемент", OV1);
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Колонка", assemblyPath, "Reinforcement.Aspirant.CreateGroundColumn",
+              "Создать колонку грунта\n" + "из адаптивного семейства ЕС_Балка", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Слои", assemblyPath, "Reinforcement.Aspirant.ConnectGroundColumns",
+              "Создать соединение колонок грунта\n" + "из адаптивного семейства ЕС_Балка соединение скважин", OV1);
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

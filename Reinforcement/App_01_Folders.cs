@@ -76,7 +76,10 @@ namespace Reinforcement
         public static string FolderErrorsLog => Path.Combine(FolderStatistics, "_errors");
         public static string FolderErrorsLogTemp => Path.Combine(FolderStatisticsTemp, "_errors");
 
-        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov", "KBocharov", "KReimer", "KZubakhina", "Npchelovod" };
+        public static HashSet<string> Avtors = new HashSet<string> { "KVinogradov","kvinogradov", "KBocharov", "KReimer", "KZubakhina", "Npchelovod" };
+
+        public static HashSet<string> IscludePCName = new HashSet<string> { "CALC" };
+        public static bool IsExcludedPCName => IscludePCName.Contains(MachineName);
 
         public static bool UserIsAvtor=false;
 

@@ -14,13 +14,16 @@ namespace Reinforcement
 
         public static void Execute()
         {
-            return;
+            if (App_Folders.IsExcludedPCName)//на кальке и другом пк не надо запускать
+            {
+                return;
+            }
             TimeStat();
         }
 
         public static void TimeStat()
         {
-
+            
             if (App.EUserOtdel != EUserOtdel.KR)
             {
                 //только для КР акция
