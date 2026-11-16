@@ -160,12 +160,15 @@
     <Compile Include="0_Aspirant\03_GetPlace\04_GetIntersectColumns.cs" />
     <Compile Include="0_Aspirant\03_GetPlace\05_GetOpors.cs" />
     <Compile Include="0_Aspirant\04_GetInitialData\01_GetInitialData.cs" />
-    <Compile Include="0_Aspirant\OtherProjects\ConnectGroundColumns.cs" />
-    <Compile Include="0_Aspirant\OtherProjects\CreateGroundColumn.cs" />
-    <Compile Include="0_Aspirant\OtherProjects\GroundLayer.cs" />
-    <Compile Include="0_Aspirant\OtherProjects\GroundLayersWindow.xaml.cs">
+    <Compile Include="0_Aspirant\00_OtherProjects\ConnectGroundColumns.cs" />
+    <Compile Include="0_Aspirant\00_OtherProjects\ConnectGroundColumns2.cs" />
+    <Compile Include="0_Aspirant\00_OtherProjects\CreateGroundColumn.cs" />
+    <Compile Include="0_Aspirant\00_OtherProjects\GroundBeamColorizer.cs" />
+    <Compile Include="0_Aspirant\00_OtherProjects\GroundLayer.cs" />
+    <Compile Include="0_Aspirant\00_OtherProjects\GroundLayersWindow.xaml.cs">
       <DependentUpon>GroundLayersWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="0_Aspirant\00_OtherProjects\SnapBeamEndToBeam.cs" />
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
@@ -583,7 +586,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="0_Aspirant\OtherProjects\GroundLayersWindow.xaml">
+    <Page Include="0_Aspirant\00_OtherProjects\GroundLayersWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -33,13 +33,15 @@ namespace Reinforcement
 
             var paramTop = element.LookupParameter("Текст верх");
             if (paramTop == null) return;
-
-            lookWidth(doc, element, name, paramTop);
+            // --- НОВАЯ ЛОГИКА: Проверяем наличие стрелки ---
+            bool hasArrow = HasLeaderArrowhead(element);
+            // ---------------------------------------------
+            lookWidth(doc, element, name, paramTop, hasArrow);
 
         }
         private readonly static List<string> nameWidths = new List<string> { "ЕС_Ширина полки", "Ширина полки" };
         private static int _fontWarningShown;   // 0 = не показывали
-        private static bool lookWidth(Document doc, Element element, string name, Parameter paramTop)
+        private static bool lookWidth(Document doc, Element element, string name, Parameter paramTop, bool hasArrow)
         {
             try
             {
@@ -70,11 +72,13 @@ namespace Reinforcement
                 //double width1 = RevitAPI.ToFoot(GetCharacterWidth(doc, firstText, H_size));
                 //double width2 = RevitAPI.ToFoot(GetCharacterWidth(doc, secondText, H_size));
 
-                double width1 = RevitAPI.ToFoot(GetCharacterWidthPrecise(firstText, H_size));
-                double width2 = RevitAPI.ToFoot(GetCharacterWidthPrecise(secondText, H_size));
+                double width1 = RevitAPI.ToFoot(GetCharacterWidthPrecise(firstText, H_size, hasArrow));
+                double width2 = RevitAPI.ToFoot(GetCharacterWidthPrecise(secondText, H_size, hasArrow));
                 double width = Math.Max(width1, width2); //может быть нулевым, ну вроде не опасно
                 if(width <=0)
-                {  return false; }
+                { 
+                    width = RevitAPI.ToFoot(1); 
+                }
 
                 foreach (var wid in nameWidths)// возможные имена
                 {
@@ -111,7 +115,40 @@ namespace Reinforcement
             }
             return true;
         }
+        /// <summary>
+        /// Проверяет, назначена ли выноске стрелка (arrowhead).
+        /// </summary>
+        private static bool HasLeaderArrowhead(Element element)
+        {
+            // 1. Проверяем параметр LEADER_ARROWHEAD у экземпляра
+            Parameter arrowParam = element.get_Parameter(BuiltInParameter.LEADER_ARROWHEAD);
+            if (arrowParam != null && arrowParam.StorageType == StorageType.ElementId)
+            {
+                ElementId arrowId = arrowParam.AsElementId();
+                if (arrowId != null && arrowId != ElementId.InvalidElementId)
+                    return true;
+            }
 
+            // 2. Если у экземпляра параметра нет (или он пуст), проверяем его Тип
+            //    (в семействах Generic Annotation стрелка часто задается на уровне типа)
+            ElementId typeId = element.GetTypeId();
+            if (typeId != ElementId.InvalidElementId)
+            {
+                ElementType elemType = element.Document.GetElement(typeId) as ElementType;
+                if (elemType != null)
+                {
+                    Parameter typeArrowParam = elemType.get_Parameter(BuiltInParameter.LEADER_ARROWHEAD);
+                    if (typeArrowParam != null && typeArrowParam.StorageType == StorageType.ElementId)
+                    {
+                        ElementId arrowId = typeArrowParam.AsElementId();
+                        if (arrowId != null && arrowId != ElementId.InvalidElementId)
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
         // ============ Кэш шрифтов ============
         private static readonly Dictionary<float, Font> _fontCache = new Dictionary<float, Font>();
         private static Font GetCachedFont(float heightMm)
@@ -167,7 +204,7 @@ namespace Reinforcement
         // Эмпирическая поправка между MeasureString (GDI+) и рендерингом Revit
         // для шрифта ISOCPEUR. Откалибрована сравнением с TextNote.Width.
         private const double IsoCpeurWidthCorrection = 1.092557;
-        private static double GetCharacterWidthPrecise(string text, float heightMm)
+        private static double GetCharacterWidthPrecise(string text, float heightMm, bool hasArrow)
         {
             if (string.IsNullOrEmpty(text)) return 0;
 
@@ -184,15 +221,27 @@ namespace Reinforcement
 
                 // PointF-overload — без ограничения ширины и без переносов.
                 SizeF size = _measureG.MeasureString(text, font, new PointF(0, 0), _measureFormat);
-
-                return size.Width * IsoCpeurWidthCorrection;   // ваша эмпирическая поправка, мм
+                double add = AddHvostic(heightMm);
+                return add+size.Width * IsoCpeurWidthCorrection;   // ваша эмпирическая поправка, мм
             }
             catch
             {
                 return 0;
             }
         }
-
+        private static double AddHvostic(float heightMm)
+        {
+            //добавка чтобы полки торчали по бокам
+            if(Math.Abs(heightMm -3.5)<Math.Abs(heightMm - 2.5))
+            {
+                //значит шрифт 2.5
+                return 1.5;
+            }
+            else
+            {
+                return 2.5;
+            }
+        }
 
         //static double GetCharacterWidth(Document doc, string text, Single H_size = 3.5f)
         //{

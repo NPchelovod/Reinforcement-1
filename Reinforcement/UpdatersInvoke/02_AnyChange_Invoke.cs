@@ -106,9 +106,13 @@ namespace Reinforcement
                 }
                 else if(delHash.Count > 0)
                 {
-                    //так лучше - тогда известно что только удаление было
-                    PeriodicHandler.ExecuteDelete(now, doc, delHash);
-                    anyProcessed = true;
+                    //считаем что удаление противоположно добавлению, иначе бывает добавляет элементы, странно 
+                    if (delHash.Count < 100)//чтоб лишний раз не мусорить
+                    {
+                        //так лучше - тогда известно что только удаление было
+                        PeriodicHandler.ExecuteDelete(now, doc, delHash);
+                        anyProcessed = true;
+                    }
                 }
 
                 if (anyProcessed)

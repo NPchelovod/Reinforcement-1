@@ -18,7 +18,7 @@ namespace Reinforcement
 
         // Cooldown — не показывать диалог чаще, чем раз в 2 часа
         private static DateTime _lastNotifiedTime = DateTime.MinValue;
-        private static readonly TimeSpan NotifyCooldown = TimeSpan.FromHours(2);
+        private static readonly TimeSpan NotifyCooldown = TimeSpan.FromHours(3);
 
         public struct CheckResult
         {
@@ -126,13 +126,13 @@ namespace Reinforcement
         private static bool existShow = false;
         private static void ShowUpdateDialog(CheckResult r)
         {
-            existShow= true;
+            //existShow= true;
             var td = new TaskDialog("Обновление плагина");
             td.MainInstruction = "Доступно свежее обновление плагина";
             td.MainContent =
                 $"Есть свежее обновление от {r.NewestSourceDateLocal:yyyy-MM-dd HH:mm},\n" +
                 $"в то время как ваш плагин от {r.CurrentDateLocal:yyyy-MM-dd HH:mm}.\n\n" +
-                "Закройте Revit для автоматического обновления.";
+                "Закройте Revit для автоматического обновления. (на 30 сек.)";
             td.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
                 "Закрыть Revit сейчас",
                 "При следующем запуске плагин обновится автоматически");

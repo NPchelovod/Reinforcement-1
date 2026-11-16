@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 
 namespace Reinforcement.Aspirant
 {
@@ -15,11 +16,6 @@ namespace Reinforcement.Aspirant
     {
         private static readonly CultureInfo Ru = CultureInfo.GetCultureInfo("ru-RU");
 
-        // ─────────────────────────────────────────────────────────
-        //  Статика сессии: сдвиг сохраняется между запусками команды.
-        //  При первом показе инициализируется как −PBP.Elevation —
-        //  именно это делает Position.Z = Z1 + сдвиг == отметка Z1.
-        // ─────────────────────────────────────────────────────────
         public static double LastOffsetMeters { get; private set; } = double.NaN;
 
         public static void EnsureOffsetInitialized(double basePointElevationM)
@@ -28,23 +24,16 @@ namespace Reinforcement.Aspirant
                 LastOffsetMeters = -basePointElevationM;
         }
 
-        // ─────────────────────────────────────────────────────────
-        //  Публичные результаты (читаются после ShowDialog() == true)
-        // ─────────────────────────────────────────────────────────
-
         public double Z1Meters { get; private set; }
         public double OffsetMeters { get; private set; }
+        public double XMeters { get; private set; }
+        public double YMeters { get; private set; }
         public string ColumnNumber { get; private set; } = "1";
 
-        /// <summary>Position.Z верхней точки (м) = Z1 + Offset.</summary>
         public double EffectiveZ1Meters => Z1Meters + OffsetMeters;
 
         public ObservableCollection<GroundLayer> Layers { get; }
             = new ObservableCollection<GroundLayer>();
-
-        // ─────────────────────────────────────────────────────────
-        //  Конструктор
-        // ─────────────────────────────────────────────────────────
 
         public GroundLayersWindow(double basePointElevationM = 0.0)
         {
@@ -60,8 +49,8 @@ namespace Reinforcement.Aspirant
             TbBasePointInfo.Text =
                 $"Справка: PBP.Elevation = {basePointElevationM:0.###} м. " +
                 $"Position.Z = Z1 + сдвиг. По умолчанию сдвиг = −PBP.Elevation " +
-                $"({(-basePointElevationM):0.###} м) — это даёт отметку в Revit = Z1. " +
-                $"Сдвиг хранится в статическом поле (в пределах сессии Revit).";
+                $"({(-basePointElevationM):0.###} м) — отметка в Revit = Z1. " +
+                $"X, Y — координаты скважины в метрах (0,0 = начало координат).";
 
             UpdateSummary();
             UpdateZPreview();
@@ -93,7 +82,7 @@ namespace Reinforcement.Aspirant
         }
 
         // ─────────────────────────────────────────────────────────
-        //  Живой превью Position.Z
+        //  Превью
         // ─────────────────────────────────────────────────────────
 
         private void TbZ_TextChanged(object sender, TextChangedEventArgs e)
@@ -151,6 +140,8 @@ namespace Reinforcement.Aspirant
             sb.Append("Z1_m;").Append(TbZ1.Text).Append("\r\n");
             sb.Append("Offset_m;").Append(TbZeroPoint.Text).Append("\r\n");
             sb.Append("ColumnNumber;").Append(TbColumnNumber.Text).Append("\r\n");
+            sb.Append("X_m;").Append(TbX.Text).Append("\r\n");
+            sb.Append("Y_m;").Append(TbY.Text).Append("\r\n");
             sb.Append("LayerName;Thickness_m\r\n");
             foreach (var l in Layers)
                 sb.Append(CsvEscape(l.Name)).Append(';')
@@ -160,7 +151,7 @@ namespace Reinforcement.Aspirant
         }
 
         // ─────────────────────────────────────────────────────────
-        //  CSV: импорт
+        //  CSV: импорт (с автоопределением кодировки)
         // ─────────────────────────────────────────────────────────
 
         private void ImportCsv_Click(object sender, RoutedEventArgs e)
@@ -174,7 +165,7 @@ namespace Reinforcement.Aspirant
 
             try
             {
-                string text = File.ReadAllText(dlg.FileName);
+                string text = ReadTextAuto(dlg.FileName);
                 if (ApplyCsv(text, out string error))
                     MessageBox.Show("Импортировано.");
                 else
@@ -187,6 +178,46 @@ namespace Reinforcement.Aspirant
             }
         }
 
+        /// <summary>
+        /// Читает файл, автоматически определяя кодировку:
+        /// UTF-8/UTF-16 по BOM, иначе строгий UTF-8, иначе Windows-1251.
+        /// Это исправляет «3а» → «3�» при файлах из русского Excel (CP1251).
+        /// </summary>
+        private static string ReadTextAuto(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+
+            // BOM UTF-8
+            if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+                return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+
+            // BOM UTF-16 LE
+            if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+                return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
+
+            // BOM UTF-16 BE
+            if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+                return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2);
+
+            // Строгий UTF-8 без BOM — если валидный, значит это UTF-8
+            try
+            {
+                return new UTF8Encoding(false, throwOnInvalidBytes: true)
+                    .GetString(bytes);
+            }
+            catch { /* не UTF-8, идём дальше */ }
+
+            // Fallback: Windows-1251 (русский ANSI)
+            try
+            {
+                return Encoding.GetEncoding(1251).GetString(bytes);
+            }
+            catch { }
+
+            // Последний шанс — UTF-8 без проверки
+            return Encoding.UTF8.GetString(bytes);
+        }
+
         private bool ApplyCsv(string text, out string error)
         {
             error = null;
@@ -197,6 +228,7 @@ namespace Reinforcement.Aspirant
 
             double? z1 = null;
             double? offset = null;
+            double? x = null, y = null;
             string colNum = null;
             var layers = new List<GroundLayer>();
             bool inLayers = false;
@@ -229,13 +261,20 @@ namespace Reinforcement.Aspirant
                     {
                         colNum = parts[1].Trim();
                     }
+                    else if (key == "x_m" || key == "x")
+                    {
+                        if (TryParse(parts[1], out double v)) x = v;
+                    }
+                    else if (key == "y_m" || key == "y")
+                    {
+                        if (TryParse(parts[1], out double v)) y = v;
+                    }
                     else if (key == "layername" || key == "name")
                     {
                         inLayers = true;
                     }
                     else
                     {
-                        // Нет заголовка LayerName — значит это уже слой
                         if (TryParse(parts[1], out double t) &&
                             !string.IsNullOrWhiteSpace(parts[0]))
                         {
@@ -263,6 +302,8 @@ namespace Reinforcement.Aspirant
                         "  Z1_m;209,79\n" +
                         "  Offset_m;-211,1\n" +
                         "  ColumnNumber;1\n" +
+                        "  X_m;0\n" +
+                        "  Y_m;0\n" +
                         "  LayerName;Thickness_m\n" +
                         "  Песок;2,5";
                 return false;
@@ -277,6 +318,8 @@ namespace Reinforcement.Aspirant
             TbZ1.Text = z1.Value.ToString("0.###", Ru);
             if (offset.HasValue) TbZeroPoint.Text = offset.Value.ToString("0.###", Ru);
             if (!string.IsNullOrEmpty(colNum)) TbColumnNumber.Text = colNum;
+            if (x.HasValue) TbX.Text = x.Value.ToString("0.###", Ru);
+            if (y.HasValue) TbY.Text = y.Value.ToString("0.###", Ru);
 
             Layers.Clear();
             foreach (var l in layers) Layers.Add(l);
@@ -299,8 +342,17 @@ namespace Reinforcement.Aspirant
             }
             if (!TryParse(TbZeroPoint.Text, out double offset))
             {
-                MessageBox.Show("Не удалось разобрать сдвиг отметки.\n" +
-                                "Введите число, например: -211.1 или -211,1.");
+                MessageBox.Show("Не удалось разобрать сдвиг отметки.");
+                return;
+            }
+            if (!TryParse(TbX.Text, out double x))
+            {
+                MessageBox.Show("Не удалось разобрать X.");
+                return;
+            }
+            if (!TryParse(TbY.Text, out double y))
+            {
+                MessageBox.Show("Не удалось разобрать Y.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(TbColumnNumber.Text))
@@ -320,13 +372,40 @@ namespace Reinforcement.Aspirant
 
             Z1Meters = z1;
             OffsetMeters = offset;
+            XMeters = x;
+            YMeters = y;
             ColumnNumber = TbColumnNumber.Text.Trim();
-            LastOffsetMeters = offset; // запоминаем в статике сессии
+            LastOffsetMeters = offset;
             DialogResult = true;
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
             => DialogResult = false;
+
+        // ─────────────────────────────────────────────────────────
+        //  SelectAll при входе в ячейку (не сбрасывая ввод)
+        // ─────────────────────────────────────────────────────────
+
+        private void GridLayers_PreparingCellForEdit(
+            object sender, DataGridPreparingCellForEditEventArgs e)
+        {
+            if (e.EditingElement is TextBox tb &&
+                e.EditingEventArgs is MouseButtonEventArgs)
+            {
+                // SelectAll через MouseUp, а не сразу — иначе DataGrid
+                // сбрасывает выделение, ставя каретку в точку клика.
+                tb.PreviewMouseLeftButtonUp += OnFirstMouseUpSelectAll;
+            }
+        }
+
+        private void OnFirstMouseUpSelectAll(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                tb.PreviewMouseLeftButtonUp -= OnFirstMouseUpSelectAll;
+                tb.SelectAll();
+            }
+        }
 
         // ─────────────────────────────────────────────────────────
         //  Утилиты
@@ -367,10 +446,6 @@ namespace Reinforcement.Aspirant
             return result.ToArray();
         }
 
-        /// <summary>
-        /// Парсит число в формате «209.79», «209,79», «-211.1», «-211,1».
-        /// Порядок: InvariantCulture (точка) → ru-RU (запятая) → replace ','→'.'.
-        /// </summary>
         private static bool TryParse(string s, out double v)
         {
             v = 0;
@@ -386,24 +461,8 @@ namespace Reinforcement.Aspirant
                 return true;
             return false;
         }
-
-        /// <summary>
-        /// SelectAll при входе в редактирование — без этого ввод «1» + «10.1»
-        /// даёт «10.11» или «1.00010.1».
-        /// </summary>
-        private void GridLayers_PreparingCellForEdit(
-            object sender,
-            DataGridPreparingCellForEditEventArgs e)
-        {
-            if (e.EditingElement is TextBox tb)
-                tb.SelectAll();
-        }
     }
 
-    /// <summary>
-    /// Принимает и «1,2», и «1.2», отображает без хвостовых нулей.
-    /// С UpdateSourceTrigger=LostFocus не «стирает» ввод во время набора.
-    /// </summary>
     public class FlexibleDoubleConverter : IValueConverter
     {
         public object Convert(object value, Type targetType,

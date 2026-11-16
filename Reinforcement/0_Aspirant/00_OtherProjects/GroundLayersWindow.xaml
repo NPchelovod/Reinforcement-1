@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Reinforcement.Aspirant"
         Title="Грунтовая колонка (скважина)"
-        Width="640" Height="680"
+        Width="680" Height="720"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <local:FlexibleDoubleConverter x:Key="FlexDouble"/>
@@ -12,24 +12,16 @@
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- 0: Z1 -->
             <RowDefinition Height="Auto"/>
-            <!-- 1: Сдвиг -->
             <RowDefinition Height="Auto"/>
-            <!-- 2: Номер колонки -->
             <RowDefinition Height="Auto"/>
-            <!-- 3: Превью + справка -->
             <RowDefinition Height="Auto"/>
-            <!-- 4: Кнопки -->
             <RowDefinition Height="*"/>
-            <!-- 5: DataGrid -->
             <RowDefinition Height="Auto"/>
-            <!-- 6: Итог -->
             <RowDefinition Height="Auto"/>
-            <!-- 7: OK/Cancel -->
         </Grid.RowDefinitions>
 
-        <!-- Z1: принимает и «209,79», и «209.79» -->
+        <!-- Z1 -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="Абс. отметка верха Z1, м:"
                        VerticalAlignment="Center" Width="240"/>
@@ -38,7 +30,7 @@
                      TextChanged="TbZ_TextChanged"/>
         </StackPanel>
 
-        <!-- Сдвиг отметки -->
+        <!-- Сдвиг -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="Сдвиг отметки (чистый ноль), м:"
                        VerticalAlignment="Center" Width="240"/>
@@ -47,11 +39,16 @@
                      TextChanged="TbZ_TextChanged"/>
         </StackPanel>
 
-        <!-- Номер колонки -->
+        <!-- Номер + X + Y -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="Номер колонки:"
-                       VerticalAlignment="Center" Width="240"/>
-            <TextBox x:Name="TbColumnNumber" Width="120" Text="1"
+            <TextBlock Text="Номер колонки:" VerticalAlignment="Center" Width="120"/>
+            <TextBox x:Name="TbColumnNumber" Width="60" Text="1"
+                     VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="X, м:" VerticalAlignment="Center" Width="40"/>
+            <TextBox x:Name="TbX" Width="80" Text="0"
+                     VerticalContentAlignment="Center" Margin="0,0,16,0"/>
+            <TextBlock Text="Y, м:" VerticalAlignment="Center" Width="40"/>
+            <TextBox x:Name="TbY" Width="80" Text="0"
                      VerticalContentAlignment="Center"/>
         </StackPanel>
 
@@ -76,7 +73,7 @@
                     Click="ExportCsv_Click"/>
         </StackPanel>
 
-        <!-- DataGrid: толщина — LostFocus (иначе текст стирается при вводе) -->
+        <!-- DataGrid -->
         <DataGrid Grid.Row="5"
                   x:Name="GridLayers"
                   AutoGenerateColumns="False"
@@ -87,11 +84,11 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Наименование грунта"
                                     Width="*"
-                                    Binding="{Binding Name,
+                                    Binding="{Binding Name, Mode=TwoWay,
                                               UpdateSourceTrigger=LostFocus}"/>
                 <DataGridTextColumn Header="Толщина, м"
                                     Width="140"
-                                    Binding="{Binding ThicknessM,
+                                    Binding="{Binding ThicknessM, Mode=TwoWay,
                                               UpdateSourceTrigger=LostFocus,
                                               Converter={StaticResource FlexDouble}}"/>
             </DataGrid.Columns>

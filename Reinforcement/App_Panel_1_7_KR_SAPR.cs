@@ -87,8 +87,15 @@ namespace Reinforcement
 
             App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Колонка", assemblyPath, "Reinforcement.Aspirant.CreateGroundColumn",
               "Создать колонку грунта\n" + "из адаптивного семейства ЕС_Балка", OV1);
-            App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Слои", assemblyPath, "Reinforcement.Aspirant.ConnectGroundColumns",
+            App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Слои", assemblyPath, "Reinforcement.Aspirant.ConnectGroundColumns2",
               "Создать соединение колонок грунта\n" + "из адаптивного семейства ЕС_Балка соединение скважин", OV1);
+
+
+            App_Helper_Button.AddButtonToPullDownButton(item, "Грунт Краска", assemblyPath, "Reinforcement.Aspirant.ColorizeGroundBeams",
+             "Разукрасить на 3д виде\n" + "из адаптивного семейства ЕС_Балка", OV1);
+            App_Helper_Button.AddButtonToPullDownButton(item, "Балка дотяг", assemblyPath, "Reinforcement.Aspirant.SnapBeamEndToBeam",
+            "Соединить балки\n" + "сначала выберете одну балку и нажмите кнопку", OV1);
+
             // Устанавливаем иконку для самой PulldownButton
             System.Windows.Media.ImageSource imageSource = App_Helper_Button.Convert(OV1);
             item.LargeImage = imageSource;

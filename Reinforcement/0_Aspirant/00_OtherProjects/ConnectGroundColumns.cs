@@ -6,9 +6,11 @@ using Reinforcement;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Net.NetworkInformation;
 
 namespace Reinforcement.Aspirant
 {
+    //Проблема, которую вы описываете, — это классическая задача восстановления геологической поверхности по данным скважин с учётом выклинивания(pinch-out) и линз.
     public class GroundColumn
     {
         public string ColumnNumber = "";
@@ -24,6 +26,9 @@ namespace Reinforcement.Aspirant
 
         /// <summary>Имя слоя → абсолютная отметка верха слоя (мм).</summary>
         public Dictionary<string, double> LayerTopZMm = new Dictionary<string, double>();
+
+       
+        public List<StratumUnit> Units = new List<StratumUnit>();  // сверху вниз
     }
     /// <summary>Кандидат-ребро между двумя колонками в одном слое.</summary>
     public class GroundEdge
