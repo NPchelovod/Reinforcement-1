@@ -34,14 +34,130 @@ namespace Reinforcement
             var paramTop = element.LookupParameter("Текст верх");
             if (paramTop == null) return;
             // --- НОВАЯ ЛОГИКА: Проверяем наличие стрелки ---
-            bool hasArrow = HasLeaderArrowhead(element);
+            //bool hasArrow = HasLeaderArrowhead(element);
+            double? arrowAngle = null;//уго наклона стрелки
+            //if (hasArrow)
+            //{
+            //    arrowAngle = GetLeaderLineAngleDegrees(element);// угол наклона стрелки, но слишком уж жирно так делать кажется
+            //}
             // ---------------------------------------------
-            lookWidth(doc, element, name, paramTop, hasArrow);
+            lookWidth(doc, element, name, paramTop, arrowAngle);
 
+        }
+        /// <summary>
+        /// Возвращает максимальный наклон от горизонтали (в градусах, 0–90°)
+        /// среди всех выносок элемента.
+        /// нужна была чтобы пошире делать те выноски
+        /// 0° ≈ горизонтальная линия, 90° ≈ вертикальная.
+        /// Если выносок нет или геометрия не определена — возвращает null.
+        /// </summary>
+        private static double? GetLeaderLineAngleDegrees(Element element)
+        {
+            AnnotationSymbol annot = element as AnnotationSymbol;
+            if (annot == null) return null;
+
+            IList<Leader> leaders = annot.GetLeaders();
+            if (leaders == null || leaders.Count == 0) return null;
+
+            double? maxTilt = null;
+
+            foreach (Leader leader in leaders)
+            {
+                try
+                {
+                    XYZ start = leader.Elbow; // точка излома (начало последнего сегмента)
+                    XYZ end = leader.End;   // точка наконечника
+                    if (start == null || end == null) continue;
+
+                    XYZ dir = end - start;
+                    if (dir.GetLength() < 1e-9) continue; // вырожденный сегмент
+
+                    double angleRad = Math.Atan2(dir.Y, dir.X);
+                    double angleDeg = angleRad * (180.0 / Math.PI);
+
+                    // Приводим к [0;90]: насколько линия отклонена от горизонтали.
+                    // 0   = строго горизонталь (в любую сторону),
+                    // 90  = строго вертикаль,
+                    // 45  = диагональ.
+                    double tilt = Math.Abs(angleDeg) % 180.0;   // [0;180)
+                    if (tilt > 90.0) tilt = 180.0 - tilt;       // [0;90]
+
+                    if (!maxTilt.HasValue || tilt > maxTilt.Value)
+                        maxTilt = tilt;
+                }
+                catch
+                {
+                    // Одна битая выноска не должна ломать обработку остальных
+                    continue;
+                }
+            }
+
+            return maxTilt;
+        }
+        //private static double? GetLeaderLineAngleDegrees(Element element)
+        //{
+        //    // Приводим элемент к AnnotationSymbol
+        //    AnnotationSymbol annot = element as AnnotationSymbol;
+        //    if (annot == null) return null;
+
+        //    IList<Leader> leaders = annot.GetLeaders();
+        //    if (leaders == null || leaders.Count == 0) return null;
+
+        //    // Берём первую выноску (если их несколько, логику можно расширить)
+        //    Leader leader = leaders[0];
+        //    XYZ start = leader.Elbow; // Точка излома (начало линии)
+        //    XYZ end = leader.End;     // Точка наконечника (конец линии)
+
+        //    if (start == null || end == null) return null;
+
+        //    // Вычисляем вектор и угол
+        //    XYZ dir = end - start;
+        //    double angleRad = Math.Atan2(dir.Y, dir.X);
+
+        //    // Переводим в градусы и нормализуем в диапазон 0–180°
+        //    double angleDeg = angleRad * (180.0 / Math.PI);
+        //    if (angleDeg < 0) angleDeg += 180.0;
+        //    if (angleDeg > 180.0) angleDeg -= 180.0;
+
+        //    return angleDeg;
+        //}
+
+        /// <summary>
+        /// Вспомогательный метод: извлекает ElementId стрелки из экземпляра или его типа.
+        /// </summary>
+        private static ElementId GetArrowheadId(Element element)
+        {
+            // Проверяем экземпляр
+            Parameter arrowParam = element.get_Parameter(BuiltInParameter.LEADER_ARROWHEAD);
+            if (arrowParam != null && arrowParam.StorageType == StorageType.ElementId)
+            {
+                ElementId id = arrowParam.AsElementId();
+                if (id != null && id != ElementId.InvalidElementId)
+                    return id;
+            }
+
+            // Если у экземпляра нет — проверяем тип
+            ElementId typeId = element.GetTypeId();
+            if (typeId != ElementId.InvalidElementId)
+            {
+                ElementType elemType = element.Document.GetElement(typeId) as ElementType;
+                if (elemType != null)
+                {
+                    Parameter typeArrowParam = elemType.get_Parameter(BuiltInParameter.LEADER_ARROWHEAD);
+                    if (typeArrowParam != null && typeArrowParam.StorageType == StorageType.ElementId)
+                    {
+                        ElementId id = typeArrowParam.AsElementId();
+                        if (id != null && id != ElementId.InvalidElementId)
+                            return id;
+                    }
+                }
+            }
+
+            return ElementId.InvalidElementId;
         }
         private readonly static List<string> nameWidths = new List<string> { "ЕС_Ширина полки", "Ширина полки" };
         private static int _fontWarningShown;   // 0 = не показывали
-        private static bool lookWidth(Document doc, Element element, string name, Parameter paramTop, bool hasArrow)
+        private static bool lookWidth(Document doc, Element element, string name, Parameter paramTop, double? arrowAngle)
         {
             try
             {
@@ -72,8 +188,8 @@ namespace Reinforcement
                 //double width1 = RevitAPI.ToFoot(GetCharacterWidth(doc, firstText, H_size));
                 //double width2 = RevitAPI.ToFoot(GetCharacterWidth(doc, secondText, H_size));
 
-                double width1 = RevitAPI.ToFoot(GetCharacterWidthPrecise(firstText, H_size, hasArrow));
-                double width2 = RevitAPI.ToFoot(GetCharacterWidthPrecise(secondText, H_size, hasArrow));
+                double width1 = RevitAPI.ToFoot(GetCharacterWidthPrecise(firstText, H_size, arrowAngle));
+                double width2 = RevitAPI.ToFoot(GetCharacterWidthPrecise(secondText, H_size, arrowAngle));
                 double width = Math.Max(width1, width2); //может быть нулевым, ну вроде не опасно
                 if(width <=0)
                 { 
@@ -204,7 +320,7 @@ namespace Reinforcement
         // Эмпирическая поправка между MeasureString (GDI+) и рендерингом Revit
         // для шрифта ISOCPEUR. Откалибрована сравнением с TextNote.Width.
         private const double IsoCpeurWidthCorrection = 1.092557;
-        private static double GetCharacterWidthPrecise(string text, float heightMm, bool hasArrow)
+        private static double GetCharacterWidthPrecise(string text, float heightMm, double? arrowAngle)
         {
             if (string.IsNullOrEmpty(text)) return 0;
 
@@ -221,7 +337,13 @@ namespace Reinforcement
 
                 // PointF-overload — без ограничения ширины и без переносов.
                 SizeF size = _measureG.MeasureString(text, font, new PointF(0, 0), _measureFormat);
-                double add = AddHvostic(heightMm);
+
+                double add = 0;
+                if (arrowAngle.HasValue && Math.Abs(arrowAngle.Value - 90.0) < 10) // угол ~90° у выноски тогда делаем чуть шире
+                {
+                    add = AddHvostic(heightMm); ; // например, добавляем 2 мм к ширине полки
+                }
+                
                 return add+size.Width * IsoCpeurWidthCorrection;   // ваша эмпирическая поправка, мм
             }
             catch

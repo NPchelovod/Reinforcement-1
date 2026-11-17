@@ -19,7 +19,8 @@ namespace Reinforcement
             
             if (bic != _builtInCategoryCubic) { return; }
 
-            if (eTypeChangeEl != ETypeChangeEl.GeomModifiedElements && eTypeChangeEl != ETypeChangeEl.AddedElements) { return; }
+            //if (eTypeChangeEl != ETypeChangeEl.GeomModifiedElements && eTypeChangeEl != ETypeChangeEl.AddedElements) { return; }
+            if (eTypeChangeEl != ETypeChangeEl.GeomModifiedElements) { return; }//пусть будет так
 
             // Проверяем, является ли элемент экземпляром семейства
             if (!(element is FamilyInstance fi)) { return; }
@@ -70,6 +71,8 @@ namespace Reinforcement
         private static void CubicWriterLevel(DateTime dateTime, BuiltInCategory bic, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
         {
             if (bic != _builtInCategoryCubic) { return; }
+            if (eTypeChangeEl != ETypeChangeEl.GeomModifiedElements && eTypeChangeEl != ETypeChangeEl.AddedElements) { return; }
+
             //var cat = element.Category?.BuiltInCategory;
             //if (cat != builtInCategoryCubicAnnotation) { return; }
             string name = element.Name;
