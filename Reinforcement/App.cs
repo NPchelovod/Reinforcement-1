@@ -204,6 +204,15 @@ namespace Reinforcement
             {
                 try { AppErrors.LogError(ex); } catch { }
             }
+
+           //Запись текущей версии
+            try { App_History.WriteOurVersion(); }
+            catch (Exception ex)
+            {
+                try { AppErrors.LogError(ex); } catch { }
+            }
+
+
             return result;
 
         }

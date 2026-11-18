@@ -17,6 +17,15 @@
            FontWeight="Bold"
            FontSize="13"/>
             
+            <TextBlock x:Name="txtNewVersion"
+           Text="Имеется новая версия: ..."
+           Margin="0,0,0,10"
+           Foreground="Green"
+           FontWeight="Bold"
+           FontSize="13"
+           Visibility="Collapsed"
+           TextWrapping="Wrap"/>
+            
             <CheckBox x:Name="chkFillAuthor"
                       Content="Заполнять автора (ЕС_Автор)"
                       IsChecked="True"

@@ -44,21 +44,21 @@ namespace Reinforcement
             }
             bool setSoavt=false;
             // Для нового элемента записываем автора, если поле пустое
-            if (string.IsNullOrEmpty(authorValue) || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
+            if (string.IsNullOrEmpty(authorValue))// || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
             {
                //добавочный ли автор
                 // Автор — это "кто создал", тип смены тут не нужен
                 string newAuthorValue = new AuthorEntry(_userName, _nowDate, commandName).ToString();
                 SetParam(authorParam, newAuthorValue);
 
-                if ( eTypeChangeEl == ETypeChangeEl.AddedElements && coAuthorParam != null)
-                {
-                    SetParam(coAuthorParam, newAuthorValue);
-                    setSoavt = true;
-                }
+                //if ( eTypeChangeEl == ETypeChangeEl.AddedElements && coAuthorParam != null)
+                //{ // проблема что ETypeChangeEl.AddedElements это часто фальшивка и сбрасывает все при работе с хранилищем!!!
+                //    SetParam(coAuthorParam, newAuthorValue);
+                //    setSoavt = true;
+                //}
             }
 
-            if(!setSoavt && coAuthorParam != null)
+            if (!setSoavt && coAuthorParam != null)
             {
                 // Если параметр соавтора существует, обновляем его
                 string pastCoAuthors = coAuthorParam.AsString();

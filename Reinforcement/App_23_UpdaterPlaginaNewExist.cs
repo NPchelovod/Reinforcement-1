@@ -126,12 +126,14 @@ namespace Reinforcement
         private static bool existShow = false;
         private static void ShowUpdateDialog(CheckResult r)
         {
+            string textNewVersion=App_History.GetUpdate(r.NewestSourceDateLocal);
             //existShow= true;
             var td = new TaskDialog("Обновление плагина");
             td.MainInstruction = "Доступно свежее обновление плагина";
             td.MainContent =
                 $"Есть свежее обновление от {r.NewestSourceDateLocal:yyyy-MM-dd HH:mm},\n" +
                 $"в то время как ваш плагин от {r.CurrentDateLocal:yyyy-MM-dd HH:mm}.\n\n" +
+                textNewVersion+ "\n\n"+
                 "Закройте Revit для автоматического обновления. (на 30 сек.)";
             td.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
                 "Закрыть Revit сейчас",

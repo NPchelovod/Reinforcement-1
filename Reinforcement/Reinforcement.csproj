@@ -172,6 +172,7 @@
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
+    <Compile Include="App_00_History.cs" />
     <Compile Include="App_01_Folders.cs" />
     <Compile Include="App_11_Invokers.cs" />
     <Compile Include="App_12_InvokersDocChanged.cs" />

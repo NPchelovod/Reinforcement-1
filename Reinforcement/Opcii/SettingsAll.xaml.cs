@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Markup;
 
 namespace Reinforcement
 {
@@ -28,6 +29,21 @@ namespace Reinforcement
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
             chkUpdater.IsChecked = AnyChangeClass.AllUpdater;
+
+            var upData = App_History.NewVersion;
+            if (upData != null && !string.IsNullOrEmpty(upData.Message))
+            {
+                txtNewVersion.Text =
+                    $"Имеется новая версия от: {upData.DateTimeDll.ToLocalTime():d MMM yyyy, HH:mm}\n" +
+                    upData.Message;
+                txtNewVersion.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                txtNewVersion.Text = $"Версия новее не найдена";
+                //txtNewVersion.Visibility = Visibility.Collapsed;
+                txtNewVersion.Visibility = Visibility.Visible;
+            }
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
