@@ -27,6 +27,9 @@ namespace Reinforcement
     }
     public class AnyChangeClass : IUpdater
     {
+        public static bool AllUpdater = true;
+        public static bool CorrectGroop = false;
+
         private static AddInId _addInId => RegisterAutoFillUpdater.addInId;
 
         private static UpdaterId _updaterId = new UpdaterId(_addInId, new Guid("D7C9AA9A-7172-466C-AE34-B1CD8457271E"));
@@ -36,7 +39,11 @@ namespace Reinforcement
         public string GetUpdaterName() => App.TabName + "_Updater всех процессов";
 
         private readonly double TimeOutMilliseconds = 200;
+        private readonly double TimeOutMillisecondsBetweenCommands = 200;
 
+        //public static volatile bool IsExistElementsChange = false;
+
+        public static volatile bool IsProcessingOwnChange = false;
         public void Execute(UpdaterData data)
         {
             if (!AllUpdater) { return; }
@@ -98,6 +105,7 @@ namespace Reinforcement
 
                 if (addHash.Count > 0 || geomHash.Count > 0 || modifHash.Count > 0)
                 {
+                    //bool isUserTr=IsUserComand(doc, now);//если да то вероятно транзакция пользователя = если  addHash то большая вероятность что реально  addHash, иначе бывает ложные
                     var snap = new SnapShotElements(now, doc, addHash, geomHash, modifHash);
                     if (PeriodicHandler.Execute(snap))
                     {
@@ -131,58 +139,18 @@ namespace Reinforcement
             }
         }
 
-        private static void ClearInternal()
-        {
-            AddedIds.Clear();
-            GeomModificationIds.Clear();
-            ModifiedIdsProp.Clear();
-            IsExistElementsChange = false;
-        }
-        public static SnapShotElements GetSnapShotElements(Document document)
-        {
-            lock (_lock)
-            {
-                if (!IsExistElementsChange)// || document != Doc) return null;
-                {
-                    return null;
-                }
-                // Стало (логическое сравнение, true только для разных файлов):
-                if (!document.Equals(Doc))
-                {
-                    return null;
-                }
-                var snap = new SnapShotElements(
-                    DateLastExecute, document,
-                    AddedIds,
-                    GeomModificationIds,
-                    ModifiedIdsProp);
-
-                ClearInternal();
-                return snap;
-            }
-        
-
-        }
         //тут запиши какие хочешь действия на любые действия
 
-        public static bool AllUpdater = true;
-        public static bool CorrectGroop = false;
+       
 
-        private static readonly object _lock = new object();
-
-        internal static ExternalEvent ExternalEventRef;
+        //internal static ExternalEvent ExternalEventRef;
         //Обычный пользователь: совершает 3–6 кликов в секунду, что соответствует интервалу в 160–330 мс между кликами.
-        private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.125);//столько секунд ждем после обработки собственного изменения
+        //private static readonly TimeSpan CooldownAfterProcessing = TimeSpan.FromSeconds(0.125);//столько секунд ждем после обработки собственного изменения
 
         public static DateTime DateLastExecute = DateTime.MinValue;
-        public static volatile bool IsExistElementsChange = false;
-
-        private static Document Doc = null;
-        private static readonly HashSet<ElementId> AddedIds = new HashSet<ElementId>();
-        private static readonly HashSet<ElementId> GeomModificationIds = new HashSet<ElementId>();
-        private static readonly HashSet<ElementId> ModifiedIdsProp = new HashSet<ElementId>();
-
-        public static volatile bool IsProcessingOwnChange = false;
+        
+      
+       
 
     }
     

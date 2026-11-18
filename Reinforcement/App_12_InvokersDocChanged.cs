@@ -54,6 +54,7 @@ namespace Reinforcement
         public static DateTime DateLastExecute = DateTime.MinValue;
         private static void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
         {
+            
             try
             {
                 

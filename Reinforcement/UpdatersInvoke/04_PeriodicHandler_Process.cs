@@ -28,24 +28,24 @@ namespace Reinforcement
         {
 
 
-            _externalEvent = ExternalEvent.Create(new PeriodicHandler());
-            AnyChangeClass.ExternalEventRef = _externalEvent;
+            //_externalEvent = ExternalEvent.Create(new PeriodicHandler());
+            //AnyChangeClass.ExternalEventRef = _externalEvent;
 
-            // Страховка: если Raise() из AnyChange был отклонён,
-            // а новых изменений нет — таймер добьёт обработку.
-            _fallbackTimer = new Timer(_ =>
-            {
-                if (!AnyChangeClass.IsExistElementsChange) return;
-                try { _externalEvent?.Raise(); } catch { }
-            }, null, dueTime: 10000, period: 10000);//столько времени до следующей попытки 
+            //// Страховка: если Raise() из AnyChange был отклонён,
+            //// а новых изменений нет — таймер добьёт обработку.
+            //_fallbackTimer = new Timer(_ =>
+            //{
+            //    if (!AnyChangeClass.IsExistElementsChange) return;
+            //    try { _externalEvent?.Raise(); } catch { }
+            //}, null, dueTime: 10000, period: 10000);//столько времени до следующей попытки 
         }
 
         public static void Shutdown()
         {
-            _fallbackTimer?.Dispose(); _fallbackTimer = null;
-            _externalEvent?.Dispose(); _externalEvent = null;
-            AnyChangeClass.ExternalEventRef = null;
-            RegisterAutoFillUpdater.Unregister();
+            //_fallbackTimer?.Dispose(); _fallbackTimer = null;
+            //_externalEvent?.Dispose(); _externalEvent = null;
+            //AnyChangeClass.ExternalEventRef = null;
+            //RegisterAutoFillUpdater.Unregister();
         }
     }
     public partial class PeriodicHandler : IExternalEventHandler
@@ -76,55 +76,55 @@ namespace Reinforcement
         public void Execute(UIApplication app)
         {
             return;// может когда-то пригодится
-            if (IsProcessingOwnChange)
-            {
-                return;
-            }
-            if (!AnyChangeClass.IsExistElementsChange)
-            {
-                return;
-            }
+            //if (IsProcessingOwnChange)
+            //{
+            //    return;
+            //}
+            //if (!AnyChangeClass.IsExistElementsChange)
+            //{
+            //    return;
+            //}
 
-            UIDocument uidoc = app.ActiveUIDocument;
-            if (uidoc == null) return;
+            //UIDocument uidoc = app.ActiveUIDocument;
+            //if (uidoc == null) return;
 
-            Document doc = uidoc.Document;
-            if (doc == null || doc.IsReadOnly) return;
+            //Document doc = uidoc.Document;
+            //if (doc == null || doc.IsReadOnly) return;
 
-            // Revit занят другой транзакцией — выйдем, таймер-страховка повторит Raise()
-            if (doc.IsModifiable) return;
+            //// Revit занят другой транзакцией — выйдем, таймер-страховка повторит Raise()
+            //if (doc.IsModifiable) return;
 
-            SnapShotElements snap = AnyChangeClass.GetSnapShotElements(doc);
-            if (snap == null) return;
+            //SnapShotElements snap = AnyChangeClass.GetSnapShotElements(doc);
+            //if (snap == null) return;
 
-            IsProcessingOwnChange = true;
-            try
-            {
-                using (var t = new Transaction(doc, TransactionName))
-                {
-                    t.Start();
-                    try
-                    {
-                        ProcessSnapshot(snap.DateTimeCreate, snap, doc);
-                        t.Commit();
-                    }
-                    catch
-                    {
-                        if (t.GetStatus() == TransactionStatus.Started) t.RollBack();
-                        throw;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                AppErrors.LogError(ex);
-            }
-            finally
-            {
-                IsProcessingOwnChange = false;
-                // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
-                Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
-            }
+            //IsProcessingOwnChange = true;
+            //try
+            //{
+            //    using (var t = new Transaction(doc, TransactionName))
+            //    {
+            //        t.Start();
+            //        try
+            //        {
+            //            ProcessSnapshot(snap.DateTimeCreate, snap, doc);
+            //            t.Commit();
+            //        }
+            //        catch
+            //        {
+            //            if (t.GetStatus() == TransactionStatus.Started) t.RollBack();
+            //            throw;
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    AppErrors.LogError(ex);
+            //}
+            //finally
+            //{
+            //    IsProcessingOwnChange = false;
+            //    // Фиксируем момент ЗАВЕРШЕНИЯ — от него отсчитывается cooldown в AnyChange
+            //    Interlocked.Exchange(ref _lastExecuteTimestamp, Stopwatch.GetTimestamp());
+            //}
         }
 
 
