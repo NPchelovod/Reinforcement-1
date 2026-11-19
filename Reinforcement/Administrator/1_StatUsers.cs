@@ -103,7 +103,7 @@ namespace Reinforcement
     {
         public static StatElement _statElement = new StatElement();
         private static WriteAndRead<StatElement> writeAndRead=null;
-
+        public static bool SborStat = true;
         private static void InitializationWriteAndRead()
         {
             if (writeAndRead != null) { return; }
@@ -117,6 +117,10 @@ namespace Reinforcement
         private static readonly TimeSpan ThrottleWindow = TimeSpan.FromMilliseconds(300);
         public static void Update(string explicitCommandName = null, EDocStatsOptions commandType = 0)
         {
+            if(!SborStat)
+            {
+                return;
+            }
             // Пытаемся "занять" флаг: если уже 1 — значит кто-то внутри, выходим
             if (Interlocked.CompareExchange(ref _inUpdate, 1, 0) != 0)
             {
@@ -161,6 +165,8 @@ namespace Reinforcement
         private static int _hour = 0;
         private static DocStats _pastDocStat = null;
         private static ViewStat _pastViewStat = null;
+
+        
         private static void ProcessStat(string explicitCommandName, EDocStatsOptions commandType)
         {
             _pastDateProcessStat = Now;
@@ -191,16 +197,13 @@ namespace Reinforcement
            
 
             var dateDay = Now.Date;   // ← добавить
-            DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
-            
-            string pathDoc = documentInfo.FullPath;
+            DocumentInfo documentInfo = RevitAPIDoc.GetDocumentInfo(doc);
+
             // Несохранённый документ — ключа нет. Даём стабильный fallback-ключ,
             // чтобы статистика по нему тоже велась (и не сливалась с другими).
-            if (string.IsNullOrEmpty(pathDoc))
-            {
-                // ProjectUniqueId (guid документа) есть всегда, даже у несохранённого
-                pathDoc = "unsaved:" + (documentInfo?.ProjectUniqueId ?? documentInfo?.Name ?? "no-guid");
-            }
+            string pathDoc = documentInfo.GetPathKey();
+           
+            
 
             //команды кликов
             if (!_statElement.DictDateDocStats.TryGetValue(dateDay, out var docStats))
@@ -263,6 +266,7 @@ namespace Reinforcement
             }
             else
             {
+                _pastViewStat=null;//на всякий случай сбрасываем вид, а то вдруг у нас id совпали??
                 _pastDocStat = docStat;
                 docStat.CountActiveDoc++;
                 pastComDoc = 0;
@@ -347,13 +351,14 @@ namespace Reinforcement
             }
             else
             {
+                _pastViewStat = viewData;
                 viewData.CountActiveView++;//переход в активный вид
             }
             viewData.CommandHitsHours.TryGetValue(_hour, out var cmdHitsH);
             viewData.CommandHitsHours[_hour] = (cmdHitsH.cliks + 1, cmdHitsH.time + stepTime);//почасовая характеристика для оценки
 
             viewData.LastSeen = Now;
-            _pastViewStat = viewData;
+            
 
             //попытка найти активный лист
             if (string.IsNullOrEmpty(viewData.NameSheet) || viewData.NameSheet == None)

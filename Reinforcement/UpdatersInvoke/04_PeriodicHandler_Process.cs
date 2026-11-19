@@ -131,8 +131,20 @@ namespace Reinforcement
 
         private static string _userName = Environment.UserName.ToString();
         private static string _nowDate; // dd.MM.yy.HH
+        //необходим для анализа истинно нами созданных = созданные и в будущем геом измененные то верно наши
+        private static HashSet<ElementId> elementIdsPastAdd = new HashSet<ElementId>();
+        private static DocumentInfo _pastDocInfo=null;
         private static void ProcessSnapshot(DateTime dateTime, SnapShotElements snapshot, Document doc)
         {
+            
+            var docInfo = RevitAPIDoc.GetDocumentInfo(doc);
+            // сменили документ — сбрасываем кэш
+            if (_pastDocInfo != docInfo)
+            {
+                elementIdsPastAdd = new HashSet<ElementId>();
+            }
+            
+
             //прежде записи для автора нужно записать дату
             _nowDate = dateTime.ToString("dd.MM.yy.HH");
             ProcessNabor(dateTime, snapshot, doc);
@@ -143,35 +155,38 @@ namespace Reinforcement
             foreach (var addIds in snapshot.AddedIds)//тут добавленные элементы, включают изм геометрию и изм параметры
             {
                 Element element = doc.GetElement(addIds);
-                ProcessElement(dateTime, doc, element, ETypeChangeEl.AddedElements);
+                ProcessElement(dateTime, doc, addIds, element, ETypeChangeEl.AddedElements);
             }
             foreach (var geomIds in snapshot.GeomModificationIds)//тут измененная геометрия, но не добавленные элементы
             {
                 Element element = doc.GetElement(geomIds);
-                ProcessElement(dateTime, doc, element, ETypeChangeEl.GeomModifiedElements);
+                ProcessElement(dateTime, doc, geomIds, element, ETypeChangeEl.GeomModifiedElements);
             }
             foreach (var propIds in snapshot.ModifiedIdsProp) // теоретически тут с измененным параметром, но не добавленные элементы
             {
                 Element element = doc.GetElement(propIds);
-                ProcessElement(dateTime, doc, element, ETypeChangeEl.ModifiedElements);
+                ProcessElement(dateTime, doc, propIds, element, ETypeChangeEl.ModifiedElements);
             }
 
+            //возможно стоит чистить elementIdsPastAdd не каждый раз иначе возможно что мы скопировали, затем чтото другое подвинули
+            elementIdsPastAdd = snapshot.AddedIds;//присваиваем чтобы если затем будем менять геометрию поменялось
+                                                  // копия, а не ссылка
+
+            _pastDocInfo = docInfo;
         }
         private static void ProcessNabor(DateTime dateTime, SnapShotElements snapshot, Document doc)
         {
             //захват в рабочие наборы
         }
 
-
-
-
-
-        private static void ProcessElement(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
+      
+        private static void ProcessElement(DateTime dateTime, Document doc, ElementId elementId, Element element, ETypeChangeEl eTypeChangeEl)
         {
             if (element == null || !element.IsValidObject || !element.IsModifiable) return;
 
             /*В IUpdater.Execute IsModifiable обычно возвращает true, но в некоторых состояниях(например, при вложенных транзакциях или при работе с элементами внутри редактируемой группы) может *///вернуть false.Это не ошибка — просто вы отсекаете лишние срабатывания.Вреда от этого нет.
 
+            
             // НОВАЯ ПРОВЕРКА: можем ли мы вообще редактировать этот элемент?
             if (!CanEditElement(doc, element))
             {
@@ -207,10 +222,19 @@ namespace Reinforcement
             {
                 AppErrors.LogError(ex);
             }
+
+
+            bool istNewElement = false;
+            if (eTypeChangeEl == ETypeChangeEl.GeomModifiedElements && elementIdsPastAdd.Contains(elementId))
+            {
+                //если мы геометрию меняем у элемента которого мы до этого создали то вероятнее реально мы создали а не ошибка синъронизации
+                istNewElement = true;
+            }
+
             //записываем автора
             try
             {
-                AuthorWriter(dateTime, doc, element, eTypeChangeEl);
+                AuthorWriter(dateTime, doc, istNewElement, element, eTypeChangeEl);
             }
             catch (Exception ex)
             {

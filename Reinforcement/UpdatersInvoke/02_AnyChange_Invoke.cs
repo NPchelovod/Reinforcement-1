@@ -27,8 +27,8 @@ namespace Reinforcement
     }
     public class AnyChangeClass : IUpdater
     {
-        public static bool AllUpdater = true;
-        public static bool CorrectGroop = false;
+        public static  bool AllUpdater = true;
+        public static  bool CorrectGroop = false;
 
         private static AddInId _addInId => RegisterAutoFillUpdater.addInId;
 

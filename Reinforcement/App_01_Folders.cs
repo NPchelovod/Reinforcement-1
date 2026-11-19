@@ -81,12 +81,12 @@ namespace Reinforcement
         public static HashSet<string> IscludePCName = new HashSet<string> { "CALC" };
         public static bool IsExcludedPCName => IscludePCName.Contains(MachineName);
 
-        public static bool UserIsAvtor=false;
+        public static volatile bool UserIsAvtor=false;
 
 
 
         public const string Password = "kerulen";
-        public static bool UserIsAdmin=false;//введен ли Пароль
+        public static volatile bool UserIsAdmin=false;//введен ли Пароль
 
 
 

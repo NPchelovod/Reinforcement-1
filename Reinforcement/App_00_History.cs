@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.IO;
 using Autodesk.Revit.DB;
+using System.Windows.Markup;
 
 namespace Reinforcement
 {
@@ -12,12 +13,12 @@ namespace Reinforcement
         /// <summary>
         /// Тут пиши конкретно текущего релиза отличия версии
         /// </summary>
-        private static string CurrentVersion = "Кубики сброс согласования не при создании новых элементов, а только при изменении геометрии";
+        private static string CurrentVersion = "Еще лучше | Программист: улучшен вывод истории версии";
 
         private static string DifferentZeor = "Отличия новой версии от вашей неизвестны";
 
         public static UpdateStructVersion NewVersion = null;
-       
+        public static UpdateStructVersion OurVersion = null;
 
         /// <summary>
         /// история обновления. Возвращает данные новой версии относительно переданной даты
@@ -124,14 +125,29 @@ namespace Reinforcement
             if (dllDate != DateTime.MinValue &&
                 !UpdateAllVersion.UpdateStructVersion.Any(x => x.DateTimeDll == dllDate))
             {
-                UpdateAllVersion.UpdateStructVersion.Add(new UpdateStructVersion
+                int vPast=UpdateAllVersion.UpdateStructVersion.Select(x => x.NumVersion).Max();
+                OurVersion = new UpdateStructVersion
                 {
+                    NumVersion = vPast+1,
                     DateTimeDll = dllDate,
                     WriteInJson = DateTime.Now,
                     IsAvtor = App_Folders.UserIsAvtor,
                     Message = CurrentVersion
-                });
+                };
+                UpdateAllVersion.UpdateStructVersion.Add(OurVersion);
                 FileNotContainsCurrentVersion = true;
+            }
+            else
+            {
+                //нашу версию читаем, мы чтецы в данном случае
+                var ourVersion = UpdateAllVersion.UpdateStructVersion
+                .Where(x => x.DateTimeDll == dllDate)
+                .OrderByDescending(x => x.DateTimeDll)
+                .FirstOrDefault();
+                if (ourVersion != null && !string.IsNullOrEmpty(ourVersion.Message))
+                {
+                    OurVersion = ourVersion;
+                }
             }
 
             // ближайшая запись новее текущей DLL — для окна настроек
@@ -151,7 +167,7 @@ namespace Reinforcement
         private static volatile bool FileIsRead = false;
         private static volatile bool FileNotContainsCurrentVersion = false;
 
-        private static UpdateAllVersion UpdateAllVersion = null;
+        public static UpdateAllVersion UpdateAllVersion = null;
 
         private static string FolderVersion = @"Y:\\Revit\\_ЕС BIM_Плагин\\0_Разработчику";
         private static string VersionFileName = "Отличия версий.json";
@@ -160,10 +176,25 @@ namespace Reinforcement
 
     public class UpdateStructVersion
     {
+        public int NumVersion { get; set; }
         public DateTime DateTimeDll { get; set; } = DateTime.MinValue;
         public DateTime WriteInJson { get; set; } = DateTime.MinValue;
         public bool IsAvtor { get; set; } = false;
         public string Message { get; set; } = null;
+
+        public string GetMessegeVersion()
+        {
+            // Разбиваем по '|', убираем пустые части (если есть лишние разделители подряд)
+            var parts = Message.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                               .Select(p => p.Trim())        // убираем пробелы по краям
+                               .Where(p => !string.IsNullOrEmpty(p));
+
+            // Объединяем с переносом строки (для WPF TextBlock это сработает как \n)
+            string formattedMessage = string.Join("\n", parts);
+
+            return $"Версия V_{NumVersion} от {DateTimeDll.ToLocalTime():d MMM yyyy, HH:mm}, Обновлено: {formattedMessage}";
+
+        }
     }
 
     public class UpdateAllVersion

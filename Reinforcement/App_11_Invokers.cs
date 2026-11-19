@@ -26,7 +26,8 @@ namespace Reinforcement
             if (uiApp == null) { return; }
             IsOnApplicationInitialized=true;
             InitializedInvoker(uiApp);
-          
+            
+           
         }
 
 
@@ -211,7 +212,37 @@ namespace Reinforcement
             // Можно также отслеживать и другие этапы, например, ReloadLatest
             // if (e is DocumentReloadLatestProgressChangedEventArgs reloadArgs) { ... }
         }
+        /// <summary>
+        /// Срабатывает ДО закрытия — Document ещё валиден, можно читать PathName/Title/CreationGUID.
+        /// </summary>
+        private void OnDocumentClosing(object sender, DocumentClosingEventArgs e)
+        {
+            try
+            {
+                // Document ещё жив
+               RevitAPIDoc.Remove(e.Document);
 
+                // сброс состояния IUpdater (если есть метод)
+                // AnyChangeClass.ResetDocumentState();
+            }
+            catch (Exception ex)
+            {
+                AppErrors.LogError(ex);
+            }
+        }
+        private void OnDocumentClosed(object sender, Autodesk.Revit.DB.Events.DocumentClosedEventArgs e)
+        {
+            try
+            {
+                // e.DocumentId — int, единственное, что осталось от документа
+                // Например, лог: "документ с внутренним id {e.DocumentId} закрыт"
+                // Никаких обращений к Document здесь быть не может
+            }
+            catch (Exception ex)
+            {
+                AppErrors.LogError(ex);
+            }
+        }
 
 
 

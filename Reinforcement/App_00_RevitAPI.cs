@@ -137,34 +137,115 @@ namespace Reinforcement
             IncludeFields = true,
             WriteIndented = true
         };
+     }
+    public static class RevitAPIDoc
+    {
+        
 
-        private static readonly Dictionary<Document, DocumentInfo> _cache = new Dictionary<Document, DocumentInfo>();
+        private static readonly Dictionary<string, DocumentInfo> _cache =
+    new Dictionary<string, DocumentInfo>(StringComparer.OrdinalIgnoreCase);
 
         public static DocumentInfo GetDocumentInfo(Document doc)
         {
             if (doc == null) return null;
-            if (_cache.TryGetValue(doc, out var info)) return info;
 
-            info = Build(doc);
-            _cache[doc] = info;
+            string key = BuildKey(doc);
+            if (string.IsNullOrEmpty(key)) return null;
+
+            if (_cache.TryGetValue(key, out var info) && IsSameDocument(doc, info))
+                return info;
+
+            info = Build(doc,key);
+            _cache[key] = info;
             return info;
         }
 
         public static void Remove(Document doc)
         {
-            if (doc != null) _cache.Remove(doc);
+            if (doc == null) return;
+            string key = BuildKey(doc);
+            if (!string.IsNullOrEmpty(key)) _cache.Remove(key);
         }
 
         public static void Clear() => _cache.Clear();
+        /// <summary>
+        /// Строит стабильный строковый ключ для документа.
+        /// Приоритет: central path → local path → CreationGUID → Title.
+        /// </summary>
+        private static string BuildKey(Document doc)
+        {
+            // 1. Central path (workshared). Одинаков для всех локальных копий одного проекта — это ок.
+            // В рамках одной сессии Revit: стабильно, дёшево, не требует PathName
+            return "h:" + doc.GetHashCode();
 
-        private static DocumentInfo Build(Document doc)
+            //Если нужна стабильность между сессиями
+            try
+            {
+                if (doc.IsWorkshared)
+                {
+                    var central = doc.GetWorksharingCentralModelPath();
+                    if (central != null)
+                    {
+                        string cp = ModelPathUtils.ConvertModelPathToUserVisiblePath(central);
+                        if (!string.IsNullOrEmpty(cp)) return "c:" + cp;
+                    }
+                }
+            }
+            catch { /* worksharing недоступен — идём дальше */ }
+
+            // 2. Путь к локальному файлу
+            try
+            {
+                if (!string.IsNullOrEmpty(doc.PathName)) return "p:" + doc.PathName;
+            }
+            catch { }
+
+            // 3. Несохранённый документ — CreationGUID уникален для каждого «рождения»
+            try
+            {
+                Guid cg = doc.CreationGUID;
+                if (cg != Guid.Empty) return "g:" + cg.ToString("N");
+            }
+            catch { }
+
+            // 4. Title (последний resort, может совпасть у двух несохранённых)
+            try
+            {
+                if (!string.IsNullOrEmpty(doc.Title)) return "t:" + doc.Title;
+            }
+            catch { }
+
+            return null;
+        }
+        /// <summary>
+        /// Проверяет, что запись в кэше относится к тому же документу.
+        /// Защита от «файл закрыли и переоткрыли заново» — тогда CreationGUID будет другой.
+        /// </summary>
+        private static bool IsSameDocument(Document doc, DocumentInfo cached)
+        {
+            // если в кэше нет CreationGuid — валидировать нечем, доверяем ключу
+            if (string.IsNullOrEmpty(cached.CreationGuid)) return true;
+
+            try
+            {
+                Guid cg = doc.CreationGUID;
+                if (cg == Guid.Empty) return true;   // новый документ ещё не получил GUID — не отбрасываем
+                return cg.ToString() == cached.CreationGuid;
+            }
+            catch
+            {
+                return false;   // не смогли прочитать — пересоберём
+            }
+        }
+
+        private static DocumentInfo Build(Document doc, string key)
         {
             var info = new DocumentInfo
             {
                 Title = doc.Title,
                 IsWorkshared = doc.IsWorkshared,
             };
-
+            info.Key = key;
             // 1. Central path (workshared)
             try
             {
@@ -251,12 +332,15 @@ namespace Reinforcement
 
     public sealed class DocumentInfo
     {
+        public string Key { get; set; }
         // Идентификация
         public string Name { get; set; }   // "КР_Подзолкова" (без суффикса пользователя)
         public string FullPath { get; set; }   // "\\server\...\КР_Подзолкова.rvt" (или локальный)
         public string Folder { get; set; }   // "\\server\...\"
         public string FileName { get; set; }   // "КР_Подзолкова.rvt"
         public string Title { get; set; }   // doc.Title
+
+        //
 
         // Флаги
         public bool IsSaved { get; set; }
@@ -272,24 +356,18 @@ namespace Reinforcement
         // Время снимка warnings — полезно, чтобы понимать «свежесть»
         public DateTime WarningsSnapshotUtc { get; set; }
 
-
-        public string GetKey()
+        public string GetPathKey()
         {
-            string key =FullPath;
-            if (string.IsNullOrEmpty(key))
+            string pathDoc = FullPath;
+            if (string.IsNullOrEmpty(pathDoc))
             {
-                key = Title;
-                if (string.IsNullOrEmpty(key))
-                {
-                    key = Name;
-                    if (string.IsNullOrEmpty(key))
-                    {
-                        return null;
-                    }
-                }
+                // Несохранённый документ — ключа нет. Даём стабильный fallback-ключ,
+                // чтобы статистика по нему тоже велась (и не сливалась с другими).
+                pathDoc = "unsaved:" + (ProjectUniqueId ?? Name ?? "no-guid");
             }
-            return key;
+            return pathDoc;
         }
+       
     }
 
 }

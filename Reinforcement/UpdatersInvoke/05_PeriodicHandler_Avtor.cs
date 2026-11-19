@@ -13,13 +13,13 @@ namespace Reinforcement
     {
 
         public static bool RegWriterAvtor=true;
-        public static string NameAvtor = "ЕС_Автор";
-        public static string NameSoAvtor = "ЕС_Посл Автор";
+        public const string NameAvtor = "ЕС_Автор";
+        public const string NameSoAvtor = "ЕС_Посл Автор";
         public const int MaxCoAuthorsLength = 180;     // лимит строки соавторов
         public static bool longAvtors = true;           // хранить нескольких авторов через запятую
 
         
-        private static void AuthorWriter(DateTime dateTime, Document doc, Element element, ETypeChangeEl eTypeChangeEl)
+        private static void AuthorWriter(DateTime dateTime, Document doc,bool istNewElement, Element element, ETypeChangeEl eTypeChangeEl)
         {
             // 1. Параметр для автора (или запасной)
             Parameter authorParam = element.LookupParameter(NameAvtor);
@@ -30,9 +30,9 @@ namespace Reinforcement
             string authorValue = authorParam.AsString();
 
             string commandName = null;
-            if (eTypeChangeEl == ETypeChangeEl.AddedElements)
+            if (eTypeChangeEl == ETypeChangeEl.AddedElements || istNewElement)
             {
-                commandName = "нов";//то что новые элемент
+                commandName = "нов";//то что новые элемент смотри если не istNewElement, то можнт быть ложно новый, будет в соавторах
             }
             else if (ETypeChangeEl.GeomModifiedElements == eTypeChangeEl)
             {
@@ -46,7 +46,7 @@ namespace Reinforcement
             // Для нового элемента записываем автора, если поле пустое
             bool emptyAvtor = string.IsNullOrEmpty(authorValue);
 
-            if (emptyAvtor)// || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
+            if (emptyAvtor || istNewElement)// || eTypeChangeEl == ETypeChangeEl.AddedElements)//isNewElement
             {
                //добавочный ли автор
                 // Автор — это "кто создал", тип смены тут не нужен

@@ -185,10 +185,13 @@ namespace Reinforcement
             {
                 ErrorException(ex, "OnStartup");
                 try { AppErrors.LogError(ex); } catch { }
-
-                TaskDialog.Show($"{TabName}",
+                try
+                {
+                    TaskDialog.Show($"{TabName}",
                     "Плагин не запустился. Лог: %APPDATA%\\RevitAddinsLogs\\ENSPlugin_startup.log\n\n" +
                     ex.Message);
+                }
+                catch { }
                 return Result.Failed;
             }
 
@@ -441,12 +444,16 @@ namespace Reinforcement
                 controlledApp.DocumentSaved += OnDocumentSaved;
                 controlledApp.DocumentSynchronizedWithCentral += OnDocumentSynchronized;//конец синхронизации
 
+                // === ЧИСТКА КЭША: используем DocumentClosing, а не DocumentClosed ===
+                controlledApp.DocumentClosing += OnDocumentClosing;
+                // === НОВОЕ: закрытие документа — чистим кэши ===
+                controlledApp.DocumentClosed += OnDocumentClosed;
                 // Подписываемся на событие ошибок через ControlledApplication
                 app.ControlledApplication.FailuresProcessing +=
                     new EventHandler<FailuresProcessingEventArgs>(OnFailuresProcessing);
-               
 
                 
+
                 ExistPodpiskaOnChanged = true;
 
             }

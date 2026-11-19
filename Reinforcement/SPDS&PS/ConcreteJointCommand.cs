@@ -34,7 +34,7 @@ namespace Reinforcement
             ElementTypeOrSymbol Type_seach = ElementTypeOrSymbol.ElementType;
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
+                Utilit_1_1_Depth_Seach.GetResult(list_fam, Type_seach, list_Name);
             }
             catch (Exception ex)
             {
@@ -45,6 +45,10 @@ namespace Reinforcement
 
 
         }
+        public static HashSet<string> list_fam = new HashSet<string>
+        {
+            "Последовательность узлов"
+        };
 
         public static HashSet<string> list_Name = new HashSet<string>
         {

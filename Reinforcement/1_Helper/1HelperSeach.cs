@@ -10,8 +10,8 @@ namespace Reinforcement
     public class HelperSeach
     {
 
-        public static Dictionary<Document, Dictionary<string, Element>> DictElements
-             = new Dictionary<Document, Dictionary<string, Element>>();
+        public static Dictionary<string, Dictionary<string, Element>> DictElements
+             = new Dictionary<string, Dictionary<string, Element>>();
         //от 14,11,2026
         public static Element SeachElement(HashSet<string> PossibleNamesFamily,
                                      HashSet<string> PossibleNamesType,
@@ -29,10 +29,13 @@ namespace Reinforcement
 
             string key = BuildKey(PossibleNamesFamily, PossibleNamesType, Type_seach);
             Element element = null;
-            if (!DictElements.TryGetValue(doc, out var dictsElements))
+            var docInfo= RevitAPIDoc.GetDocumentInfo(doc);
+            string keyDoc = docInfo.Key;
+
+            if (!DictElements.TryGetValue(keyDoc, out var dictsElements))
             {
                 dictsElements = new Dictionary<string, Element>();
-                DictElements[doc] = dictsElements;
+                DictElements[keyDoc] = dictsElements;
             }
             else if (dictsElements.TryGetValue(key, out element) && element != null)
             {
@@ -133,10 +136,13 @@ namespace Reinforcement
 
             string key = BuildKey(PossibleNamesFamily, PossibleNamesType, Type_seach);
             Element element = null;
-            if (!DictElements.TryGetValue(doc, out var dictsElements))
+            var docInfo = RevitAPIDoc.GetDocumentInfo(doc);
+            string keyDoc = docInfo.Key;
+
+            if (!DictElements.TryGetValue(keyDoc, out var dictsElements))
             {
                 dictsElements = new Dictionary<string, Element>();
-                DictElements[doc] = dictsElements;
+                DictElements[keyDoc] = dictsElements;
             }
             else if (dictsElements.TryGetValue(key, out element) && element != null)
             {

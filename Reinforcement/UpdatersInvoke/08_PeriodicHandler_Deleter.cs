@@ -113,7 +113,7 @@ namespace Reinforcement
             if (deletes == null || deletes.Count == 0) return;
             try
             {
-                DocumentInfo documentInfo = RevitAPI.GetDocumentInfo(doc);
+                DocumentInfo documentInfo = RevitAPIDoc.GetDocumentInfo(doc);
 
                 if (!documentInfo.HasCentral) { return; }
                 string FullPath = documentInfo.FullPath;//путь к централу
@@ -123,8 +123,8 @@ namespace Reinforcement
                 }
                 string key1 = FullPath + ": "+now.ToString("yyMMdd");
 
-                
-                string key2 = App_Folders.UserName_MachineName + ": " + now.ToString("yyMMdd");
+                //хочу еще по проектам разделить
+                //string key2 = App_Folders.UserName_MachineName + ": " + now.ToString("yyMMdd");
 
                 lock (_lockDelete)
                 {

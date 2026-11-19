@@ -33,7 +33,10 @@ namespace Reinforcement
             //FatherGroopCurrent = null; 
             InGroop = false; 
         }
-
+        public void EnterInGroop()
+        {
+            InGroop =true;
+        }
         public static int inGroop = 0;//сколько входов в группы
         public static int outGroop = 0;// сколько выходов из групп
     }
@@ -105,17 +108,14 @@ namespace Reinforcement
         {
             //проверка входа в группу и проверка на секретную команду
 
-            //1. проверка на секретную команду
-            if (OnGroupCurrent.InGroop && MatchesSecretPattern())
-            {
-                InPendingSecret = true;//применение секрета
-            }
+            
+            
 
             //3. --- распознаем Вход в режим редактирования группы ---
             if (txNames.Any(n => EnterGroupTxNames.Contains(n, StringComparer.OrdinalIgnoreCase)))
             {
                 GroopCurrent.inGroop++;
-
+                OnGroupCurrent.EnterInGroop();
                 foreach (var id in elIds)
                 {
                     Element elem = doc.GetElement(id);
@@ -165,6 +165,10 @@ namespace Reinforcement
                 GroopCurrent.outGroop++;
                 OnGroupCurrent.Clear();
                 
+            }
+            else if (OnGroupCurrent.InGroop && MatchesSecretPattern())
+            {
+                InPendingSecret = true;//применение секрета
             }
         }
         private static void CreateGroop(Document doc,DateTime now, string name, ElementId elementId)

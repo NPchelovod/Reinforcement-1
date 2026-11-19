@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Markup;
 
@@ -15,7 +17,12 @@ namespace Reinforcement
             // Загружаем текущие настройки в элементы управления
             //chkFillAuthor.IsChecked = AddinSettings.FillAuthor;
         }
-        public static string GetDatePluginText => $"Плагин от: {App_Folders.DatePluginDll.ToLocalTime():d MMM yyyy, HH:mm}, ПК_{App_Folders.UserName_MachineName}";
+        public static string GetDatePluginText => $"Плагин от: {GetStringFromDate(App_Folders.DatePluginDll)}, ПК_{App_Folders.UserName_MachineName}";
+
+        public static string GetStringFromDate(DateTime date)
+        {
+            return $"{date.ToLocalTime():d MMM yyyy, HH: mm}";
+        }
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
             chkFillAuthor.IsChecked = PeriodicHandler.RegWriterAvtor;
@@ -24,8 +31,9 @@ namespace Reinforcement
             
            
             var buildDate = App_Folders.DatePluginDll.ToLocalTime(); //локальное время
-            var version = App_Folders.VersionString; 
-            txtPluginVersion.Text = GetDatePluginText+$" V ({version})";
+            var version = App_Folders.VersionString;
+            string status = !App_Folders.UserIsAvtor ? "Рядовой" : "Командир";
+            txtPluginVersion.Text = GetDatePluginText+$", Пользователь {status}";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
             chkUpdater.IsChecked = AnyChangeClass.AllUpdater;
@@ -34,16 +42,38 @@ namespace Reinforcement
             if (upData != null && !string.IsNullOrEmpty(upData.Message))
             {
                 txtNewVersion.Text =
-                    $"Имеется новая версия от: {upData.DateTimeDll.ToLocalTime():d MMM yyyy, HH:mm}\n" +
-                    upData.Message;
+                    $"Имеется новая {upData.GetMessegeVersion()}";
+                txtNewVersion.Foreground = System.Windows.Media.Brushes.Red;   // есть обновление — красный
                 txtNewVersion.Visibility = Visibility.Visible;
             }
             else
             {
-                txtNewVersion.Text = $"Версия новее не найдена";
+                var ourV  = App_History.OurVersion;
+                if (ourV != null && !string.IsNullOrEmpty(ourV.Message))
+
+                {
+                    if (UpdaterCheck.NewVersionData.HasUpdate)
+                    {
+                        //из самого dll
+                        txtNewVersion.Text = $"Имеется новая версия {GetStringFromDate(UpdaterCheck.NewVersionData.NewestSourceDateLocal)}, отличия от вашей неизвестны";
+                        txtNewVersion.Foreground = System.Windows.Media.Brushes.Red;   // есть обновление — красный
+                    }
+                    else
+                    {
+                        txtNewVersion.Text =
+                       $"Версия новее не найдена, но ваша {ourV.GetMessegeVersion()}";
+                    }
+                }
+                else
+                {
+                    txtNewVersion.Text = $"Версия новее не найдена";
+                }
+
                 //txtNewVersion.Visibility = Visibility.Collapsed;
                 txtNewVersion.Visibility = Visibility.Visible;
             }
+
+            sborStatAndErrors.IsChecked = StatUsers.SborStat;
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
@@ -71,8 +101,8 @@ namespace Reinforcement
             {
                 App.InitializedInvoker(RevitAPI.UiApplication);//переподписываеся
             }
-
-
+            StatUsers.SborStat = sborStatAndErrors.IsChecked == true;
+            
             DialogResult = true;
             Close();
         }
@@ -81,6 +111,52 @@ namespace Reinforcement
         {
             DialogResult = false;
             Close();
+        }
+
+        //private void HistoryButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    var alVersions = App_History.UpdateAllVersion;
+        //    if (alVersions == null) { return; }
+        //    var listVersion =alVersions.UpdateStructVersion;
+        //    if(listVersion == null || listVersion.Count==0) { return; };
+
+        //    var sb = new System.Text.StringBuilder();
+        //    sb.AppendLine("История версий плагина:");
+        //    sb.AppendLine();
+
+        //    foreach (var v in listVersion)
+        //    {
+        //        sb.AppendLine(v.GetMessegeVersion());
+        //    }
+
+        //    MessageBox.Show(sb.ToString(),
+        //                    "История версий",
+        //                    MessageBoxButton.OK, MessageBoxImage.Information);
+        //}
+        private void HistoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            var alVersions = App_History.UpdateAllVersion;
+            if (alVersions == null) { return; }
+
+            var listVersion = alVersions.UpdateStructVersion;
+            if (listVersion == null || listVersion.Count == 0) { return; }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("История версий плагина:");
+            sb.AppendLine();
+
+            int i = 1;
+            foreach (var v in listVersion)
+            {
+                sb.AppendLine($"{i}. {v.GetMessegeVersion()}");
+                sb.AppendLine();          // пустая строка между сообщениями
+                i++;
+            }
+
+            var win = new HistoryWindow();
+            win.SetText(sb.ToString());
+            win.Owner = this;
+            win.ShowDialog();
         }
     }
 }

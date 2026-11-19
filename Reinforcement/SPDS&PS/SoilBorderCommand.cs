@@ -34,7 +34,7 @@ namespace Reinforcement
 
             try
             {
-                Utilit_1_1_Depth_Seach.GetResult(list_Name, Type_seach);
+                Utilit_1_1_Depth_Seach.GetResult(list_fam, Type_seach, list_Name);
             }
             catch (Exception ex)
             {
@@ -43,11 +43,14 @@ namespace Reinforcement
             }
             return Result.Succeeded;
         }
-
+        public static HashSet<string> list_fam = new HashSet<string>
+        {
+            "Последовательность узлов"
+        };
         public static HashSet<string> list_Name = new HashSet<string>
-{
-   "Граница грунта (М50)","ЕС_ЭУ_Компонент_Граница грунта","Граница грунта_М50"
-};
+        {
+           "Граница грунта (М50)","ЕС_ЭУ_Компонент_Граница грунта","Граница грунта_М50"
+        };
         
 
     }

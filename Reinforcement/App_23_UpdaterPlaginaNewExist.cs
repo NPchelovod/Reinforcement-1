@@ -7,6 +7,8 @@ namespace Reinforcement
 {
     public static class UpdaterCheck
     {
+        //Кэшированный результат для доступа
+        public static CheckResult NewVersionData = new CheckResult();
         public static void GetResult(bool forceShow = false)
         {
             if (existShow) return;//уже быд
@@ -54,7 +56,23 @@ namespace Reinforcement
             TryEvaluateSource(App_Folders.SourcePluginDir, ref r);
 
             if (App_Folders.UserIsAvtor)
-                TryEvaluateSource(App_Folders.SourcePluginDirAvtor, ref r);
+            {
+                var r2 = new CheckResult
+                {
+                    CurrentDateLocal = App_Folders.DatePluginDll,
+                    NewestSourceDateLocal = DateTime.MinValue,
+                    NewestSourcePath = null
+                };
+                TryEvaluateSource(App_Folders.SourcePluginDirAvtor, ref r2);
+
+                if(r2.NewestSourceDateLocal>r.NewestSourceDateLocal)
+                {
+                    r = r2;
+                }
+
+            }
+
+            NewVersionData = r;
 
             return r;
         }

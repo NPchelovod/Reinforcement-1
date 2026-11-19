@@ -36,9 +36,10 @@ namespace Reinforcement
             Element element = HelperSeach.SeachElement(famNames, typeNames, mode, userShow);//надо протестить будет
             //element = typeNames == null ? HelperSeach.GetExistFamily(famNames, mode) : HelperSeach.GetExistFamily(famNames, typeNames, mode);
             if (element == null) { return false; }
-            
 
-            ElementType elementType = element as ElementType;
+
+            if (!(element is ElementType elementType))
+                return false;
 
             // HelperSeach.Cached() уже отсеивает мёртвые объекты,
             // но между возвратом и вызовом API элемент теоретически

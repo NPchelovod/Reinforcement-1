@@ -298,6 +298,9 @@
     <Compile Include="Opcii\ErrorAdminWindow.xaml.cs">
       <DependentUpon>ErrorAdminWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Opcii\HistoryWindow.xaml.cs">
+      <DependentUpon>HistoryWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Opcii\PropertiesPereop.cs" />
     <Compile Include="Opcii\SettingsAll.xaml.cs">
       <DependentUpon>SettingsAll.xaml</DependentUpon>
@@ -632,6 +635,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Opcii\ErrorAdminWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Opcii\HistoryWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

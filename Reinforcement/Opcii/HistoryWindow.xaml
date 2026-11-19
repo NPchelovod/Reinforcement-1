@@ -1,0 +1,15 @@
+﻿<Window x:Class="Reinforcement.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="История версий"
+        Width="500" Height="400"
+        MinWidth="400" MinHeight="250"
+        WindowStartupLocation="CenterOwner">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <TextBlock x:Name="txtHistory"
+                   Margin="15"
+                   FontSize="13"
+                   TextWrapping="Wrap"/>
+    </ScrollViewer>
+</Window>

@@ -51,6 +51,11 @@ namespace Reinforcement
         public static void Add(FailureRecord record)
         {
             if (record == null) return;
+
+            if (!StatUsers.SborStat)
+            {
+                return;
+            }
             lock (_lock)
             {
                 Records.Records.Add(record);
