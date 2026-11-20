@@ -67,9 +67,13 @@
             <Separator Margin="0,15,0,15"/>
 
             <Grid>
-                <Button Content="История версий" Width="120" Height="25"
-            HorizontalAlignment="Left"
-            Click="HistoryButton_Click"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="История версий" Width="120" Height="25"
+                Click="HistoryButton_Click"/>
+                    <Button Content="Проверить обновление" Width="150" Height="25"
+                Margin="10,0,0,0"
+                Click="CheckUpdateButton_Click"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="Сохранить" Width="100" Height="25" Margin="0,0,10,0"
                 Click="SaveButton_Click"/>

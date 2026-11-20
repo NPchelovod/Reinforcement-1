@@ -116,11 +116,8 @@ namespace Reinforcement
                 DocumentInfo documentInfo = RevitAPIDoc.GetDocumentInfo(doc);
 
                 if (!documentInfo.HasCentral) { return; }
-                string FullPath = documentInfo.FullPath;//путь к централу
-                if(string.IsNullOrEmpty(FullPath))
-                {
-                    return;
-                }
+                string FullPath = documentInfo.GetPathKey();//путь к централу
+                
                 string key1 = FullPath + ": "+now.ToString("yyMMdd");
 
                 //хочу еще по проектам разделить
@@ -138,7 +135,14 @@ namespace Reinforcement
 
                     foreach (ElementId id in deletes)
                     {
+                        //бывает мы создали элемент и сразу удалили, тогда надо пропустить такой мусор
+                        if (elementIdsPastAdd.Contains(id))
+                        {
+                            continue;
+                        }    
+                           
                         hd.Add(id.IntegerValue);   // ← ElementId → int
+                        
                     }
                 }
                 if (now - pastExportIdDeletes > _flushInterval)

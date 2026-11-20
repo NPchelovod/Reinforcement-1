@@ -27,7 +27,7 @@ namespace Reinforcement
             public DateTime CurrentDateLocal;
             public DateTime NewestSourceDateLocal;
             public string NewestSourcePath;
-
+            public bool FromAdminFolder;// обновление из папки админа??
             public bool HasUpdate =>
                 CurrentDateLocal != DateTime.MinValue &&
                 NewestSourceDateLocal != DateTime.MinValue &&
@@ -44,6 +44,7 @@ namespace Reinforcement
             {
                 CurrentDateLocal = App_Folders.DatePluginDll,
                 NewestSourceDateLocal = DateTime.MinValue,
+                FromAdminFolder=false,
                 NewestSourcePath = null
             };
 
@@ -53,22 +54,11 @@ namespace Reinforcement
                 catch (Exception ex) { AppErrors.LogError(ex); }
             }
 
-            TryEvaluateSource(App_Folders.SourcePluginDir, ref r);
+            TryEvaluateSource(App_Folders.SourcePluginDir, ref r, false);
 
             if (App_Folders.UserIsAvtor)
             {
-                var r2 = new CheckResult
-                {
-                    CurrentDateLocal = App_Folders.DatePluginDll,
-                    NewestSourceDateLocal = DateTime.MinValue,
-                    NewestSourcePath = null
-                };
-                TryEvaluateSource(App_Folders.SourcePluginDirAvtor, ref r2);
-
-                if(r2.NewestSourceDateLocal>r.NewestSourceDateLocal)
-                {
-                    r = r2;
-                }
+                TryEvaluateSource(App_Folders.SourcePluginDirAvtor, ref r,true);
 
             }
 
@@ -77,7 +67,7 @@ namespace Reinforcement
             return r;
         }
 
-        private static void TryEvaluateSource(string sourceDir, ref CheckResult r)
+        private static void TryEvaluateSource(string sourceDir, ref CheckResult r, bool fromAdminFolder)
         {
             try
             {
@@ -89,6 +79,7 @@ namespace Reinforcement
                 {
                     r.NewestSourceDateLocal = d;
                     r.NewestSourcePath = sourceDir;
+                    r.FromAdminFolder = fromAdminFolder;
                 }
             }
             catch (Exception ex) { AppErrors.LogError(ex); }

@@ -169,6 +169,10 @@
       <DependentUpon>GroundLayersWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="0_Aspirant\00_OtherProjects\SnapBeamEndToBeam.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\01_CalcWalls.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\02_IntersectWalls.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\03_ArmWalls.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\04_ArmExport.cs" />
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
@@ -202,8 +206,8 @@
     <Compile Include="Infrastructure\StringSimilarity.cs" />
     <Compile Include="Infrastructure\BatchReport.cs" />
     <Compile Include="Infrastructure\RevitCommandBase.cs" />
-    <Compile Include="2_Architecture\OpeningMarks\CreateOpeningMarksCommand.cs" />
-    <Compile Include="2_Architecture\OpeningMarks\OpeningMarkService.cs" />
+    <Compile Include="2_Architecture\2_OpeningMarks\CreateOpeningMarksCommand.cs" />
+    <Compile Include="2_Architecture\2_OpeningMarks\OpeningMarkService.cs" />
     <Compile Include="Infrastructure\ElevationGrouping.cs" />
     <Compile Include="Infrastructure\SearchQueryKey.cs" />
   </ItemGroup>
@@ -215,8 +219,8 @@
     <Compile Include="1_Helper\3HelperElementsCreate.cs" />
     <Compile Include="1_Helper\4HelperSeachLoocop.cs" />
     <Compile Include="1_Helper\HelperSeach2.cs" />
-    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\ViewModel\CalculateReinforcementArchitectureWallsViewModel.cs" />
-    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml.cs">
+    <Compile Include="2_Architecture\1_CalculateReinforcementArchitectureWalls\3_ViewModel\CalculateReinforcementArchitectureWallsViewModel.cs" />
+    <Compile Include="2_Architecture\1_CalculateReinforcementArchitectureWalls\2_View\CalculateReinforcementArchitectureWallsView.xaml.cs">
       <DependentUpon>CalculateReinforcementArchitectureWallsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="3_Electric\2_1_EL_GusakRoof.cs" />
@@ -346,7 +350,7 @@
     <Compile Include="App_Panel_9_1_Configuration_Admin.cs" />
     <Compile Include="App_Panel_92_2_Asp_Utilit.cs" />
     <Compile Include="App_Panel_9_2_AdminPanel.cs" />
-    <Compile Include="2_Architecture\CalculateReinforcementArchitectureWalls\Command\CalculateReinforcementArchitectureWallsCommand.cs" />
+    <Compile Include="2_Architecture\1_CalculateReinforcementArchitectureWalls\1_Command\CalculateReinforcementArchitectureWallsCommand.cs" />
     <Compile Include="ChangeTextFontInSchedule.cs" />
     <Compile Include="CheckReinfTag.cs" />
     <Compile Include="3_Electric\EL_panel_Light_without_boxes.cs" />
@@ -594,7 +598,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="2_Architecture\CalculateReinforcementArchitectureWalls\View\CalculateReinforcementArchitectureWallsView.xaml">
+    <Page Include="2_Architecture\1_CalculateReinforcementArchitectureWalls\2_View\CalculateReinforcementArchitectureWallsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

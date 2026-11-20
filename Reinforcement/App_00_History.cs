@@ -16,7 +16,7 @@ namespace Reinforcement
         private static string CurrentVersion = "Еще лучше | Программист: улучшен вывод истории версии";
 
         private static string DifferentZeor = "Отличия новой версии от вашей неизвестны";
-
+        private static string DifferentEquelPast = "Отличия версии те же, что у прошлой";
         public static UpdateStructVersion NewVersion = null;
         public static UpdateStructVersion OurVersion = null;
 
@@ -62,6 +62,20 @@ namespace Reinforcement
                     .OrderByDescending(x => x.DateTimeDll)
                     .ToList();
 
+                if (UpdateAllVersion.UpdateStructVersion.Count > 1)
+                {
+                    var pastEl = UpdateAllVersion.UpdateStructVersion[0];
+                    //схллопываем повторы не записанной версии
+                    for (int i = 1; i < UpdateAllVersion.UpdateStructVersion.Count; i++)
+                    {
+                        var el = UpdateAllVersion.UpdateStructVersion[i];
+                        if (el.Message == pastEl.Message)
+                        {
+                            el.Message = DifferentEquelPast;
+                        }
+                    }
+                }
+
                 string json = JsonSerializer.Serialize(UpdateAllVersion, RevitAPI.Options);
                 File.WriteAllText(tmp, json);
                 try { File.Replace(tmp, path, null, true); }
@@ -83,7 +97,27 @@ namespace Reinforcement
             }
         }
 
-        private static void ReadData()
+        private static bool GetFolderExist()
+        {
+            if (FolderVersion != FolderVersionDefaultPath)
+            {
+                FolderVersion = FolderVersionDefaultPath;
+            }
+            if (!FastDirectoryChecker.DirectoryExistsFast(FolderVersion)) 
+            {
+                
+                //пробуем папку temp
+                FolderVersion = App_Folders.TempFolder;
+                if (!FastDirectoryChecker.DirectoryExistsFast(FolderVersion))
+                {
+                    FolderVersion = FolderVersionDefaultPath;
+                    return false;
+                }
+               
+            }
+            return true;
+        }
+        public static void ReadData()
         {
             FolderExist = false;
             FileIsRead = false;
@@ -91,9 +125,12 @@ namespace Reinforcement
             FileIsExist = false;
             UpdateAllVersion = new UpdateAllVersion();
             NewVersion = null;
-           
 
-            if (!FastDirectoryChecker.DirectoryExistsFast(FolderVersion)) return;
+            if(!GetFolderExist())
+            {
+                return;
+            }
+
             FolderExist = true;
 
             var path = GetFilePath;
@@ -125,7 +162,19 @@ namespace Reinforcement
             if (dllDate != DateTime.MinValue &&
                 !UpdateAllVersion.UpdateStructVersion.Any(x => x.DateTimeDll == dllDate))
             {
-                int vPast=UpdateAllVersion.UpdateStructVersion.Select(x => x.NumVersion).Max();
+                
+                var lastPastVersion = UpdateAllVersion.UpdateStructVersion.OrderByDescending(x=>x.DateTimeDll).FirstOrDefault();
+                int vPast = 0;
+                if (lastPastVersion!=null)
+                {
+                    vPast = UpdateAllVersion.UpdateStructVersion.Select(x => x.NumVersion).Max();
+                    string lastMessage = lastPastVersion.Message;
+                    if (CurrentVersion == lastMessage)
+                    {
+                        CurrentVersion = DifferentEquelPast;
+                    }
+                }
+                
                 OurVersion = new UpdateStructVersion
                 {
                     NumVersion = vPast+1,
@@ -135,6 +184,11 @@ namespace Reinforcement
                     Message = CurrentVersion
                 };
                 UpdateAllVersion.UpdateStructVersion.Add(OurVersion);
+
+                //сортируем
+                UpdateAllVersion.UpdateStructVersion = UpdateAllVersion.UpdateStructVersion
+                    .OrderByDescending(x => x.DateTimeDll)
+                    .ToList();
                 FileNotContainsCurrentVersion = true;
             }
             else
@@ -170,6 +224,9 @@ namespace Reinforcement
         public static UpdateAllVersion UpdateAllVersion = null;
 
         private static string FolderVersion = @"Y:\\Revit\\_ЕС BIM_Плагин\\0_Разработчику";
+        private static string FolderVersionDefaultPath = @"Y:\\Revit\\_ЕС BIM_Плагин\\0_Разработчику";
+
+
         private static string VersionFileName = "Отличия версий.json";
         private static string GetFilePath => Path.Combine(FolderVersion, VersionFileName);
     }

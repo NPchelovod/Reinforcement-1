@@ -21,7 +21,7 @@ namespace Reinforcement
 
         public static string GetStringFromDate(DateTime date)
         {
-            return $"{date.ToLocalTime():d MMM yyyy, HH: mm}";
+            return $"{date.ToLocalTime():d MMM yyyy, HH:mm}";
         }
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -33,11 +33,18 @@ namespace Reinforcement
             var buildDate = App_Folders.DatePluginDll.ToLocalTime(); //локальное время
             var version = App_Folders.VersionString;
             string status = !App_Folders.UserIsAvtor ? "Рядовой" : "Командир";
-            txtPluginVersion.Text = GetDatePluginText+$", Пользователь {status}";
+            txtPluginVersion.Text = GetDatePluginText+$", Пользователь: {status}";
 
             logErrorsShow.IsChecked = AppErrors.LookErrorsAdmin;
             chkUpdater.IsChecked = AnyChangeClass.AllUpdater;
 
+            ControlVersion();
+
+            sborStatAndErrors.IsChecked = StatUsers.SborStat;
+        }
+
+        private void ControlVersion()
+        {
             var upData = App_History.NewVersion;
             if (upData != null && !string.IsNullOrEmpty(upData.Message))
             {
@@ -48,21 +55,17 @@ namespace Reinforcement
             }
             else
             {
-                var ourV  = App_History.OurVersion;
-                if (ourV != null && !string.IsNullOrEmpty(ourV.Message))
-
+                var ourV = App_History.OurVersion;
+                if (UpdaterCheck.NewVersionData.HasUpdate)
                 {
-                    if (UpdaterCheck.NewVersionData.HasUpdate)
-                    {
-                        //из самого dll
-                        txtNewVersion.Text = $"Имеется новая версия {GetStringFromDate(UpdaterCheck.NewVersionData.NewestSourceDateLocal)}, отличия от вашей неизвестны";
-                        txtNewVersion.Foreground = System.Windows.Media.Brushes.Red;   // есть обновление — красный
-                    }
-                    else
-                    {
-                        txtNewVersion.Text =
-                       $"Версия новее не найдена, но ваша {ourV.GetMessegeVersion()}";
-                    }
+                    //из самого dll
+                    txtNewVersion.Text = $"Имеется новая версия {GetStringFromDate(UpdaterCheck.NewVersionData.NewestSourceDateLocal)}, отличия от вашей неизвестны";
+                    txtNewVersion.Foreground = System.Windows.Media.Brushes.Red;   // есть обновление — красный
+                }
+                else if (ourV != null && !string.IsNullOrEmpty(ourV.Message))
+                {
+                    txtNewVersion.Text =
+                   $"Версия новее не найдена, но ваша {ourV.GetMessegeVersion()}";
                 }
                 else
                 {
@@ -72,8 +75,14 @@ namespace Reinforcement
                 //txtNewVersion.Visibility = Visibility.Collapsed;
                 txtNewVersion.Visibility = Visibility.Visible;
             }
-
-            sborStatAndErrors.IsChecked = StatUsers.SborStat;
+        }
+        private void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            // ваша существующая логика проверки, например:
+            // UpdateChecker.CheckForUpdate();
+            App_History.ReadData();
+            UpdaterCheck.GetResult();
+            ControlVersion();
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
