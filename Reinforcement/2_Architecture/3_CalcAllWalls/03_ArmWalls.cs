@@ -29,26 +29,37 @@ namespace Reinforcement
         CountDoorOrWindow,//количество окон и дверей
         CountKRBorder,// количество примыканий стены к стенам кр - максимум с 2 сторон
 
-        ArmRow,                // количество рядов армирования на этаж
-        ArmDopRow,             // количество дополнительных рядов армирования (для кирпича)
+       //константные параметры для расчета
+        
         ArmStepMM,             // шаг рядов армирования, мм
+        ArmTopDopRow,             // количество дополнительных рядов армирования у потолка (для кирпича)
+
         ArmDetailArmLengthMM,  // длина арматуры обрамления закладной, мм
-        ArmDetailArmCount,     // количество арматурин на одну деталь обрамления
-        Details,               // количество деталей крепежа
+        ArmDetailArmCount,     // количество арматурин на одну деталь обрамления 2 штуки обычно
+        ArmCountCrossRow,//=2 - кол-во стержней в одном шве кирпичном - всю погонную длину умножаем на это кол-во
+
+
         StepDetailsMM,         // шаг деталей крепежа, мм
         StepDetailsRoofMM,     // шаг крепежа плоскости стены к потолку, мм
 
-       
-
+        
+        //посчитанные данные
         DetailsRoofInt,        // количество крепежа по длине стены (плоскость к потолку)
         DetailsWallsInt,       // количество боковых деталей (у примыканий к ЖБ-стенам)
+        DetailsAllCount,// суммарное кол-во деталей
 
+        ArmRow,                // количество рядов армирования на этаж
         ArmGeneralTotalMM,     // армирование основное, мм (без учёта проёмов)
         ArmTopTotalMM,         // армирование верха кирпичной стены, мм
         ArmDetailsTotalMM,     // арматура обрамления закладных кирпичной стены, мм
 
-        MinesArmFromWindAndDoor,      // вычет основного армирования по проёмам, мм
-        MinesArmDetailsFromWindAndDoor // вычет арматуры обрамления по проёмам, мм
+        MinesArmFromWindAndDoorMM,      // вычет основного армирования по проёмам, мм
+        MinesArmDetailsFromWindAndDoorMM, // вычет арматуры обрамления по проёмам, мм
+
+        ArmAllM,//длина арматуры общая пог метры, наверно надо на 2 домножить
+        ArmAllM2
+
+
     }
     /// <summary>
     /// Строковые данные
@@ -106,23 +117,26 @@ namespace Reinforcement
             { EArmWall.CountKRBorder,                  "Кол-во примыканий к стенам КР" },
 
             { EArmWall.ArmRow,                         "Кол-во рядов армирования" },
-            { EArmWall.ArmDopRow,                      "Доп. ряды армирования (кирпич)" },
+            { EArmWall.ArmTopDopRow,                      "Доп. ряды армирования (кирпич)" },
             { EArmWall.ArmStepMM,                      "Шаг армирования, мм" },
-            { EArmWall.ArmDetailArmLengthMM,           "Длина арматуры обрамления, мм" },
-            { EArmWall.ArmDetailArmCount,              "Кол-во арматурин на деталь" },
-            { EArmWall.Details,                        "Кол-во деталей крепежа" },
+            { EArmWall.ArmDetailArmLengthMM,           "Длина арматуры обрамления деталей, мм" },
+            { EArmWall.ArmDetailArmCount,              "Кол-во арматурин обрамления на деталь" },
+            { EArmWall.ArmCountCrossRow,               "Кол-во стержней в одном шве" },
+            { EArmWall.DetailsAllCount,                "Кол-во деталей крепежа" },
             { EArmWall.StepDetailsMM,                  "Шаг деталей крепежа, мм" },
             { EArmWall.StepDetailsRoofMM,              "Шаг крепежа к потолку, мм" },
 
             { EArmWall.DetailsRoofInt,                 "Кол-во крепежа по длине (потолок)" },
             { EArmWall.DetailsWallsInt,                "Кол-во боковых деталей" },
 
-            { EArmWall.ArmGeneralTotalMM,              "Армирование основное, мм" },
-            { EArmWall.ArmTopTotalMM,                  "Армирование верха, мм" },
-            { EArmWall.ArmDetailsTotalMM,              "Арматура обрамления закладных, мм" },
+            { EArmWall.ArmGeneralTotalMM,              "Армирование основное, длина шва, мм" },
+            { EArmWall.ArmTopTotalMM,                  "Армирование верха, длина шва, мм" },
+            { EArmWall.ArmDetailsTotalMM,              "Арматура обрамления закладных, длина шва, мм" },
 
-            { EArmWall.MinesArmFromWindAndDoor,        "Вычет армирования по проёмам, мм" },
-            { EArmWall.MinesArmDetailsFromWindAndDoor, "Вычет обрамления по проёмам, мм" }
+            { EArmWall.MinesArmFromWindAndDoorMM,        "Вычет армирования по проёмам, длина шва, мм" },
+            { EArmWall.MinesArmDetailsFromWindAndDoorMM, "Вычет обрамления по проёмам, длина шва, мм" },
+             { EArmWall.ArmAllM, "Полная арматура (длина шва*арматур в шве), м" },
+              { EArmWall.ArmAllM2, "Полная арматура (длина шва*арматур в шве), м2" }
         };
 
                 /// <summary>
@@ -139,7 +153,20 @@ namespace Reinforcement
             { EArmWallString.IdsConnectsWalls,   "Id примыкающих стен" },
             { EArmWallString.IdsConnectsWallsKR, "Id примыкающих стен КР" }
         };
+        /// <summary>
+        /// Проверяет, что все значения enum'ов покрыты словарями русских названий.
+        /// Вызывать один раз при старте (например, в Execute).
+        /// </summary>
+        public static bool CheckNameMaps()
+        {
+            foreach (EArmWall p in Enum.GetValues(typeof(EArmWall)))
+                if (!EArmWallNames.ContainsKey(p)) return false;
 
+            foreach (EArmWallString p in Enum.GetValues(typeof(EArmWallString)))
+                if (!EArmWallStringNames.ContainsKey(p)) return false;
+
+            return true;
+        }
         //элемент армирования
         public ECWall ECWall = null; // ссылка на стену, которой принадлежит данный элемент армирования
 
@@ -159,7 +186,7 @@ namespace Reinforcement
                 this[EArmWall.StepDetailsMM] = 600;
 
                 this[EArmWall.StepDetailsRoofMM] = 1500;
-                this[EArmWall.ArmDopRow] = 3;
+                this[EArmWall.ArmTopDopRow] = 3;
                 this[EArmWall.ArmDetailArmLengthMM] = 1000;
                 this[EArmWall.ArmDetailArmCount] = 2; // на одну деталь 2 арматурины
             }
@@ -169,6 +196,8 @@ namespace Reinforcement
                 this[EArmWall.StepDetailsMM] = 1250;
                 this[EArmWall.StepDetailsRoofMM] = 3000;
             }
+
+            this[EArmWall.ArmCountCrossRow] = 2;
         }
 
         public void CalculateArm()
@@ -237,7 +266,7 @@ namespace Reinforcement
 
             this[EArmWall.CountKRBorder] = _otherWalls.Count;
             //детали боковые сбоку стены
-            this[EArmWall.DetailsWallsInt] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.StepDetailsMM]) * _otherWalls.Count();
+            this[EArmWall.DetailsWallsInt] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.StepDetailsMM]) * _otherWalls.Count;
 
             this[EArmWall.ArmRow] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.ArmStepMM]);
             this[EArmWall.ArmGeneralTotalMM] = this[EArmWall.ArmRow] * this[EArmWall.WallLengthMM]; // кол-во рядов на длину
@@ -246,30 +275,31 @@ namespace Reinforcement
             this[EArmWall.ArmDetailsTotalMM] = 0;
             if (type == EWallTypes.AR_Brick)
             {
-                this[EArmWall.ArmTopTotalMM] += this[EArmWall.ArmDopRow] * this[EArmWall.WallLengthMM]; // дополнительная арматура вверху кирпичной стены
+                this[EArmWall.ArmTopTotalMM] += this[EArmWall.ArmTopDopRow] * this[EArmWall.WallLengthMM]; // дополнительная арматура вверху кирпичной стены
 
+                //1000*2*
                 this[EArmWall.ArmDetailsTotalMM] += this[EArmWall.ArmDetailArmLengthMM] * this[EArmWall.ArmDetailArmCount] * this[EArmWall.DetailsWallsInt];
 
                 //тут надо проанализировать двери и т.д. — вычитания
             }
 
             //вычитаем армирование дверей и окон
-            this[EArmWall.MinesArmFromWindAndDoor] = 0;
+            this[EArmWall.MinesArmFromWindAndDoorMM] = 0;
             foreach (var windAndDoor in ECWall.ECDoorOrWindows)
             {
-                double l = windAndDoor.LengthM;
-                double h = windAndDoor.HeightM;
+                double l = windAndDoor.LengthM*1000;
+                double h = windAndDoor.HeightM*1000;
                 double row = GetGridCount(h, this[EArmWall.ArmStepMM]);
                 double dist = row * l;
-                this[EArmWall.MinesArmFromWindAndDoor] += dist;
+                this[EArmWall.MinesArmFromWindAndDoorMM] += dist;
             }
 
-            if (this[EArmWall.MinesArmFromWindAndDoor] > this[EArmWall.ArmGeneralTotalMM])
+            if (this[EArmWall.MinesArmFromWindAndDoorMM] > this[EArmWall.ArmGeneralTotalMM])
             {
-                this[EArmWall.MinesArmFromWindAndDoor] = this[EArmWall.ArmGeneralTotalMM];
+                this[EArmWall.MinesArmFromWindAndDoorMM] = this[EArmWall.ArmGeneralTotalMM];
             }
 
-            this[EArmWall.MinesArmDetailsFromWindAndDoor] = 0;
+            this[EArmWall.MinesArmDetailsFromWindAndDoorMM] = 0;
             if (type == EWallTypes.AR_Brick && this[EArmWall.ArmDetailsTotalMM] > 0)
             {
                 List<XYZ> pastPoints = new List<XYZ>();
@@ -293,15 +323,26 @@ namespace Reinforcement
                         pastPoints.Add(sosed.point);
                         //кол-во перерезов
                         double co = GetGridCount(windAndDoor.HeightM * 1000, this[EArmWall.StepDetailsMM]);
-                        this[EArmWall.MinesArmDetailsFromWindAndDoor] += co * dif * this[EArmWall.ArmDetailArmCount];
+                        this[EArmWall.MinesArmDetailsFromWindAndDoorMM] += co * dif * this[EArmWall.ArmDetailArmCount];
                     }
                 }
 
-                if (this[EArmWall.MinesArmDetailsFromWindAndDoor] > this[EArmWall.ArmDetailsTotalMM])
+                if (this[EArmWall.MinesArmDetailsFromWindAndDoorMM] > this[EArmWall.ArmDetailsTotalMM])
                 {
-                    this[EArmWall.MinesArmDetailsFromWindAndDoor] = this[EArmWall.ArmDetailsTotalMM];
+                    this[EArmWall.MinesArmDetailsFromWindAndDoorMM] = this[EArmWall.ArmDetailsTotalMM];
                 }
             }
+
+
+            //подсчитываем итого
+            //итого деталей
+            this[EArmWall.DetailsAllCount] = this[EArmWall.DetailsRoofInt] + this[EArmWall.DetailsWallsInt];
+            //итого арматуры
+            double lenArmAllM = Math.Max(0, (this[EArmWall.ArmGeneralTotalMM] + this[EArmWall.ArmTopTotalMM] + this[EArmWall.ArmDetailsTotalMM] - this[EArmWall.MinesArmDetailsFromWindAndDoorMM] - this[EArmWall.MinesArmFromWindAndDoorMM]) / 1000);
+            this[EArmWall.ArmAllM] = lenArmAllM * this[EArmWall.ArmCountCrossRow];
+
+            //если арматура раскладывается в два взаимно перпендикулярных направления в одном шве, умножение на ширину даст не площадь сетки, а площадь «поверхности, покрытой стержнями одной ориентации»
+            this[EArmWall.ArmAllM2] = this[EArmWall.ArmAllM] * this[EArmWall.WallWidthMM]/1000;
         }
 
 

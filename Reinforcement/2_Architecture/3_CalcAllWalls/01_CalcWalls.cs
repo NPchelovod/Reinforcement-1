@@ -91,6 +91,7 @@ namespace Reinforcement
 
         public XYZ StartPt;
         public XYZ EndPt;
+        public BuiltInCategory BuiltInCategory;
     }
 
     public enum EWallTypes
@@ -352,9 +353,10 @@ namespace Reinforcement
             // 5. Габаритная площадь без вычета проёмов
             //    (Face.Area внешней грани; fallback → Length × Height)
             // ============================================================
-            double grossAreaSqFt = GetWallGrossAreaSqFt(wall);
-            eCWall.AreaGrossM2 = UnitUtils.ConvertFromInternalUnits(
-                grossAreaSqFt, UnitTypeId.SquareMeters);
+            //double grossAreaSqFt = GetWallGrossAreaSqFt(wall);
+            //eCWall.AreaGrossM2 = UnitUtils.ConvertFromInternalUnits(
+            //    grossAreaSqFt, UnitTypeId.SquareMeters);
+            eCWall.AreaGrossM2 = eCWall.LengthM * eCWall.HeightM;
 
             // ============================================================
             // 6. Площадь проёмов = все отверстия (двери + окна + прочие)
@@ -413,6 +415,7 @@ namespace Reinforcement
         // ----------------------------------------------------------------
         private static double GetWallGrossAreaSqFt(Wall wall)
         {
+            //не верно - он с учетом проемов считает
             try
             {
                 var sideRefs = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Exterior);
@@ -446,10 +449,16 @@ namespace Reinforcement
                 var bic = doorOrWind.Category.BuiltInCategory;
 
                 if(bic!= BuiltInCategory.OST_Doors && bic != BuiltInCategory.OST_Windows) { continue; }
-
+                // Проверяем, что элемент хостится именно в этой стене,
+                // а не во встроенной (embedded) стене
+                if (doorOrWind is FamilyInstance fi)
+                {
+                    Element host = fi.Host;
+                    if (host == null || host.Id != wall.Id) continue;
+                }
 
                 //надо получить окна и двери их размеры габаритные
-                var dw = GetECDoorOrWindow(doorOrWind, wall);
+                var dw = GetECDoorOrWindow(doorOrWind, wall,bic);
                 if (dw != null)
                 {
                     eCWall.ECDoorOrWindows.Add(dw);
@@ -458,7 +467,7 @@ namespace Reinforcement
             }
         }
 
-        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, Wall wall)
+        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, Wall wall, BuiltInCategory bic)
         {
             ElementId id = doorOrWind.Id;
             var dw = new ECDoorOrWindow
@@ -483,7 +492,7 @@ namespace Reinforcement
             dw.LengthM = widthM;
             dw.HeightM = heightM;
             dw.AreaM2 = widthM * heightM;
-
+            dw.BuiltInCategory= bic;
             if (wall == null) return dw;
 
             // --- Отметка низа проёма от уровня ---

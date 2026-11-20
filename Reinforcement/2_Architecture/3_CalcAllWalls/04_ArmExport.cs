@@ -37,7 +37,11 @@ namespace Reinforcement
                 MessageBox.Show("Нет стен для экспорта.");
                 return;
             }
-
+            if (!ECArmWallElement.CheckNameMaps())
+            {
+                MessageBox.Show("Не все параметры имеют русские названия — проверьте словари.");
+                return;
+            }
             // 2. Диалог сохранения
             var dlg = new WinForms.SaveFileDialog
             {
@@ -84,7 +88,9 @@ namespace Reinforcement
                 foreach (var typeGroup in byType)
                 {
                     var walls = typeGroup
-                        .OrderBy(x => x.WallType?.NameWall ?? string.Empty)
+                        .OrderBy(x => x.WallType?.NameWall ?? string.Empty).ThenByDescending(x=>x.WidthM).ThenByDescending(x=>x.RelationsWalls.Count)
+                        .ThenByDescending(x => x.ECDoorOrWindows.Count)
+                        .ThenBy(x=>x.AreaNetM2)
                         .ThenBy(x => x.Id)
                         .ToList();
 
@@ -128,7 +134,7 @@ namespace Reinforcement
                     {
                         if (SummedColumns.Contains(p))
                         {
-                            char colLetter = (char)('A' + c - 1); // колонки до Z — нам хватает
+                            string colLetter = ColumnName(c); // вместо (char)('A' + c - 1)
                             sheet.Range[row, c].Formula =
                                 $"SUM({colLetter}{firstRowOfType}:{colLetter}{lastRowOfType})";
                         }
@@ -179,5 +185,21 @@ namespace Reinforcement
         {
             return groups.SelectMany(g => g).Count();
         }
+        /// <summary>
+        /// Преобразует номер колонки (1-based) в буквы Excel: 1 -> "A", 27 -> "AA".
+        /// </summary>
+        private static string ColumnName(int index)
+        {
+            int n = index;
+            string name = string.Empty;
+            while (n > 0)
+            {
+                int rem = (n - 1) % 26;
+                name = (char)('A' + rem) + name;
+                n = (n - 1) / 26;
+            }
+            return name;
+        }
+
     }
 }
