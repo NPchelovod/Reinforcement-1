@@ -172,7 +172,14 @@
     <Compile Include="2_Architecture\3_CalcAllWalls\01_CalcWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\02_IntersectWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\03_ArmWalls.cs" />
-    <Compile Include="2_Architecture\3_CalcAllWalls\04_ArmExport.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\05_ArmWallElement.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\06_ArmElementConstants.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\08_ArmExport.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\10_InsulationsWalls.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\20_CalculateArmWalls.xaml.cs">
+      <DependentUpon>20_CalculateArmWalls.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="2_Architecture\3_CalcAllWalls\21_AR_Arm_Wall_LoadWPF.cs" />
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
@@ -599,6 +606,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="2_Architecture\1_CalculateReinforcementArchitectureWalls\2_View\CalculateReinforcementArchitectureWallsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="2_Architecture\3_CalcAllWalls\20_CalculateArmWalls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

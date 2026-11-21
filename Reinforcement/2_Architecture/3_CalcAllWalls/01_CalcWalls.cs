@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Autodesk.Revit.Attributes;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
+using Autodesk.Revit.UI;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
-using Autodesk.Revit.Attributes;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
 using static Autodesk.Revit.DB.SpecTypeId;
 
 namespace Reinforcement
@@ -29,7 +31,10 @@ namespace Reinforcement
         public ECWallType WallType=new ECWallType();//параметры типоразмера стены
         public ECArmWallElement ECArmWallElement = new ECArmWallElement();//армирование если надо армировать
         public EWallTypes EWallTypes => WallType?.EWallTypes ?? EWallTypes.None;
+        
+        public ECInsulation ECInsulation = new ECInsulation();//параметры теплоизоляции, наружная ли это стелна и тд
 
+        public HashSet<ECRoom> ECRooms = new HashSet<ECRoom>();//комнаты к которым принадлежит стена
         // --- Геометрия ---
         public double LengthM;              // длина оси
         public double HeightM;              // фактическая высота
@@ -44,10 +49,12 @@ namespace Reinforcement
 
 
 
-        public List<ECDoorOrWindow> ECDoorOrWindows = new List<ECDoorOrWindow>();
+        public HashSet<ECDoorOrWindow> ECDoorOrWindows = new HashSet<ECDoorOrWindow>();
 
         //зависимые друг от друга стены, которые касаются друг друга надо найти данные стены
         public HashSet<ECWall> RelationsWalls = new HashSet<ECWall>();
+
+        
     }
     /// <summary>
     /// Конкретный экземпляр уровня
@@ -71,9 +78,12 @@ namespace Reinforcement
         public ElementId ElementIdWallType;
         public long Id = 0; // Рекомендуется использовать long для ID в Revit 2024+
         public string FamilyName;
-        public EWallTypes EWallTypes;
+        public EWallTypes EWallTypes=0;
 
         public double WidthM;
+
+        public List<ECLayerWall> ECLayerWalls = new List<ECLayerWall>();//послойный состав
+        public ECWallType() { }
     }
 
     public class ECDoorOrWindow
@@ -92,7 +102,47 @@ namespace Reinforcement
         public XYZ StartPt;
         public XYZ EndPt;
         public BuiltInCategory BuiltInCategory;
+        public HashSet<ECWall> ECWalls = new HashSet<ECWall>();//каким стенам принадлежит
     }
+
+    public class ECLayerWall
+    {
+        ECWallType ECWallType;
+        //один слой стены
+        public int Index;                        // индекс слоя: 0 — самый наружный (слева в редакторе структуры)
+        public double WidthM;                    // толщина слоя, м (0 у мембранных слоёв)
+        public MaterialFunctionAssignment Function; // Structure, Insulation/Fill, Finish1/Finish2, Membrane, Substrate...
+        public bool IsCore;                      // несущий слой (core)
+        public bool IsVariable;                  // "переменный" слой (подстраивается по высоте)
+        public bool Wraps;                       // слой оборачивается вокруг вставок (окон/дверей)
+
+        public ElementId MaterialId;             // может быть InvalidElementId (-1) — тогда материал берётся у категории
+        public string MaterialName;
+        public string MaterialClass;             // "Бетон", "Кирпич", "Газобетон" — как в шаблоне проекта
+        public string MaterialDescription;
+        public Color MaterialColor;
+
+        public double? DensityKgM3;              // кг/м³, из структурного актива материала
+        public double? ThermalConductivityWmK;   // Вт/(м·К), из теплового актива
+    }
+
+    public class ECInsulation
+    {
+        public ECWall ECWall;
+        public bool OutWallFromNAmeMaterial = false;//наружная ли стена, при анализе имени стены
+
+    }
+    public class ECRoom
+    {
+        public long Id;
+        public string Name;
+        public string Number;
+        public double AreaM2 ;                 // площадь в кв. футах (внутренние единицы)
+        public double VolumeM3;            // объём в куб. футах
+        public double PerimeterM;//периметр
+        public Room Room;
+    }
+    
 
     public enum EWallTypes
     {
@@ -132,6 +182,7 @@ namespace Reinforcement
             DictECWalls.Clear();
             DictECLevels.Clear();
             DictWallType.Clear();
+            DictECRooms.Clear();
         }
         public static List<ECWall> GetWalls(Document doc)
         {
@@ -201,7 +252,10 @@ namespace Reinforcement
 
             //дверные проемы в стене и другое
             ReadDoorAndWindow(eCWall, wall, element, doc);
-            
+
+
+            //другие свойства
+            ReadWallOtherData(eCWall, wall, element, doc);
             return eCWall;
         }
 
@@ -254,34 +308,31 @@ namespace Reinforcement
             wt = new ECWallType();
             DictWallType[name] = wt;
 
+            wt.NameWall = name;
             ElementId typeId = wall.GetTypeId();
-            WallType wallType = doc.GetElement(typeId) as WallType;
-            if (wallType != null)
-            {
-                wt.Id = typeId.Value;
-                wt.FamilyName = wallType.FamilyName; // напр. "Basic Wall" (Базовая стена)
-            }
-            EWallTypes eWallTypes= EWallTypes.None;
+
+
+            EWallTypes eWallTypes = EWallTypes.None;
             //здесь можно было бы настроить чтобы понимать жб стена несущая кирпичная или газобетонная
-            double widthFoot= wall.Width;// — в футах(внутренние единицы)
-            double widthMM=RevitAPI.ToMm(widthFoot);
-            wt.WidthM = widthMM/1000;
+            double widthFoot = wall.Width;// — в футах(внутренние единицы)
+            double widthMM = RevitAPI.ToMm(widthFoot);
+            wt.WidthM = widthMM / 1000;
 
             //начинаем анализировать EWallTypes
 
-            if(name.Contains("Газобетон"))
+            if (name.Contains("Газобетон"))
             {
                 eWallTypes = EWallTypes.AR_Aerocrete;
             }
-            else if(name.Contains("Бетон"))
+            else if (name.Contains("Бетон"))
             {
                 eWallTypes = EWallTypes.KR_Reinforcement;
             }
-            else if(name.Contains("Кирпич"))
+            else if (name.Contains("Кирпич"))
             {
                 eWallTypes = EWallTypes.AR_Brick;
             }
-            else if(name.Contains("Утеплитель")|| name.StartsWith("СШ"))
+            else if (name.Contains("Утеплитель") || name.StartsWith("СШ"))
             {
                 eWallTypes = EWallTypes.AR_Uteplitel;
             }
@@ -295,8 +346,158 @@ namespace Reinforcement
             }
             wt.EWallTypes = eWallTypes;
 
+
+
+            WallType wallType = doc.GetElement(typeId) as WallType;
+            if (wallType != null)
+            {
+               
+                ReadECWallTypeLayers(wallType, typeId, wt,doc);
+            }
+
         }
         private static Dictionary<string, ECWallType> DictWallType = new Dictionary<string, ECWallType>();
+
+
+
+        private static void ReadECWallTypeLayers(WallType wallType, ElementId typeId, ECWallType wt, Document doc)
+        {
+            wt.Id = typeId.Value;
+            wt.FamilyName = wallType.FamilyName; // напр. "Basic Wall" (Базовая стена)
+
+            CompoundStructure cs = wallType.GetCompoundStructure();
+            if (cs == null) return; // у сэндвич-стен (Stacked) структуры нет
+
+
+            // общая толщина типа (в футах) — надёжнее, чем wall.Width у экземпляра
+            wt.WidthM = UnitUtils.ConvertFromInternalUnits(cs.GetWidth(), UnitTypeId.Meters);
+
+            IList<CompoundStructureLayer> apiLayers = cs.GetLayers();
+            int varIdx = cs.VariableLayerIndex; // индекс переменного слоя или -1
+
+            List<ECLayerWall> layers = new List<ECLayerWall>();
+
+            for (int i = 0; i < apiLayers.Count; i++)
+            {
+                CompoundStructureLayer layer = apiLayers[i];
+
+                ECLayerWall ec = new ECLayerWall();
+                ec.Index = i;
+                ec.WidthM = UnitUtils.ConvertFromInternalUnits(cs.GetLayerWidth(i), UnitTypeId.Meters);
+                ec.Function = layer.Function;
+                ec.IsCore = cs.IsCoreLayer(i);
+                ec.IsVariable = (i == varIdx);
+                ec.Wraps = layer.LayerCapFlag;
+
+                ElementId matId = cs.GetMaterialId(i);
+                ec.MaterialId = matId;
+
+                Autodesk.Revit.DB.Material mat = doc.GetElement(matId) as Autodesk.Revit.DB.Material;
+                if (mat != null)
+                {
+                    ec.MaterialName = mat.Name;
+                    ec.MaterialClass = mat.MaterialClass;
+                    Parameter pDesc = mat.get_Parameter(BuiltInParameter.ALL_MODEL_DESCRIPTION);
+                    ec.MaterialDescription = (pDesc != null && pDesc.HasValue) ? pDesc.AsString() : null;
+                    ec.MaterialColor = mat.Color;
+
+                    // Плотность: у самого Material её нет — она лежит в структурном активе
+                    PropertySetElement psa = doc.GetElement(mat.StructuralAssetId) as PropertySetElement;
+                    if (psa != null)
+                    {
+                        Parameter pDens = psa.get_Parameter(BuiltInParameter.PHY_MATERIAL_PARAM_STRUCTURAL_DENSITY);
+                        if (pDens != null && pDens.HasValue && pDens.StorageType == StorageType.Double)
+                            ec.DensityKgM3 = pDens.AsDouble(); // кг/м³
+                    }
+
+                    // Теплопроводность — из теплового актива
+                    PropertySetElement pseThermal = doc.GetElement(mat.ThermalAssetId) as PropertySetElement;
+                    if (pseThermal != null)
+                    {
+                        ThermalAsset ta = pseThermal.GetThermalAsset();
+                        ec.ThermalConductivityWmK = ta.ThermalConductivity; // Вт/(м·К)
+                    }
+                }
+
+                layers.Add(ec);
+            }
+          
+            wt.ECLayerWalls = layers;
+
+
+
+
+
+        }
+
+        public static void GetRooms(ECWall eCWall, Wall wall, Element element, Document doc)
+        {
+            GetRoomAtSide(eCWall, wall, element, doc, true);//1 сторона
+            GetRoomAtSide(eCWall, wall, element, doc, false);//2 сторона
+        }
+        // комнаты по обе стороны стены (или null, если с этой стороны нет помещения)
+        private static double offsetRoomF = UnitUtils.ConvertToInternalUnits(50, UnitTypeId.Millimeters);//мм
+        public static void  GetRoomAtSide(ECWall eCWall, Wall wall, Element element, Document doc, bool exteriorSide)
+        {
+            LocationCurve lc = wall.Location as LocationCurve;
+            if (lc == null) return;
+
+            Curve curve = lc.Curve;
+            XYZ mid = curve.Evaluate(0.5, true);
+
+            // перпендикуляр к оси в плане
+            XYZ dir = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize();
+            XYZ nrm = new XYZ(-dir.Y, dir.X, 0);          // влево по ходу оси
+            if (!exteriorSide) nrm = -nrm;                 // у стен ось: наружу — наружная грань (Flipped! см. ниже)
+
+            double half = wall.Width / 2.0;
+            double offset = half + offsetRoomF; // +50 мм запас чтобы найти комнату
+
+            XYZ pt = mid + nrm * offset;
+            Room room = doc.GetRoomAtPoint(pt);
+            if (room == null) return;
+            // GetRoomAtPoint может вернуться из другого уровня — проверьте высоту точки:
+            // она должна попадать в вертикальный диапазон помещения (BaseOffset..BaseOffset+Height)
+            var ecRoom = GetECRoom(room, doc);
+            eCWall.ECRooms.Add(ecRoom);
+            return;
+        }
+
+        public static ECRoom GetECRoom(Room room, Document doc)
+        {
+            if (room == null) return null;
+            long id = room.Id.Value;
+            if (DictECRooms.TryGetValue(id, out var ecRoom))
+            {
+                return ecRoom;
+            }
+            ecRoom= new ECRoom();
+            DictECRooms[id] = ecRoom;
+            ecRoom.Id = id;
+            ecRoom.Room=room;
+            string name = room.Name;                 // «Кабинет 101» (Name + Number вместе)
+            string number = room.Number;             // «101»
+            ElementId levelId = room.LevelId;        // уровень, на котором комната
+            Level level = doc.GetElement(levelId) as Level;
+            double area = room.Area;                 // площадь в кв. футах (внутренние единицы)
+            double volume = room.Volume;            // объём в куб. футах
+            double perimeter = room.Perimeter;       // периметр (если границы замкнуты)
+
+            // Конвертация в привычные единицы
+            double areaM2 = UnitUtils.ConvertFromInternalUnits(area, UnitTypeId.SquareMeters);
+            double volM3 = UnitUtils.ConvertFromInternalUnits(volume, UnitTypeId.CubicMeters);
+            double perM = UnitUtils.ConvertFromInternalUnits(perimeter, UnitTypeId.Meters);
+
+            ecRoom.Name = name;
+            ecRoom.Number = number;
+            ecRoom.AreaM2 = areaM2;
+            ecRoom.VolumeM3 = volM3;
+            ecRoom.PerimeterM = perM;
+
+
+            return ecRoom;
+        }
+        private static Dictionary<long,ECRoom> DictECRooms = new Dictionary<long,ECRoom>();
 
         /// <summary>
         /// Параметры конкретной стены
@@ -383,7 +584,18 @@ namespace Reinforcement
                 volumeParam.AsDouble(),
                 UnitTypeId.CubicMeters);
 
+            //определим, является ли стена наружная по названию
+           
+
         }
+        private static void ReadWallOtherData(ECWall eCWall, Wall wall, Element element, Document doc)
+        {
+            //наружная ли это стена пытаемся определить сразу по названию
+            InsulationsWalls.InsulationNameWall(eCWall);
+            GetRooms(eCWall, wall, element, doc);
+        }
+
+
         private static double GetWallHeight(Wall wall, Document doc)
         {
             var pTopLevel = wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE);
@@ -458,7 +670,7 @@ namespace Reinforcement
                 }
 
                 //надо получить окна и двери их размеры габаритные
-                var dw = GetECDoorOrWindow(doorOrWind, wall,bic);
+                var dw = GetECDoorOrWindow(doorOrWind, eCWall, wall,bic);
                 if (dw != null)
                 {
                     eCWall.ECDoorOrWindows.Add(dw);
@@ -466,17 +678,26 @@ namespace Reinforcement
 
             }
         }
-
-        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, Wall wall, BuiltInCategory bic)
+        private static Dictionary<long, ECDoorOrWindow> DictECDoorOrWindow = new Dictionary<long, ECDoorOrWindow>();
+        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, ECWall eCWall, Wall wall, BuiltInCategory bic)
         {
             ElementId id = doorOrWind.Id;
-            var dw = new ECDoorOrWindow
+            long idL = id.Value;
+            if(DictECDoorOrWindow.TryGetValue(idL, out var dw))
+            {
+                dw.ECWalls.Add(eCWall);//какой стене принадлежит
+                //Внимание для стены это явная ошибка если дверь или окно в нескольких стенах!!!!!
+                return dw;
+            }
+
+             dw = new ECDoorOrWindow
             {
                 ElementId = id,
-                Id = id.Value,
+                Id = idL,
                 Element = doorOrWind,
                 Name = doorOrWind.Name
             };
+            dw.ECWalls.Add(eCWall);//какой стене принадлежит
 
             // --- Габариты: независимый fallback ---
             var widthParam = doorOrWind.get_Parameter(BuiltInParameter.DOOR_WIDTH)

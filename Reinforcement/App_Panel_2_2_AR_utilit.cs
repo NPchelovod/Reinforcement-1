@@ -21,6 +21,10 @@ namespace Reinforcement
                  "Позволяет создать отчет армирования кладки",
                  "Для работы плагина нужно заполнить форму",
                 panel);
+            App_Helper_Button.CreateButton("Расчет кладки3", "Армирование\n кладки ", "Reinforcement.AR_Arm_Wall_LoadWPF", Properties.Resources.rashet_walls2,
+                "Позволяет создать отчет армирования кладки",
+                "Для работы плагина нужно заполнить форму",
+               panel);
 
         }
     }
