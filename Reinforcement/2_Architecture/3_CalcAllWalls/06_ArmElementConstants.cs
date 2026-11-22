@@ -62,9 +62,9 @@ namespace Reinforcement
 
 
     }
-    /// <summary>
-    /// Строковые данные
-    /// </summary>
+    ///// <summary>
+    ///// Строковые данные
+    ///// </summary>
     public enum EArmWallString
     {
         LevelName,//имя уровня
@@ -140,20 +140,7 @@ namespace Reinforcement
 
 
 
-        /// <summary>
-        /// Проверяет, что все значения enum'ов покрыты словарями русских названий.
-        /// Вызывать один раз при старте (например, в Execute).
-        /// </summary>
-        public static bool CheckNameMaps()
-        {
-            foreach (EArmWall p in Enum.GetValues(typeof(EArmWall)))
-                if (!EArmWallNames.ContainsKey(p)) return false;
-
-            foreach (EArmWallString p in Enum.GetValues(typeof(EArmWallString)))
-                if (!EArmWallStringNames.ContainsKey(p)) return false;
-
-            return true;
-        }
+        
         // соответствие констант и имён параметров в Revit (префикс "ЕС_" — наша компания)
         private static Dictionary<EArmWall, string> NamesParametersInRevit = new Dictionary<EArmWall, string>()
         {

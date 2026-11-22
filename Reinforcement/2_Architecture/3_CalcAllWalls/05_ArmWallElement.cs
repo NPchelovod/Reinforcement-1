@@ -9,7 +9,7 @@ namespace Reinforcement
 {
     
 
-    public class ECArmWallElement
+    public class ECArmWallElement : IExportStringDoubleData
     {
         public static readonly int countEArmWall = Enum.GetNames(typeof(EArmWall)).Length;
         public static readonly int countEArmWallString = Enum.GetNames(typeof(EArmWallString)).Length;
@@ -59,10 +59,10 @@ namespace Reinforcement
             var type = ECWall.EWallTypes;
 
 
-            this[EArmWallString.LevelName] = ECWall.ECLevel.LevelName;
+            this[EArmWallString.LevelName] = ECWall.ECLevel.Name;
             this[EArmWallString.WallEWallTypes] = type.ToString();
             this[EArmWallString.WallFamily] = ECWall.WallType.FamilyName;
-            this[EArmWallString.WallType] = ECWall.WallType.NameWall;
+            this[EArmWallString.WallType] = ECWall.WallType.Name;
             this[EArmWallString.IdsWindAndDoors] = string.Join(", ", ECWall.ECDoorOrWindows.Select(x => x.Id));
             this[EArmWallString.IdsConnectsWalls] = string.Join(", ", ECWall.RelationsWalls.Select(x => x.Id));
             
@@ -83,11 +83,12 @@ namespace Reinforcement
             this[EArmWall.DetailsRoofInt] = GetGridCount(this[EArmWall.WallLengthMM], this[EArmWall.StepDetailsRoofMM]);
 
             //нам надо найти кол-во стен, с которыми мы пересекаемся из ЖБ
-            var wallsKR = ECWall.RelationsWalls.Where(x => x.EWallTypes == EWallTypes.KR_Reinforcement).ToList();
-
+            var wallsKR = ECWall.RelationsWalls.Where(x => x.EWallTypes == EWallTypes.KR_Reinforcement).ToHashSet();
+            
             _otherWalls.Clear();
             if (wallsKR != null && wallsKR.Count > 0)
             {
+               
                 foreach (var wall in wallsKR)
                 {
                     if (IntersectWalls.IsEndOfWall1TouchingWall2(ECWall, wall, out XYZ touchingPoint))
@@ -106,6 +107,7 @@ namespace Reinforcement
                         if (adp)
                         {
                             _otherWalls.Add((touchingPoint, wall));
+                            ECWall.RelationsWallsKR.Add(wall);
                             if (_otherWalls.Count == 2)
                             {
                                 break;
@@ -230,6 +232,30 @@ namespace Reinforcement
                 return 0;
 
             return (int)Math.Floor(height / step);
+        }
+
+        public List<ExportElement> GetCalcData()
+        {
+            var data = new List<ExportElement>()
+            {
+              
+            };
+            foreach (var item in ArmElementConstants.EArmWallStringNames)
+            {
+                var a = new ExportElement(item.Value, this[item.Key], data);
+                data.Add(a);
+            }
+            foreach (var item in ArmElementConstants.EArmWallNames)
+            {
+                var a = new ExportElement(item.Value, this[item.Key], data);
+                data.Add(a);
+            }
+            
+            return data;
+        }
+        public string NameThisClass
+        {
+            get => nameof(ECArmWallElement);
         }
     }
 }

@@ -15,146 +15,7 @@ using static Autodesk.Revit.DB.SpecTypeId;
 
 namespace Reinforcement
 {
-    /// <summary>
-    /// Конкретный экземпляр стены
-    /// </summary>
-    public class ECWall
-    {
-        public Element Element;
-        public Wall Wall;//element as Wall;
-        public ElementId ElementId;
-        public long Id=0; // Рекомендуется использовать long для ID в Revit 2024+
-
-        public Curve Curve=null;//  XYZ startPoint = curve
-
-        public ECLevel ECLevel=new ECLevel();//параметры уровня
-        public ECWallType WallType=new ECWallType();//параметры типоразмера стены
-        public ECArmWallElement ECArmWallElement = new ECArmWallElement();//армирование если надо армировать
-        public EWallTypes EWallTypes => WallType?.EWallTypes ?? EWallTypes.None;
-        
-        public ECInsulation ECInsulation = new ECInsulation();//параметры теплоизоляции, наружная ли это стелна и тд
-
-        public HashSet<ECRoom> ECRooms = new HashSet<ECRoom>();//комнаты к которым принадлежит стена
-        // --- Геометрия ---
-        public double LengthM;              // длина оси
-        public double HeightM;              // фактическая высота
-        public double VolumeM3;             // объём с учётом проёмов
-        public double WidthM => WallType?.WidthM ?? 0.0;
-        
-                                 // --- Площади ---
-        public double AreaNetM2;            // чистая площадь (с проёмами)  — HOST_AREA_COMPUTED
-        public double AreaGrossM2;          // габаритная площадь (без проёмов)
-        public double OpeningsAreaM2;       // площадь всех проёмов = Gross − Net
-        public double PlanAreaM2;           // площадь в плане: Length × Width
-
-
-
-        public HashSet<ECDoorOrWindow> ECDoorOrWindows = new HashSet<ECDoorOrWindow>();
-
-        //зависимые друг от друга стены, которые касаются друг друга надо найти данные стены
-        public HashSet<ECWall> RelationsWalls = new HashSet<ECWall>();
-
-        
-    }
-    /// <summary>
-    /// Конкретный экземпляр уровня
-    /// </summary>
-    public class ECLevel
-    {
-        public string LevelName;
-        public double LevelElevation;
-        public Element Level;
-        public ElementId LevelId;
-        public long Id=0; // Рекомендуется использовать long для ID в Revit 2024+
-    }
-    /// <summary>
-    /// Типоразмер стены, у многих стен он одинаковый
-    /// </summary>
-    public class ECWallType
-    {
-        //тип стены, 
-        public string NameWall;//типоразмера имя стены
-        public Element ElementWallType;
-        public ElementId ElementIdWallType;
-        public long Id = 0; // Рекомендуется использовать long для ID в Revit 2024+
-        public string FamilyName;
-        public EWallTypes EWallTypes=0;
-
-        public double WidthM;
-
-        public List<ECLayerWall> ECLayerWalls = new List<ECLayerWall>();//послойный состав
-        public ECWallType() { }
-    }
-
-    public class ECDoorOrWindow
-    {
-        public Element Element;
-        public ElementId ElementId;
-        public long Id; // Рекомендуется использовать long для ID в Revit 2024+
-        public string Name;
-        //и надо бы имя еще и что-то еще???
-        public double HeightM;
-        public double LengthM;
-        public double AreaM2;
-
-        public double OtmZ;//отметка от нуля??
-
-        public XYZ StartPt;
-        public XYZ EndPt;
-        public BuiltInCategory BuiltInCategory;
-        public HashSet<ECWall> ECWalls = new HashSet<ECWall>();//каким стенам принадлежит
-    }
-
-    public class ECLayerWall
-    {
-        ECWallType ECWallType;
-        //один слой стены
-        public int Index;                        // индекс слоя: 0 — самый наружный (слева в редакторе структуры)
-        public double WidthM;                    // толщина слоя, м (0 у мембранных слоёв)
-        public MaterialFunctionAssignment Function; // Structure, Insulation/Fill, Finish1/Finish2, Membrane, Substrate...
-        public bool IsCore;                      // несущий слой (core)
-        public bool IsVariable;                  // "переменный" слой (подстраивается по высоте)
-        public bool Wraps;                       // слой оборачивается вокруг вставок (окон/дверей)
-
-        public ElementId MaterialId;             // может быть InvalidElementId (-1) — тогда материал берётся у категории
-        public string MaterialName;
-        public string MaterialClass;             // "Бетон", "Кирпич", "Газобетон" — как в шаблоне проекта
-        public string MaterialDescription;
-        public Color MaterialColor;
-
-        public double? DensityKgM3;              // кг/м³, из структурного актива материала
-        public double? ThermalConductivityWmK;   // Вт/(м·К), из теплового актива
-    }
-
-    public class ECInsulation
-    {
-        public ECWall ECWall;
-        public bool OutWallFromNAmeMaterial = false;//наружная ли стена, при анализе имени стены
-
-    }
-    public class ECRoom
-    {
-        public long Id;
-        public string Name;
-        public string Number;
-        public double AreaM2 ;                 // площадь в кв. футах (внутренние единицы)
-        public double VolumeM3;            // объём в куб. футах
-        public double PerimeterM;//периметр
-        public Room Room;
-    }
-    
-
-    public enum EWallTypes
-    {
-        None=0,
-        KR_Reinforcement,
-        AR_Brick,
-        AR_Aerocrete,
-        AR_Uteplitel,
-        AR_Otdelca,
-        AR_VentFasad,
-        AR_PGPorGKL
-    }
+   
 
     [Transaction(TransactionMode.Manual)]
     public  class CalcWalls : IExternalCommand
@@ -194,21 +55,34 @@ namespace Reinforcement
             if (view == null) return null;
             int viewIdValue = (int)view.Id.Value;
             if (viewIdValue <= 0) return null;
-
-            var allElements = new FilteredElementCollector(doc, view.Id)
-                .WhereElementIsNotElementType().ToElementIds();
-            if (allElements.Count == 0) return null;
+           
+            //нулевая вызывает ошибку
             var selectedIds = uidoc.Selection.GetElementIds();
-            
-            if(selectedIds.Count>0)
+
+            var walls = new FilteredElementCollector(doc, selectedIds)
+                .OfCategory(BuiltInCategory.OST_Walls)
+                .OfClass(typeof(Wall))
+                .Cast<Wall>()
+                .ToList();
+            if (walls.Count==0)
             {
-                allElements = selectedIds;
+                walls = new FilteredElementCollector(doc, view.Id).OfCategory(BuiltInCategory.OST_Walls)
+                .OfClass(typeof(Wall))
+                .Cast<Wall>()
+                .ToList();
             }
+            if (walls.Count == 0)
+            {
+                return null;
+            }
+
+            
             //теперь мы анализируем все элементы
             var answer = new List<ECWall>();
-            foreach (var elId in allElements)
+            foreach (var wall in walls)
             {
-                var element = doc.GetElement(elId);
+                Element element = (Element)wall;          // явное приведение
+                
                 if (element == null) continue;
                 //OST получаем
                 BuiltInCategory bic = BuiltInCategory.INVALID;
@@ -222,7 +96,6 @@ namespace Reinforcement
                 {
                     answer.Add(w);
                 }
-
             }
             return answer;
         }
@@ -232,11 +105,17 @@ namespace Reinforcement
         {
             Wall wall = element as Wall;
             if (wall == null) return null;
+            long id = (int)element.Id.Value;
+            if (DictECWalls.TryGetValue(id, out ECWall eCWall))
+            {
+                return eCWall;
+            }
             //тут заполняем все данные 
-            ECWall eCWall = new ECWall();
+            eCWall = new ECWall();
             eCWall.Element = element;
             eCWall.ElementId = element.Id;
-            eCWall.Id = (int)eCWall.ElementId.Value;
+            eCWall.Id = id;
+
 
             DictECWalls[eCWall.Id] = eCWall;
 
@@ -279,14 +158,20 @@ namespace Reinforcement
             //заполняем в словари и в ответ
             eCLevel = new ECLevel();
             DictECLevels[levelIdInt]= eCLevel;
+
             eCWall.ECLevel = eCLevel;
 
             //заполняем параметры уровня
+            eCLevel.Id = levelIdInt;
+            eCLevel.Element = level;
+            eCLevel.Level = level;
 
-            eCLevel.LevelName = level.Name;                 // <-- имя уровня
-            eCLevel.LevelElevation = level.ProjectElevation; // отметка уровня от проектного нуля
-            
+            eCLevel.Name = level.Name;                 // <-- имя уровня
+            eCLevel.LevelElevation = level.ProjectElevation; // отметка уровня от проектного нуля 
         }
+
+
+
         private static Dictionary<long, ECLevel> DictECLevels = new Dictionary<long, ECLevel>();
 
         /// <summary>
@@ -308,7 +193,9 @@ namespace Reinforcement
             wt = new ECWallType();
             DictWallType[name] = wt;
 
-            wt.NameWall = name;
+            wt.Name= name;
+            eCWall.Name = name;
+
             ElementId typeId = wall.GetTypeId();
 
 
@@ -390,12 +277,13 @@ namespace Reinforcement
                 ec.Wraps = layer.LayerCapFlag;
 
                 ElementId matId = cs.GetMaterialId(i);
-                ec.MaterialId = matId;
-
+                ec.ElementId = matId;
+                ec.Id = matId.Value;
                 Autodesk.Revit.DB.Material mat = doc.GetElement(matId) as Autodesk.Revit.DB.Material;
                 if (mat != null)
                 {
-                    ec.MaterialName = mat.Name;
+                    ec.Name = mat.Name;
+                    ec.Element = mat;
                     ec.MaterialClass = mat.MaterialClass;
                     Parameter pDesc = mat.get_Parameter(BuiltInParameter.ALL_MODEL_DESCRIPTION);
                     ec.MaterialDescription = (pDesc != null && pDesc.HasValue) ? pDesc.AsString() : null;
@@ -423,10 +311,6 @@ namespace Reinforcement
             }
           
             wt.ECLayerWalls = layers;
-
-
-
-
 
         }
 
@@ -459,6 +343,8 @@ namespace Reinforcement
             // GetRoomAtPoint может вернуться из другого уровня — проверьте высоту точки:
             // она должна попадать в вертикальный диапазон помещения (BaseOffset..BaseOffset+Height)
             var ecRoom = GetECRoom(room, doc);
+            if (ecRoom == null) return;
+
             eCWall.ECRooms.Add(ecRoom);
             return;
         }
@@ -474,6 +360,8 @@ namespace Reinforcement
             ecRoom= new ECRoom();
             DictECRooms[id] = ecRoom;
             ecRoom.Id = id;
+            ecRoom.ElementId = room.Id;
+            ecRoom.Element = room;
             ecRoom.Room=room;
             string name = room.Name;                 // «Кабинет 101» (Name + Number вместе)
             string number = room.Number;             // «101»

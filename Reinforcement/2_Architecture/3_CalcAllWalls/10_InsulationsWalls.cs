@@ -13,7 +13,7 @@ namespace Reinforcement
         private static HashSet<string> NameInsulationWalls = new HashSet<string>() { "Наруж", "фасад" };
         public static bool InsulationNameWall(ECWall wall)
         {
-            string nameWall = wall.WallType.NameWall;
+            string nameWall = wall.WallType.Name;
             if(string.IsNullOrEmpty(nameWall) ) {return false;}
 
             foreach (var name in NameInsulationWalls)

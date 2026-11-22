@@ -59,11 +59,11 @@ namespace Reinforcement
                 MessageBox.Show("Нет стен для экспорта.");
                 return;
             }
-            if (!ArmElementConstants.CheckNameMaps())
-            {
-                MessageBox.Show("Не все параметры имеют русские названия — проверьте словари.");
-                return;
-            }
+            //if (!ArmElementConstants.CheckNameMaps())
+            //{
+            //    MessageBox.Show("Не все параметры имеют русские названия — проверьте словари.");
+            //    return;
+            //}
 
             var dlg = new WinForms.SaveFileDialog
             {
@@ -95,8 +95,10 @@ namespace Reinforcement
                     foreach (var typeGroup in levelGroup.GroupBy(x => x.EWallTypes).OrderBy(g => g.Key))
                     {
                         var walls = typeGroup
-                            .OrderBy(x => x.WallType?.NameWall ?? string.Empty)
+                            .OrderBy(x => x.WallType?.EWallTypes ?? 0)
                             .ThenByDescending(x => x.WidthM)
+                            .ThenByDescending(x => x.WallType?.Name ?? string.Empty)
+                            .ThenByDescending(x => x.RelationsWallsKR.Count)
                             .ThenByDescending(x => x.RelationsWalls.Count)
                             .ThenByDescending(x => x.ECDoorOrWindows.Count)
                             .ThenBy(x => x.AreaNetM2)
