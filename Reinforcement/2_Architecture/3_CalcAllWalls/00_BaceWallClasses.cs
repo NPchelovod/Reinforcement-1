@@ -54,7 +54,7 @@ namespace Reinforcement
         /// <summary>
         /// Подводить итори - суммировать все строки??
         /// </summary>
-        public bool SumItog = false;
+        public bool SumItog = true;
 
         public ExportElement( string name, double valueD, List<ExportElement> relationsElements, string number="", string formula="")
         {
@@ -247,14 +247,14 @@ namespace Reinforcement
                 new ExportElement("Стены Имя", Name,data),
                 new ExportElement("Стены наш тип", EWallTypes.ToString(),data),
 
-                new ExportElement("Стены длина, м", LengthM,data),
-                new ExportElement("Стены высота, м", HeightM,data),
-                new ExportElement("Стены толщина, м", WidthM,data),
+                new ExportElement("Стены длина, м", LengthM,data,"l"),
+                new ExportElement("Стены высота, м", HeightM,data,"h"),
+                new ExportElement("Стены толщина, м", WidthM,data,"w"),
 
-                new ExportElement("Стены площадь с проемами, м2", AreaNetM2,data),
-                new ExportElement("Стены площадь без проемов, м2", AreaGrossM2,data),
-                new ExportElement("Стены площадь проемов, м2", OpeningsAreaM2,data),
-                new ExportElement("Стены площадь в плане, м2", PlanAreaM2,data),
+                new ExportElement("Стены площадь с проемами, м2", AreaNetM2,data,"AN"),
+                new ExportElement("Стены площадь без проемов, м2", AreaGrossM2,data,"AA"),
+                new ExportElement("Стены площадь проемов, м2", OpeningsAreaM2,data,"Ao","AA-AN"),
+                new ExportElement("Стены площадь в плане, м2", PlanAreaM2,data,"Aplan","l*w" ),
 
                 new ExportElement("Стена наружная?", ECInsulation.OutWallFromNAmeMaterial ? 1 : 0,data),
 
@@ -270,11 +270,18 @@ namespace Reinforcement
                 new ExportElement("Стена двери, колво", doors.Count,data),
                 new ExportElement("Стена двери, Id", string.Join(",", doors.Select(x => x.Id)),data),
 
-                new ExportElement("Стена окно, средняя высота, м", winds.Select(x => x.HeightM).Average(),data),
-                new ExportElement("Стена окно, средняя длина, м", winds.Select(x => x.LengthM).Average(),data),
+                new ExportElement("Стена окно, средняя высота, м",
+                    winds.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data),
+                new ExportElement("Стена окно, средняя длина, м",
+                    winds.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data),
+                new ExportElement("Стена дверь, средняя высота, м",
+                    doors.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data),
+                new ExportElement("Стена дверь, средняя длина, м",
+                    doors.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data),
 
-                new ExportElement("Стена дверь, средняя высота, м", doors.Select(x => x.HeightM).Average(),data),
-                new ExportElement("Стена дверь, средняя длина, м", doors.Select(x => x.LengthM).Average(),data),
+                new ExportElement("Стена комнаты, колво комнат",ECRooms.Count,data),
+                 new ExportElement("Стена комнаты, Id", string.Join(",", ECRooms.Select(x => x.Id)),data),
+                 new ExportElement("Стена комнаты, номера", string.Join(",", ECRooms.Select(x => x.Number)),data),
                 }
             );
 
@@ -465,6 +472,8 @@ namespace Reinforcement
         public double PerimeterM;//периметр
         public Room Room;
 
+        public string TypeOfRoom;//ADSK_Тип помещения
+
         public List<ExportElement> GetCalcData()
         {
             var data = new List<ExportElement>();
@@ -476,6 +485,7 @@ namespace Reinforcement
                 new ExportElement("Комната_Площадь, м2",AreaM2,data),
                 new ExportElement("Комната_Периметр, м",PerimeterM,data),
                 new ExportElement("Комната_Объем, м",VolumeM3,data),
+                 new ExportElement("ADSK_Тип помещения",TypeOfRoom,data),
             });
 
             return data;

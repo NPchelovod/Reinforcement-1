@@ -2,6 +2,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Reinforcement.Aspirant;
+using Spire.Xls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,11 +71,83 @@ namespace Reinforcement
             }
 
             eCWalls = GetArmExportWalls(eCWalls);
-            ArmExport.Export(eCWalls);
 
+
+
+            //ArmExport.Export(eCWalls);
+
+            GroopWallsAndExportArm(eCWalls);
             //возврат стен не КР!
             return eCWalls;
         }
+
+        private static void GroopWallsAndExportArm(List<ECWall> eCWalls)
+        {
+            var answerArm = new List<List<IExportStringDoubleData>>();
+            var answerWalls = new List<List<IExportStringDoubleData>>();
+            if (eCWalls == null || eCWalls.Count == 0)
+            {
+                MessageBox.Show("Нет стен для экспорта.");
+                return;
+            }
+
+            var groups = eCWalls
+                .Where(x => x != null && x.Curve != null && x.ECLevel != null)
+                .GroupBy(x => x.ECLevel.LevelElevation)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            if (groups.Count == 0)
+            {
+                MessageBox.Show("Нет стен для экспорта.");
+                return;
+            }
+
+            foreach (var levelGroup in groups)
+            {
+                var levelWalls = new List<IExportStringDoubleData>();
+                foreach (var typeGroup in levelGroup.GroupBy(x => x.EWallTypes).OrderBy(g => g.Key))
+                {
+                    var walls = typeGroup
+                        .OrderBy(x => x.WallType?.EWallTypes ?? 0)
+                        .ThenByDescending(x => x.WidthM)
+                        .ThenByDescending(x => x.WallType?.Name ?? string.Empty)
+                        .ThenByDescending(x => x.RelationsWallsKR.Count)
+                        .ThenByDescending(x => x.RelationsWalls.Count)
+                        .ThenByDescending(x => x.ECDoorOrWindows.Count)
+                        .ThenBy(x => x.AreaNetM2)
+                        .ThenBy(x => x.Id)
+                        .ToList();
+                    var LevelAndTypeArm = new List<IExportStringDoubleData>();
+                    var LevelAndTypeWalls = new List<IExportStringDoubleData>();
+                    foreach (var wall in walls)
+                    {
+                        LevelAndTypeArm.Add((IExportStringDoubleData)wall.ECArmWallElement);
+                        LevelAndTypeWalls.Add((IExportStringDoubleData)wall);
+                    }
+                    if (LevelAndTypeArm.Count > 0)
+                    {
+                        answerArm.Add(LevelAndTypeArm);
+                        answerWalls.Add(LevelAndTypeWalls);
+                    }
+                }
+            }
+            var sheetWalls = new ExportElementOnSheetExcell
+            {
+                SheetName = "Стены",
+                exportStringDoubleDatas = answerWalls
+            };
+            var sheetArm = new ExportElementOnSheetExcell
+            {
+                SheetName = "СтеныАрмирование",
+                exportStringDoubleDatas = answerArm
+            };
+
+            var eg=new List<ExportElementOnSheetExcell>() { sheetWalls, sheetArm };
+            ExcelGroupExporter.Exporter(eg, "Армирование стен");
+
+        }
+
 
         /// <summary>
         /// Получение только тех стен которые будут участвовать в наших расчетах

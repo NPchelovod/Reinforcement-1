@@ -47,30 +47,47 @@ namespace Reinforcement
         }
         public static List<ECWall> GetWalls(Document doc)
         {
-            //или из выделенных элементов или из вида собираем все стены и данные о них
+            if (doc == null) return null;
+
             ClearCash();
             UIDocument uidoc = RevitAPI.UiDocument;
-            
-            View view = doc.ActiveView;
-            if (view == null) return null;
-            int viewIdValue = (int)view.Id.Value;
-            if (viewIdValue <= 0) return null;
-           
-            //нулевая вызывает ошибку
-            var selectedIds = uidoc.Selection.GetElementIds();
+            if (uidoc == null) return null;
 
-            var walls = new FilteredElementCollector(doc, selectedIds)
-                .OfCategory(BuiltInCategory.OST_Walls)
-                .OfClass(typeof(Wall))
-                .Cast<Wall>()
-                .ToList();
-            if (walls.Count==0)
+            View view = doc.ActiveView;
+            if (view == null || view.Id == ElementId.InvalidElementId) return null;
+
+            var walls = new List<Wall>();
+
+            // 1) пробуем собрать из выделения — ТОЛЬКО если оно не пустое
+            var selectedIds = uidoc.Selection.GetElementIds();
+            if (selectedIds != null && selectedIds.Count > 0)
             {
-                walls = new FilteredElementCollector(doc, view.Id).OfCategory(BuiltInCategory.OST_Walls)
-                .OfClass(typeof(Wall))
-                .Cast<Wall>()
-                .ToList();
+                walls = new FilteredElementCollector(doc, selectedIds)
+                    .OfCategory(BuiltInCategory.OST_Walls)
+                    .OfClass(typeof(Wall))
+                    .Cast<Wall>()
+                    .ToList();
             }
+
+            // 2) если в выделении стен нет — собираем со всего вида
+            if (walls.Count == 0 && CanCollectFromView(view))
+            {
+                try
+                {
+                    walls = new FilteredElementCollector(doc, view.Id)
+                        .OfCategory(BuiltInCategory.OST_Walls)
+                        .OfClass(typeof(Wall))
+                        .Cast<Wall>()
+                        .ToList();
+                }
+                catch (Autodesk.Revit.Exceptions.ArgumentException)
+                {
+                    // вид не подходит для коллектора — перейдём к п.3
+                    walls.Clear();
+                }
+            }
+
+            
             if (walls.Count == 0)
             {
                 return null;
@@ -99,6 +116,24 @@ namespace Reinforcement
             }
             return answer;
         }
+        /// <summary>
+        /// Не всякий вид допустим в FilteredElementCollector(doc, viewId):
+        /// листы, спецификации и легенды выбросят ArgumentException.
+        /// </summary>
+        private static bool CanCollectFromView(View view)
+        {
+            switch (view.ViewType)
+            {
+                case ViewType.DrawingSheet:
+                case ViewType.Legend:
+                case ViewType.Schedule:
+                case ViewType.ColumnSchedule:
+                case ViewType.PanelSchedule:
+                    return false;
+                default:
+                    return true;
+            }
+        }
         private static Dictionary<long, ECWall> DictECWalls = new Dictionary<long, ECWall>();
 
         private static ECWall GetECWall(Element element, Document doc)
@@ -108,7 +143,7 @@ namespace Reinforcement
             long id = (int)element.Id.Value;
             if (DictECWalls.TryGetValue(id, out ECWall eCWall))
             {
-                return eCWall;
+                return null;
             }
             //тут заполняем все данные 
             eCWall = new ECWall();
@@ -381,7 +416,11 @@ namespace Reinforcement
             ecRoom.AreaM2 = areaM2;
             ecRoom.VolumeM3 = volM3;
             ecRoom.PerimeterM = perM;
-
+            Parameter tp = room.LookupParameter("ADSK_Тип помещения");
+            if (tp != null)
+            {
+                ecRoom.TypeOfRoom = tp.AsString();
+            }
 
             return ecRoom;
         }

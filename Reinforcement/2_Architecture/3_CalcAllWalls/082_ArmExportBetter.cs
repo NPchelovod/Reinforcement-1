@@ -8,52 +8,81 @@ using WinForms = System.Windows.Forms;
 namespace Reinforcement
 {
 
+    //var sheetDoorsAndWindows = new ExportElementOnSheetExcell
+    //{
+    //    SheetName = "ДвериОкна",
+    //    exportStringDoubleDatas = new List<List<IExportStringDoubleData>>
+    //{
+    //    ECDoorOrWindows1.Cast<IExportStringDoubleData>().ToList(),  // 1-й этаж
+    //    ECDoorOrWindows2.Cast<IExportStringDoubleData>().ToList(),  // 2-й этаж
+    //    ECDoorOrWindows3.Cast<IExportStringDoubleData>().ToList(),  // ...
+    //}
+    //};
 
-     public class vvv
+    /// <summary>
+    /// класс экспорта в один лист экселя
+    /// </summary>
+    public class ExportElementOnSheetExcell
     {
-        public void exporter()
+        //один List<IExportStringDoubleData> - это например 10 строк данных в конце которых итог, дальше идет второй List<IExportStringDoubleData>...
+        public List<List<IExportStringDoubleData>> exportStringDoubleDatas;
+        public string SheetName;
+
+    }
+  
+
+    public class ExcelGroupExporter
+    {
+        // ---------- многолистовой экспорт ----------
+        public static void Exporter(
+            List<ExportElementOnSheetExcell> exportSheetsElements,
+            string fileName)
         {
+            if (exportSheetsElements == null || exportSheetsElements.Count == 0) return;
+
             var dlg = new WinForms.SaveFileDialog
             {
                 Filter = "Файл Excel (*.xlsx)|*.xlsx",
-                FileName = "ДвериОкна.xlsx"
+                FileName = $"{fileName}.xlsx"
             };
             if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
 
             using (var workbook = new Workbook())
             {
-                workbook.CreateEmptySheets(1);
-                var sheet = workbook.Worksheets[0];
-                sheet.Name = "ДвериОкна";
+            // Workbook() по умолчанию содержит один пустой лист — убираем его,
+            // чтобы не было «лишнего» Sheet1 рядом с рабочими.
+            // Убираем все листы, которые Spire создаёт по умолчанию
+            workbook.Worksheets.Clear();
 
-                var exporter = new ExcelGroupExporter(sheet);
+            foreach (var exportElement in exportSheetsElements)
+                {
+                        // Сразу создаём лист с нужным именем.
+                        // Если лист с таким именем уже есть, Spire кинет исключение —
+                        // имена листов в книге должны быть уникальны.
+                        Worksheet sheet = workbook.Worksheets.Add(exportElement.SheetName);
 
-                // группы вы уже как-то подготовили
-                // 1) получаем данные
-                var allData = new List<List<ExportElement>>(ECDoorOrWindows1.Count);
+                        var exporter = new ExcelGroupExporter(sheet);
 
-                exporter.AppendGroup(ECDoorOrWindows1);
-                exporter.AppendGroup(ECDoorOrWindows2);
-                exporter.AppendGroup(ECDoorOrWindows3);
+                        foreach (var exportData in exportElement.exportStringDoubleDatas)
+                            exporter.AppendGroup(exportData);
 
-                exporter.FinalizeSheet();
+                        exporter.FinalizeSheet();
+                    }
 
                 workbook.SaveToFile(dlg.FileName, ExcelVersion.Version2010);
             }
         }
-    }
 
-    public class ExcelGroupExporter
-    {
-
-
+        // ---------- состояние одного листа ----------
         private readonly Worksheet _sheet;
+
         private readonly Dictionary<string, int> _headerToCol =
             new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly HashSet<int> _doubleCols = new HashSet<int>();
         private readonly HashSet<int> _sumCols = new HashSet<int>();
 
-        private int _nextRow = 1;
+        private int _nextHeaderCol = 1;   // следующий свободный столбец в шапке
+        private int _nextRow = 2;   // следующая свободная строка
         private bool _headersWritten = false;
 
         public ExcelGroupExporter(Worksheet sheet)
@@ -62,9 +91,9 @@ namespace Reinforcement
         }
 
         /// <summary>
-        /// Дописывает одну группу (например, ECDoorOrWindows по уровню/типу).
-        /// Первый вызов создаёт шапку из первой строки GetCalcData(),
-        /// последующие — дописывают ниже. После строк группы ставит «Итого».
+        /// Дописывает одну группу (List&lt;IExportStringDoubleData&gt;) ниже уже
+        /// записанного. Новые колонки добавляются в шапку на лету.
+        /// После строк группы ставит итоговую строку.
         /// </summary>
         public void AppendGroup(List<IExportStringDoubleData> group)
         {
@@ -72,39 +101,50 @@ namespace Reinforcement
 
             // 1) получаем данные
             var allData = new List<List<ExportElement>>(group.Count);
+            var failed = new List<string>();
             foreach (var item in group)
             {
-                var data = item?.GetCalcData();
-                if (data != null && data.Count > 0)
-                    allData.Add(data);
-            }
-            if (allData.Count == 0) return;
+                if (item == null) continue;
+                try
+                {
+                    var data = item.GetCalcData();
+                    if (data != null && data.Count > 0)
+                        allData.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    failed.Add($"{item.GetType().Name}: {ex.Message}");
+                }
+                }
+        if (failed.Count > 0)
+        {
+            // можно записать в лог, MessageBox, в первую строку листа — на ваш вкус
+            System.Diagnostics.Debug.WriteLine(
+                "GetCalcData() ошибки:\n" + string.Join("\n", failed));
+        }
+        if (allData.Count == 0) return;
 
-            // 2) шапка (один раз)
-            if (!_headersWritten)
-            {
-                WriteHeaders(allData[0]);
-                _headersWritten = true;
-                _nextRow = 2;
-            }
+            // 2) объединяем шапку: если появились новые колонки — заводим их
+            MergeHeaders(allData[0]);
+            _headersWritten = true;
 
             int firstDataRow = _nextRow;
 
             // 3) строки группы
             foreach (var rowData in allData)
             {
-                // 3a) сначала назначаем CellExcell ВСЕМ элементам строки
+                // 3a) сначала адреса ВСЕМ элементам строки
                 foreach (var el in rowData)
                 {
                     if (_headerToCol.TryGetValue(el.Name ?? string.Empty, out int col))
                         el.CellExcell = ColumnName(col) + _nextRow;
                 }
 
-                // 3b) только теперь считаем формулы и пишем
+                // 3b) потом пишем (числа/строки/формулы)
                 foreach (var el in rowData)
                 {
                     if (!_headerToCol.TryGetValue(el.Name ?? string.Empty, out int col))
-                        continue;
+                        continue;   // колонки нет в шапке (странно, но безопасно)
 
                     if (el.ExportDoubleOrString)
                     {
@@ -131,8 +171,7 @@ namespace Reinforcement
         }
 
         /// <summary>
-        /// Финальное оформление листа: рамки, шрифт, ширины, freeze.
-        /// Вызвать один раз после всех AppendGroup.
+        /// Финальное оформление. Вызывать один раз после всех AppendGroup.
         /// </summary>
         public void FinalizeSheet()
         {
@@ -154,21 +193,27 @@ namespace Reinforcement
             _sheet.FreezePanes(2, 1);
         }
 
-        // --- helpers -------------------------------------------------------
+        // ---------- helpers ----------
 
-        private void WriteHeaders(List<ExportElement> template)
+        /// <summary>
+        /// Добавляет в шапку только те колонки из шаблона,
+        /// которых ещё нет. Старые колонки не трогает.
+        /// </summary>
+        private void MergeHeaders(List<ExportElement> template)
         {
-            for (int i = 0; i < template.Count; i++)
+            foreach (var el in template)
             {
-                int col = i + 1;
-                var el = template[i];
-                string header = !string.IsNullOrEmpty(el.Name) ? el.Name : ("Column " + col);
+                string header = !string.IsNullOrEmpty(el.Name)
+                    ? el.Name
+                    : ("Column_" + _nextHeaderCol);
 
+                if (_headerToCol.ContainsKey(header))
+                    continue;   // колонка уже есть
+
+                int col = _nextHeaderCol++;
                 _sheet.Range[1, col].Text = header;
-
-                if (_headerToCol.ContainsKey(header)) continue;   // дубликат — игнор
-
                 _headerToCol[header] = col;
+
                 if (el.ExportDoubleOrString) _doubleCols.Add(col);
                 if (el.ExportDoubleOrString && el.SumItog) _sumCols.Add(col);
             }
@@ -184,6 +229,8 @@ namespace Reinforcement
                 string colLetter = ColumnName(col);
                 _sheet.Range[_nextRow, col].Formula =
                     $"=SUM({colLetter}{firstDataRow}:{colLetter}{lastDataRow})";
+                if (_doubleCols.Contains(col))
+                    _sheet.Range[_nextRow, col].NumberFormat = "0.##";
             }
 
             var rowRange = _sheet.Range[_nextRow, 1, _nextRow, MaxCol()];
@@ -192,12 +239,7 @@ namespace Reinforcement
             rowRange.BorderAround();
         }
 
-        private int MaxCol()
-        {
-            int max = 0;
-            foreach (var v in _headerToCol.Values) if (v > max) max = v;
-            return max == 0 ? 1 : max;
-        }
+        private int MaxCol() => _nextHeaderCol - 1 > 0 ? _nextHeaderCol - 1 : 1;
 
         public static string ColumnName(int index)
         {
