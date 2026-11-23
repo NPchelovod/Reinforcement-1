@@ -102,7 +102,7 @@ namespace Reinforcement
         Wall_Arm_DetailedObram_Count,//по 2 штуки обрамления
 
         Wall_Detailed_Brick_Row_Step_m,//шаг в горизонтальной плоскости деталей
-        Wall_Detailed_Brick_Vert_Step_m,//шаг вдоль стены деталей
+        Wall_Detailed_Brick_Roof_Step_m,//шаг вдоль стены деталей
 
         //Вычисленные параметры 
 
@@ -111,10 +111,10 @@ namespace Reinforcement
         Wall_Arm_Aerocrete_Step_m,
 
         Wall_Detailed_Aerocrete_Row_Step_m,//шаг в горизонтальной плоскости деталей
-        Wall_Detailed_Aerocrete_Vert_Step_m,//шаг вдоль стены деталей
+        Wall_Detailed_Aerocrete_Roof_Step_m,//шаг вдоль стены деталей
         //вычисленные параметры
         Wall_Arm_Rows,//рядов армирования
-
+        Wall_Arm_Roofs,//рядов армирования по вертикале
     }
 
     public static class EValuesGetter

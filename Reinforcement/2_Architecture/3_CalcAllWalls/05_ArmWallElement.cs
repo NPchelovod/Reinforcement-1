@@ -11,27 +11,20 @@ namespace Reinforcement
 
     public class ECArmWallElement : IExportStringDoubleData
     {
-        public static readonly int countEArmWall = Enum.GetNames(typeof(EArmWall)).Length;
-        public static readonly int countEArmWallString = Enum.GetNames(typeof(EArmWallString)).Length;
-        private readonly double[] values = new double[countEArmWall];
-        private readonly string[] valuesStr = new string[countEArmWallString];
-        /// <summary>
-        /// Доступ к параметру армирования по индексу enum.
-        /// Пример: el[EArmWall.ArmStepMM] = 600;
-        /// </summary>
-        public double this[EArmWall type]
+        public static readonly int countEValuesExportData = Enum.GetNames(typeof(EValuesExportData)).Length;
+        
+        private readonly double[] values = new double[countEValuesExportData];
+        
+      
+        public double this[EValuesExportData param]
         {
-            get => values[(int)type];
-            set => values[(int)type] = value;
-        }
-        public string this[EArmWallString type]
-        {
-            get => valuesStr[(int)type];
-            set => valuesStr[(int)type] = value;
+            get => values[(int)param];
+            set => values[(int)param] = value;
         }
 
-       
-        //элемент армирования
+        /// <summary>
+        /// элемент армирования - стена
+        /// </summary>
         public ECWall ECWall = null; // ссылка на стену, которой принадлежит данный элемент армирования
 
         private static double tolerencePoint = RevitAPI.ToFoot(10);
@@ -51,6 +44,9 @@ namespace Reinforcement
                 this[kvp.Key] = kvp.Value;
             }
         }
+        public double Arm_Row_Step_m = 0.600;
+        public double Arm_Roof_Step_m = 1.5;
+        public double Arm_DopTop_Count;//дополнительная арматура сверху
 
         public void CalculateArm()
         {
@@ -59,28 +55,11 @@ namespace Reinforcement
             var type = ECWall.EWallTypes;
 
 
-            this[EArmWallString.LevelName] = ECWall.ECLevel.Name;
-            this[EArmWallString.WallEWallTypes] = type.ToString();
-            this[EArmWallString.WallFamily] = ECWall.WallType.FamilyName;
-            this[EArmWallString.WallType] = ECWall.WallType.Name;
-            this[EArmWallString.IdsWindAndDoors] = string.Join(", ", ECWall.ECDoorOrWindows.Select(x => x.Id));
-            this[EArmWallString.IdsConnectsWalls] = string.Join(", ", ECWall.RelationsWalls.Select(x => x.Id));
-            
-            
-            this[EArmWall.LevelHM] = ECWall.ECLevel.LevelElevation;
-            this[EArmWall.WallId] = ECWall.Id;
-
-            this[EArmWall.WallHeightMM] = ECWall.HeightM * 1000;
-            this[EArmWall.WallLengthMM] = ECWall.LengthM * 1000;
-            this[EArmWall.WallWidthMM] = ECWall.WidthM * 1000;
-            this[EArmWall.WallAreaNetM2] = ECWall.AreaNetM2;
-            this[EArmWall.WallAreaGrossM2] = ECWall.AreaGrossM2;
-            this[EArmWall.WallOpeningsAreaM2] = ECWall.OpeningsAreaM2;
-            this[EArmWall.WallPlanAreaM2] = ECWall.PlanAreaM2;
-            this[EArmWall.CountDoorOrWindow] = ECWall.ECDoorOrWindows.Count;
-
-            //1. Считаем кол-во деталей
-            this[EArmWall.DetailsRoofInt] = GetGridCount(this[EArmWall.WallLengthMM], this[EArmWall.StepDetailsRoofMM]);
+            //1. Считаем кол-во арматуры
+            //1.1  в крыши рядов
+            this[EValuesExportData.Wall_Arm_Roofs] = GetGridCount(ECWall.LengthM, this[EValuesExportData.Wall_Arm_Brick_Row_Step_m]);
+            //1.2 в стенах рядов арматуры
+            this[EValuesExportData.Wall_Arm_Rows]= GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Brick_Roof_Step_m]);
 
             //нам надо найти кол-во стен, с которыми мы пересекаемся из ЖБ
             var wallsKR = ECWall.RelationsWalls.Where(x => x.EWallTypes == EWallTypes.KR_Reinforcement).ToHashSet();
@@ -91,7 +70,7 @@ namespace Reinforcement
                
                 foreach (var wall in wallsKR)
                 {
-                    if (IntersectWalls.IsEndOfWall1TouchingWall2(ECWall, wall, out XYZ touchingPoint))
+                    if (wall!= ECWall&& IntersectWalls.IsEndOfWall1TouchingWall2(ECWall, wall, out XYZ touchingPoint))
                     {
                         //проверяем прошлые стены
                         bool adp = true;
@@ -117,12 +96,10 @@ namespace Reinforcement
                 }
             }
 
-
-            this[EArmWallString.IdsConnectsWallsKR] = string.Join(", ", _otherWalls.Select(x => x.wall.Id));
-
-            this[EArmWall.CountKRBorder] = _otherWalls.Count;
             //детали боковые сбоку стены
             this[EArmWall.DetailsWallRow] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.StepDetailsMM]);
+
+
             this[EArmWall.DetailsWallsInt] = this[EArmWall.DetailsWallRow] * _otherWalls.Count;
 
             this[EArmWall.ArmRow] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.ArmStepMM]);
