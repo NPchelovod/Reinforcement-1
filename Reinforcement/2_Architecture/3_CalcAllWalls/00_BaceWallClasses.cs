@@ -12,20 +12,7 @@ using System.Threading.Tasks;
 
 namespace Reinforcement
 {
-    /// <summary>
-    /// Типы стен
-    /// </summary>
-    public enum EWallTypes
-    {
-        None = 0,
-        KR_Reinforcement,
-        AR_Brick,
-        AR_Aerocrete,
-        AR_Uteplitel,
-        AR_Otdelca,
-        AR_VentFasad,
-        AR_PGPorGKL
-    }
+    
 
     
 
@@ -72,9 +59,10 @@ namespace Reinforcement
            
             
         }
-        public ExportElement( string name, string valueS, List<ExportElement> relationsElements)
+        public ExportElement( string name, string valueS, List<ExportElement> relationsElements, EValuesExportData eValuesExportData = 0)
         {
-            //Number= number;
+            
+            EValuesExportData = eValuesExportData;
             Name = name;
             ValueString = valueS;
             ExportDoubleOrString = false;
@@ -92,7 +80,7 @@ namespace Reinforcement
             }
         }
         /// <summary>
-        /// Список к которому мы принадлежим чтобы можно было посчитаться автоматически
+        /// Список к которому мы принадлежим чтобы можно было посчитаться автоматически формулы по переменным в списке
         /// </summary>
         public List<ExportElement> RelationsElements = null;
         /// <summary>
@@ -188,8 +176,13 @@ namespace Reinforcement
                     : ErrorMessageFormula + "; " + msg;
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
         public bool IsCalculations=false;
+        /// <summary>
+        /// Итоговое значение посчитанное из Excell
+        /// </summary>
         public double ValueDoubleCalculated;//посчитанная по формуле значение
         /// <summary>
         /// Ячейка в Excell которую занимает данная ячейка, например A1
@@ -212,7 +205,15 @@ namespace Reinforcement
     public interface IExportStringDoubleData
     {
         string NameThisClass{ get; }
+        /// <summary>
+        /// подсчет и возврат 
+        /// </summary>
+        /// <returns></returns>
         List<ExportElement> GetCalcData();
+        /// <summary>
+        /// его можно снаружи обнулять для подсчета GetCalcData() заново иначе 
+        /// </summary>
+        List<ExportElement> _exportElements { get; set; }
     }
     public interface IElement
     {
@@ -268,59 +269,67 @@ namespace Reinforcement
         public HashSet<ECWall> RelationsWalls = new HashSet<ECWall>();
         public HashSet<ECWall> RelationsWallsKR = new HashSet<ECWall>();
 
+        public List<ExportElement> _exportElements { get; set; } =null;
         public List<ExportElement> GetCalcData()
         {
+            //if (_exportElements != null) {  return _exportElements; } опасно так как могу для других дел брать..
+
             var winds = ECDoorOrWindows.Where(x => x.BuiltInCategory == BuiltInCategory.OST_Windows).ToList();
             var doors = ECDoorOrWindows.Where(x => x.BuiltInCategory == BuiltInCategory.OST_Doors).ToList();
 
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("Стены Id", Id,data),
+                    new ExportElement("Стены Уровень Имя",  ECLevel.Name,data, EValuesExportData.Wall_Level_Name),
+                    new ExportElement("Стены Уровень Отметка",  ECLevel.LevelElevation,data, EValuesExportData.Wall_Level_Elevation),
 
-                new ExportElement("Стены Имя", Name,data),
-                new ExportElement("Стены наш тип", EWallTypes.ToString(),data),
+                new ExportElement("Стены Id", Id.ToString(),data, EValuesExportData.Wall_Id),
 
-                new ExportElement("Стены длина, м", LengthM,data,EValuesExportData.Wall_L),
-                new ExportElement("Стены высота, м", HeightM,data,EValuesExportData.Wall_H),
-                new ExportElement("Стены толщина, м", WidthM,data,EValuesExportData.Wall_W),
+                new ExportElement("Стены Имя", Name,data, EValuesExportData.Wall_Name),
+                new ExportElement("Стены наш тип", EWallTypes.ToString(),data, EValuesExportData.Wall_EWallTypes),
+
+                new ExportElement("Стены длина, м", LengthM,data,EValuesExportData.Wall_Length_m),
+                new ExportElement("Стены высота, м", HeightM,data,EValuesExportData.Wall_Height_m),
+                new ExportElement("Стены толщина, м", WidthM,data,EValuesExportData.Wall_Width_m),
 
                 new ExportElement("Стены площадь с проемами, м2", AreaNetM2,data,EValuesExportData.Wall_AreaNetM2),
                 new ExportElement("Стены площадь без проемов, м2", AreaGrossM2,data,EValuesExportData.Wall_AreaGrossM2),
                 new ExportElement("Стены площадь проемов, м2", OpeningsAreaM2,data,EValuesExportData.Wall_OpeningsAreaM2,
                 "Wall_AreaGrossM2-Wall_AreaNetM2"),
                 new ExportElement("Стены площадь в плане, м2", PlanAreaM2,data,EValuesExportData.Wall_PlanAreaM2,
-                "Wall_L*Wall_W" ),
+                "Wall_Length_m*Wall_Width_m" ),
+                new ExportElement("Стены объём, м3", VolumeM3,data,EValuesExportData.Wall_VolumeM3),
 
-                new ExportElement("Стена наружная?", ECInsulation.OutWallFromNAmeMaterial ? 1 : 0,data),
+                new ExportElement("Стена наружная?", ECInsulation.OutWallFromNAmeMaterial ? 1 : 0, data,EValuesExportData.Wall_Insulation_OutSideWallName),
 
-                new ExportElement("Стена примыкающие стены, Id", string.Join(",", RelationsWalls.Select(x => x.Id)),data),
-                new ExportElement("Стена примыкающие стены кр, Id", string.Join(",", RelationsWallsKR.Select(x => x.Id)),data),
-
+                new ExportElement("Стена примыкающие стены, Id", string.Join(",", RelationsWalls.Select(x => x.Id)),data,EValuesExportData.Wall_OtherWallsIds),
+                new ExportElement("Стена примыкающие стены, колво", string.Join(",", RelationsWalls.Count),data,EValuesExportData.Wall_OtherWallsCount),
+                new ExportElement("Стена примыкающие стены кр, Id", string.Join(",", RelationsWallsKR.Select(x => x.Id)),data,EValuesExportData.Wall_OtherWallsKRIds),
+                new ExportElement("Стена примыкающие стены кр, колво", string.Join(",", RelationsWallsKR.Count),data,EValuesExportData.Wall_OtherWallsKRCount),
                 new ExportElement("Стена окна и двери, Id", string.Join(",", ECDoorOrWindows.Select(x => x.Id)),data),
-                new ExportElement("Стена окна и двери, колво", ECDoorOrWindows.Count,data),
+                new ExportElement("Стена окна и двери, колво", ECDoorOrWindows.Count,data, EValuesExportData.Wall_DoorsAndWindows_Count),
 
-                new ExportElement("Стена окна, колво", winds.Count,data),
-                  new ExportElement("Стена окна, Id", string.Join(",", winds.Select(x => x.Id)),data),
+                new ExportElement("Стена окна, колво", winds.Count,data, EValuesExportData.Wall_Window_Count),
+                  new ExportElement("Стена окна, Id", string.Join(",", winds.Select(x => x.Id)),data, EValuesExportData.Wall_Window_Ids),
 
-                new ExportElement("Стена двери, колво", doors.Count,data),
-                new ExportElement("Стена двери, Id", string.Join(",", doors.Select(x => x.Id)),data),
+                new ExportElement("Стена двери, колво", doors.Count,data,EValuesExportData.Wall_Doors_Count),
+                new ExportElement("Стена двери, Id", string.Join(",", doors.Select(x => x.Id)),data, EValuesExportData.Wall_Doors_Ids),
 
                 new ExportElement("Стена окно, средняя высота, м",
-                    winds.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data),
+                    winds.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data,EValuesExportData.Wall_Window_H_Average_m),
                 new ExportElement("Стена окно, средняя длина, м",
-                    winds.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data),
+                    winds.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data,EValuesExportData.Wall_Window_L_Average_m),
                 new ExportElement("Стена дверь, средняя высота, м",
-                    doors.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data),
+                    doors.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data,EValuesExportData.Wall_Doors_H_Average_m),
                 new ExportElement("Стена дверь, средняя длина, м",
-                    doors.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data),
+                    doors.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data,EValuesExportData.Wall_Doors_L_Average_m),
 
                 new ExportElement("Стена комнаты, колво комнат",ECRooms.Count,data,EValuesExportData.Wall_Room_Count),
-                 new ExportElement("Стена комнаты, Id", string.Join(",", ECRooms.Select(x => x.Id)),data),
-                 new ExportElement("Стена комнаты, номера", string.Join(",", ECRooms.Select(x => x.Number)),data),
+                 new ExportElement("Стена комнаты, Id", string.Join(",", ECRooms.Select(x => x.Id)),data,EValuesExportData.Wall_Room_Ids),
+                 new ExportElement("Стена комнаты, номера", string.Join(",", ECRooms.Select(x => x.Number)),data, EValuesExportData.Wall_Room_Numbers),
                 }
             );
-
+            _exportElements = data;
             return data;
         }
     }
@@ -339,18 +348,21 @@ namespace Reinforcement
         
         public double LevelElevation;
 
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            if (_exportElements != null) { return _exportElements; }
+
             var data = new List<ExportElement>();
             data.AddRange(
             new List<ExportElement>() 
             {
-            new ExportElement("Уровень Id",Id,data ),
+            new ExportElement("Уровень Id",Id.ToString(),data ),
             new ExportElement("Уровень Имя",Name,data ),
-            new ExportElement("Уровень отметка", LevelElevation,data ),
+            new ExportElement("Уровень отметка", LevelElevation,data, EValuesExportData.Wall_Level_Elevation ){SumItog=false},
 
             });
-
+            _exportElements = data;
             return data;
         }
         public string NameThisClass
@@ -374,19 +386,23 @@ namespace Reinforcement
         public double WidthM;
 
         public List<ECLayerWall> ECLayerWalls = new List<ECLayerWall>();//послойный состав
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            if (_exportElements != null) { return _exportElements; }
+
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("СтеныТип_Id",Id ,data),
+                new ExportElement("СтеныТип_Id",Id.ToString() ,data),
                 new ExportElement("СтеныТип_Семейство",FamilyName,data ),
                 new ExportElement("СтеныТип_Типоразмер",Name,data ),
                 new ExportElement("СтеныТип_ТипоразмерНаш",EWallTypes.ToString() ,data),
-                new ExportElement("СтеныТип_Толщина, м",WidthM ,data),
-                new ExportElement("СтеныТип_Колво_Слоев",ECLayerWalls.Count,data ),
+                new ExportElement("СтеныТип_Толщина, м",WidthM ,data, EValuesExportData.Wall_Width_m),
+                new ExportElement("СтеныТип_Колво_Слоев",ECLayerWalls.Count,data, EValuesExportData.Wall_LayersCount ),
                
             });
+            _exportElements = data;
             return data;
         }
         public string NameThisClass
@@ -412,19 +428,40 @@ namespace Reinforcement
         public XYZ EndPt;
         public BuiltInCategory BuiltInCategory;
         public HashSet<ECWall> ECWalls = new HashSet<ECWall>();//каким стенам принадлежит
+
+
+
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
-            var data = new List<ExportElement>();
-            data.AddRange(
-                new List<ExportElement>() {
-                new ExportElement("ДверьОкно_Id",Id,data ),
-                new ExportElement("ДверьОкно_Это дверь?",BuiltInCategory==BuiltInCategory.OST_Doors?1:0,data ),
-                new ExportElement("ДверьОкно_Высота, м",HeightM,data),
-                new ExportElement("ДверьОкно_Длина, м",LengthM ,data),
-                new ExportElement("ДверьОкно_Площадь, м2",AreaM2,data ),
-                new ExportElement("ДверьОкно_Отметка, м",OtmZ,data ),
-            });
+            if (_exportElements != null) { return _exportElements; }
 
+            var data = new List<ExportElement>();
+            bool isDoor = BuiltInCategory == BuiltInCategory.OST_Doors;
+            if (isDoor)
+            {
+                data.AddRange(
+                    new List<ExportElement>() {
+                new ExportElement("Дверь",Id.ToString(),data ),
+                
+                new ExportElement("Дверь_Высота, м",HeightM,data, EValuesExportData.Door_Height_m),
+                new ExportElement("Дверь_Длина, м",LengthM ,data,EValuesExportData.Door_Length_m),
+                new ExportElement("Дверь_Площадь, м2",AreaM2,data ,EValuesExportData.Door_Area_m2, "Door_Height_m*Door_Length_m"),
+                new ExportElement("Дверь_Отметка, м",OtmZ,data,EValuesExportData.Door_Level_Elevation ){SumItog=false},
+                });
+            }
+            else
+            {
+                data.AddRange(
+                    new List<ExportElement>() {
+                new ExportElement("Окно_Id",Id.ToString(),data ),
+                new ExportElement("Окно_Высота, м",HeightM,data,EValuesExportData.Window_Height_m),
+                new ExportElement("Окно_Длина, м",LengthM ,data,EValuesExportData.Window_Length_m),
+                new ExportElement("Окно_Площадь, м2",AreaM2,data,EValuesExportData.Window_Area_m2, "Window_Height_m*Window_Length_m"),
+                new ExportElement("Окно_Отметка, м",OtmZ,data, EValuesExportData.Window_Level_Elevation ){SumItog=false},
+                });
+            }
+            _exportElements = data;
             return data;
         }
         public string NameThisClass
@@ -456,17 +493,20 @@ namespace Reinforcement
         public double? DensityKgM3;              // кг/м³, из структурного актива материала
         public double? ThermalConductivityWmK;   // Вт/(м·К), из теплового актива
 
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            if (_exportElements != null) { return _exportElements; }
+
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("СтеныСлой",Id,data ),
-                new ExportElement("СтеныСлойИндекс",Index,data ),
-                new ExportElement("СтеныСлойТолщинаМ",WidthM,data ),
+                new ExportElement("СтеныСлой",Id.ToString(),data ),
+                new ExportElement("СтеныСлойИндекс",Index,data ){SumItog=false},
+                new ExportElement("СтеныСлойТолщинаМ",WidthM,data,EValuesExportData.WallLayer_Width_m ),
 
             });
-
+            _exportElements = data;
             return data;
         }
         public string NameThisClass
@@ -479,15 +519,18 @@ namespace Reinforcement
     {
         public ECWall ECWall;
         public bool OutWallFromNAmeMaterial = false;//наружная ли стена, при анализе имени стены
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            if (_exportElements != null) { return _exportElements; }
+
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("Стена_Утепление_Имя_Наружное",OutWallFromNAmeMaterial?1:0,data ),
+                new ExportElement("Стена_Утепление_Имя_Наружное",OutWallFromNAmeMaterial?1:0,data,EValuesExportData.Wall_Insulation_OutSideWallName ),
                
             });
-
+            _exportElements = data;
             return data;
         }
         public string NameThisClass
@@ -510,20 +553,23 @@ namespace Reinforcement
 
         public string TypeOfRoom;//ADSK_Тип помещения
 
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            if (_exportElements != null) { return _exportElements; }
+
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("Комната_Id",Id,data),
+                new ExportElement("Комната_Id",Id.ToString(),data),
                 new ExportElement("Комната_Номер",Number,data),
                 new ExportElement("Комната_Имя",Name,data),
-                new ExportElement("Комната_Площадь, м2",AreaM2,data),
-                new ExportElement("Комната_Периметр, м",PerimeterM,data),
-                new ExportElement("Комната_Объем, м",VolumeM3,data),
+                new ExportElement("Комната_Площадь, м2",AreaM2,data, EValuesExportData.Room_Area_m2),
+                new ExportElement("Комната_Периметр, м",PerimeterM,data, EValuesExportData.Room_Perimeter_m),
+                new ExportElement("Комната_Объем, м",VolumeM3,data, EValuesExportData.Room_Volume_m3),
                  new ExportElement("ADSK_Тип помещения",TypeOfRoom,data),
             });
-
+            _exportElements = data;
             return data;
         }
         //добавь еще уровень помещения

@@ -234,12 +234,36 @@ namespace Reinforcement
             return (int)Math.Floor(height / step);
         }
 
+        public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
+            //if (_exportElements != null) {  return _exportElements; } опасно так как могу для других дел брать..
+
             var data = new List<ExportElement>()
             {
               
             };
+
+            var wallsExportElement = ECWall.GetCalcData();
+
+            EValuesGetter.AddExportElementInOurExportElements(data, wallsExportElement, new HashSet<EValuesExportData>()
+            { 
+                EValuesExportData.Wall_Id, EValuesExportData.Wall_Name, EValuesExportData.Wall_EWallTypes ,
+                EValuesExportData.Wall_Length_m, EValuesExportData.Wall_Width_m, EValuesExportData.Wall_Height_m,
+                EValuesExportData.Wall_AreaNetM2, EValuesExportData.Wall_AreaGrossM2, EValuesExportData.Wall_OpeningsAreaM2,
+                EValuesExportData.Wall_PlanAreaM2, EValuesExportData. Wall_VolumeM3,
+
+                 EValuesExportData.Wall_OtherWallsIds, EValuesExportData.  Wall_OtherWallsCount,
+                EValuesExportData.Wall_OtherWallsKRIds, EValuesExportData.Wall_OtherWallsKRCount, EValuesExportData.Wall_Room_Count,
+
+                 EValuesExportData.Wall_Doors_Ids,EValuesExportData.Wall_Doors_Count,
+                EValuesExportData.Wall_Doors_L_Average_m,EValuesExportData.Wall_Doors_H_Average_m,
+
+                 EValuesExportData.Wall_Window_Ids,EValuesExportData.Wall_Window_Count,
+                 EValuesExportData.Wall_Window_L_Average_m,EValuesExportData.Wall_Window_H_Average_m,
+
+            });
+
             foreach (var item in ArmElementConstants.EArmWallStringNames)
             {
                 var a = new ExportElement(item.Value, this[item.Key], data);
@@ -250,7 +274,9 @@ namespace Reinforcement
                 var a = new ExportElement(item.Value, this[item.Key], data);
                 data.Add(a);
             }
-            
+
+
+            _exportElements= data;
             return data;
         }
         public string NameThisClass
