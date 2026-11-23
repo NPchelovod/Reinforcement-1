@@ -58,7 +58,9 @@ namespace Reinforcement
         MinesArmDetailsFromWindAndDoorMM, // вычет арматуры обрамления по проёмам, мм
 
         ArmAllM,//длина арматуры общая пог метры, наверно надо на 2 домножить
-        ArmAllM2
+        ArmAllM2,
+        VilatermM,
+        VilatermM2,
 
 
     }
@@ -121,8 +123,12 @@ namespace Reinforcement
         { EArmWall.MinesArmFromWindAndDoorMM,        "Вычет армирования по проёмам, длина шва, мм" },
         { EArmWall.MinesArmDetailsFromWindAndDoorMM, "Вычет обрамления по проёмам, длина шва, мм" },
         { EArmWall.ArmAllM,                        "Полная арматура (длина шва*арматур в шве), м" },
-        { EArmWall.ArmAllM2,                       "Полная арматура (длина шва*арматур в шве), м²" }
-    };
+        { EArmWall.ArmAllM2,                       "Полная арматура (длина шва*арматур в шве), м²" },
+
+        { EArmWall.VilatermM, "Вилатерм, м"},
+        { 
+         EArmWall.VilatermM2,"Вилатерм, м²" }
+        };
         /// <summary>
         /// Русские названия строковых параметров армирования.
         /// </summary>

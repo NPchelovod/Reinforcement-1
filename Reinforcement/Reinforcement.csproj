@@ -170,6 +170,7 @@
     </Compile>
     <Compile Include="0_Aspirant\00_OtherProjects\SnapBeamEndToBeam.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\00_BaceWallClasses.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\00_BaseParameters.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\01_CalcWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\02_IntersectWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\03_ArmWalls.cs" />

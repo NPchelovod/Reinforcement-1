@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
+using MathNet.Numerics.Distributions;
 using MathNet.Numerics.RootFinding;
 using System;
 using System.Collections.Generic;
@@ -25,16 +26,19 @@ namespace Reinforcement
         AR_VentFasad,
         AR_PGPorGKL
     }
+
+    
+
     /// <summary>
     /// Класс для экспорта в эксель данных
     /// </summary>
     public class ExportElement
     {
-        
         /// <summary>
-        /// номер для взаимных ссылок и записи формулы лучше чтобы он бы строчным, иначе можно запутаться. Например "а" или "б"
+        /// Переменная для вычислений
         /// </summary>
-        public string Number;
+        public EValuesExportData EValuesExportData = EValuesExportData.None;
+
         /// <summary>
         /// Имя которое будет при экспорте
         /// </summary>
@@ -56,14 +60,17 @@ namespace Reinforcement
         /// </summary>
         public bool SumItog = true;
 
-        public ExportElement( string name, double valueD, List<ExportElement> relationsElements, string number="", string formula="")
+        public ExportElement( string name, double valueD, List<ExportElement> relationsElements, EValuesExportData eValuesExportData= 0, string formula="")
         {
-            Number= number;
+            EValuesExportData = eValuesExportData;
             Name = name;
             ValueDouble = valueD;
             ExportDoubleOrString = true;
             RelationsElements = relationsElements;
             Formula = formula;
+            GeneralInitial();
+           
+            
         }
         public ExportElement( string name, string valueS, List<ExportElement> relationsElements)
         {
@@ -72,13 +79,24 @@ namespace Reinforcement
             ValueString = valueS;
             ExportDoubleOrString = false;
             RelationsElements = relationsElements;
+            GeneralInitial();
+        }
+
+        private void GeneralInitial()
+        {
+            //проверка других 
+            string otherName = EValuesGetter.GetName(EValuesExportData);
+            if (!string.IsNullOrEmpty(otherName))
+            {
+                Name = otherName;
+            }
         }
         /// <summary>
         /// Список к которому мы принадлежим чтобы можно было посчитаться автоматически
         /// </summary>
         public List<ExportElement> RelationsElements = null;
         /// <summary>
-        /// Формула вида (а+б)*2
+        /// Формула вида Wall_L*Wall_W*Wall_H - переменные из EValuesExportData
         /// </summary>
         public string Formula;
         public void Calculations()
@@ -100,14 +118,22 @@ namespace Reinforcement
                 return;
             }
 
-            var numberToCell = new Dictionary<string, string>(StringComparer.Ordinal);
+            // Карта: EValuesExportData -> CellExcell
+            // Если для одной переменной в строке оказалось несколько элементов,
+            // приоритет — у того, у кого CellExcell уже назначен.
+            var evalToCell = new Dictionary<EValuesExportData, string>();
             foreach (var el in RelationsElements)
             {
-                if (string.IsNullOrEmpty(el.Number)) continue;
-                numberToCell[el.Number] = el.CellExcell;
+                if (el.EValuesExportData == EValuesExportData.None) continue;
+
+                if (evalToCell.TryGetValue(el.EValuesExportData, out var existing)
+                    && !string.IsNullOrEmpty(existing))
+                    continue;   // уже есть хорошее значение
+
+                evalToCell[el.EValuesExportData] = el.CellExcell;
             }
 
-            // Токен: буква/_, затем буквы/цифры/_ . Жадный * → "l1" целиком.
+            // Токен: буква/_, затем буквы/цифры/_ . Жадный * → Wall_L целиком.
             var tokenPattern = new Regex(@"[\p{L}_][\p{L}\p{N}_]*");
             // Похоже на Excel-ячейку: A1, F2, AA12, XFD1048576
             var cellPattern = new Regex(@"^[A-Za-z]{1,3}[0-9]+$");
@@ -119,19 +145,27 @@ namespace Reinforcement
             {
                 string token = m.Value;
 
-                // 1) приоритет: если это Number — подменяем на его CellExcell
-                if (numberToCell.TryGetValue(token, out string cell))
+                // 1) приоритет: токен — имя EValuesExportData
+                if (Enum.TryParse<EValuesExportData>(token, ignoreCase: false, out var eval)
+                    && eval != EValuesExportData.None
+                    && Enum.IsDefined(typeof(EValuesExportData), eval))
                 {
-                    if (string.IsNullOrEmpty(cell))
+                    if (evalToCell.TryGetValue(eval, out string cell))
                     {
-                        missingCell.Add(token);
-                        return token;
+                        if (string.IsNullOrEmpty(cell))
+                        {
+                            missingCell.Add(token);
+                            return token;
+                        }
+                        return cell;
                     }
-                    return cell;
+
+                    // enum распознан, но такого элемента в RelationsElements нет
+                    unknownIds.Add(token);
+                    return token;
                 }
 
-                // 2) не Number, но написано как Excel-ячейка → значит это уже готовое
-                //    имя ячейки, вписанное руками в Formula. Оставляем как есть.
+                // 2) не переменная, но написано как Excel-ячейка → оставляем как есть
                 if (cellPattern.IsMatch(token))
                     return token;
 
@@ -148,7 +182,7 @@ namespace Reinforcement
             if (unknownIds.Count > 0)
             {
                 CorrectExcellFormula = false;
-                string msg = "Идентификаторы не найдены в RelationsElements: " + string.Join(", ", unknownIds);
+                string msg = "Переменные не найдены в RelationsElements: " + string.Join(", ", unknownIds);
                 ErrorMessageFormula = string.IsNullOrEmpty(ErrorMessageFormula)
                     ? msg
                     : ErrorMessageFormula + "; " + msg;
@@ -247,14 +281,16 @@ namespace Reinforcement
                 new ExportElement("Стены Имя", Name,data),
                 new ExportElement("Стены наш тип", EWallTypes.ToString(),data),
 
-                new ExportElement("Стены длина, м", LengthM,data,"l"),
-                new ExportElement("Стены высота, м", HeightM,data,"h"),
-                new ExportElement("Стены толщина, м", WidthM,data,"w"),
+                new ExportElement("Стены длина, м", LengthM,data,EValuesExportData.Wall_L),
+                new ExportElement("Стены высота, м", HeightM,data,EValuesExportData.Wall_H),
+                new ExportElement("Стены толщина, м", WidthM,data,EValuesExportData.Wall_W),
 
-                new ExportElement("Стены площадь с проемами, м2", AreaNetM2,data,"AN"),
-                new ExportElement("Стены площадь без проемов, м2", AreaGrossM2,data,"AA"),
-                new ExportElement("Стены площадь проемов, м2", OpeningsAreaM2,data,"Ao","AA-AN"),
-                new ExportElement("Стены площадь в плане, м2", PlanAreaM2,data,"Aplan","l*w" ),
+                new ExportElement("Стены площадь с проемами, м2", AreaNetM2,data,EValuesExportData.Wall_AreaNetM2),
+                new ExportElement("Стены площадь без проемов, м2", AreaGrossM2,data,EValuesExportData.Wall_AreaGrossM2),
+                new ExportElement("Стены площадь проемов, м2", OpeningsAreaM2,data,EValuesExportData.Wall_OpeningsAreaM2,
+                "Wall_AreaGrossM2-Wall_AreaNetM2"),
+                new ExportElement("Стены площадь в плане, м2", PlanAreaM2,data,EValuesExportData.Wall_PlanAreaM2,
+                "Wall_L*Wall_W" ),
 
                 new ExportElement("Стена наружная?", ECInsulation.OutWallFromNAmeMaterial ? 1 : 0,data),
 
@@ -279,7 +315,7 @@ namespace Reinforcement
                 new ExportElement("Стена дверь, средняя длина, м",
                     doors.Select(x => x.LengthM).DefaultIfEmpty(0).Average(), data),
 
-                new ExportElement("Стена комнаты, колво комнат",ECRooms.Count,data),
+                new ExportElement("Стена комнаты, колво комнат",ECRooms.Count,data,EValuesExportData.Wall_Room_Count),
                  new ExportElement("Стена комнаты, Id", string.Join(",", ECRooms.Select(x => x.Id)),data),
                  new ExportElement("Стена комнаты, номера", string.Join(",", ECRooms.Select(x => x.Number)),data),
                 }
@@ -383,9 +419,9 @@ namespace Reinforcement
                 new List<ExportElement>() {
                 new ExportElement("ДверьОкно_Id",Id,data ),
                 new ExportElement("ДверьОкно_Это дверь?",BuiltInCategory==BuiltInCategory.OST_Doors?1:0,data ),
-                new ExportElement("ДверьОкно_Высота, м",HeightM,data,"h" ),
-                new ExportElement("ДверьОкно_Длина, м",LengthM ,data,"l"),
-                new ExportElement("ДверьОкно_Площадь, м2",AreaM2,data,"A","l*h" ),
+                new ExportElement("ДверьОкно_Высота, м",HeightM,data),
+                new ExportElement("ДверьОкно_Длина, м",LengthM ,data),
+                new ExportElement("ДверьОкно_Площадь, м2",AreaM2,data ),
                 new ExportElement("ДверьОкно_Отметка, м",OtmZ,data ),
             });
 

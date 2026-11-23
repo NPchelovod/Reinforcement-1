@@ -36,7 +36,9 @@ namespace Reinforcement
 
             EArmWall.DetailsAllCount,
             EArmWall.ArmAllM,
-            EArmWall.ArmAllM2
+            EArmWall.ArmAllM2,
+              EArmWall.VilatermM,
+         EArmWall.VilatermM2,
 
         };
 

@@ -35,42 +35,162 @@ namespace Reinforcement
     {
         // ---------- многолистовой экспорт ----------
         public static void Exporter(
-            List<ExportElementOnSheetExcell> exportSheetsElements,
-            string fileName)
+        List<ExportElementOnSheetExcell> exportSheetsElements,
+        string fileName)
         {
             if (exportSheetsElements == null || exportSheetsElements.Count == 0) return;
 
             var dlg = new WinForms.SaveFileDialog
             {
                 Filter = "Файл Excel (*.xlsx)|*.xlsx",
-                FileName = $"{fileName}.xlsx"
+                FileName = $"{fileName}.xlsx",
+                OverwritePrompt = true
             };
             if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
 
-            using (var workbook = new Workbook())
+            string path = dlg.FileName;
+            const int maxAttempts = 5;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-            // Workbook() по умолчанию содержит один пустой лист — убираем его,
-            // чтобы не было «лишнего» Sheet1 рядом с рабочими.
-            // Убираем все листы, которые Spire создаёт по умолчанию
-            workbook.Worksheets.Clear();
+                bool fileExists = System.IO.File.Exists(path);
+                bool loaded = false;
 
-            foreach (var exportElement in exportSheetsElements)
+                using (var workbook = new Workbook())
                 {
-                        // Сразу создаём лист с нужным именем.
-                        // Если лист с таким именем уже есть, Spire кинет исключение —
-                        // имена листов в книге должны быть уникальны.
+                    // --- 1) загрузка (если файл существует) ---
+                    if (fileExists)
+                    {
+                        try
+                        {
+                            workbook.LoadFromFile(path);
+                            loaded = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            var choice = MessageBox.Show(
+                                "Не удалось открыть файл:\n" + ex.Message +
+                                "\n\nДа — перезаписать с нуля" +
+                                "\nНет — выбрать другой файл" +
+                                "\nОтмена — прервать экспорт",
+                                "Ошибка открытия",
+                                MessageBoxButton.YesNoCancel,
+                                MessageBoxImage.Warning);
+
+                            if (choice == MessageBoxResult.Cancel) return;
+                            if (choice == MessageBoxResult.No)
+                            {
+                                if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
+                                path = dlg.FileName;
+                                continue;   // новая попытка с новым путём
+                            }
+                            // Yes → работаем как с пустым файлом
+                        }
+                    }
+
+                    // --- 2) подготовка листов ---
+                    string tempName = null;
+                    if (!loaded)
+                    {
+                        workbook.Worksheets.Clear();
+                    }
+                    else
+                    {
+                        tempName = RemoveMatchingSheets(workbook, exportSheetsElements);
+                    }
+
+                    // --- 3) добавление своих листов ---
+                    foreach (var exportElement in exportSheetsElements)
+                    {
                         Worksheet sheet = workbook.Worksheets.Add(exportElement.SheetName);
-
                         var exporter = new ExcelGroupExporter(sheet);
-
                         foreach (var exportData in exportElement.exportStringDoubleDatas)
                             exporter.AppendGroup(exportData);
-
                         exporter.FinalizeSheet();
                     }
 
-                workbook.SaveToFile(dlg.FileName, ExcelVersion.Version2010);
+                    // --- 4) удаление временного листа (если создавали) ---
+                    if (tempName != null)
+                    {
+                        for (int i = 0; i < workbook.Worksheets.Count; i++)
+                        {
+                            if (string.Equals(workbook.Worksheets[i].Name, tempName,
+                                              StringComparison.Ordinal))
+                            {
+                                workbook.Worksheets.RemoveAt(i);
+                                break;
+                            }
+                        }
+                    }
+
+                    // --- 5) сохранение ---
+                    try
+                    {
+                        workbook.SaveToFile(path, ExcelVersion.Version2010);
+                        return;   // успех
+                    }
+                    catch (Exception ex)
+                    {
+                        var choice = MessageBox.Show(
+                            "Не удалось сохранить файл:\n" + ex.Message +
+                            "\n\nДа — выбрать другой файл и повторить" +
+                            "\nНет — прервать",
+                            "Ошибка сохранения",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+
+                        if (choice != MessageBoxResult.Yes) return;
+                        if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
+                        path = dlg.FileName;
+                        // новая итерация цикла
+                    }
+                }
             }
+
+            MessageBox.Show(
+                $"Не удалось выполнить экспорт после {maxAttempts} попыток.",
+                "Экспорт", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        /// <summary>
+        /// Удаляет листы, имена которых совпадают с SheetName из экспорта.
+        /// Если удаляются все листы — переименовывает один во временное имя,
+        /// чтобы обойти ограничение «нельзя удалить последний лист»,
+        /// и возвращает это имя (для удаления в вызывающем коде).
+        /// Если удаление безопасно — возвращает null.
+        /// </summary>
+        private static string RemoveMatchingSheets(
+            Workbook workbook,
+            List<ExportElementOnSheetExcell> exportSheetsElements)
+        {
+            var toRemove = new HashSet<string>(
+                exportSheetsElements.Select(x => x.SheetName),
+                StringComparer.OrdinalIgnoreCase);
+
+            var matching = new List<int>();
+            for (int i = 0; i < workbook.Worksheets.Count; i++)
+                if (toRemove.Contains(workbook.Worksheets[i].Name))
+                    matching.Add(i);
+
+            if (matching.Count == 0) return null;   // нечего удалять
+
+            bool allWillBeRemoved = matching.Count == workbook.Worksheets.Count;
+
+            if (allWillBeRemoved)
+            {
+                string tempName = "__tmp__" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                workbook.Worksheets[0].Name = tempName;
+
+                for (int k = matching.Count - 1; k >= 1; k--)
+                    workbook.Worksheets.RemoveAt(matching[k]);
+
+                return tempName;
+            }
+
+            for (int k = matching.Count - 1; k >= 0; k--)
+                workbook.Worksheets.RemoveAt(matching[k]);
+
+            return null;
         }
 
         // ---------- состояние одного листа ----------

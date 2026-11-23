@@ -28,10 +28,12 @@ namespace Reinforcement
             ElementType type = doc.GetElement(fi.GetTypeId()) as ElementType;
             if (type == null) { return; }
             string familyName = type.FamilyName;
-            if (string.IsNullOrEmpty(familyName))// || !familyName.Contains("Закладная"))
-            { return; }
-            // Ищем параметр "Согласовано" (или "Согласновано" с опечаткой)
 
+            //Только для электриков
+            if (string.IsNullOrEmpty(familyName)|| !familyName.Contains("Закладная ЭЛ в плит"))
+            { return; }
+
+            
             foreach (string soglasSeach in Soglass)
             {
                 Parameter soglas = fi.LookupParameter(soglasSeach);
