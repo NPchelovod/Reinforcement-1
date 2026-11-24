@@ -39,14 +39,15 @@ namespace Reinforcement
             //начальные параметры для расчета заполняем
             var param = ArmElementConstants.GetConstantsParameters(type, ECWall.Element, ArmElementConstants.GetParamFromECPropElement, ArmElementConstants.GetParamOnlyNonZero);
             if(param == null) return;
+            //Установка начальных параметров
             foreach (var kvp in param)
             {
                 this[kvp.Key] = kvp.Value;
             }
         }
-        public double Arm_Row_Step_m = 0.600;
-        public double Arm_Roof_Step_m = 1.5;
-        public double Arm_DopTop_Count;//дополнительная арматура сверху
+        //public double Arm_Row_Step_m = 0.600;
+        //public double Arm_Roof_Step_m = 1.5;
+        //public double Arm_DopTop_Count;//дополнительная арматура сверху
 
         public void CalculateArm()
         {
@@ -54,17 +55,27 @@ namespace Reinforcement
 
             var type = ECWall.EWallTypes;
 
-
+            var data = new List<ExportElement>();
             //1. Считаем кол-во арматуры
-            //1.1  в крыши рядов
-            this[EValuesExportData.Wall_Arm_Roofs] = GetGridCount(ECWall.LengthM, this[EValuesExportData.Wall_Arm_Brick_Row_Step_m]);
-            //1.2 в стенах рядов арматуры
-            this[EValuesExportData.Wall_Arm_Rows]= GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Brick_Roof_Step_m]);
 
-            //нам надо найти кол-во стен, с которыми мы пересекаемся из ЖБ
+
+            //1.1 в стенах рядов арматуры
+
+            this[EValuesExportData.Wall_Arm_Rows]= GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Roof_Step_m]);
+            this[EValuesExportData.Wall_Arm_Rows_Gross_m] = this[EValuesExportData.Wall_Arm_Rows]*ECWall.LengthM;
+            //1.2 в стенах рядов деталей
+
+            this[EValuesExportData.Wall_Datailed_Rows] = GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
+
+            //1.3 в стенах рядов вертикальных деталей
+
+            this[EValuesExportData.Wall_Datailed_Colums] = GetGridCount(ECWall.LengthM, this[EValuesExportData.Wall_Detailed_Roof_Step_m]);
+
+            //2.1 нам надо найти кол-во стен, с которыми мы пересекаемся из ЖБ
             var wallsKR = ECWall.RelationsWalls.Where(x => x.EWallTypes == EWallTypes.KR_Reinforcement).ToHashSet();
             
             _otherWalls.Clear();
+            ECWall.RelationsWallsKR.Clear();
             if (wallsKR != null && wallsKR.Count > 0)
             {
                
@@ -95,68 +106,68 @@ namespace Reinforcement
                     }
                 }
             }
+            //2.2 установка кол-ва жб стен
+            this[EValuesExportData.Wall_OtherWallsKRCount] = _otherWalls.Count;
 
-            //детали боковые сбоку стены
-            this[EArmWall.DetailsWallRow] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.StepDetailsMM]);
+
+            //2.3 колво горизонтальных деталей
+            this[EValuesExportData.Wall_Datailed_Hor_Count] = this[EValuesExportData.Wall_OtherWallsKRCount] *
+                this[EValuesExportData.Wall_Datailed_Rows];
+
+            //2.4 колво вертикальных деталей
+            this[EValuesExportData.Wall_Datailed_Roof_Count] = this[EValuesExportData.Wall_Datailed_Colums];
+
+            //2.5 итого деталей колво
+            this[EValuesExportData.Wall_Datailed_Count] = this[EValuesExportData.Wall_Datailed_Roof_Count] + this[EValuesExportData.Wall_Datailed_Hor_Count];
 
 
-            this[EArmWall.DetailsWallsInt] = this[EArmWall.DetailsWallRow] * _otherWalls.Count;
 
-            this[EArmWall.ArmRow] = GetGridCount(this[EArmWall.WallHeightMM], this[EArmWall.ArmStepMM]);
-            this[EArmWall.ArmGeneralTotalMM] = this[EArmWall.ArmRow] * this[EArmWall.WallLengthMM]; // кол-во рядов на длину
-
-            this[EArmWall.ArmTopTotalMM] = 0;
-            this[EArmWall.ArmDetailsTotalMM] = 0;
             if (type == EWallTypes.AR_Brick)
             {
-                this[EArmWall.ArmTopTotalMM] += this[EArmWall.ArmTopDopRow] * this[EArmWall.WallLengthMM]; // дополнительная арматура вверху кирпичной стены
+                //армирование вокруг закладных
+                this[EValuesExportData.Wall_Arm_Detailes_Gross_m] = this[EValuesExportData.Wall_Arm_Detailed_Obram_Length_m] * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count] * this[EValuesExportData.Wall_Datailed_Count];
 
-                //1000*2*
-                this[EArmWall.ArmDetailsTotalMM] += this[EArmWall.ArmDetailArmLengthMM] * this[EArmWall.ArmDetailArmCount] * this[EArmWall.DetailsWallsInt];
+                //армирование верха у самого
+                this[EValuesExportData.Wall_Arm_Roof_m] = ECWall.LengthM * this[EValuesExportData.Wall_Arm_DopTop_Count];
 
-                //тут надо проанализировать двери и т.д. — вычитания
             }
 
             //вычитаем армирование дверей и окон
-            this[EArmWall.MinesArmFromWindAndDoorMM] = 0;
-            //if(ArmElementConstants.)
-            //пока обнуляем их для надежности
-            this[EArmWall.ArmRowsCutByWindow] = 0;
-            this[EArmWall.ArmRowsCutByDoor] = 0;
-            this[EArmWall.ArmRowsCutByCurtain] = 0;
+            this[EValuesExportData.Wall_Arm_MinesArmProem_m] = 0;
             foreach (var windAndDoor in ECWall.ECDoorOrWindows)
             {
-                double l = windAndDoor.LengthM * 1000;
-                double h = windAndDoor.HeightM * 1000;
-                double row = GetGridCount(h, this[EArmWall.ArmStepMM]);
+                double l = windAndDoor.LengthM;
+                double h = windAndDoor.HeightM ;
+                double row = GetGridCount(h, this[EValuesExportData.Wall_Detailed_Roof_Step_m]);
                 if (row > 0)
                 {
                     
                     if(windAndDoor.BuiltInCategory==BuiltInCategory.OST_Windows)
                     {
-                        
-                        this[EArmWall.ArmRowsCutByWindow] = row;
-                            
+
+                        this[EValuesExportData.Wall_Arm_Row_Window] = row;
+
                     }
                     else if(windAndDoor.BuiltInCategory ==BuiltInCategory.OST_Doors)
                     {
-                        this[EArmWall.ArmRowsCutByDoor] = row;
+                        this[EValuesExportData.Wall_Arm_Row_Door] = row;
                     }
 
-
+                    //дистанция вычета
                     double dist = row * l;
-                    this[EArmWall.MinesArmFromWindAndDoorMM] += dist;
-
+                    this[EValuesExportData.Wall_Arm_MinesArmProem_m] += dist;
                 }
             }
 
-            if (this[EArmWall.MinesArmFromWindAndDoorMM] > this[EArmWall.ArmGeneralTotalMM])
+            if (this[EValuesExportData.Wall_Arm_MinesArmProem_m] > this[EValuesExportData.Wall_Arm_Rows_Gross_m])
             {
-                this[EArmWall.MinesArmFromWindAndDoorMM] = this[EArmWall.ArmGeneralTotalMM];
+                this[EValuesExportData.Wall_Arm_MinesArmProem_m] = this[EValuesExportData.Wall_Arm_Rows_Gross_m];
             }
 
-            this[EArmWall.MinesArmDetailsFromWindAndDoorMM] = 0;
-            if (type == EWallTypes.AR_Brick && this[EArmWall.ArmDetailsTotalMM] > 0)
+
+            //вычитаем дополнительную арматуру которая в проем попала из-за дистанции
+            this[EValuesExportData.Wall_Arm_Detailed_Mines_m] = 0;
+            if (type == EWallTypes.AR_Brick && this[EValuesExportData.Wall_Arm_Detailes_Gross_m] > 0)
             {
                 List<XYZ> pastPoints = new List<XYZ>();
                 //вычитаем доп. армирование, если его дверь пересекает или окно
@@ -172,23 +183,24 @@ namespace Reinforcement
 
                         double df = RevitAPI.ToMm(Math.Min(
                             windAndDoor.StartPt.DistanceTo(sosed.point),
-                            windAndDoor.EndPt.DistanceTo(sosed.point)));
-                        double dif = this[EArmWall.ArmDetailArmLengthMM] - df;
+                            windAndDoor.EndPt.DistanceTo(sosed.point)))/1000;
+                        double dif = this[EValuesExportData.Wall_Arm_Detailed_Obram_Length_m] - df;
                         if (dif < 0) { continue; }
                         //дверь или окно близки к краю — отнимаем
                         pastPoints.Add(sosed.point);
                         //кол-во перерезов
-                        double co = GetGridCount(windAndDoor.HeightM * 1000, this[EArmWall.StepDetailsMM]);
-                        this[EArmWall.MinesArmDetailsFromWindAndDoorMM] += co * dif * this[EArmWall.ArmDetailArmCount];
+                        double co = GetGridCount(windAndDoor.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
+
+
+                        this[EValuesExportData.Wall_Arm_Detailed_Mines_m] += co * dif * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count];
                     }
                 }
 
-                if (this[EArmWall.MinesArmDetailsFromWindAndDoorMM] > this[EArmWall.ArmDetailsTotalMM])
-                {
-                    this[EArmWall.MinesArmDetailsFromWindAndDoorMM] = this[EArmWall.ArmDetailsTotalMM];
-                }
             }
-
+            if (this[EValuesExportData.Wall_Arm_Detailed_Mines_m] > this[EValuesExportData.Wall_Arm_Detailes_Gross_m])
+            {
+                this[EValuesExportData.Wall_Arm_Detailed_Mines_m] = this[EValuesExportData.Wall_Arm_Detailes_Gross_m];
+            }
 
             //подсчитываем итого
             //итого деталей

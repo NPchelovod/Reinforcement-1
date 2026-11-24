@@ -67,17 +67,17 @@ namespace Reinforcement
     ///// <summary>
     ///// Строковые данные
     ///// </summary>
-    public enum EArmWallString
-    {
-        LevelName,//имя уровня
-        WallFamily,//семейство стены
-        WallType,//типоразмер
-        WallEWallTypes,//наш тип утеплитель или что это
+    //public enum EArmWallString
+    //{
+    //    LevelName,//имя уровня
+    //    WallFamily,//семейство стены
+    //    WallType,//типоразмер
+    //    WallEWallTypes,//наш тип утеплитель или что это
 
-        IdsWindAndDoors,//список Id окон и дверей
-        IdsConnectsWalls,// список Id всех примыкающих стен
-        IdsConnectsWallsKR,// список Id всех КР примыкающих стен
-    }
+    //    IdsWindAndDoors,//список Id окон и дверей
+    //    IdsConnectsWalls,// список Id всех примыкающих стен
+    //    IdsConnectsWallsKR,// список Id всех КР примыкающих стен
+    //}
 
     public static class ArmElementConstants
     {
@@ -226,12 +226,12 @@ namespace Reinforcement
         /// <summary>
         /// Получить копию словаря констант (защита от внешней правки оригинала)
         /// </summary>
-        public static Dictionary<EArmWall, double> GetConstantsParameters(EWallTypes eWallTypes)
+        public static Dictionary<EValuesExportData, double> GetConstantsParameters(EWallTypes eWallTypes)
         {
-            Dictionary<EArmWall, double> dict = GetDict(eWallTypes);
+            Dictionary<EValuesExportData, double> dict = GetDict(eWallTypes);
             if (dict == null) return null;
 
-            return new Dictionary<EArmWall, double>(dict);
+            return new Dictionary<EValuesExportData, double>(dict);
         }
         public static bool GetParamFromGeomElement = true;//брать параметры из геометрии элемента
         public static bool GetParamFromECPropElement = false;// взять начальные параметры из свойств ревита
@@ -241,7 +241,7 @@ namespace Reinforcement
         /// Если у элемента заполнены параметры — берёт из него.
         /// getOnlyNonZero = true: параметр читаем только ненулевой, нулевому остаётся константа.
         /// </summary>
-        public static Dictionary<EArmWall, double> GetConstantsParameters(
+        public static Dictionary<EValuesExportData, double> GetConstantsParameters(
             EWallTypes eWallTypes, Element element, bool getFromElement, bool getOnlyNonZero)
         {
             Dictionary<EArmWall, double> dictConst = GetConstantsParameters(eWallTypes);

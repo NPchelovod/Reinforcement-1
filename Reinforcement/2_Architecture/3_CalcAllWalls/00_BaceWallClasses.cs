@@ -204,7 +204,10 @@ namespace Reinforcement
     }
     public interface IExportStringDoubleData
     {
-        string NameThisClass{ get; }
+        /// <summary>
+        /// Собственное имя класса
+        /// </summary>
+        string NameThisClass{ get; } 
         /// <summary>
         /// подсчет и возврат 
         /// </summary>
@@ -280,8 +283,8 @@ namespace Reinforcement
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                    new ExportElement("Стены Уровень Имя",  ECLevel.Name,data, EValuesExportData.Wall_Level_Name),
-                    new ExportElement("Стены Уровень Отметка",  ECLevel.LevelElevation,data, EValuesExportData.Wall_Level_Elevation),
+                    new ExportElement("Стены Уровень Имя",  ECLevel.Name,data, EValuesExportData.Level_Name),
+                    new ExportElement("Стены Уровень Отметка",  ECLevel.LevelElevation,data, EValuesExportData.Level_Elevation),
 
                 new ExportElement("Стены Id", Id.ToString(),data, EValuesExportData.Wall_Id),
 
@@ -357,9 +360,9 @@ namespace Reinforcement
             data.AddRange(
             new List<ExportElement>() 
             {
-            new ExportElement("Уровень Id",Id.ToString(),data ),
-            new ExportElement("Уровень Имя",Name,data ),
-            new ExportElement("Уровень отметка", LevelElevation,data, EValuesExportData.Wall_Level_Elevation ){SumItog=false},
+            new ExportElement("Уровень Id",Id.ToString(),data,EValuesExportData.Level_Id ),
+            new ExportElement("Уровень Имя",Name,data,EValuesExportData.Level_Name ),
+            new ExportElement("Уровень отметка", LevelElevation,data, EValuesExportData.Level_Elevation ){SumItog=false},
 
             });
             _exportElements = data;
@@ -399,7 +402,7 @@ namespace Reinforcement
                 new ExportElement("СтеныТип_Типоразмер",Name,data ),
                 new ExportElement("СтеныТип_ТипоразмерНаш",EWallTypes.ToString() ,data),
                 new ExportElement("СтеныТип_Толщина, м",WidthM ,data, EValuesExportData.Wall_Width_m),
-                new ExportElement("СтеныТип_Колво_Слоев",ECLayerWalls.Count,data, EValuesExportData.Wall_LayersCount ),
+                new ExportElement("СтеныТип_Колво_Слоев",ECLayerWalls.Count,data, EValuesExportData.WallType_LayersCount ),
                
             });
             _exportElements = data;
@@ -561,9 +564,9 @@ namespace Reinforcement
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
-                new ExportElement("Комната_Id",Id.ToString(),data),
-                new ExportElement("Комната_Номер",Number,data),
-                new ExportElement("Комната_Имя",Name,data),
+                new ExportElement("Комната_Id",Id.ToString(),data,EValuesExportData.Room_Id),
+                new ExportElement("Комната_Номер",Number,data,EValuesExportData.Room_Number),
+                new ExportElement("Комната_Имя",Name,data,EValuesExportData.Room_Name),
                 new ExportElement("Комната_Площадь, м2",AreaM2,data, EValuesExportData.Room_Area_m2),
                 new ExportElement("Комната_Периметр, м",PerimeterM,data, EValuesExportData.Room_Perimeter_m),
                 new ExportElement("Комната_Объем, м",VolumeM3,data, EValuesExportData.Room_Volume_m3),

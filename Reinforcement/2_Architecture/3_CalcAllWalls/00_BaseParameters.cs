@@ -62,12 +62,17 @@ namespace Reinforcement
         Wall_Window_L_Average_m,//средняя длина двери среди всех дверей стены
         Wall_Window_H_Average_m,//средняя высота двери среди всех дверей стены
 
+        //Тип стены
+        WallType_Id,
+        WallType_LayersCount,
+
+
         //Теплоизоляционная ли это стена
         Wall_Insulation_OutSideWallName, //по имени bool =true если стена наружная
-        Wall_LayersCount,//колво слоев у стены
+        //Wall_LayersCount,//колво слоев у стены
         //Уровень
-        Wall_Level_Name,
-        Wall_Level_Elevation,
+        //Wall_Level_Name,
+        //Wall_Level_Elevation,
 
 
         //Дверь
@@ -85,36 +90,61 @@ namespace Reinforcement
         WallLayer_Width_m,
 
         //комната
+        Room_Id,
+        Room_Name,
+        Room_Number,
         Room_Perimeter_m,
         Room_Area_m2,
         Room_Volume_m3,
 
 
+        //Уровеньъ
+        Level_Id,
+        Level_Name,
+        Level_Elevation,
 
         //Армирование стен
         //Кирпич
 
         //Расчетные параметры
-        Wall_Arm_Brick_Row_Step_m,
-        Wall_Arm_DopTop_Count,//дополнительная арматура сверху
+        //Начальные параметры
+        Wall_Arm_DopTop_Count,//дополнительная арматура сверху - у кирпича 3 штуки
 
-        Wall_Arm_DetailedObram_Length_m,//длина обрамления детелей = 2 метра
-        Wall_Arm_DetailedObram_Count,//по 2 штуки обрамления
+        Wall_Arm_Detailed_Obram_Length_m,//длина обрамления детелей = 1 метра
+        Wall_Arm_Detailed_Obram_Count,//по 2 штуки обрамления
 
-        Wall_Detailed_Brick_Row_Step_m,//шаг в горизонтальной плоскости деталей
-        Wall_Detailed_Brick_Roof_Step_m,//шаг вдоль стены деталей
+        Wall_Detailed_Row_Step_m,//шаг в горизонтальной плоскости деталей
+        Wall_Detailed_Roof_Step_m,//шаг вдоль стены деталей
 
         //Вычисленные параметры 
 
         //Газобетон
         //Расчетные параметры
-        Wall_Arm_Aerocrete_Step_m,
-
-        Wall_Detailed_Aerocrete_Row_Step_m,//шаг в горизонтальной плоскости деталей
-        Wall_Detailed_Aerocrete_Roof_Step_m,//шаг вдоль стены деталей
         //вычисленные параметры
+
+        Wall_Datailed_Colums,//рядов вертикальных у деталей
+        Wall_Datailed_Rows,//горизонтальных рядов у деталей
+
+        Wall_Datailed_Hor_Count,//колво горизонтельных деталей, колво стен* кол во рядов закладных
+        Wall_Datailed_Roof_Count,//==Wall_Datailed_Colums - колво вертикальных деталей
+        Wall_Datailed_Count,//всего деталей==Wall_Datailed_Roof_Count+ Wall_Datailed_Hor_Count
+
         Wall_Arm_Rows,//рядов армирования
-        Wall_Arm_Roofs,//рядов армирования по вертикале
+        Wall_Arm_Roof_Count,//рядов армирования по вертикале
+
+        Wall_Arm_Detailes_Gross_m,//армирование деталей погонные метры кирпичного шва без вычита дверного проема который близко находится
+        Wall_Arm_Roof_m,//метров армирвоания верха стены шов 
+        Wall_Arm_Rows_Gross_m,//армирование без вычита
+
+        Wall_Arm_Row_Window,
+        Wall_Arm_Row_Door,
+        Wall_Arm_MinesArmProem_m,
+        Wall_Arm_Detailed_Mines_m, // вычитание если около дверь или окно
+
+        Wall_Arm_Itog_m,
+        Wall_Arm_Itog_m2,
+        Wall_Arm_Itog_pog_m,
+
     }
 
     public static class EValuesGetter
