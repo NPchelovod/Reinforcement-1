@@ -81,120 +81,29 @@ namespace Reinforcement
 
     public static class ArmElementConstants
     {
-        /// <summary>
-        /// Русские названия числовых параметров армирования (для заголовков экспорта).
-        /// </summary>
-        public static readonly Dictionary<EArmWall, string> EArmWallNames = new Dictionary<EArmWall, string>
-    {
-        { EArmWall.LevelHM,                        "Отметка уровня, м" },
-        { EArmWall.WallId,                         "Id стены" },
-        { EArmWall.WallHeightMM,                   "Высота стены, мм" },
-        { EArmWall.WallLengthMM,                   "Длина стены, мм" },
-        { EArmWall.WallWidthMM,                    "Толщина стены, мм" },
-        { EArmWall.WallAreaNetM2,                  "Чистая площадь (с проёмами), м²" },
-        { EArmWall.WallAreaGrossM2,                "Габаритная площадь (без проёмов), м²" },
-        { EArmWall.WallOpeningsAreaM2,             "Площадь проёмов, м²" },
-        { EArmWall.WallPlanAreaM2,                 "Площадь в плане, м²" },
-
-        { EArmWall.CountDoorOrWindow,              "Кол-во окон и дверей" },
-        { EArmWall.CountKRBorder,                  "Кол-во примыканий к стенам КР" },
-
-        { EArmWall.ArmRow,                         "Кол-во рядов армирования" },
-        { EArmWall.ArmTopDopRow,                   "Доп. ряды армирования (кирпич)" },
-        { EArmWall.ArmStepMM,                      "Шаг армирования, мм" },
-        { EArmWall.ArmDetailArmLengthMM,           "Длина арматуры обрамления деталей, мм" },
-        { EArmWall.ArmDetailArmCount,              "Кол-во арматурин обрамления на деталь" },
-        { EArmWall.ArmCountCrossRow,               "Кол-во стержней в одном шве" },
-        { EArmWall.ArmRowsCutByWindow,             "Ряды арм., перерезанные окнами" },      // — новое
-        { EArmWall.ArmRowsCutByDoor,               "Ряды арм., перерезанные дверями" },     // — новое
-        { EArmWall.ArmRowsCutByCurtain,            "Ряды арм., перерезанные витражами" },   // — новое
-        { EArmWall.DetailsAllCount,                "Кол-во деталей крепежа" },
-        { EArmWall.StepDetailsMM,                  "Шаг деталей крепежа, мм" },
-        { EArmWall.StepDetailsRoofMM,              "Шаг крепежа к потолку, мм" },
-
-        { EArmWall.DetailsRoofInt,                 "Кол-во крепежа по длине (потолок)" },
-        { EArmWall.DetailsWallRow,                 "Рядов в стене деталей" },               // — новое
-        { EArmWall.DetailsWallsInt,                "Кол-во боковых деталей" },
-
-        { EArmWall.ArmGeneralTotalMM,              "Армирование основное, длина шва, мм" },
-        { EArmWall.ArmTopTotalMM,                  "Армирование верха, длина шва, мм" },
-        { EArmWall.ArmDetailsTotalMM,              "Арматура обрамления закладных, длина шва, мм" },
-
-        { EArmWall.MinesArmFromWindAndDoorMM,        "Вычет армирования по проёмам, длина шва, мм" },
-        { EArmWall.MinesArmDetailsFromWindAndDoorMM, "Вычет обрамления по проёмам, длина шва, мм" },
-        { EArmWall.ArmAllM,                        "Полная арматура (длина шва*арматур в шве), м" },
-        { EArmWall.ArmAllM2,                       "Полная арматура (длина шва*арматур в шве), м²" },
-
-        { EArmWall.VilatermM, "Вилатерм, м"},
-        { 
-         EArmWall.VilatermM2,"Вилатерм, м²" }
-        };
-        /// <summary>
-        /// Русские названия строковых параметров армирования.
-        /// </summary>
-        public static readonly Dictionary<EArmWallString, string> EArmWallStringNames = new Dictionary<EArmWallString, string>
-        {
-            { EArmWallString.LevelName,          "Имя уровня" },
-            { EArmWallString.WallFamily,         "Семейство стены" },
-            { EArmWallString.WallType,           "Типоразмер стены" },
-            { EArmWallString.WallEWallTypes,     "Тип стены" },
-
-            { EArmWallString.IdsWindAndDoors,    "Id окон и дверей" },
-            { EArmWallString.IdsConnectsWalls,   "Id примыкающих стен" },
-            { EArmWallString.IdsConnectsWallsKR, "Id примыкающих стен КР" }
-        };
-
-
-
-        
-        // соответствие констант и имён параметров в Revit (префикс "ЕС_" — наша компания)
-        private static Dictionary<EArmWall, string> NamesParametersInRevit = new Dictionary<EArmWall, string>()
-        {
-            { EArmWall.ArmStepMM,            "ЕС_Шаг_Армирования_ММ"        }, // шаг армирования, мм
-            { EArmWall.StepDetailsMM,        "ЕС_Шаг_Деталей_ММ"            }, // шаг деталей (крепление к перекрытию), мм
-            { EArmWall.StepDetailsRoofMM,    "ЕС_Шаг_Деталей_Перекрытие_ММ" }, // шаг деталей у перекрытия/крыши, мм
-            { EArmWall.ArmTopDopRow,         "ЕС_Кол_Доп_Верхних_Рядов"     }, // доп. верхние ряды армирования, шт.
-            { EArmWall.ArmDetailArmLengthMM, "ЕС_Длина_Арматурины_Детали_ММ"       }, // длина арматурины в детали, мм
-            { EArmWall.ArmDetailArmCount,    "ЕС_Кол_Арматурин_В_Детали"    }, // арматурин на одну деталь, шт.
-            { EArmWall.ArmCountCrossRow,     "ЕС_Кол_Прутков_В_Ряду"        },  // количество прутков в ряду, шт.
-
-            { EArmWall.DetailsWallRow, "ЕС_Кол_Деталей_рядов" }//количество рядов деталей
-        };
-
+       
         // константы для кирпича
-        private static Dictionary<EArmWall, double> ConstantsBrick = new Dictionary<EArmWall, double>()
+        private static Dictionary<EValuesExportData, double> ConstantsBrick = new Dictionary<EValuesExportData, double>()
         {
-            { EArmWall.ArmStepMM,             600  },  // шаг армирования, мм
-            { EArmWall.StepDetailsMM,         600  },  // шаг деталей, мм
-            { EArmWall.StepDetailsRoofMM,     1500 },  // шаг деталей у перекрытия/крыши, мм
-            { EArmWall.ArmTopDopRow,          3    },  // доп. верхних рядов армирования
-            { EArmWall.ArmDetailArmLengthMM,  1000 },  // длина арматурины в детали, мм
-            { EArmWall.ArmDetailArmCount,     2    },  // на одну деталь 2 арматурины
-            { EArmWall.ArmCountCrossRow,      2    },  // количество прутков в ряду
-            { EArmWall.ArmRow,                2    },  // кол-во рядов армирования на этаж
-          
-            { EArmWall.ArmRowsCutByWindow,    1    },  // ряды, перерезанные окнами
-            { EArmWall.ArmRowsCutByDoor,      1    },  // ряды, перерезанные дверями
-            { EArmWall.ArmRowsCutByCurtain,   1    },   // ряды, перерезанные витражами
-            { EArmWall.DetailsWallRow,2 },//количество рядов деталей
+            { EValuesExportData. Wall_Arm_Row_Step_m,             0.600  },  // шаг армирования, мм
+            { EValuesExportData.Wall_Detailed_Row_Step_m,         0.600  },  // шаг деталей, мм
+            { EValuesExportData. Wall_Detailed_Roof_Step_m,     1.500 },  // шаг деталей у перекрытия/крыши, мм
+            { EValuesExportData. Wall_Arm_DopTop_Count,          3.0    },  // доп. верхних рядов армирования
+            { EValuesExportData. Wall_Arm_Detailed_Obram_Length_m,  1.000 },  // длина арматурины в детали, мм
+            { EValuesExportData.Wall_Arm_Detailed_Obram_Count,     2    },  // на одну деталь 2 арматурины
+           
         };
         //для газобетона
-                private static Dictionary<EArmWall, double> ConstantsAerocrete = new Dictionary<EArmWall, double>()
+                private static Dictionary<EValuesExportData, double> ConstantsAerocrete = new Dictionary<EValuesExportData, double>()
         {
-            { EArmWall.ArmStepMM,             750  },
-            { EArmWall.StepDetailsMM,         1250 },
-            { EArmWall.StepDetailsRoofMM,     3000 },
-            { EArmWall.ArmCountCrossRow,      2    },
-            { EArmWall.ArmRow,                2    },
-           
-            { EArmWall.ArmRowsCutByWindow,    1    },
-            { EArmWall.ArmRowsCutByDoor,      1    },
-            { EArmWall.ArmRowsCutByCurtain,   1    },
-            { EArmWall.DetailsWallRow,2 },//количество рядов деталей
+            { EValuesExportData. Wall_Arm_Row_Step_m,             0.750  },
+            {EValuesExportData.Wall_Detailed_Row_Step_m,         0.1250 },
+            { EValuesExportData. Wall_Detailed_Roof_Step_m,    3.000 },
+            
         };
 
         /// <summary>Выбрать словарь констант по типу стены</summary>
-        private static Dictionary<EArmWall, double> GetDict(EWallTypes eWallTypes)
+        private static Dictionary<EValuesExportData, double> GetDict(EWallTypes eWallTypes)
         {
             if (eWallTypes == EWallTypes.AR_Brick) return ConstantsBrick;
             if (eWallTypes == EWallTypes.AR_Aerocrete) return ConstantsAerocrete;
@@ -204,9 +113,9 @@ namespace Reinforcement
         /// <summary>
         /// Установка константного параметра
         /// </summary>
-        public static bool SetConstantsParameter(EWallTypes eWallTypes, EArmWall eArmWall, double value)
+        public static bool SetConstantsParameter(EWallTypes eWallTypes, EValuesExportData eArmWall, double value)
         {
-            Dictionary<EArmWall, double> dict = GetDict(eWallTypes);
+            Dictionary<EValuesExportData, double> dict = GetDict(eWallTypes);
             if (dict == null) return false;
 
             if (dict.ContainsKey(eArmWall))
@@ -217,9 +126,9 @@ namespace Reinforcement
             return false; // ключа нет — а добавлять его извне не даём, константы фиксированы
         }
         /// <summary>Публичное чтение одной константы (для инициализации окна)</summary>
-        public static double GetConstant(EWallTypes eWallTypes, EArmWall key)
+        public static double GetConstant(EWallTypes eWallTypes, EValuesExportData key)
         {
-            Dictionary<EArmWall, double> dict = GetDict(eWallTypes);
+            Dictionary<EValuesExportData, double> dict = GetDict(eWallTypes);
             if (dict == null) return 0;
             return dict.TryGetValue(key, out double v) ? v : 0;
         }
@@ -244,12 +153,12 @@ namespace Reinforcement
         public static Dictionary<EValuesExportData, double> GetConstantsParameters(
             EWallTypes eWallTypes, Element element, bool getFromElement, bool getOnlyNonZero)
         {
-            Dictionary<EArmWall, double> dictConst = GetConstantsParameters(eWallTypes);
+            Dictionary<EValuesExportData, double> dictConst = GetConstantsParameters(eWallTypes);
             if (!getFromElement || element == null) return dictConst;
 
             foreach (var key in dictConst.Keys)
             {
-                if (!NamesParametersInRevit.TryGetValue(key, out string nameParamRevit)) continue;
+                if (!EValuesGetter.NamesParametersInRevit.TryGetValue(key, out string nameParamRevit)) continue;
 
                 // параметр может лежать на экземпляре или на типе — проверяем оба варианта
                 Parameter param = element.LookupParameter(nameParamRevit);
@@ -296,7 +205,7 @@ namespace Reinforcement
             if (!FillParametersInProject) { return; }
             if (element == null || eCArmWallElement == null) return;
            
-            Dictionary<EArmWall, double> dict = GetDict(eWallTypes);
+            Dictionary<EValuesExportData, double> dict = GetDict(eWallTypes);
             if (dict == null) return;
 
             // тип элемента ищем один раз, а не в каждой итерации
@@ -305,11 +214,11 @@ namespace Reinforcement
             if (typeId != null && typeId != ElementId.InvalidElementId)
                 typeElem = element.Document?.GetElement(typeId);
 
-            foreach (EArmWall key in dict.Keys)
+            foreach (EValuesExportData key in dict.Keys)
             {
                 
                 double value = eCArmWallElement[key];
-                if (!NamesParametersInRevit.TryGetValue(key, out string nameParamRevit)) continue;
+                if (!EValuesGetter.NamesParametersInRevit.TryGetValue(key, out string nameParamRevit)) continue;
 
                 // сначала экземпляр, потом тип
                 Parameter param = element.LookupParameter(nameParamRevit);

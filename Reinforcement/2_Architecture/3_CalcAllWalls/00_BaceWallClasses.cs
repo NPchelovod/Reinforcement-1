@@ -306,7 +306,7 @@ namespace Reinforcement
                 new ExportElement("Стена наружная?", ECInsulation.OutWallFromNAmeMaterial ? 1 : 0, data,EValuesExportData.Wall_Insulation_OutSideWallName),
 
                 new ExportElement("Стена примыкающие стены, Id", string.Join(",", RelationsWalls.Select(x => x.Id)),data,EValuesExportData.Wall_OtherWallsIds),
-                new ExportElement("Стена примыкающие стены, колво", string.Join(",", RelationsWalls.Count),data,EValuesExportData.Wall_OtherWallsCount),
+                new ExportElement("Стена примыкающие стены, колво", RelationsWalls.Count,data,EValuesExportData.Wall_OtherWallsCount),
                 new ExportElement("Стена примыкающие стены кр, Id", string.Join(",", RelationsWallsKR.Select(x => x.Id)),data,EValuesExportData.Wall_OtherWallsKRIds),
                 new ExportElement("Стена примыкающие стены кр, колво", string.Join(",", RelationsWallsKR.Count),data,EValuesExportData.Wall_OtherWallsKRCount),
                 new ExportElement("Стена окна и двери, Id", string.Join(",", ECDoorOrWindows.Select(x => x.Id)),data),

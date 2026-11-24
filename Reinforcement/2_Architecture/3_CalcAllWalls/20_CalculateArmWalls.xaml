@@ -123,59 +123,43 @@
                     <!-- ============ Кирпичные стены ============ -->
                     <TextBlock Text="Кирпичные стены" HorizontalAlignment="Center" FontSize="16" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов армирования на этаж" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding NumberOfRowsInBricks}"/>
+                        <TextBlock Text="Шаг армирования на этаж, мм" Margin="7" Width="300"/>
+                        <TextBox Width="200" Margin="7" Text="{Binding StepArmOfRowsInBricks}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Шаг деталей (крепление к перекрытию), мм" Margin="7" Width="300"/>
                         <TextBox Width="200" Margin="7" Text="{Binding StepOfTopJointsInBricks}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding NumberOfSideJointsInBricks}"/>
+                        <TextBlock Text="Шаг деталей (крепление по бокам), мм" Margin="7" Width="300"/>
+                        <TextBox Width="200" Margin="7" Text="{Binding StepOfHorJointsInBricks}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают окна" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForBricksWindow}"/>
+                        <TextBlock Text="Кол-во рядов арматуры у потолка, шт" Margin="7" Width="300"/>
+                        <TextBox Width="200" Margin="7" Text="{Binding CountDopArmInBricks}"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают двери" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForBricksDoor}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают витражи" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForBricksCurtains}"/>
-                    </StackPanel>
+
+
+
 
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
                     <!-- ============ Газобетонные стены ============ -->
                     <TextBlock Text="Газобетонные стены" HorizontalAlignment="Center" FontSize="16" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов армирования на этаж" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding NumberOfRowsInGasConcrete}"/>
+                        <TextBlock Text="Шаг армирования на этаж, мм" Margin="7" Width="300"/>
+                        <TextBox Width="200" Margin="7" Text="{Binding StepArmOfRowsInConcrete}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Шаг деталей (крепление к перекрытию), мм" Margin="7" Width="300"/>
                         <TextBox Width="200" Margin="7" Text="{Binding StepOfTopJointsInGasConcrete}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество боковых деталей на этаж данной высоты" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding NumberOfSideJointsInGasConcrete}"/>
+                        <TextBlock Text="Шаг деталей (крепление по бокам), мм" Margin="7" Width="300"/>
+                        <TextBox Width="200" Margin="7" Text="{Binding StepOfHorJointsInGasConcrete}"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают окна" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForGasConcreteWindow}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают двери" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForGasConcreteDoor}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Количество рядов арм., которое перерезают витражи" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding RowsOfReductionReinforcementForGasConcreteCurtains}"/>
-                    </StackPanel>
-
+                    
+                   
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
                     <!-- ============ Настройки ============ -->
@@ -206,9 +190,9 @@
                         <TextBlock Text="Армирование (м²)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding ReinforcementInBricksM2, StringFormat=F2}"/>
-                        <TextBlock Text="" Width="140" Margin="7"/>
+                        <TextBlock Text="Вилатерм (м²)" Width="140" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
-                                 Visibility="Hidden"/>
+                    Text="{Binding AreaOfVilatermInBricks, StringFormat=F2}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Крепление к перекрытию (шт.)" Width="170" Margin="7"/>
@@ -233,9 +217,9 @@
                         <TextBlock Text="Армирование (м²)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding ReinforcementInGasConcreteM2, StringFormat=F2}"/>
-                        <TextBlock Text="" Width="140" Margin="7"/>
+                        <TextBlock Text="Вилатерм (м²)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
-                                 Visibility="Hidden"/>
+                        Text="{Binding AreaVilatermInGasConcreteM2, StringFormat=F2}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <TextBlock Text="Крепление к перекрытию (шт.)" Margin="7" Width="170"/>
