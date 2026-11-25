@@ -330,6 +330,7 @@ namespace Reinforcement
                 new ExportElement("Стена комнаты, колво комнат",ECRooms.Count,data,EValuesExportData.Wall_Room_Count),
                  new ExportElement("Стена комнаты, Id", string.Join(",", ECRooms.Select(x => x.Id)),data,EValuesExportData.Wall_Room_Ids),
                  new ExportElement("Стена комнаты, номера", string.Join(",", ECRooms.Select(x => x.Number)),data, EValuesExportData.Wall_Room_Numbers),
+                  new ExportElement("Стена комнаты, типы помещений", string.Join(",", ECRooms.Select(x => x.TypeOfRoom)),data, EValuesExportData.Wall_Room_Types),
                 }
             );
             _exportElements = data;
@@ -414,6 +415,14 @@ namespace Reinforcement
         }
     }
 
+    public enum ETypeInsidersWalls
+    { 
+        None=0,
+        Window,
+        Door,
+        Vitrage,// витраж
+    }
+
     public class ECDoorOrWindow: IElement, IExportStringDoubleData
     {
         public Element Element { get; set; }
@@ -433,6 +442,8 @@ namespace Reinforcement
         public HashSet<ECWall> ECWalls = new HashSet<ECWall>();//каким стенам принадлежит
 
 
+        public ETypeInsidersWalls TypeInsidersWalls;
+        
 
         public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
@@ -440,8 +451,8 @@ namespace Reinforcement
             if (_exportElements != null) { return _exportElements; }
 
             var data = new List<ExportElement>();
-            bool isDoor = BuiltInCategory == BuiltInCategory.OST_Doors;
-            if (isDoor)
+            
+            if (TypeInsidersWalls== ETypeInsidersWalls.Door)
             {
                 data.AddRange(
                     new List<ExportElement>() {
@@ -453,7 +464,7 @@ namespace Reinforcement
                 new ExportElement("Дверь_Отметка, м",OtmZ,data,EValuesExportData.Door_Level_Elevation ){SumItog=false},
                 });
             }
-            else
+            else if(TypeInsidersWalls == ETypeInsidersWalls.Window)
             {
                 data.AddRange(
                     new List<ExportElement>() {
@@ -464,6 +475,18 @@ namespace Reinforcement
                 new ExportElement("Окно_Отметка, м",OtmZ,data, EValuesExportData.Window_Level_Elevation ){SumItog=false},
                 });
             }
+            else if (TypeInsidersWalls == ETypeInsidersWalls.Vitrage)
+            {
+                data.AddRange(
+                    new List<ExportElement>() {
+                new ExportElement("Витраж_Id",Id.ToString(),data ),
+                new ExportElement("Витраж_Высота, м",HeightM,data,EValuesExportData.Vitrage_Height_m),
+                new ExportElement("Витраж_Длина, м",LengthM ,data,EValuesExportData.Vitrage_Length_m),
+                new ExportElement("Витраж_Площадь, м2",AreaM2,data,EValuesExportData.Vitrage_Area_m2, "Vitrage_Height_m*Vitrage_Length_m"),
+                new ExportElement("Витраж_Отметка, м",OtmZ,data, EValuesExportData.Vitrage_Level_Elevation ){SumItog=false},
+                });
+            }
+
             _exportElements = data;
             return data;
         }

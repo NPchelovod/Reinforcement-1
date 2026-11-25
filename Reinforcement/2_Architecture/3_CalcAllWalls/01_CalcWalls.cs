@@ -582,22 +582,31 @@ namespace Reinforcement
             IList<ElementId> insertIds = wall.FindInserts(true, true, true, true);
             foreach (ElementId depId in insertIds)
             {
-                Element doorOrWind = doc.GetElement(depId);
-                if (doorOrWind == null) continue;
-                if (doorOrWind.Category == null) continue;
-                var bic = doorOrWind.Category.BuiltInCategory;
+                Element dep = doc.GetElement(depId);
+                if (dep == null) continue;
+                if (dep.Category == null) continue;
+                var bic = dep.Category.BuiltInCategory;
 
-                if(bic!= BuiltInCategory.OST_Doors && bic != BuiltInCategory.OST_Windows) { continue; }
+
+                // --- 1. Определяем, что это ---
+                bool isDoor= bic == BuiltInCategory.OST_Doors;
+                bool isWind = bic == BuiltInCategory.OST_Windows;
+                                  
+                bool isCurtainWall = dep is Wall depWall
+                                  && depWall.WallType?.Kind == WallKind.Curtain;
+
+                if (!isDoor && !isWind &&!isCurtainWall) continue;
+
                 // Проверяем, что элемент хостится именно в этой стене,
                 // а не во встроенной (embedded) стене
-                if (doorOrWind is FamilyInstance fi)
+                if (dep is FamilyInstance fi)
                 {
                     Element host = fi.Host;
                     if (host == null || host.Id != wall.Id) continue;
                 }
 
                 //надо получить окна и двери их размеры габаритные
-                var dw = GetECDoorOrWindow(doorOrWind, eCWall, wall,bic);
+                var dw = GetECDoorOrWindow(dep, eCWall, wall,bic, doc);
                 if (dw != null)
                 {
                     eCWall.ECDoorOrWindows.Add(dw);
@@ -606,7 +615,7 @@ namespace Reinforcement
             }
         }
         private static Dictionary<long, ECDoorOrWindow> DictECDoorOrWindow = new Dictionary<long, ECDoorOrWindow>();
-        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, ECWall eCWall, Wall wall, BuiltInCategory bic)
+        private static ECDoorOrWindow GetECDoorOrWindow(Element doorOrWind, ECWall eCWall, Wall wall, BuiltInCategory bic, Document doc)
         {
             ElementId id = doorOrWind.Id;
             long idL = id.Value;
@@ -617,12 +626,27 @@ namespace Reinforcement
                 return dw;
             }
 
-             dw = new ECDoorOrWindow
+            ETypeInsidersWalls type = ETypeInsidersWalls.None;
+            switch (bic)
+            {
+                case BuiltInCategory.OST_Doors:
+                    type=ETypeInsidersWalls.Door;
+                    break;
+                case BuiltInCategory.OST_Windows:
+                    type=ETypeInsidersWalls.Window;
+                    break;
+                case BuiltInCategory.OST_Walls:
+                    type=ETypeInsidersWalls.Vitrage;
+                    break;
+            }
+            
+            dw = new ECDoorOrWindow
             {
                 ElementId = id,
                 Id = idL,
                 Element = doorOrWind,
-                Name = doorOrWind.Name
+                Name = doorOrWind.Name,
+                TypeInsidersWalls = type,
             };
             dw.ECWalls.Add(eCWall);//какой стене принадлежит
 
@@ -631,12 +655,36 @@ namespace Reinforcement
                            ?? doorOrWind.get_Parameter(BuiltInParameter.WINDOW_WIDTH);
             var heightParam = doorOrWind.get_Parameter(BuiltInParameter.DOOR_HEIGHT)
                            ?? doorOrWind.get_Parameter(BuiltInParameter.WINDOW_HEIGHT);
-
-            double widthM = (widthParam != null && widthParam.HasValue)
-                ? RevitAPI.ToMm(widthParam.AsDouble()) / 1000.0 : 0.0;
-            double heightM = (heightParam != null && heightParam.HasValue)
-                ? RevitAPI.ToMm(heightParam.AsDouble()) / 1000.0 : 0.0;
-
+            double widthM = 0; double heightM = 0;
+            if (type != ETypeInsidersWalls.Vitrage)
+            {
+                widthM = (widthParam != null && widthParam.HasValue)
+                    ? RevitAPI.ToMm(widthParam.AsDouble()) / 1000.0 : 0.0;
+                heightM = (heightParam != null && heightParam.HasValue)
+                    ? RevitAPI.ToMm(heightParam.AsDouble()) / 1000.0 : 0.0;
+            }
+            else if(doorOrWind is Wall vitrage)
+            {
+                double lenFt = 0;
+                if (vitrage.Location is LocationCurve lc && lc.Curve != null)
+                {
+                    
+                    lenFt = lc.Curve.Length;
+                }
+                else
+                {
+                    var pLen = vitrage.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
+                    if (pLen != null && pLen.HasValue) lenFt = pLen.AsDouble();
+                }
+                widthM = UnitUtils.ConvertFromInternalUnits(lenFt, UnitTypeId.Meters);
+                double heightFt = GetWallHeight(vitrage, doc);
+                heightM = UnitUtils.ConvertFromInternalUnits(heightFt, UnitTypeId.Meters);
+            }
+            
+            // ============================================================
+            // 2. Высота (учитываем привязку к уровню сверху)
+            // ============================================================
+            
             dw.LengthM = widthM;
             dw.HeightM = heightM;
             dw.AreaM2 = widthM * heightM;

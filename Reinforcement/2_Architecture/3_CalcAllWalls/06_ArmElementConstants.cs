@@ -11,59 +11,59 @@ namespace Reinforcement
     /// <summary>
     /// Параметры элемента армирования стены (индексы массива значений ECArmWallElement).
     /// </summary>
-    public enum EArmWall
-    {
-        LevelHM,// отметка уровня
-        WallId,//Id стены
-        WallHeightMM,          // высота стены, мм
-        WallLengthMM,          // длина стены, мм
-        WallWidthMM,           // толщина стены, мм
-        WallAreaNetM2,// чистая площадь (с проёмами)  — HOST_AREA_COMPUTE
-        WallAreaGrossM2,// габаритная площадь (без проёмов)
-        WallOpeningsAreaM2,// площадь всех проёмов = Gross − Net
-        WallPlanAreaM2,// площадь в плане: Length × Width
+    //public enum EArmWall
+    //{
+    //    LevelHM,// отметка уровня
+    //    WallId,//Id стены
+    //    WallHeightMM,          // высота стены, мм
+    //    WallLengthMM,          // длина стены, мм
+    //    WallWidthMM,           // толщина стены, мм
+    //    WallAreaNetM2,// чистая площадь (с проёмами)  — HOST_AREA_COMPUTE
+    //    WallAreaGrossM2,// габаритная площадь (без проёмов)
+    //    WallOpeningsAreaM2,// площадь всех проёмов = Gross − Net
+    //    WallPlanAreaM2,// площадь в плане: Length × Width
 
-        CountDoorOrWindow,//количество окон и дверей
-        CountKRBorder,// количество примыканий стены к стенам кр - максимум с 2 сторон
+    //    CountDoorOrWindow,//количество окон и дверей
+    //    CountKRBorder,// количество примыканий стены к стенам кр - максимум с 2 сторон
 
-        //константные параметры для расчета
+    //    //константные параметры для расчета
 
-        ArmStepMM,             // шаг рядов армирования, мм
-        ArmTopDopRow,             // количество дополнительных рядов армирования у потолка (для кирпича)
+    //    ArmStepMM,             // шаг рядов армирования, мм
+    //    ArmTopDopRow,             // количество дополнительных рядов армирования у потолка (для кирпича)
 
-        ArmDetailArmLengthMM,  // длина арматуры обрамления закладной, мм
-        ArmDetailArmCount,     // количество арматурин на одну деталь обрамления 2 штуки обычно
-        ArmCountCrossRow,//=2 - кол-во стержней в одном шве кирпичном - всю погонную длину умножаем на это кол-во
+    //    ArmDetailArmLengthMM,  // длина арматуры обрамления закладной, мм
+    //    ArmDetailArmCount,     // количество арматурин на одну деталь обрамления 2 штуки обычно
+    //    ArmCountCrossRow,//=2 - кол-во стержней в одном шве кирпичном - всю погонную длину умножаем на это кол-во
 
-        ArmRowsCutByWindow,//рядов перерезают окна
-        ArmRowsCutByDoor,//рядов перерезают двери
-        ArmRowsCutByCurtain,//рядов перерезают витражи
+    //    ArmRowsCutByWindow,//рядов перерезают окна
+    //    ArmRowsCutByDoor,//рядов перерезают двери
+    //    ArmRowsCutByCurtain,//рядов перерезают витражи
 
-        StepDetailsMM,         // шаг деталей крепежа, мм
-        StepDetailsRoofMM,     // шаг крепежа плоскости стены к потолку, мм
-
-
-        //посчитанные данные
-        DetailsRoofInt,        // количество крепежа по длине стены (плоскость к потолку)
-        DetailsWallRow,//рядов в стене деталей
-        DetailsWallsInt,       // количество боковых деталей (у примыканий к ЖБ-стенам)
-        DetailsAllCount,// суммарное кол-во деталей
-
-        ArmRow,                // количество рядов армирования на этаж
-        ArmGeneralTotalMM,     // армирование основное, мм (без учёта проёмов)
-        ArmTopTotalMM,         // армирование верха кирпичной стены, мм
-        ArmDetailsTotalMM,     // арматура обрамления закладных кирпичной стены, мм
-
-        MinesArmFromWindAndDoorMM,      // вычет основного армирования по проёмам, мм
-        MinesArmDetailsFromWindAndDoorMM, // вычет арматуры обрамления по проёмам, мм
-
-        ArmAllM,//длина арматуры общая пог метры, наверно надо на 2 домножить
-        ArmAllM2,
-        VilatermM,
-        VilatermM2,
+    //    StepDetailsMM,         // шаг деталей крепежа, мм
+    //    StepDetailsRoofMM,     // шаг крепежа плоскости стены к потолку, мм
 
 
-    }
+    //    //посчитанные данные
+    //    DetailsRoofInt,        // количество крепежа по длине стены (плоскость к потолку)
+    //    DetailsWallRow,//рядов в стене деталей
+    //    DetailsWallsInt,       // количество боковых деталей (у примыканий к ЖБ-стенам)
+    //    DetailsAllCount,// суммарное кол-во деталей
+
+    //    ArmRow,                // количество рядов армирования на этаж
+    //    ArmGeneralTotalMM,     // армирование основное, мм (без учёта проёмов)
+    //    ArmTopTotalMM,         // армирование верха кирпичной стены, мм
+    //    ArmDetailsTotalMM,     // арматура обрамления закладных кирпичной стены, мм
+
+    //    MinesArmFromWindAndDoorMM,      // вычет основного армирования по проёмам, мм
+    //    MinesArmDetailsFromWindAndDoorMM, // вычет арматуры обрамления по проёмам, мм
+
+    //    ArmAllM,//длина арматуры общая пог метры, наверно надо на 2 домножить
+    //    ArmAllM2,
+    //    VilatermM,
+    //    VilatermM2,
+
+
+    //}
     ///// <summary>
     ///// Строковые данные
     ///// </summary>
@@ -85,20 +85,49 @@ namespace Reinforcement
         // константы для кирпича
         private static Dictionary<EValuesExportData, double> ConstantsBrick = new Dictionary<EValuesExportData, double>()
         {
-            { EValuesExportData. Wall_Arm_Row_Step_m,             0.600  },  // шаг армирования, мм
-            { EValuesExportData.Wall_Detailed_Row_Step_m,         0.600  },  // шаг деталей, мм
-            { EValuesExportData. Wall_Detailed_Roof_Step_m,     1.500 },  // шаг деталей у перекрытия/крыши, мм
+            { EValuesExportData. Wall_Arm_Bool_CalcFromStepOrRows,             0  },  //если 1 то из шага, иначе из рядов
+
+            //1 Вариант - из шага надо определять Wall_Arm_Bool_CalcFromStepOrRows=1
+            { EValuesExportData. Wall_Arm_Row_Step_m,             0.600  },  // шаг армирования, м
+            { EValuesExportData.Wall_Detailed_Row_Step_m,         1.250  },  // шаг деталей, м
+
+            //2 Вариант - из колва надо определять все остальное, быстрее и лучше Wall_Arm_Bool_CalcFromStepOrRows=0
+             { EValuesExportData. Wall_Arm_Rows,            2.0  },  //рядов армирования
+            { EValuesExportData. Wall_Detailed_Rows,         2.0  },  // рядов деталей
+
+             { EValuesExportData.Wall_Arm_Row_Window,  1  }, // рядов арматуры перерезает
+              { EValuesExportData.Wall_Arm_Row_Door,  1  }, // рядов арматуры перерезает
+               { EValuesExportData.Wall_Arm_Row_Vitrage,  1  }, // рядов арматуры перерезает
+
+
+            { EValuesExportData. Wall_Detailed_Roof_Step_m,     1.500 },  // шаг деталей у перекрытия/крыши, м
+
             { EValuesExportData. Wall_Arm_DopTop_Count,          3.0    },  // доп. верхних рядов армирования
-            { EValuesExportData. Wall_Arm_Detailed_Obram_Length_m,  1.000 },  // длина арматурины в детали, мм
+            { EValuesExportData. Wall_Arm_Detailed_Obram_Length_m,  1.000 },  // длина арматурины в детали, м
             { EValuesExportData.Wall_Arm_Detailed_Obram_Count,     2    },  // на одну деталь 2 арматурины
            
         };
         //для газобетона
                 private static Dictionary<EValuesExportData, double> ConstantsAerocrete = new Dictionary<EValuesExportData, double>()
         {
-            { EValuesExportData. Wall_Arm_Row_Step_m,             0.750  },
-            {EValuesExportData.Wall_Detailed_Row_Step_m,         0.1250 },
-            { EValuesExportData. Wall_Detailed_Roof_Step_m,    3.000 },
+            { EValuesExportData. Wall_Arm_Bool_CalcFromStepOrRows,             0  },  //если 1 то из шага, иначе из рядов
+
+
+            //1 Вариант - из шага надо определять Wall_Arm_Bool_CalcFromStepOrRows=1
+            { EValuesExportData. Wall_Arm_Row_Step_m,             0.600  },  // шаг армирования, м
+            {EValuesExportData.Wall_Detailed_Row_Step_m,         1.250 },  // шаг деталей, м
+
+            //2 Вариант - из колва надо определять
+             { EValuesExportData. Wall_Arm_Rows,            2.0  },  //рядов армирования
+            { EValuesExportData. Wall_Detailed_Rows,         2.0  },  // рядов деталей
+
+             { EValuesExportData.Wall_Arm_Row_Window,  1  }, // рядов арматуры перерезает
+              { EValuesExportData.Wall_Arm_Row_Door,  1  }, // рядов арматуры перерезает
+               { EValuesExportData.Wall_Arm_Row_Vitrage,  1  }, // рядов арматуры перерезает
+
+
+
+            { EValuesExportData. Wall_Detailed_Roof_Step_m,    3.000 },// шаг деталей у перекрытия/крыши, м
             
         };
 

@@ -163,7 +163,7 @@
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
                     <!-- ============ Настройки ============ -->
-                    <TextBlock Text="Настройки заполнения параметров" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" />
+                    <TextBlock Text="//не трогать - не работает пока//Настройки заполнения параметров" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" />
                     <CheckBox Content="1.1 Брать для расчета параметры из значение ЕС_параметр стен (игнорировать настройки)"
                               IsChecked="{Binding ReadParametersFromWalls}" Margin="20,5,7,0"/>
                     <CheckBox Content="2.1 Заполнять параметры самим стенам в проекте"

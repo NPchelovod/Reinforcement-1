@@ -47,6 +47,7 @@ namespace Reinforcement
         Wall_Room_Count,
         Wall_Room_Ids,
         Wall_Room_Numbers,
+        Wall_Room_Types,// типы помещения
 
         //Двери и окна вместе
         Wall_DoorsAndWindows_Count,
@@ -61,6 +62,12 @@ namespace Reinforcement
         Wall_Window_Ids,
         Wall_Window_L_Average_m,//средняя длина двери среди всех дверей стены
         Wall_Window_H_Average_m,//средняя высота двери среди всех дверей стены
+
+        // параметры витражай
+        Wall_Vitrage_Count,
+        Wall_Vitrage_Ids,
+        Wall_Vitrage_L_Average_m,//средняя длина двери среди всех дверей стены
+        Wall_Vitrage_H_Average_m,//средняя высота двери среди всех дверей стены
 
         //Тип стены
         WallType_Id,
@@ -85,6 +92,12 @@ namespace Reinforcement
         Window_Length_m,
         Window_Area_m2,
         Window_Level_Elevation,
+        //Витраж
+        Vitrage_Height_m,
+        Vitrage_Length_m,
+        Vitrage_Area_m2,
+        Vitrage_Level_Elevation,
+
 
         //Слойдвери
         WallLayer_Width_m,
@@ -108,6 +121,9 @@ namespace Reinforcement
 
         //Расчетные параметры
         //Начальные параметры
+
+        Wall_Arm_Bool_CalcFromStepOrRows,//если 1 то из шага, иначе из рядов
+
         Wall_Arm_DopTop_Count,//дополнительная арматура сверху - у кирпича 3 штуки
 
         Wall_Arm_Detailed_Obram_Length_m,//длина обрамления детелей = 1 метра
@@ -124,12 +140,12 @@ namespace Reinforcement
         //Расчетные параметры
         //вычисленные параметры
 
-        Wall_Datailed_Colums,//рядов вертикальных у деталей
-        Wall_Datailed_Rows,//горизонтальных рядов у деталей
+        Wall_Detailed_Colums,//рядов вертикальных у деталей
+        Wall_Detailed_Rows,//горизонтальных рядов у деталей
 
-        Wall_Datailed_Hor_Count,//колво горизонтельных деталей, колво стен* кол во рядов закладных
-        Wall_Datailed_Roof_Count,//==Wall_Datailed_Colums - колво вертикальных деталей
-        Wall_Datailed_Count,//всего деталей==Wall_Datailed_Roof_Count+ Wall_Datailed_Hor_Count
+        Wall_Detailed_Hor_Count,//колво горизонтельных деталей, колво стен* кол во рядов закладных
+        Wall_Detailed_Roof_Count,//==Wall_Detailed_Colums - колво вертикальных деталей
+        Wall_Detailed_Count,//всего деталей==Wall_Detailed_Roof_Count+ Wall_Detailed_Hor_Count
 
         Wall_Arm_Rows,//рядов армирования
         Wall_Arm_Roof_Count,//рядов армирования по вертикале
@@ -140,6 +156,8 @@ namespace Reinforcement
 
         Wall_Arm_Row_Window,
         Wall_Arm_Row_Door,
+        Wall_Arm_Row_Vitrage,
+
         Wall_Arm_MinesArmProem_m,
         Wall_Arm_Detailed_Mines_m, // вычитание если около дверь или окно
 
@@ -177,7 +195,7 @@ namespace Reinforcement
     { EValuesExportData.Wall_OpeningsAreaM2,          "Стена площадь проёмов, м2" },
     { EValuesExportData.Wall_PlanAreaM2,              "Стена площадь в плане, м2" },
     { EValuesExportData.Wall_VolumeM3,                "Стена объём, м3" },
-    { EValuesExportData.Wall_Insulation_OutSideWallName, "Стена наружная?" },
+    { EValuesExportData.Wall_Insulation_OutSideWallName,"Стена наружная?" },
 
     // ==================== Примыкающие стены ====================
     { EValuesExportData.Wall_OtherWallsIds,           "Стена примыкающие стены, Id" },
@@ -189,7 +207,7 @@ namespace Reinforcement
     { EValuesExportData.Wall_Room_Count,              "Стена комнат, кол-во" },
     { EValuesExportData.Wall_Room_Ids,                "Стена комнат, Id" },
     { EValuesExportData.Wall_Room_Numbers,            "Стена комнат, номера" },
-
+    { EValuesExportData.Wall_Room_Types,                "Стена комнат, типы помещений" },
     // ==================== Проёмы (двери и окна) ====================
     { EValuesExportData.Wall_DoorsAndWindows_Count,   "Стена двери+окна, кол-во" },
     { EValuesExportData.Wall_Doors_Count,             "Стена двери, кол-во" },
@@ -235,11 +253,11 @@ namespace Reinforcement
     { EValuesExportData.Wall_Detailed_Roof_Step_m,    "Детали шаг по верху, м" },
 
     // ==================== Армирование: детали ====================
-    { EValuesExportData.Wall_Datailed_Colums,         "Детали: столбцов, шт" },
-    { EValuesExportData.Wall_Datailed_Rows,           "Детали: рядов, шт" },
-    { EValuesExportData.Wall_Datailed_Hor_Count,      "Детали: горизонтальных, шт" },
-    { EValuesExportData.Wall_Datailed_Roof_Count,     "Детали: по верху, шт" },
-    { EValuesExportData.Wall_Datailed_Count,          "Детали: всего, шт" },
+    { EValuesExportData.Wall_Detailed_Colums,         "Детали: столбцов, шт" },
+    { EValuesExportData.Wall_Detailed_Rows,           "Детали: рядов, шт" },
+    { EValuesExportData.Wall_Detailed_Hor_Count,      "Детали: горизонтальных, шт" },
+    { EValuesExportData.Wall_Detailed_Roof_Count,     "Детали: по верху, шт" },
+    { EValuesExportData.Wall_Detailed_Count,          "Детали: всего, шт" },
 
     // ==================== Армирование: расчёт ====================
     { EValuesExportData.Wall_Arm_Rows,                "Арм. рядов, шт" },
@@ -257,7 +275,7 @@ namespace Reinforcement
     { EValuesExportData.Wall_Arm_Vilaterm_Itog_m,     "Вилатерм итог, пог.м" },
     { EValuesExportData.Wall_Arm_Vilaterm_Itog_m2,    "Вилатерм итог, м2" },
 
-    { EValuesExportData.Wall_Arm_Itog_m,              "Арм. итог, пог.м" },
+    { EValuesExportData.Wall_Arm_Itog_m,              "Арм. итог, пог.м одного прута" },
     { EValuesExportData.Wall_Arm_Itog_m2,             "Арм. итог, м2" },
    
 };

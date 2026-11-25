@@ -270,8 +270,8 @@ namespace Reinforcement
 
             LengthOfVilatermInBricks = answerBrick[EValuesExportData.Wall_Arm_Vilaterm_Itog_m] * 2;
 
-            NumberOfJointsInBricks = (int)answerBrick[EValuesExportData.Wall_Datailed_Roof_Count];
-            TotalNumberOfSideJointsInBricks = (int)answerBrick[EValuesExportData.Wall_Datailed_Hor_Count];
+            NumberOfJointsInBricks = (int)answerBrick[EValuesExportData.Wall_Detailed_Roof_Count];
+            TotalNumberOfSideJointsInBricks = (int)answerBrick[EValuesExportData.Wall_Detailed_Hor_Count];
 
             // ---------- Газобетон ----------
             ReinforcementInGasConcrete = answerAer[EValuesExportData.Wall_Arm_Itog_m];
@@ -280,8 +280,8 @@ namespace Reinforcement
             // Wall_Length_m уже в метрах — деление на 1000 не нужно
             LengthOfVilatermInGasConcrete = answerAer[EValuesExportData.Wall_Length_m] * 2;
 
-            NumberOfJointsInGasConcrete = (int)answerAer[EValuesExportData.Wall_Datailed_Roof_Count];
-            TotalNumberOfSideJointsInGasConcrete = (int)answerAer[EValuesExportData.Wall_Datailed_Hor_Count];
+            NumberOfJointsInGasConcrete = (int)answerAer[EValuesExportData.Wall_Detailed_Roof_Count];
+            TotalNumberOfSideJointsInGasConcrete = (int)answerAer[EValuesExportData.Wall_Detailed_Hor_Count];
         }
 
         /// <summary>
