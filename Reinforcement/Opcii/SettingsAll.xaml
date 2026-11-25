@@ -26,6 +26,14 @@
            Visibility="Collapsed"
            TextWrapping="Wrap"/>
             
+            <TextBlock x:Name="txtShareDostup"
+        Text="Disk Share: ..."
+        Margin="0,0,0,10"
+        Foreground="Green"
+        FontWeight="Bold"
+        FontSize="13"
+        Visibility="Collapsed"
+        TextWrapping="Wrap"/>
             <CheckBox x:Name="chkFillAuthor"
                       Content="Заполнять автора (ЕС_Автор)"
                       IsChecked="True"
@@ -55,6 +63,31 @@
             Content="Показывать возникающие ошибки (вылет при первом error, для анализа ошибки)"
             IsChecked="False"
                 Margin="0,5,0,5"/>
+            <!-- === НОВЫЙ БЛОК: текстовые данные === -->
+            <TextBlock Text="Текстовые данные"
+           FontWeight="Bold"
+           Margin="0,15,0,5"/>
+
+            <DockPanel LastChildFill="True" Margin="0,0,0,5">
+                <Button x:Name="btnCopyTextData"
+            Content="Копировать"
+            Width="100" Height="25"
+            DockPanel.Dock="Right"
+            Margin="5,0,0,0"
+            VerticalAlignment="Top"
+            Click="CopyTextDataButton_Click"/>
+                <TextBox x:Name="txtData"
+             Text=""
+             IsReadOnly="True"
+             AcceptsReturn="True"
+             TextWrapping="Wrap"
+             VerticalScrollBarVisibility="Auto"
+             HorizontalScrollBarVisibility="Auto"
+             Height="140"
+             FontFamily="Consolas"
+             Padding="4"
+             BorderBrush="#FFB0B0B0"/>
+            </DockPanel>
 
             <!-- Другие булевы настройки можно добавить аналогично -->
             <!--

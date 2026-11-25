@@ -183,6 +183,14 @@
       <DependentUpon>20_CalculateArmWalls.xaml</DependentUpon>
     </Compile>
     <Compile Include="2_Architecture\3_CalcAllWalls\21_AR_Arm_Wall_LoadWPF.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\0_CmdWorksetManager.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\1_WorksetRule.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\2_WorksetAssignService.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\3_WorksetAssignHandler.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\4_WorksetManagerViewModel.cs" />
+    <Compile Include="2_Architecture\4_WorkNabors\WorksetManager.xaml.cs">
+      <DependentUpon>WorksetManager.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Administrator\1_StatUsers.cs" />
     <Compile Include="Administrator\0_WriteAndRead.cs" />
     <Compile Include="Administrator\8_SyncError.cs" />
@@ -613,6 +621,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="2_Architecture\3_CalcAllWalls\20_CalculateArmWalls.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="2_Architecture\4_WorkNabors\WorksetManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

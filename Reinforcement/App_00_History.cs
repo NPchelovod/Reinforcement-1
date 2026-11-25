@@ -13,10 +13,10 @@ namespace Reinforcement
         /// <summary>
         /// Тут пиши конкретно текущего релиза отличия версии
         /// </summary>
-        private static string CurrentVersion = "Еще лучше | Программист: улучшен вывод истории версии";
+        private static string CurrentVersion = "Вид настроек чуть лучше";
 
         private static string DifferentZeor = "Отличия новой версии от вашей неизвестны";
-        private static string DifferentEquelPast = "Отличия версии те же, что у прошлой";
+        private static string DifferentEquelPast = "Отличия версии те же, что у прошлой, или не заполнены";
         public static UpdateStructVersion NewVersion = null;
         public static UpdateStructVersion OurVersion = null;
 

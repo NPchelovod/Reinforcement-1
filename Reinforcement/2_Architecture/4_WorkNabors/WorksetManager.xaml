@@ -1,0 +1,63 @@
+﻿<Window x:Class="Reinforcement.Worksets.WorksetManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Диспетчер рабочих наборов"
+        Width="1000" Height="700"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Режим работы -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <RadioButton Content="Только видимые на активном виде"
+                         IsChecked="{Binding OnlyVisible}" Margin="0,0,15,0" GroupName="Scope"/>
+            <RadioButton Content="Только выделенные"
+                         IsChecked="{Binding OnlySelected}" Margin="0,0,15,0" GroupName="Scope"/>
+            <CheckBox Content="Создавать отсутствующие рабочие наборы"
+                      IsChecked="{Binding CreateMissing}" Margin="20,0,0,0"/>
+        </StackPanel>
+
+        <!-- Вкладки -->
+        <TabControl Grid.Row="1">
+            <TabItem Header="Архитекторы (АР)">
+                <DataGrid ItemsSource="{Binding ArchRules}"
+                          AutoGenerateColumns="False" CanUserAddRows="False"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Вкл" Binding="{Binding IsEnabled}" Width="50"/>
+                        <DataGridTextColumn Header="Рабочий набор" Binding="{Binding WorksetName}" Width="220" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Критерии" Binding="{Binding Description}" Width="*" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Связи">
+                <DataGrid ItemsSource="{Binding LinkRules}"
+                          AutoGenerateColumns="False" CanUserAddRows="False"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Вкл" Binding="{Binding IsEnabled}" Width="50"/>
+                        <DataGridTextColumn Header="Рабочий набор" Binding="{Binding WorksetName}" Width="200" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Критерии" Binding="{Binding Description}" Width="*" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Общие">
+                <TextBlock Margin="20" TextWrapping="Wrap" Foreground="Gray"
+                           Text="Уровни, сетки и элементы по умолчанию остаются в рабочих наборах «Общие уровни и сетки» / «Рабочий набор 1». Правила для них не заданы."/>
+            </TabItem>
+        </TabControl>
+
+        <!-- Кнопка -->
+        <Button Grid.Row="2" Content="Распределить по рабочим наборам"
+                Command="{Binding AssignCommand}"
+                Height="40" Margin="0,10,0,0"
+                FontWeight="Bold"/>
+    </Grid>
+</Window>

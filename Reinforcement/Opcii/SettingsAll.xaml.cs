@@ -39,7 +39,7 @@ namespace Reinforcement
             chkUpdater.IsChecked = AnyChangeClass.AllUpdater;
 
             ControlVersion();
-
+            OtherProp();
             sborStatAndErrors.IsChecked = StatUsers.SborStat;
         }
 
@@ -83,6 +83,23 @@ namespace Reinforcement
             App_History.ReadData();
             UpdaterCheck.GetResult();
             ControlVersion();
+        }
+
+        private void OtherProp()
+        {
+            //другие характеристика например доступность диска share
+            if(App_Folders.IsTempFolders)
+            {
+                txtShareDostup.Text = "Диск Share не доступен";
+                txtShareDostup.Foreground = System.Windows.Media.Brushes.Red;
+                txtShareDostup.Visibility = Visibility.Visible;
+            }
+
+            string answer =
+            $"{GetDatePluginText}\r\n" +
+            $"Путь хранения текущего плагина: {App_Folders.TargetPluginDir}\r\n"+
+            $"Путь резервного хранения: {App_Folders.TempFolder}\r\n";
+            txtData.Text = answer;
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
@@ -167,5 +184,25 @@ namespace Reinforcement
             win.Owner = this;
             win.ShowDialog();
         }
+        private void CopyTextDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(txtData.Text))
+                {
+                    MessageBox.Show("Поле пустое — нечего копировать.",
+                                    "Копирование", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                Clipboard.SetText(txtData.Text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось скопировать в буфер обмена: {ex.Message}",
+                                "Копирование", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
     }
+
 }

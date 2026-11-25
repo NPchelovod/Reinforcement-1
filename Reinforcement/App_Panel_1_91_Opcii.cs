@@ -48,7 +48,7 @@ namespace Reinforcement
             App_Helper_Button.AddButtonToPullDownButton(item, "!Sync", assemblyPath, "Reinforcement.SyncError", "Синхронизироваться, для поиска ошибок", OV3);
             //App_Helper_Button.AddButtonToPullDownButton(item, "Разраб", assemblyPath, "Reinforcement.Statist", $"Кнопка Разработчика\n {SettingsWindow.GetDatePluginText}", OV1);
 
-
+            App_Helper_Button.AddButtonToPullDownButton(item, "Раб.Наборы", assemblyPath, "Reinforcement.Worksets.CmdWorksetManager", "Распределение по рабочим наборам", OV3);
             // Устанавливаем иконку для самой PulldownButton
             ImageSource imageSource = App_Helper_Button.Convert(OV1);
 
