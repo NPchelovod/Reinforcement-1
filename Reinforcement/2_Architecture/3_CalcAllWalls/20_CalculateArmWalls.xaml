@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="Вычисление армирования в АР стенах"
         SizeToContent="WidthAndHeight"
-        MinWidth="580" MinHeight="400"
+        MinWidth="720" MinHeight="400"
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="True"
@@ -30,6 +30,45 @@
             <Setter Property="Margin" Value="0,10,0,5"/>
         </Style>
 
+        <!-- Стиль для строки «пояснение» в таблице исходных данных -->
+        <Style x:Key="NoteTextStyle" TargetType="TextBlock">
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="4,2,2,2"/>
+        </Style>
+
+        <!-- Стиль для «текстовой» ячейки-заголовка параметра -->
+        <Style x:Key="ParamLabelStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="4,4,2,4"/>
+        </Style>
+        <!-- ================== ПОДСВЕТКА НЕАКТИВНОЙ ГРУППЫ ================== -->
+        <!-- «Шаг» красим красным, когда чекбокс «Из шага» ВЫКЛ (считаем по рядам) -->
+        <Style x:Key="StepValTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Margin" Value="2,2"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="False">
+                    <Setter Property="Foreground" Value="#D32F2F"/>
+                    <Setter Property="ToolTip" Value="Не используется при расчёте (считаем по рядам)"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- «Ряды» красим красным, когда чекбокс «Из шага» ВКЛ (считаем по шагу) -->
+        <Style x:Key="RowsValTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Margin" Value="2,2"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Foreground" Value="#D32F2F"/>
+                    <Setter Property="ToolTip" Value="Не используется при расчёте (считаем по шагу)"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <!-- Кнопки заголовка -->
         <Style x:Key="CaptionButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="34"/>
@@ -84,11 +123,8 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- заголовок -->
                 <RowDefinition Height="*"/>
-                <!-- прокручиваемый контент -->
                 <RowDefinition Height="Auto"/>
-                <!-- кнопки внизу -->
             </Grid.RowDefinitions>
 
             <!-- ============ ЗАГОЛОВОК ============ -->
@@ -120,48 +156,166 @@
                     <TextBlock Text="Ввод информации" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" Margin="0,10,0,0" />
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
-                    <!-- ============ Кирпичные стены ============ -->
-                    <TextBlock Text="Кирпичные стены" HorizontalAlignment="Center" FontSize="16" />
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг армирования на этаж, мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepArmOfRowsInBricks}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг деталей (крепление к перекрытию), мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepOfTopJointsInBricks}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг деталей (крепление по бокам), мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepOfHorJointsInBricks}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Кол-во рядов арматуры у потолка, шт" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding CountDopArmInBricks}"/>
-                    </StackPanel>
+                    <!-- ========================================================== -->
+                    <!--  ЕДИНАЯ ТАБЛИЦА: Параметр | Кирпич | Газобетон | Примечание -->
+                    <!-- ========================================================== -->
+                    <Grid Margin="4,0,4,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="240"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- 0: заголовки колонок -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 1: Способ расчёта -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 2: Шаг армирования, мм -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 3: Рядов армирования, шт -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 4: Шаг деталей по бокам, мм -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 5: Рядов деталей, шт -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 6: Шаг деталей у перекрытия, мм -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 7: Доп. верхних рядов, шт -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 8: Рядов перерезает окно -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 9: Рядов перерезает дверь -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 10: Рядов перерезает витраж -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 11: Длина арматурины в детали, мм -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 12: Арматурин на деталь, шт -->
+                        </Grid.RowDefinitions>
 
+                        <!-- 0. Заголовки -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Параметр" FontWeight="Bold" Margin="4,4,2,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Кирпич"   FontWeight="Bold" HorizontalAlignment="Center" Margin="2,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Газобетон" FontWeight="Bold" HorizontalAlignment="Center" Margin="2,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Примечание" FontWeight="Bold" Margin="4,4,2,4"/>
 
+                        <!-- 1. Способ расчёта -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Способ расчёта" Style="{StaticResource ParamLabelStyle}"/>
+                        <CheckBox  Grid.Row="1" Grid.Column="1" Content="Из шага" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsChecked="{Binding CalcFromStepInBricks}"
+                                   ToolTip="Если вкл — расчёт по Wall_Arm_Row_Step_m; иначе — по Wall_Arm_Rows"/>
+                        <CheckBox  Grid.Row="1" Grid.Column="2" Content="Из шага" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsChecked="{Binding CalcFromStepInConcrete}"
+                                   ToolTip="Если вкл — расчёт по Wall_Arm_Row_Step_m; иначе — по Wall_Arm_Rows"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" Text="Вкл — шаг, выкл — ряды" Style="{StaticResource NoteTextStyle}"/>
 
+                        <!-- 2. Шаг армирования на этаж -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Шаг армирования на этаж, мм" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"
+         Style="{StaticResource StepValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInBricks}"
+         Text="{Binding StepArmOfRowsInBricks}"/>
+                        <TextBox Grid.Row="2" Grid.Column="2"
+         Style="{StaticResource StepValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInConcrete}"
+         Text="{Binding StepArmOfRowsInConcrete}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="3" Text="Шаг основных рядов" Style="{StaticResource NoteTextStyle}"/>
 
-                    <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+                        <!-- 3. Рядов армирования -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Рядов армирования, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox Grid.Row="3" Grid.Column="1"
+         Style="{StaticResource RowsValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInBricks}"
+         Text="{Binding ArmRowsInBricks}"/>
+                        <TextBox Grid.Row="3" Grid.Column="2"
+         Style="{StaticResource RowsValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInConcrete}"
+         Text="{Binding ArmRowsInConcrete}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="3" Text="Кол-во основных рядов" Style="{StaticResource NoteTextStyle}"/>
 
-                    <!-- ============ Газобетонные стены ============ -->
-                    <TextBlock Text="Газобетонные стены" HorizontalAlignment="Center" FontSize="16" />
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг армирования на этаж, мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepArmOfRowsInConcrete}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг деталей (крепление к перекрытию), мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepOfTopJointsInGasConcrete}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Шаг деталей (крепление по бокам), мм" Margin="7" Width="300"/>
-                        <TextBox Width="200" Margin="7" Text="{Binding StepOfHorJointsInGasConcrete}"/>
-                    </StackPanel>
-                    
+                        <!-- 4. Шаг деталей по бокам -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Шаг деталей по бокам, мм" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox Grid.Row="4" Grid.Column="1"
+         Style="{StaticResource StepValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInBricks}"
+         Text="{Binding StepOfHorJointsInBricks}"/>
+                        <TextBox Grid.Row="4" Grid.Column="2"
+         Style="{StaticResource StepValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInConcrete}"
+         Text="{Binding StepOfHorJointsInGasConcrete}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="3" Text="Шаг боковых деталей" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 5. Рядов деталей -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Рядов деталей, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox Grid.Row="5" Grid.Column="1"
+         Style="{StaticResource RowsValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInBricks}"
+         Text="{Binding DetailRowsInBricks}"/>
+                        <TextBox Grid.Row="5" Grid.Column="2"
+         Style="{StaticResource RowsValTextBoxStyle}"
+         Tag="{Binding CalcFromStepInConcrete}"
+         Text="{Binding DetailRowsInConcrete}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="3" Text="Кол-во рядов боковых деталей" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 6. Шаг деталей у перекрытия -->
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Шаг деталей к перекрытию, мм" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="6" Grid.Column="1" Text="{Binding StepOfTopJointsInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="6" Grid.Column="2" Text="{Binding StepOfTopJointsInGasConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="6" Grid.Column="3" Text="Шаг деталей у перекрытия" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 7. Доп. верхних рядов -->
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Доп. верхних рядов арматуры, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="7" Grid.Column="1" Text="{Binding CountDopArmInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="7" Grid.Column="2" Text="{Binding CountDopArmInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="7" Grid.Column="3" Text="Доп. ряды у потолка" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 8. Рядов перерезает окно -->
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Рядов перерезает окно, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="8" Grid.Column="1" Text="{Binding ArmRowsWindowInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="8" Grid.Column="2" Text="{Binding ArmRowsWindowInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="8" Grid.Column="3" Text="Прерывает окно" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 9. Рядов перерезает дверь -->
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Рядов перерезает дверь, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="9" Grid.Column="1" Text="{Binding ArmRowsDoorInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="9" Grid.Column="2" Text="{Binding ArmRowsDoorInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="9" Grid.Column="3" Text="Прерывает дверь" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 10. Рядов перерезает витраж -->
+                        <TextBlock Grid.Row="10" Grid.Column="0" Text="Рядов перерезает витраж, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="10" Grid.Column="1" Text="{Binding ArmRowsVitrageInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="10" Grid.Column="2" Text="{Binding ArmRowsVitrageInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="10" Grid.Column="3" Text="Прерывает витраж" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 11. Длина арматурины в детали -->
+                        <TextBlock Grid.Row="11" Grid.Column="0" Text="Длина арматурины в детали, мм" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="11" Grid.Column="1" Text="{Binding ObramLengthInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="11" Grid.Column="2" Text="{Binding ObramLengthInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="11" Grid.Column="3" Text="Длина стержня в детали" Style="{StaticResource NoteTextStyle}"/>
+
+                        <!-- 12. Арматурин на деталь -->
+                        <TextBlock Grid.Row="12" Grid.Column="0" Text="Арматурин на одну деталь, шт" Style="{StaticResource ParamLabelStyle}"/>
+                        <TextBox   Grid.Row="12" Grid.Column="1" Text="{Binding ObramCountInBricks}"   Margin="2,2"/>
+                        <TextBox   Grid.Row="12" Grid.Column="2" Text="{Binding ObramCountInConcrete}" Margin="2,2"/>
+                        <TextBlock Grid.Row="12" Grid.Column="3" Text="Стержней в детали" Style="{StaticResource NoteTextStyle}"/>
+                    </Grid>
+
                    
+
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
+                    <!-- ============ Настройки (пользовательские) ============ -->
+                    <TextBlock Text="Настройки" HorizontalAlignment="Center"
+                               FontSize="16" FontWeight="Bold" />
+                    <CheckBox Content="Экспортировать расчёт деталей"
+                              IsChecked="{Binding ExportDetailCalculation}"
+                              Margin="20,5,7,0"
+                              ToolTip="Если вкл — в результатах и при заполнении параметров учитываются детали (крепления)"/>
+                    <Border Height="1" Background="Gray" Margin="0,10,0,10" />
+
+                   
                     <!-- ============ Настройки ============ -->
                     <TextBlock Text="//не трогать - не работает пока//Настройки заполнения параметров" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" />
                     <CheckBox Content="1.1 Брать для расчета параметры из значение ЕС_параметр стен (игнорировать настройки)"
@@ -192,7 +346,7 @@
                                  Text="{Binding ReinforcementInBricksM2, StringFormat=F2}"/>
                         <TextBlock Text="Вилатерм (м²)" Width="140" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
-                    Text="{Binding AreaOfVilatermInBricks, StringFormat=F2}"/>
+                                 Text="{Binding AreaOfVilatermInBricks, StringFormat=F2}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Крепление к перекрытию (шт.)" Width="170" Margin="7"/>
@@ -219,7 +373,7 @@
                                  Text="{Binding ReinforcementInGasConcreteM2, StringFormat=F2}"/>
                         <TextBlock Text="Вилатерм (м²)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
-                        Text="{Binding AreaVilatermInGasConcreteM2, StringFormat=F2}"/>
+                                 Text="{Binding AreaVilatermInGasConcreteM2, StringFormat=F2}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <TextBlock Text="Крепление к перекрытию (шт.)" Margin="7" Width="170"/>

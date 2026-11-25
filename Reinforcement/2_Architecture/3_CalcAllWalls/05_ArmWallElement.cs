@@ -60,7 +60,7 @@ namespace Reinforcement
             var data = new List<ExportElement>();
             //1. Считаем кол-во арматуры
             bool armIsStep = this[EValuesExportData.Wall_Arm_Bool_CalcFromStepOrRows] > 0.1;//значит армирование считаем из шага, иначе - шаг предопределен
-            
+            bool calcDet=ArmElementConstants.ExportDetailCalculation;
             //1.1 в стенах рядов арматуры
             if (armIsStep)
             {
@@ -79,13 +79,19 @@ namespace Reinforcement
             {
                 this[EValuesExportData.Wall_Detailed_Rows] = GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
             }
-            data.Add(new ExportElement("стены деталей рядов", this[EValuesExportData.Wall_Detailed_Rows], data,
-                EValuesExportData.Wall_Detailed_Rows));
-            //1.3 в стенах рядов вертикальных деталей
 
+            if (calcDet)
+            {
+                data.Add(new ExportElement("стены деталей рядов", this[EValuesExportData.Wall_Detailed_Rows], data,
+                    EValuesExportData.Wall_Detailed_Rows));
+            }
+            //1.3 в стенах рядов вертикальных деталей
             this[EValuesExportData.Wall_Detailed_Colums] = GetGridCount(ECWall.LengthM, this[EValuesExportData.Wall_Detailed_Roof_Step_m]);
-            data.Add(new ExportElement("стены деталей столбцов", this[EValuesExportData.Wall_Detailed_Colums], data,
-                EValuesExportData.Wall_Detailed_Colums));
+            if (calcDet)
+            {
+                data.Add(new ExportElement("стены деталей столбцов", this[EValuesExportData.Wall_Detailed_Colums], data,
+                    EValuesExportData.Wall_Detailed_Colums));
+            }
             
             
             //2.1 нам надо найти кол-во стен, с которыми мы пересекаемся из ЖБ
@@ -132,33 +138,48 @@ namespace Reinforcement
             //2.3 колво горизонтальных деталей
             this[EValuesExportData.Wall_Detailed_Hor_Count] = this[EValuesExportData.Wall_OtherWallsKRCount] *
                 this[EValuesExportData.Wall_Detailed_Rows];
-            data.Add(new ExportElement("стены детали рядов, штук", this[EValuesExportData.Wall_Detailed_Hor_Count], data,
+            if (calcDet)
+            {
+                data.Add(new ExportElement("стены детали рядов, штук", this[EValuesExportData.Wall_Detailed_Hor_Count], data,
                EValuesExportData.Wall_Detailed_Hor_Count, "Wall_OtherWallsKRCount*Wall_Detailed_Rows"));
-
+            }
             //2.4 колво вертикальных деталей
             this[EValuesExportData.Wall_Detailed_Roof_Count] = this[EValuesExportData.Wall_Detailed_Colums];
-            data.Add(new ExportElement("стены детали потолка, штук", this[EValuesExportData.Wall_Detailed_Roof_Count], data,
+            if (calcDet)
+            {
+                data.Add(new ExportElement("стены детали потолка, штук", this[EValuesExportData.Wall_Detailed_Roof_Count], data,
                EValuesExportData.Wall_Detailed_Roof_Count, "Wall_Detailed_Colums"));
+            }
 
 
             //2.5 итого деталей колво
             this[EValuesExportData.Wall_Detailed_Count] = this[EValuesExportData.Wall_Detailed_Roof_Count] + this[EValuesExportData.Wall_Detailed_Hor_Count];
-            
-            data.Add(new ExportElement("стены детали колво, штук", this[EValuesExportData.Wall_Detailed_Count], data,
+            if (calcDet)
+            {
+                data.Add(new ExportElement("стены детали колво, штук", this[EValuesExportData.Wall_Detailed_Count], data,
               EValuesExportData.Wall_Detailed_Count, "Wall_Detailed_Roof_Count+Wall_Detailed_Hor_Count"));
+            }
 
 
             //if (type == EWallTypes.AR_Brick)
             
             //армирование вокруг закладных
-            this[EValuesExportData.Wall_Arm_Detailes_Gross_m] = this[EValuesExportData.Wall_Arm_Detailed_Obram_Length_m] * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count] * this[EValuesExportData.Wall_Detailed_Count];
+            this[EValuesExportData.Wall_Arm_Detailes_Gross_m] = this[EValuesExportData.Wall_Arm_Detailed_Obram_Length_m] * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count] * this[EValuesExportData.Wall_Detailed_Hor_Count];
                 
             //армирование верха у самого
             this[EValuesExportData.Wall_Arm_Roof_m] = ECWall.LengthM * this[EValuesExportData.Wall_Arm_DopTop_Count];
-                
-            
+
+
+            data.Add(new ExportElement("стены армирование деталей длина прутка, м", this[EValuesExportData.Wall_Arm_Detailed_Obram_Length_m], data,
+          EValuesExportData.Wall_Arm_Detailed_Obram_Length_m));
+            data.Add(new ExportElement("стены армирование деталей колво арматурин, штук", this[EValuesExportData.Wall_Arm_Detailed_Obram_Count], data,
+          EValuesExportData.Wall_Arm_Detailed_Obram_Count));
+
             data.Add(new ExportElement("стены армирование деталей без вычета, пог.м", this[EValuesExportData.Wall_Arm_Detailes_Gross_m], data,
-               EValuesExportData.Wall_Arm_Detailes_Gross_m, "Wall_Arm_Detailed_Obram_Length_m*Wall_Arm_Detailed_Obram_Count*Wall_Detailed_Count"));
+               EValuesExportData.Wall_Arm_Detailes_Gross_m, "Wall_Arm_Detailed_Obram_Length_m*Wall_Arm_Detailed_Obram_Count*Wall_Detailed_Hor_Count"));
+
+            data.Add(new ExportElement("стены армирование у потолка арматурин, штук", this[EValuesExportData.Wall_Arm_DopTop_Count], data,
+          EValuesExportData.Wall_Arm_DopTop_Count));
             data.Add(new ExportElement("стены армирование дополнительное у потолка, пог.м", this[EValuesExportData.Wall_Arm_Roof_m], data,
                EValuesExportData.Wall_Arm_Roof_m, "Wall_Arm_DopTop_Count*Wall_Length_m"));
 
@@ -263,7 +284,7 @@ namespace Reinforcement
             data.Add(new ExportElement("стены вилатерм итог, пог.м", this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m], data,
              EValuesExportData.Wall_Arm_Vilaterm_Itog_m, "Wall_Length_m+Wall_Height_m*Wall_OtherWallsKRCount"));
 
-            //this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m2] = this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m] * ECWall.WidthM;
+            this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m2] = this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m] * ECWall.WidthM;
             //data.Add(new ExportElement("стены вилатерм итог, м2", this[EValuesExportData.Wall_Arm_Vilaterm_Itog_m2], data,
             //EValuesExportData.Wall_Arm_Vilaterm_Itog_m2, "Wall_Arm_Vilaterm_Itog_m*Wall_Width_m"));
 

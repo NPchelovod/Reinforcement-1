@@ -175,6 +175,9 @@ namespace Reinforcement
         public static bool GetParamFromECPropElement = false;// взять начальные параметры из свойств ревита
         public static bool GetParamOnlyNonZero = false;//брать только не нулевые
         public static bool FillParametersInProject = false;//заполнить параметры проекта
+
+        public static bool ExportDetailCalculation = true;//экспорт в расчет деталей количества 
+
         /// <summary>
         /// Если у элемента заполнены параметры — берёт из него.
         /// getOnlyNonZero = true: параметр читаем только ненулевой, нулевому остаётся константа.
