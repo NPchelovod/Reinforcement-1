@@ -277,9 +277,9 @@ namespace Reinforcement
         {
             //if (_exportElements != null) {  return _exportElements; } опасно так как могу для других дел брать..
 
-            var winds = ECDoorOrWindows.Where(x => x.BuiltInCategory == BuiltInCategory.OST_Windows).ToList();
-            var doors = ECDoorOrWindows.Where(x => x.BuiltInCategory == BuiltInCategory.OST_Doors).ToList();
-
+            var winds = ECDoorOrWindows.Where(x => x.TypeInsidersWalls==ETypeInsidersWalls.Window).ToList();
+            var doors = ECDoorOrWindows.Where(x => x.TypeInsidersWalls == ETypeInsidersWalls.Door).ToList();
+            var vitrage = ECDoorOrWindows.Where(x => x.TypeInsidersWalls == ETypeInsidersWalls.Vitrage).ToList();
             var data = new List<ExportElement>();
             data.AddRange(
                 new List<ExportElement>() {
@@ -317,6 +317,10 @@ namespace Reinforcement
 
                 new ExportElement("Стена двери, колво", doors.Count,data,EValuesExportData.Wall_Doors_Count),
                 new ExportElement("Стена двери, Id", string.Join(",", doors.Select(x => x.Id)),data, EValuesExportData.Wall_Doors_Ids),
+
+                new ExportElement("Стена витражи, колво", vitrage.Count,data,EValuesExportData.Wall_Vitrage_Count),
+                new ExportElement("Стена витражи, Id", string.Join(",", vitrage.Select(x => x.Id)),data, EValuesExportData.Wall_Vitrage_Count),
+
 
                 new ExportElement("Стена окно, средняя высота, м",
                     winds.Select(x => x.HeightM).DefaultIfEmpty(0).Average(), data,EValuesExportData.Wall_Window_H_Average_m),

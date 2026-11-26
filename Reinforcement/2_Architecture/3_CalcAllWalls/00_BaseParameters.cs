@@ -323,6 +323,36 @@ namespace Reinforcement
                 }
             }
         }
+        /// <summary>
+        /// Формирование порядка, сначала самый с максимальным посчитанным значением и чистка от дублей
+        /// </summary>
+        /// <param name="exportElements"></param>
+        /// <returns></returns>
+        public static List<ExportElement> ClearAndOrdered(List<ExportElement> exportElements)
+        {
+            var pastEValuesExportData = new HashSet<EValuesExportData>();
+
+            var group = exportElements.GroupBy(x=>x.EValuesExportData);
+            var answer = new List<ExportElement>();
+            foreach (var gr in group)
+            {
+                var key = gr.Key;
+                if (key == EValuesExportData.None)
+                {
+                    answer.AddRange(gr);
+                }
+                else
+                {
+                    var add = gr.OrderByDescending(x => x.ValueDouble).ThenByDescending(x => x.ValueString).FirstOrDefault();
+                    if(add != null)
+                    {
+                        answer.Add(add);
+                    }
+                }
+            }
+            answer = answer.OrderBy(x=>x.EValuesExportData).ToList();
+            return answer;
+        }
         public static void AddExportElementInOurExportElements(List<ExportElement> exportElementsInner, List<ExportElement> exportElementsOuter)
         {
             var pastEValuesExportData = exportElementsInner.Select(x => x.EValuesExportData).ToHashSet();

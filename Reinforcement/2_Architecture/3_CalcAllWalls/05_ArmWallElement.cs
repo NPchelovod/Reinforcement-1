@@ -58,17 +58,26 @@ namespace Reinforcement
             var type = ECWall.EWallTypes;
 
             var data = new List<ExportElement>();
+
+            //начальные данные заполняем
+            data.Add(new ExportElement("стены армирование из шага - 1, из кол-ва рядов - 0", this[EValuesExportData.Wall_Arm_Bool_CalcFromStepOrRows], data,
+                    EValuesExportData.Wall_Arm_Bool_CalcFromStepOrRows));
+
+
+
             //1. Считаем кол-во арматуры
             bool armIsStep = this[EValuesExportData.Wall_Arm_Bool_CalcFromStepOrRows] > 0.1;//значит армирование считаем из шага, иначе - шаг предопределен
             bool calcDet=ArmElementConstants.ExportDetailCalculation;
             //1.1 в стенах рядов арматуры
             if (armIsStep)
             {
-               
+                data.Add(new ExportElement("стены армированияшаг рядов, штук", this[EValuesExportData.Wall_Arm_Row_Step_m], data,
+                    EValuesExportData.Wall_Arm_Row_Step_m));
                 this[EValuesExportData.Wall_Arm_Rows] = GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Arm_Row_Step_m]);
-                data.Add(new ExportElement("стены армирования рядов горизонтальных, штук", this[EValuesExportData.Wall_Arm_Rows], data,
-                    EValuesExportData.Wall_Arm_Rows));
             }
+            data.Add(new ExportElement("стены армирования рядов горизонтальных, штук", this[EValuesExportData.Wall_Arm_Rows], data,
+                    EValuesExportData.Wall_Arm_Rows));
+
             //арматура как будто нет окон и дверей
             this[EValuesExportData.Wall_Arm_Rows_Gross_m] = this[EValuesExportData.Wall_Arm_Rows]*ECWall.LengthM;
             data.Add(new ExportElement("стены армирование рядов, без вычета, пог.м ", this[EValuesExportData.Wall_Arm_Rows_Gross_m], data,
@@ -78,8 +87,13 @@ namespace Reinforcement
             if (armIsStep)
             {
                 this[EValuesExportData.Wall_Detailed_Rows] = GetGridCount(ECWall.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
+                if (calcDet)
+                {
+                    data.Add(new ExportElement("стены деталей шаг, м", this[EValuesExportData.Wall_Detailed_Row_Step_m], data,
+                   EValuesExportData.Wall_Detailed_Row_Step_m));
+                }
             }
-
+    
             if (calcDet)
             {
                 data.Add(new ExportElement("стены деталей рядов", this[EValuesExportData.Wall_Detailed_Rows], data,
@@ -89,6 +103,9 @@ namespace Reinforcement
             this[EValuesExportData.Wall_Detailed_Colums] = GetGridCount(ECWall.LengthM, this[EValuesExportData.Wall_Detailed_Roof_Step_m]);
             if (calcDet)
             {
+                data.Add(new ExportElement("стены деталей у потолка шаг, м", this[EValuesExportData.Wall_Detailed_Roof_Step_m], data,
+                    EValuesExportData.Wall_Detailed_Roof_Step_m));
+
                 data.Add(new ExportElement("стены деталей столбцов", this[EValuesExportData.Wall_Detailed_Colums], data,
                     EValuesExportData.Wall_Detailed_Colums));
             }
@@ -253,7 +270,7 @@ namespace Reinforcement
                         //определяем дистанцию
 
                         //!!! Может быть задевание — тогда надо координату проверять...
-
+                        if(windAndDoor.StartPt==null) {continue;}
                         double df = RevitAPI.ToMm(Math.Min(
                             windAndDoor.StartPt.DistanceTo(sosed.point),
                             windAndDoor.EndPt.DistanceTo(sosed.point)))/1000;
@@ -335,6 +352,7 @@ namespace Reinforcement
             EValuesGetter.AddExportElementInOurExportElements(data, wallsExportElement, new HashSet<EValuesExportData>()
             { 
                 EValuesExportData.Wall_Id, EValuesExportData.Wall_Name, EValuesExportData.Wall_EWallTypes ,
+                 EValuesExportData.Level_Name,EValuesExportData.Level_Elevation,
                 EValuesExportData.Wall_Length_m, EValuesExportData.Wall_Width_m, EValuesExportData.Wall_Height_m,
                 
                 EValuesExportData.Wall_OtherWallsKRIds, EValuesExportData.Wall_OtherWallsKRCount,
@@ -347,6 +365,7 @@ namespace Reinforcement
                 EValuesExportData.Wall_Window_Count,
                  //EValuesExportData.Wall_Window_L_Average_m,
                 //EValuesExportData.Wall_Window_H_Average_m,
+                EValuesExportData.Wall_Vitrage_Count,
 
             });
             if (_exportElements != null)
@@ -354,8 +373,11 @@ namespace Reinforcement
                 EValuesGetter.AddExportElementInOurExportElements(data, _exportElements);
             }
 
+            data = EValuesGetter.ClearAndOrdered(data);
+
             _exportElements = data;
             isCalc=true;
+
             return data;
         }
         public string NameThisClass

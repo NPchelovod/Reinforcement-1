@@ -150,7 +150,7 @@ namespace Reinforcement
             eCWall.Element = element;
             eCWall.ElementId = element.Id;
             eCWall.Id = id;
-
+            eCWall.Name = element.Name;
 
             DictECWalls[eCWall.Id] = eCWall;
 
@@ -597,6 +597,11 @@ namespace Reinforcement
 
                 if (!isDoor && !isWind &&!isCurtainWall) continue;
 
+                if(isCurtainWall && dep is Wall depWall2)
+                {
+                    
+                    string testName=depWall2.Name;
+                }
                 // Проверяем, что элемент хостится именно в этой стене,
                 // а не во встроенной (embedded) стене
                 if (dep is FamilyInstance fi)
@@ -665,20 +670,28 @@ namespace Reinforcement
             }
             else if(doorOrWind is Wall vitrage)
             {
-                double lenFt = 0;
-                if (vitrage.Location is LocationCurve lc && lc.Curve != null)
+                if (DictECWalls.TryGetValue(vitrage.Id.Value, out var vitrageECWall) && vitrageECWall.LengthM>0)
                 {
-                    
-                    lenFt = lc.Curve.Length;
+                    heightM = vitrageECWall.HeightM;
+                    widthM = vitrageECWall.WidthM;
                 }
                 else
                 {
-                    var pLen = vitrage.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
-                    if (pLen != null && pLen.HasValue) lenFt = pLen.AsDouble();
+                    double lenFt = 0;
+                    if (vitrage.Location is LocationCurve lc && lc.Curve != null)
+                    {
+
+                        lenFt = lc.Curve.Length;
+                    }
+                    else
+                    {
+                        var pLen = vitrage.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
+                        if (pLen != null && pLen.HasValue) lenFt = pLen.AsDouble();
+                    }
+                    widthM = UnitUtils.ConvertFromInternalUnits(lenFt, UnitTypeId.Meters);
+                    double heightFt = GetWallHeight(vitrage, doc);
+                    heightM = UnitUtils.ConvertFromInternalUnits(heightFt, UnitTypeId.Meters);
                 }
-                widthM = UnitUtils.ConvertFromInternalUnits(lenFt, UnitTypeId.Meters);
-                double heightFt = GetWallHeight(vitrage, doc);
-                heightM = UnitUtils.ConvertFromInternalUnits(heightFt, UnitTypeId.Meters);
             }
             
             // ============================================================
@@ -704,12 +717,18 @@ namespace Reinforcement
             Curve wallCurve = locCurve.Curve;
 
             IntersectionResult projection = wallCurve.Project(instPoint);
-            if (projection == null) return dw;
+            if (projection == null)
+            {
+                return dw;
+            }
 
             double p0 = wallCurve.GetEndParameter(0);
             double p1 = wallCurve.GetEndParameter(1);
             double wallLen = wallCurve.Length;
-            if (Math.Abs(p1 - p0) < 1e-9 || wallLen < 1e-9) return dw;
+            if (Math.Abs(p1 - p0) < 1e-9 || wallLen < 1e-9)
+            {
+                return dw;
+            }
 
             // Нормализованное положение центра
             double normCenter = (projection.Parameter - p0) / (p1 - p0);
