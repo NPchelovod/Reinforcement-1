@@ -313,6 +313,10 @@
                               IsChecked="{Binding ExportDetailCalculation}"
                               Margin="20,5,7,0"
                               ToolTip="Если вкл — в результатах и при заполнении параметров учитываются детали (крепления)"/>
+                    
+                    
+                    
+                    
                     <Border Height="1" Background="Gray" Margin="0,10,0,10" />
 
                    
@@ -333,7 +337,7 @@
 
                     <TextBlock Text="Кирпичные стены" HorizontalAlignment="Center" FontSize="16" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Армирование (п.м.)" Width="170" Margin="7"/>
+                        <TextBlock Text="Армирование (п.м.) (1 ряд)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding ReinforcementInBricks, StringFormat=F2}"/>
                         <TextBlock Text="Вилатерм (п.м.)" Width="140" Margin="7"/>
@@ -360,7 +364,7 @@
 
                     <TextBlock Text="Газобетонные стены" HorizontalAlignment="Center" FontSize="16" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Армирование (п.м.)" Margin="7" Width="170"/>
+                        <TextBlock Text="Армирование (п.м.) (1 ряд)" Margin="7" Width="170"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding ReinforcementInGasConcrete, StringFormat=F2}"/>
                         <TextBlock Text="Вилатерм (п.м.)" Width="140" Margin="7"/>
@@ -371,7 +375,7 @@
                         <TextBlock Text="Армирование (м²)" Width="170" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding ReinforcementInGasConcreteM2, StringFormat=F2}"/>
-                        <TextBlock Text="Вилатерм (м²)" Width="170" Margin="7"/>
+                        <TextBlock Text="Вилатерм (м²)" Width="140" Margin="7"/>
                         <TextBox IsReadOnly="True" Background="LightGray" Width="90" Margin="7" BorderBrush="Gray"
                                  Text="{Binding AreaVilatermInGasConcreteM2, StringFormat=F2}"/>
                     </StackPanel>

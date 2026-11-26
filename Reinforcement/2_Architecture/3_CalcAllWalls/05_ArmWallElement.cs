@@ -284,10 +284,28 @@ namespace Reinforcement
                         //дверь или окно близки к краю — отнимаем
                         pastPoints.Add(sosed.point);
                         //кол-во перерезов
-                        double co = GetGridCount(windAndDoor.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
+                        if (armIsStep)
+                        {
+                            double co = GetGridCount(windAndDoor.HeightM, this[EValuesExportData.Wall_Detailed_Row_Step_m]);
 
+                            this[EValuesExportData.Wall_Arm_Detailed_Mines_m] += co * dif * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count];
 
-                        this[EValuesExportData.Wall_Arm_Detailed_Mines_m] += co * dif * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count];
+                        }
+                        else
+                        {
+                            double row = 0;
+                            switch (windAndDoor.TypeInsidersWalls)
+                            {
+                                case ETypeInsidersWalls.Window:
+                                    this[EValuesExportData.Wall_Arm_Row_Window] = row; break;
+                                case ETypeInsidersWalls.Door:
+                                    this[EValuesExportData.Wall_Arm_Row_Door] = row; break;
+                                case ETypeInsidersWalls.Vitrage:
+                                    this[EValuesExportData.Wall_Arm_Row_Vitrage] = row; break;
+                            }
+                            this[EValuesExportData.Wall_Arm_Detailed_Mines_m] += row * dif * this[EValuesExportData.Wall_Arm_Detailed_Obram_Count];
+                        }
+                        break;//одно окно или дверь у одной стены
                     }
                 }
 

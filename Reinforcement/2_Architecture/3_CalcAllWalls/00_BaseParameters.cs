@@ -26,6 +26,12 @@ namespace Reinforcement
         //все 
         None = 0,
 
+        //Уровень
+        Level_Id,
+        Level_Name,
+        Level_Elevation,
+
+        //Сама стена
         Wall_Id,
         Wall_Name,
         Wall_EWallTypes,
@@ -112,10 +118,7 @@ namespace Reinforcement
         Room_Volume_m3,
 
 
-        //Уровеньъ
-        Level_Id,
-        Level_Name,
-        Level_Elevation,
+       
 
         //Армирование стен
         //Кирпич
@@ -179,6 +182,10 @@ namespace Reinforcement
         public static readonly Dictionary<EValuesExportData, string> DictNamesParam
     = new Dictionary<EValuesExportData, string>()
 {
+        // ==================== Служебное ====================
+        // Если None не должен попадать в экспорт — эту строку можно не добавлять
+        { EValuesExportData.None,                         "Не выбрано" },
+
     // ==================== Уровень ====================
     { EValuesExportData.Level_Id,                     "Уровень Id" },
     { EValuesExportData.Level_Name,                   "Уровень имя" },
@@ -220,6 +227,13 @@ namespace Reinforcement
     { EValuesExportData.Wall_Window_L_Average_m,      "Стена окно ср. длина, м" },
     { EValuesExportData.Wall_Window_H_Average_m,      "Стена окно ср. высота, м" },
 
+    // ==================== Витраж в стене ====================
+    { EValuesExportData.Wall_Vitrage_Count,           "Стена витражи, кол-во" },
+    { EValuesExportData.Wall_Vitrage_Ids,             "Стена витражи, Id" },
+    { EValuesExportData.Wall_Vitrage_L_Average_m,     "Стена витраж ср. длина, м" },
+    { EValuesExportData.Wall_Vitrage_H_Average_m,     "Стена витраж ср. высота, м" },
+
+
     // ==================== Тип стены / слои ====================
     { EValuesExportData.WallType_Id,                  "Тип стены Id" },
     { EValuesExportData.WallType_LayersCount,         "Тип стены слоёв, шт" },
@@ -237,6 +251,13 @@ namespace Reinforcement
     { EValuesExportData.Window_Area_m2,               "Окно площадь, м2" },
     { EValuesExportData.Window_Level_Elevation,       "Окно отметка, м" },
 
+    // ==================== Витраж ====================
+    { EValuesExportData.Vitrage_Height_m,             "Витраж высота, м" },
+    { EValuesExportData.Vitrage_Length_m,             "Витраж длина, м" },
+    { EValuesExportData.Vitrage_Area_m2,              "Витраж площадь, м2" },
+    { EValuesExportData.Vitrage_Level_Elevation,      "Витраж отметка, м" },
+
+
     // ==================== Комната ====================
     { EValuesExportData.Room_Id,                      "Комната Id" },
     { EValuesExportData.Room_Name,                    "Комната имя" },
@@ -246,6 +267,8 @@ namespace Reinforcement
     { EValuesExportData.Room_Volume_m3,               "Комната объём, м3" },
 
     // ==================== Армирование: входные ====================
+    { EValuesExportData.Wall_Arm_Bool_CalcFromStepOrRows, "Арм. расчёт из шага/рядов" },
+
     { EValuesExportData.Wall_Arm_DopTop_Count,        "Арм. доп. рядов сверху, шт" },
     { EValuesExportData.Wall_Arm_Detailed_Obram_Length_m, "Арм. обрамление детали, длина, м" },
     { EValuesExportData.Wall_Arm_Detailed_Obram_Count,    "Арм. обрамлений на деталь, шт" },
@@ -270,6 +293,7 @@ namespace Reinforcement
 
     { EValuesExportData.Wall_Arm_Row_Window,          "Арм. рядов у окна, шт" },
     { EValuesExportData.Wall_Arm_Row_Door,            "Арм. рядов у двери, шт" },
+     { EValuesExportData.Wall_Arm_Row_Vitrage,         "Арм. рядов у витража, шт" },
     { EValuesExportData.Wall_Arm_MinesArmProem_m,     "Арм. минус проёмы, пог.м" },
     { EValuesExportData.Wall_Arm_Detailed_Mines_m,    "Арм. деталей минус проёмы, пог.м" },
 
@@ -279,6 +303,8 @@ namespace Reinforcement
     { EValuesExportData.Wall_Arm_Itog_m,              "Арм. итог, пог.м одного прута" },
     { EValuesExportData.Wall_Arm_Itog_m2,             "Арм. итог, м2" },
    
+    { EValuesExportData.Wall_Arm_Itog_pog_m,          "Арм. итог, пог.м" },
+
 };
         // соответствие констант и имён параметров в Revit (префикс "ЕС_" — наша компания)
         public static Dictionary<EValuesExportData, string> NamesParametersInRevit = new Dictionary<EValuesExportData, string>()
