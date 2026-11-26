@@ -173,11 +173,10 @@
     <Compile Include="2_Architecture\3_CalcAllWalls\00_BaseParameters.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\01_CalcWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\02_IntersectWalls.cs" />
-    <Compile Include="2_Architecture\3_CalcAllWalls\03_ArmWalls.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\03_ArmWallsCommand.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\05_ArmWallElement.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\06_ArmElementConstants.cs" />
-    <Compile Include="2_Architecture\3_CalcAllWalls\082_ArmExportBetter.cs" />
-    <Compile Include="2_Architecture\3_CalcAllWalls\08_ArmExport.cs" />
+    <Compile Include="2_Architecture\3_CalcAllWalls\31_ExportToExcellBetter.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\10_InsulationsWalls.cs" />
     <Compile Include="2_Architecture\3_CalcAllWalls\20_CalculateArmWalls.xaml.cs">
       <DependentUpon>20_CalculateArmWalls.xaml</DependentUpon>

@@ -91,44 +91,55 @@ namespace Reinforcement
                 return;
             }
 
-            var groups = eCWalls
+            var groupsLevel = eCWalls
                 .Where(x => x != null && x.Curve != null && x.ECLevel != null)
                 .GroupBy(x => x.ECLevel.LevelElevation)
                 .OrderBy(g => g.Key)
                 .ToList();
 
-            if (groups.Count == 0)
+            if (groupsLevel.Count == 0)
             {
                 MessageBox.Show("Нет стен для экспорта.");
                 return;
             }
 
-            foreach (var levelGroup in groups)
+            foreach (var levelGroup in groupsLevel)
             {
                 var levelWalls = new List<IExportStringDoubleData>();
+
+                //группируем по типу стены
+                
+
                 foreach (var typeGroup in levelGroup.GroupBy(x => x.EWallTypes).OrderBy(g => g.Key))
                 {
-                    var walls = typeGroup
+
+                    //группируем по толщине стены
+                    foreach (var widthGroup in levelGroup.GroupBy(x => x.ECArmWallElement.WidthDo200).OrderBy(g => g.Key))
+                    {
+                        var walls = widthGroup
                         .OrderBy(x => x.WallType?.EWallTypes ?? 0)
                         .ThenByDescending(x => x.WidthM)
-                        .ThenByDescending(x => x.WallType?.Name ?? string.Empty)
+                        .ThenByDescending(x => x.ECInsulation.OutWallFromNAmeMaterial)
+                        .ThenByDescending(x => x.WallType.Name ?? string.Empty)
                         .ThenByDescending(x => x.RelationsWallsKR.Count)
                         .ThenByDescending(x => x.RelationsWalls.Count)
                         .ThenByDescending(x => x.ECDoorOrWindows.Count)
-                        .ThenBy(x => x.AreaNetM2)
+                        .ThenByDescending(x => x.AreaNetM2)
                         .ThenBy(x => x.Id)
                         .ToList();
-                    var LevelAndTypeArm = new List<IExportStringDoubleData>();
-                    var LevelAndTypeWalls = new List<IExportStringDoubleData>();
-                    foreach (var wall in walls)
-                    {
-                        LevelAndTypeArm.Add((IExportStringDoubleData)wall.ECArmWallElement);
-                        LevelAndTypeWalls.Add((IExportStringDoubleData)wall);
-                    }
-                    if (LevelAndTypeArm.Count > 0)
-                    {
-                        answerArm.Add(LevelAndTypeArm);
-                        answerWalls.Add(LevelAndTypeWalls);
+                        //сразу несколько данных по выгрузу
+                        var LevelAndTypeArm = new List<IExportStringDoubleData>();
+                        var LevelAndTypeWalls = new List<IExportStringDoubleData>();
+                        foreach (var wall in walls)
+                        {
+                            LevelAndTypeArm.Add((IExportStringDoubleData)wall.ECArmWallElement);
+                            LevelAndTypeWalls.Add((IExportStringDoubleData)wall);
+                        }
+                        if (LevelAndTypeArm.Count > 0)
+                        {
+                            answerArm.Add(LevelAndTypeArm);
+                            answerWalls.Add(LevelAndTypeWalls);
+                        }
                     }
                 }
             }
@@ -159,6 +170,11 @@ namespace Reinforcement
         {
             return eCWalls.Where(x => EWallTypesForCalc.Contains(x.EWallTypes)).ToList();
         }
+        /// <summary>
+        /// Стены АР которые мы армируем
+        /// </summary>
+        /// <param name="eCWalls"></param>
+        /// <returns></returns>
         private static List<ECWall> GetArmExportWalls(List<ECWall> eCWalls)
         {
             return eCWalls.Where(x => ArmEWallTypes.Contains(x.EWallTypes)).ToList();

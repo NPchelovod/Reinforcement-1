@@ -43,13 +43,14 @@ namespace Reinforcement
                 }
                 //не всегда стены соединены, так что надо еще вручную находить пересечения
                 // --- 2) Геометрический поиск касаний (с учётом толщины) ---
-                for (int i = 0; i < wallsOnLevel.Count; i++)
+                int count = wallIdsOnLevel.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    var w1 = wallsOnLevel[i];
-                    for (int j = i + 1; j < wallsOnLevel.Count; j++)
+                    ECWall w1 = wallsOnLevel[i];
+                    for (int j = i + 1; j < count; j++)
                     {
-                        var w2 = wallsOnLevel[j];
-
+                        ECWall w2 = wallsOnLevel[j];
+                        
                         // уже связаны через JoinGeometryUtils — пропускаем
                         if (w1.RelationsWalls.Contains(w2)) continue;
 
@@ -106,7 +107,82 @@ namespace Reinforcement
                 c1.GetEndPoint(0), c1.GetEndPoint(1),
                 c2.GetEndPoint(0), c2.GetEndPoint(1));
         }
+        /// <summary>
+        /// Проверяет, что кирпичная стена brickWall примыкает к монолитной monolithWall 
+        /// СВОИМ ТОРЦОМ — то есть торец brickWall попадает на ЛЮБУЮ точку осевой 
+        /// линии monolithWall (включая её концы, но не только их).
+        /// Проверка направленная: обратный случай (торец monolithWall в середину brickWall) — false.
+        /// «Примыкает» = расстояние от торца до ОТРЕЗКА оси monolithWall ≤ halfWidth(monolithWall) + tolerance.
+        /// </summary>
+        public static bool IsBrickWallEndTouchingMonolithWall(
+            ECWall brickWall, ECWall monolithWall,
+            out XYZ contactPointOnBrick,
+            double toleranceMm = 10)
+        {
+            contactPointOnBrick = null;
 
+            if (brickWall?.Curve == null || monolithWall?.Curve == null) return false;
+            if (ReferenceEquals(brickWall, monolithWall)) return false;
+            if (brickWall.ElementId == monolithWall.ElementId) return false;
+
+            XYZ a1 = brickWall.Curve.GetEndPoint(0);
+            XYZ b1 = brickWall.Curve.GetEndPoint(1);
+            XYZ a2 = monolithWall.Curve.GetEndPoint(0);
+            XYZ b2 = monolithWall.Curve.GetEndPoint(1);
+
+            double halfWidthFt2 = RevitAPI.ToFoot(monolithWall.WidthM) / 2.0;
+            double tolFt = RevitAPI.ToFoot(toleranceMm / 1000.0);
+            double threshold = halfWidthFt2 + tolFt;
+
+            // Проекция каждого торца кирпичной стены на ОТРЕЗОК [a2,b2]
+            XYZ projA = ClosestPointOnSegmentXY(a1, a2, b2);
+            XYZ projB = ClosestPointOnSegmentXY(b1, a2, b2);
+
+            double dA = DistanceXY(a1, projA);
+            double dB = DistanceXY(b1, projB);
+
+            // Берём ближайший торец; важно: projA/projB всегда лежат НА отрезке,
+            // поэтому и T-примыкание, и угловое примыкание корректно ловятся.
+            if (dA <= dB && dA <= threshold)
+            {
+                contactPointOnBrick = a1;
+                return true;
+            }
+            if (dB < dA && dB <= threshold)
+            {
+                contactPointOnBrick = b1;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Ближайшая точка НА ОТРЕЗКЕ [p0,p1] к точке pt (проекция в плане XY).
+        /// Если проекция выходит за концы отрезка — возвращается соответствующий конец 
+        /// (clamp параметра t в [0,1]). Именно это позволяет ловить T-примыкание.
+        /// </summary>
+        private static XYZ ClosestPointOnSegmentXY(XYZ pt, XYZ p0, XYZ p1)
+        {
+            double dx = p1.X - p0.X;
+            double dy = p1.Y - p0.Y;
+            double len2 = dx * dx + dy * dy;
+
+            if (len2 < 1e-12)
+                return new XYZ(p0.X, p0.Y, pt.Z); // вырожденный отрезок
+
+            double t = ((pt.X - p0.X) * dx + (pt.Y - p0.Y) * dy) / len2;
+            t = Math.Max(0.0, Math.Min(1.0, t));   // ключевая строка
+
+            return new XYZ(p0.X + t * dx, p0.Y + t * dy, pt.Z);
+        }
+
+        private static double DistanceXY(XYZ p, XYZ q)
+        {
+            double dx = p.X - q.X;
+            double dy = p.Y - q.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
         /// <summary>
         /// Проверяет, что хотя бы один торец стены wall1 примыкает к стене wall2.
         /// «Примыкает» = расстояние от точки торца до ОСИ wall2 (в плане) 

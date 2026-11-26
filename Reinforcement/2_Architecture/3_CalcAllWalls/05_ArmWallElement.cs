@@ -12,15 +12,15 @@ namespace Reinforcement
     public class ECArmWallElement : IExportStringDoubleData
     {
         public static readonly int countEValuesExportData = Enum.GetNames(typeof(EValuesExportData)).Length;
-        
+
         private readonly double[] values = new double[countEValuesExportData];
-        
-      
         public double this[EValuesExportData param]
         {
             get => values[(int)param];
             set => values[(int)param] = value;
         }
+
+        public bool WidthDo200 = false;// толищна стены менее 200 - то отдельно арматуру считаем
 
         /// <summary>
         /// элемент армирования - стена
@@ -28,6 +28,7 @@ namespace Reinforcement
         public ECWall ECWall = null; // ссылка на стену, которой принадлежит данный элемент армирования
 
         private static double tolerencePoint = RevitAPI.ToFoot(10);
+        private static double tolerencePointIntersectOtherWalls = RevitAPI.ToFoot(200);
 
         public List<(XYZ point, ECWall wall)> _otherWalls = new List<(XYZ, ECWall)>(); // те, к кому мы своим торцом подходим
 
@@ -37,6 +38,10 @@ namespace Reinforcement
             if (ECWall == null) return;
             var type = ECWall.EWallTypes;
 
+            if(ECWall.WidthM<0.2)
+            {
+                WidthDo200=true;
+            }
             //начальные параметры для расчета заполняем
             var param = ArmElementConstants.GetConstantsParameters(type, ECWall.Element, ArmElementConstants.GetParamFromECPropElement, ArmElementConstants.GetParamOnlyNonZero);
             if(param == null) return;
@@ -119,16 +124,16 @@ namespace Reinforcement
             if (wallsKR != null && wallsKR.Count > 0)
             {
                
-                foreach (var wall in wallsKR)
+                foreach (var wallKR in wallsKR)
                 {
-                    if (wall!= ECWall&& IntersectWalls.IsEndOfWall1TouchingWall2(ECWall, wall, out XYZ touchingPoint))
+                    if (wallKR!= ECWall&& IntersectWalls.IsBrickWallEndTouchingMonolithWall(ECWall, wallKR, out XYZ touchingPoint))
                     {
                         //проверяем прошлые стены
                         bool adp = true;
                         foreach (var point in _otherWalls)
                         {
                             double dist = point.point.DistanceTo(touchingPoint);
-                            if (dist < tolerencePoint)
+                            if (dist < tolerencePointIntersectOtherWalls)
                             {
                                 adp = false;
                                 break;
@@ -136,8 +141,8 @@ namespace Reinforcement
                         }
                         if (adp)
                         {
-                            _otherWalls.Add((touchingPoint, wall));
-                            ECWall.RelationsWallsKR.Add(wall);
+                            _otherWalls.Add((touchingPoint, wallKR));
+                            ECWall.RelationsWallsKR.Add(wallKR);
                             if (_otherWalls.Count == 2)
                             {
                                 break;

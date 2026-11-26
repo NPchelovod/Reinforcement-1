@@ -266,6 +266,11 @@ namespace Reinforcement
             {
                 eWallTypes = EWallTypes.AR_PGPorGKL;
             }
+            else if(name.Contains("Витраж") || name.Contains("Дверь"))
+            {
+                //ненадежно да и ладно, пусть
+                eWallTypes = EWallTypes.AR_Vitrage;
+            }
             wt.EWallTypes = eWallTypes;
 
 

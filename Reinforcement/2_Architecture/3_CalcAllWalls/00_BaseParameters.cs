@@ -18,7 +18,8 @@ namespace Reinforcement
         AR_Uteplitel,
         AR_Otdelca,
         AR_VentFasad,
-        AR_PGPorGKL
+        AR_PGPorGKL,
+        AR_Vitrage,
     }
     public enum EValuesExportData
     {
