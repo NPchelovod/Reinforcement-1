@@ -15,10 +15,10 @@ using static Autodesk.Revit.DB.SpecTypeId;
 
 namespace Reinforcement
 {
-   
+
 
     [Transaction(TransactionMode.Manual)]
-    public  class CalcWalls : IExternalCommand
+    public class CalcWalls : IExternalCommand
     {
         public Result Execute(
             ExternalCommandData commandData,
@@ -32,7 +32,7 @@ namespace Reinforcement
             //сбор всех стен
 
             var lw = GetWalls(doc);//все стены
-            
+
 
             //затем мои методы подсчета, мой алгоритм
             return Result.Succeeded;
@@ -47,6 +47,14 @@ namespace Reinforcement
         }
         public static List<ECWall> GetWalls(Document doc)
         {
+            return GetWalls(doc, true);
+        }
+        public static List<ECWall> GetWallsOnActiveView(Document doc)
+        {
+            return GetWalls(doc, false);
+        }
+        private static List<ECWall> GetWalls(Document doc, bool useSelection)
+        {
             if (doc == null) return null;
 
             ClearCash();
@@ -60,7 +68,7 @@ namespace Reinforcement
 
             // 1) пробуем собрать из выделения — ТОЛЬКО если оно не пустое
             var selectedIds = uidoc.Selection.GetElementIds();
-            if (selectedIds != null && selectedIds.Count > 0)
+            if (useSelection && selectedIds != null && selectedIds.Count > 0)
             {
                 walls = new FilteredElementCollector(doc, selectedIds)
                     .OfCategory(BuiltInCategory.OST_Walls)
@@ -87,19 +95,19 @@ namespace Reinforcement
                 }
             }
 
-            
+
             if (walls.Count == 0)
             {
                 return null;
             }
 
-            
+
             //теперь мы анализируем все элементы
             var answer = new List<ECWall>();
             foreach (var wall in walls)
             {
                 Element element = (Element)wall;          // явное приведение
-                
+
                 if (element == null) continue;
                 //OST получаем
                 BuiltInCategory bic = BuiltInCategory.INVALID;
@@ -107,7 +115,7 @@ namespace Reinforcement
                 {
                     bic = element.Category.BuiltInCategory;
                 }
-                if(bic!= OSTWall) continue;
+                if (bic != OSTWall) continue;
                 var w = GetECWall(element, doc);
                 if (w != null)
                 {
@@ -159,7 +167,7 @@ namespace Reinforcement
             ReadLevel(eCWall, element, doc);
 
             //затем внутреннии характеристики стены
-            
+
             ReadWallType(eCWall, wall, element, doc);
 
 
@@ -177,11 +185,11 @@ namespace Reinforcement
         private static void ReadLevel(ECWall eCWall, Element element, Document doc)
         {
             ElementId levelId = element.LevelId;
-            if (levelId==null|| levelId == ElementId.InvalidElementId)
+            if (levelId == null || levelId == ElementId.InvalidElementId)
                 return;
 
             long levelIdInt = levelId.Value;
-            if(DictECLevels.TryGetValue(levelIdInt, out ECLevel eCLevel))
+            if (DictECLevels.TryGetValue(levelIdInt, out ECLevel eCLevel))
             {
                 eCWall.ECLevel = eCLevel;
                 return;
@@ -190,10 +198,10 @@ namespace Reinforcement
             Level level = doc.GetElement(levelId) as Level;
             if (level == null)
                 return;
-            
+
             //заполняем в словари и в ответ
             eCLevel = new ECLevel();
-            DictECLevels[levelIdInt]= eCLevel;
+            DictECLevels[levelIdInt] = eCLevel;
 
             eCWall.ECLevel = eCLevel;
 
@@ -217,19 +225,19 @@ namespace Reinforcement
         /// <param name="wall"></param>
         /// <param name="element"></param>
         /// <param name="doc"></param>
-        private static void ReadWallType(ECWall eCWall,Wall wall, Element element, Document doc)
+        private static void ReadWallType(ECWall eCWall, Wall wall, Element element, Document doc)
         {
             string name = element.Name;//типоразмер стены??? == wall.Name;
             name = wall.Name;
             if (DictWallType.TryGetValue(name, out ECWallType wt))
             {
-                eCWall.WallType= wt;
+                eCWall.WallType = wt;
                 return;
             }
             wt = new ECWallType();
             DictWallType[name] = wt;
 
-            wt.Name= name;
+            wt.Name = name;
             eCWall.Name = name;
 
             ElementId typeId = wall.GetTypeId();
@@ -271,7 +279,7 @@ namespace Reinforcement
             {
                 eWallTypes = EWallTypes.AR_PGPorGKL;
             }
-            else if(name.Contains("Витраж") || name.Contains("Дверь"))
+            else if (name.Contains("Витраж") || name.Contains("Дверь"))
             {
                 //ненадежно да и ладно, пусть
                 eWallTypes = EWallTypes.AR_Vitrage;
@@ -288,8 +296,8 @@ namespace Reinforcement
             WallType wallType = doc.GetElement(typeId) as WallType;
             if (wallType != null)
             {
-               
-                ReadECWallTypeLayers(wallType, typeId, wt,doc);
+
+                ReadECWallTypeLayers(wallType, typeId, wt, doc);
             }
 
         }
@@ -359,7 +367,7 @@ namespace Reinforcement
 
                 layers.Add(ec);
             }
-          
+
             wt.ECLayerWalls = layers;
 
         }
@@ -371,7 +379,7 @@ namespace Reinforcement
         }
         // комнаты по обе стороны стены (или null, если с этой стороны нет помещения)
         private static double offsetRoomF = UnitUtils.ConvertToInternalUnits(50, UnitTypeId.Millimeters);//мм
-        public static void  GetRoomAtSide(ECWall eCWall, Wall wall, Element element, Document doc, bool exteriorSide)
+        public static void GetRoomAtSide(ECWall eCWall, Wall wall, Element element, Document doc, bool exteriorSide)
         {
             LocationCurve lc = wall.Location as LocationCurve;
             if (lc == null) return;
@@ -407,12 +415,12 @@ namespace Reinforcement
             {
                 return ecRoom;
             }
-            ecRoom= new ECRoom();
+            ecRoom = new ECRoom();
             DictECRooms[id] = ecRoom;
             ecRoom.Id = id;
             ecRoom.ElementId = room.Id;
             ecRoom.Element = room;
-            ecRoom.Room=room;
+            ecRoom.Room = room;
             string name = room.Name;                 // «Кабинет 101» (Name + Number вместе)
             string number = room.Number;             // «101»
             ElementId levelId = room.LevelId;        // уровень, на котором комната
@@ -439,7 +447,7 @@ namespace Reinforcement
 
             return ecRoom;
         }
-        private static Dictionary<long,ECRoom> DictECRooms = new Dictionary<long,ECRoom>();
+        private static Dictionary<long, ECRoom> DictECRooms = new Dictionary<long, ECRoom>();
 
         /// <summary>
         /// Параметры конкретной стены
@@ -527,7 +535,7 @@ namespace Reinforcement
                 UnitTypeId.CubicMeters);
 
             //определим, является ли стена наружная по названию
-           
+
 
         }
         private static void ReadWallOtherData(ECWall eCWall, Wall wall, Element element, Document doc)
@@ -604,18 +612,18 @@ namespace Reinforcement
 
 
                 // --- 1. Определяем, что это ---
-                bool isDoor= bic == BuiltInCategory.OST_Doors;
+                bool isDoor = bic == BuiltInCategory.OST_Doors;
                 bool isWind = bic == BuiltInCategory.OST_Windows;
-                                  
+
                 bool isCurtainWall = dep is Wall depWall
                                   && depWall.WallType?.Kind == WallKind.Curtain;
 
-                if (!isDoor && !isWind &&!isCurtainWall) continue;
+                if (!isDoor && !isWind && !isCurtainWall) continue;
 
-                if(isCurtainWall && dep is Wall depWall2)
+                if (isCurtainWall && dep is Wall depWall2)
                 {
-                    
-                    string testName=depWall2.Name;
+
+                    string testName = depWall2.Name;
                 }
                 // Проверяем, что элемент хостится именно в этой стене,
                 // а не во встроенной (embedded) стене
@@ -626,7 +634,7 @@ namespace Reinforcement
                 }
 
                 //надо получить окна и двери их размеры габаритные
-                var dw = GetECDoorOrWindow(dep, eCWall, wall,bic, doc);
+                var dw = GetECDoorOrWindow(dep, eCWall, wall, bic, doc);
                 if (dw != null)
                 {
                     eCWall.ECDoorOrWindows.Add(dw);
@@ -639,7 +647,7 @@ namespace Reinforcement
         {
             ElementId id = doorOrWind.Id;
             long idL = id.Value;
-            if(DictECDoorOrWindow.TryGetValue(idL, out var dw))
+            if (DictECDoorOrWindow.TryGetValue(idL, out var dw))
             {
                 dw.ECWalls.Add(eCWall);//какой стене принадлежит
                 //Внимание для стены это явная ошибка если дверь или окно в нескольких стенах!!!!!
@@ -650,16 +658,16 @@ namespace Reinforcement
             switch (bic)
             {
                 case BuiltInCategory.OST_Doors:
-                    type=ETypeInsidersWalls.Door;
+                    type = ETypeInsidersWalls.Door;
                     break;
                 case BuiltInCategory.OST_Windows:
-                    type=ETypeInsidersWalls.Window;
+                    type = ETypeInsidersWalls.Window;
                     break;
                 case BuiltInCategory.OST_Walls:
-                    type=ETypeInsidersWalls.Vitrage;
+                    type = ETypeInsidersWalls.Vitrage;
                     break;
             }
-            
+
             dw = new ECDoorOrWindow
             {
                 ElementId = id,
@@ -683,9 +691,9 @@ namespace Reinforcement
                 heightM = (heightParam != null && heightParam.HasValue)
                     ? RevitAPI.ToMm(heightParam.AsDouble()) / 1000.0 : 0.0;
             }
-            else if(doorOrWind is Wall vitrage)
+            else if (doorOrWind is Wall vitrage)
             {
-                if (DictECWalls.TryGetValue(vitrage.Id.Value, out var vitrageECWall) && vitrageECWall.LengthM>0)
+                if (DictECWalls.TryGetValue(vitrage.Id.Value, out var vitrageECWall) && vitrageECWall.LengthM > 0)
                 {
                     heightM = vitrageECWall.HeightM;
                     widthM = vitrageECWall.WidthM;
@@ -708,15 +716,15 @@ namespace Reinforcement
                     heightM = UnitUtils.ConvertFromInternalUnits(heightFt, UnitTypeId.Meters);
                 }
             }
-            
+
             // ============================================================
             // 2. Высота (учитываем привязку к уровню сверху)
             // ============================================================
-            
+
             dw.LengthM = widthM;
             dw.HeightM = heightM;
             dw.AreaM2 = widthM * heightM;
-            dw.BuiltInCategory= bic;
+            dw.BuiltInCategory = bic;
             if (wall == null) return dw;
 
             // --- Отметка низа проёма от уровня ---
@@ -778,7 +786,7 @@ namespace Reinforcement
             }
         }
 
-        
+
 
     }
 }
