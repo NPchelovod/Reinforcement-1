@@ -239,7 +239,21 @@ namespace Reinforcement
         public void Initialization(Element element)
         {
             if(element == null) {  return; }
-
+            Parameter mark = element.LookupParameter(MarkParam);
+            Parameter group = element.LookupParameter(ADSKGroopParam);
+            Parameter comm = element.LookupParameter(CommentariiParam);
+            if (mark != null)
+            {
+                Mark=mark.AsString();
+            }
+            if (group != null)
+            {
+                ADSKGroopParam = mark.AsString();
+            }
+            if (comm != null)
+            {
+                CommentariiParam = mark.AsString();
+            }
         }
     }
 
@@ -294,7 +308,7 @@ namespace Reinforcement
         public List<ExportElement> _exportElements { get; set; } =null;
         public List<ExportElement> GetCalcData()
         {
-            //if (_exportElements != null) {  return _exportElements; } опасно так как могу для других дел брать..
+            if (_exportElements != null) {  return _exportElements; } //опасно так как могу для других дел брать..
 
             var winds = ECDoorOrWindows.Where(x => x.TypeInsidersWalls==ETypeInsidersWalls.Window).ToList();
             var doors = ECDoorOrWindows.Where(x => x.TypeInsidersWalls == ETypeInsidersWalls.Door).ToList();
@@ -586,7 +600,19 @@ namespace Reinforcement
         {
             if (_exportElements != null) { return _exportElements; }
 
+            var wallsExportElement = ECWall.GetCalcData();
+
+
             var data = new List<ExportElement>();
+
+            EValuesGetter.AddExportElementInOurExportElements(data, wallsExportElement, new HashSet<EValuesExportData>()
+            {
+                EValuesExportData.Wall_Id, EValuesExportData.Wall_Name, EValuesExportData.Wall_EWallTypes ,
+                 EValuesExportData.Level_Name,EValuesExportData.Level_Elevation,
+                EValuesExportData.Wall_Length_m, EValuesExportData.Wall_Width_m, EValuesExportData.Wall_Height_m,
+            });
+
+
             data.AddRange(
                 new List<ExportElement>() {
                 new ExportElement("Стена_Утепление_Имя_Наружное",OutWallFromNAmeMaterial?1:0,data,EValuesExportData.Wall_Insulation_OutSideWallName ),

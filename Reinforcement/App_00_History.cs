@@ -13,7 +13,7 @@ namespace Reinforcement
         /// <summary>
         /// Тут пиши конкретно текущего релиза отличия версии
         /// </summary>
-        private static string CurrentVersion = "Вид настроек чуть лучше";
+        private static string CurrentVersion = "Для АР расчет армирования, алгоритм для ЭЭФ Алгоритм Лянга — Барски";
 
         private static string DifferentZeor = "Отличия новой версии от вашей неизвестны";
         private static string DifferentEquelPast = "Отличия версии те же, что у прошлой, или не заполнены";
