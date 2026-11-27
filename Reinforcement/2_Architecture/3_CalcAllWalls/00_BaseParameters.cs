@@ -85,6 +85,7 @@ namespace Reinforcement
         //Теплоизоляционная ли это стена
         Wall_Insulation_Number,//номер стены в общей цепочку стен наружных
         Wall_Insulation_OutSideWallName, //по имени bool =true если стена наружная
+        Wall_Insulation_OutSideWallContur,
         Wall_Insulation_LengthM,
         //Wall_LayersCount,//колво слоев у стены
         //Уровень
@@ -190,7 +191,7 @@ namespace Reinforcement
 {
         // ==================== Служебное ====================
         // Если None не должен попадать в экспорт — эту строку можно не добавлять
-        { EValuesExportData.None,                         "Не выбрано" },
+        { EValuesExportData.None,                         "None" },
 
     // ==================== Уровень ====================
     { EValuesExportData.Level_Id,                     "Уровень Id" },

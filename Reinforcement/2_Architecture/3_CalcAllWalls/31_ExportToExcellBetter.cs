@@ -29,7 +29,7 @@ namespace Reinforcement
         public string SheetName;
 
     }
-  
+
 
     public class ExcelGroupExporter
     {
@@ -38,118 +38,128 @@ namespace Reinforcement
         List<ExportElementOnSheetExcell> exportSheetsElements,
         string fileName)
         {
+            Exporter(exportSheetsElements, fileName, null);
+        }
+
+        public static void Exporter(List<ExportElementOnSheetExcell> exportSheetsElements,
+            string fileName, string outputPath)
+        {
             if (exportSheetsElements == null || exportSheetsElements.Count == 0) return;
 
-            var dlg = new WinForms.SaveFileDialog
+            using (var dlg = new WinForms.SaveFileDialog
             {
                 Filter = "Файл Excel (*.xlsx)|*.xlsx",
                 FileName = $"{fileName}.xlsx",
                 OverwritePrompt = true
-            };
-            if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
-
-            string path = dlg.FileName;
-            const int maxAttempts = 5;
-
-            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            })
             {
-                bool fileExists = System.IO.File.Exists(path);
-                bool loaded = false;
+                if (outputPath == null && dlg.ShowDialog() != WinForms.DialogResult.OK) return;
 
-                using (var workbook = new Workbook())
+                string path = outputPath ?? dlg.FileName;
+                const int maxAttempts = 5;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++)
                 {
-                    // --- 1) загрузка (если файл существует) ---
-                    if (fileExists)
+                    bool fileExists = System.IO.File.Exists(path);
+                    bool loaded = false;
+
+                    using (var workbook = new Workbook())
                     {
+                        // --- 1) загрузка (если файл существует) ---
+                        if (fileExists)
+                        {
+                            try
+                            {
+                                workbook.LoadFromFile(path);
+                                loaded = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                if (outputPath != null) throw;
+                                var choice = MessageBox.Show(
+                                    "Не удалось открыть файл:\n" + ex.Message +
+                                    "\n\nДа — перезаписать с нуля" +
+                                    "\nНет — выбрать другой файл" +
+                                    "\nОтмена — прервать экспорт",
+                                    "Ошибка открытия",
+                                    MessageBoxButton.YesNoCancel,
+                                    MessageBoxImage.Warning);
+
+                                if (choice == MessageBoxResult.Cancel) return;
+                                if (choice == MessageBoxResult.No)
+                                {
+                                    if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
+                                    path = dlg.FileName;
+                                    continue;   // новая попытка с новым путём
+                                }
+                                // Yes → работаем как с пустым файлом
+                            }
+                        }
+
+                        // --- 2) подготовка листов ---
+                        string tempName = null;
+                        if (!loaded)
+                        {
+                            workbook.Worksheets.Clear();
+                        }
+                        else
+                        {
+                            tempName = RemoveMatchingSheets(workbook, exportSheetsElements);
+                        }
+
+                        // --- 3) добавление своих листов ---
+                        foreach (var exportElement in exportSheetsElements)
+                        {
+                            Worksheet sheet = workbook.Worksheets.Add(exportElement.SheetName);
+                            var exporter = new ExcelGroupExporter(sheet);
+                            foreach (var exportData in exportElement.exportStringDoubleDatas)
+                                exporter.AppendGroup(exportData);
+                            exporter.FinalizeSheet();
+                        }
+
+                        // --- 4) удаление временного листа (если создавали) ---
+                        if (tempName != null)
+                        {
+                            for (int i = 0; i < workbook.Worksheets.Count; i++)
+                            {
+                                if (string.Equals(workbook.Worksheets[i].Name, tempName,
+                                                  StringComparison.Ordinal))
+                                {
+                                    workbook.Worksheets.RemoveAt(i);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // --- 5) сохранение ---
                         try
                         {
-                            workbook.LoadFromFile(path);
-                            loaded = true;
+                            workbook.SaveToFile(path, ExcelVersion.Version2010);
+                            return;   // успех
                         }
                         catch (Exception ex)
                         {
+                            if (outputPath != null) throw;
                             var choice = MessageBox.Show(
-                                "Не удалось открыть файл:\n" + ex.Message +
-                                "\n\nДа — перезаписать с нуля" +
-                                "\nНет — выбрать другой файл" +
-                                "\nОтмена — прервать экспорт",
-                                "Ошибка открытия",
-                                MessageBoxButton.YesNoCancel,
+                                "Не удалось сохранить файл:\n" + ex.Message +
+                                "\n\nДа — выбрать другой файл и повторить" +
+                                "\nНет — прервать",
+                                "Ошибка сохранения",
+                                MessageBoxButton.YesNo,
                                 MessageBoxImage.Warning);
 
-                            if (choice == MessageBoxResult.Cancel) return;
-                            if (choice == MessageBoxResult.No)
-                            {
-                                if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
-                                path = dlg.FileName;
-                                continue;   // новая попытка с новым путём
-                            }
-                            // Yes → работаем как с пустым файлом
+                            if (choice != MessageBoxResult.Yes) return;
+                            if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
+                            path = dlg.FileName;
+                            // новая итерация цикла
                         }
-                    }
-
-                    // --- 2) подготовка листов ---
-                    string tempName = null;
-                    if (!loaded)
-                    {
-                        workbook.Worksheets.Clear();
-                    }
-                    else
-                    {
-                        tempName = RemoveMatchingSheets(workbook, exportSheetsElements);
-                    }
-
-                    // --- 3) добавление своих листов ---
-                    foreach (var exportElement in exportSheetsElements)
-                    {
-                        Worksheet sheet = workbook.Worksheets.Add(exportElement.SheetName);
-                        var exporter = new ExcelGroupExporter(sheet);
-                        foreach (var exportData in exportElement.exportStringDoubleDatas)
-                            exporter.AppendGroup(exportData);
-                        exporter.FinalizeSheet();
-                    }
-
-                    // --- 4) удаление временного листа (если создавали) ---
-                    if (tempName != null)
-                    {
-                        for (int i = 0; i < workbook.Worksheets.Count; i++)
-                        {
-                            if (string.Equals(workbook.Worksheets[i].Name, tempName,
-                                              StringComparison.Ordinal))
-                            {
-                                workbook.Worksheets.RemoveAt(i);
-                                break;
-                            }
-                        }
-                    }
-
-                    // --- 5) сохранение ---
-                    try
-                    {
-                        workbook.SaveToFile(path, ExcelVersion.Version2010);
-                        return;   // успех
-                    }
-                    catch (Exception ex)
-                    {
-                        var choice = MessageBox.Show(
-                            "Не удалось сохранить файл:\n" + ex.Message +
-                            "\n\nДа — выбрать другой файл и повторить" +
-                            "\nНет — прервать",
-                            "Ошибка сохранения",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Warning);
-
-                        if (choice != MessageBoxResult.Yes) return;
-                        if (dlg.ShowDialog() != WinForms.DialogResult.OK) return;
-                        path = dlg.FileName;
-                        // новая итерация цикла
                     }
                 }
-            }
 
-            MessageBox.Show(
-                $"Не удалось выполнить экспорт после {maxAttempts} попыток.",
-                "Экспорт", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Не удалось выполнить экспорт после {maxAttempts} попыток.",
+                    "Экспорт", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         /// <summary>
@@ -235,14 +245,14 @@ namespace Reinforcement
                 {
                     failed.Add($"{item.GetType().Name}: {ex.Message}");
                 }
-                }
-        if (failed.Count > 0)
-        {
-            // можно записать в лог, MessageBox, в первую строку листа — на ваш вкус
-            System.Diagnostics.Debug.WriteLine(
-                "GetCalcData() ошибки:\n" + string.Join("\n", failed));
-        }
-        if (allData.Count == 0) return;
+            }
+            if (failed.Count > 0)
+            {
+                // можно записать в лог, MessageBox, в первую строку листа — на ваш вкус
+                System.Diagnostics.Debug.WriteLine(
+                    "GetCalcData() ошибки:\n" + string.Join("\n", failed));
+            }
+            if (allData.Count == 0) return;
 
             // 2) объединяем шапку: если появились новые колонки — заводим их
             MergeHeaders(allData[0]);

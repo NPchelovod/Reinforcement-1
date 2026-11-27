@@ -284,6 +284,9 @@ namespace Reinforcement
 
         public ECInsulation ECInsulation = new ECInsulation();//параметры теплоизоляции, наружная ли это стелна и тд
 
+        // --- Другие величины 
+        public ECParameters ECParameters = new ECParameters();
+
         public HashSet<ECRoom> ECRooms = new HashSet<ECRoom>();//комнаты к которым принадлежит стена
         // --- Геометрия ---
         public double LengthM;              // длина оси
@@ -480,7 +483,8 @@ namespace Reinforcement
 
 
         public ETypeInsidersWalls TypeInsidersWalls;
-        
+
+        public ECParameters ECParameters = new ECParameters();
 
         public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
@@ -586,6 +590,10 @@ namespace Reinforcement
         public bool InWallFromNAmeMaterial=false;
 
         public int Number;// номер в цепочку стен
+        public bool OutWallFromContur => Number > 0;
+
+        public bool OutWall => OutWallFromNAmeMaterial || OutWallFromContur;
+
         public void Initializator(ECWall eCWall)
         {
             ECWall = eCWall;
@@ -616,6 +624,7 @@ namespace Reinforcement
             data.AddRange(
                 new List<ExportElement>() {
                 new ExportElement("Стена_Утепление_Имя_Наружное",OutWallFromNAmeMaterial?1:0,data,EValuesExportData.Wall_Insulation_OutSideWallName ),
+                new ExportElement("Стена_Утепление_Контур_Наружный",OutWallFromContur?1:0,data,EValuesExportData.Wall_Insulation_OutSideWallContur ),
                 new ExportElement("Стена_Утепление_Номер в контуре",Number,data,EValuesExportData. Wall_Insulation_Number ),
 
                 new ExportElement("Стена_Утепление_Длина изнутри, м",LengthInsideM,data,EValuesExportData.Wall_Insulation_LengthM ),

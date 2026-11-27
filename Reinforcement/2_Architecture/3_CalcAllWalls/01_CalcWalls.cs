@@ -41,6 +41,7 @@ namespace Reinforcement
         private static void ClearCash()
         {
             DictECWalls.Clear();
+            DictECDoorOrWindow.Clear();
             DictECLevels.Clear();
             DictWallType.Clear();
             DictECRooms.Clear();
@@ -67,7 +68,7 @@ namespace Reinforcement
             var walls = new List<Wall>();
 
             // 1) пробуем собрать из выделения — ТОЛЬКО если оно не пустое
-            var selectedIds = uidoc.Selection.GetElementIds();
+            var selectedIds = useSelection ? uidoc.Selection.GetElementIds() : null;
             if (useSelection && selectedIds != null && selectedIds.Count > 0)
             {
                 walls = new FilteredElementCollector(doc, selectedIds)
@@ -82,10 +83,12 @@ namespace Reinforcement
             {
                 try
                 {
+                    bool temporaryVisibility = view.IsTemporaryHideIsolateActive();
                     walls = new FilteredElementCollector(doc, view.Id)
                         .OfCategory(BuiltInCategory.OST_Walls)
                         .OfClass(typeof(Wall))
                         .Cast<Wall>()
+                        .Where(w => !temporaryVisibility || view.IsElementVisibleInTemporaryViewMode(TemporaryViewMode.TemporaryHideIsolate, w.Id))
                         .ToList();
                 }
                 catch (Autodesk.Revit.Exceptions.ArgumentException)
@@ -148,7 +151,7 @@ namespace Reinforcement
         {
             Wall wall = element as Wall;
             if (wall == null) return null;
-            long id = (int)element.Id.Value;
+            long id = element.Id.Value;
             if (DictECWalls.TryGetValue(id, out ECWall eCWall))
             {
                 //не повторяемся
@@ -227,21 +230,20 @@ namespace Reinforcement
         /// <param name="doc"></param>
         private static void ReadWallType(ECWall eCWall, Wall wall, Element element, Document doc)
         {
-            string name = element.Name;//типоразмер стены??? == wall.Name;
-            name = wall.Name;
-            if (DictWallType.TryGetValue(name, out ECWallType wt))
+            ElementId typeId = wall.GetTypeId();
+            string name = wall.Name;
+            ECWallType wt;
+            if (DictWallType.TryGetValue(typeId.Value, out wt))
             {
                 eCWall.WallType = wt;
                 return;
             }
             wt = new ECWallType();
-            DictWallType[name] = wt;
-
+            // The first instance must receive the same type and width as subsequent instances.
+            eCWall.WallType = wt;
+            DictWallType[typeId.Value] = wt;
             wt.Name = name;
             eCWall.Name = name;
-
-            ElementId typeId = wall.GetTypeId();
-
 
             EWallTypes eWallTypes = EWallTypes.None;
             //здесь можно было бы настроить чтобы понимать жб стена несущая кирпичная или газобетонная
@@ -301,7 +303,7 @@ namespace Reinforcement
             }
 
         }
-        private static Dictionary<string, ECWallType> DictWallType = new Dictionary<string, ECWallType>();
+        private static Dictionary<long, ECWallType> DictWallType = new Dictionary<long, ECWallType>();
 
 
 
@@ -543,6 +545,7 @@ namespace Reinforcement
             //наружная ли это стена пытаемся определить сразу по названию
             eCWall.ECInsulation.Initializator(eCWall);
             GetRooms(eCWall, wall, element, doc);
+            eCWall.ECParameters.Initialization(eCWall.Element);
         }
 
 
@@ -675,7 +678,9 @@ namespace Reinforcement
                 Element = doorOrWind,
                 Name = doorOrWind.Name,
                 TypeInsidersWalls = type,
+
             };
+            dw.ECParameters.Initialization(dw.Element);
             dw.ECWalls.Add(eCWall);//какой стене принадлежит
 
             // --- Габариты: независимый fallback ---

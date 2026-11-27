@@ -24,7 +24,8 @@ namespace Reinforcement
                 RevitAPI.Initialize(commandData);
                 UIDocument uidoc = RevitAPI.UiDocument;
                 if (uidoc == null) throw new InvalidOperationException("Нет активного документа Revit.");
-                List<ECWall> walls = ExecuteLogic(uidoc.Document);
+                var notes = new List<string>();
+                List<ECWall> walls = ExecuteLogic(uidoc.Document, notes, null);
                 List<ElementId> ids = walls.Where(w => w != null && w.ElementId != null)
                     .Select(w => w.ElementId).ToList();
                 if (ids.Count > 0)
@@ -32,6 +33,8 @@ namespace Reinforcement
                     uidoc.Selection.SetElementIds(ids);
                     uidoc.ShowElements(ids);
                 }
+                if (notes.Count > 0)
+                    TaskDialog.Show("Расчёт охлаждаемой длины", string.Join(Environment.NewLine, notes.Distinct()));
                 return Result.Succeeded;
             }
             catch (Exception error)
@@ -42,6 +45,11 @@ namespace Reinforcement
         }
 
         public static List<ECWall> ExecuteLogic(Document doc)
+        {
+            return ExecuteLogic(doc, new List<string>(), null);
+        }
+
+        public static List<ECWall> ExecuteLogic(Document doc, List<string> diagnostics, string outputPath)
         {
             if (doc == null) throw new ArgumentNullException("doc");
             // The architects hide conflicting walls on this view. Ignore any old selection.
@@ -56,19 +64,23 @@ namespace Reinforcement
                 throw new InvalidOperationException("На активном виде нет стен после фильтрации типов.");
 
             IntersectWalls.CalcIntersects(doc, walls);
-            var groups = walls.GroupBy(w => w.ECLevel.LevelElevation).OrderBy(g => g.Key);
+            var groups = walls.GroupBy(w => w.ECLevel.Id).OrderBy(g => g.First().ECLevel.LevelElevation);
             var answerWalls = new List<List<IExportStringDoubleData>>();
             var answerInsulation = new List<List<IExportStringDoubleData>>();
             var allWalls = new List<ECWall>();
 
             foreach (var group in groups)
             {
-                List<ECWall> ordered = ECWallPerimeterChainBuilder.FillLengthInsideM(group.ToList(), doc);
+                List<ECWall> ordered = ECWallPerimeterChainBuilder.FillLengthInsideM(group.ToList(), doc, diagnostics);
+                if (ordered.Count == 0) continue;
                 allWalls.AddRange(ordered);
                 answerWalls.Add(ordered.Cast<IExportStringDoubleData>().ToList());
                 answerInsulation.Add(ordered.Select(w => w.ECInsulation)
                     .Cast<IExportStringDoubleData>().ToList());
             }
+
+            if (allWalls.Count == 0)
+                throw new InvalidOperationException("На подготовленном виде не найдены участки стен с охлаждаемой длиной.");
 
             ExcelGroupExporter.Exporter(new List<ExportElementOnSheetExcell>
             {
@@ -80,7 +92,7 @@ namespace Reinforcement
                 {
                     SheetName = "ТеплоИзол", exportStringDoubleDatas = answerInsulation
                 }
-            }, "ТеплоизолСтен");
+            }, "ТеплоизолСтен", outputPath);
             return allWalls;
         }
     }
