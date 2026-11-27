@@ -225,6 +225,25 @@ namespace Reinforcement
         long Id { get; set; }
         string Name { get; set; }
     }
+
+    public class ECParameters
+    {
+        //параметры элемента для доступа к нему
+        private static string MarkParam = "Марка";
+        private static string ADSKGroopParam = "ADSK_Группирование";
+        private static string CommentariiParam = "Комментарии";
+
+        public string Mark;
+        public string ADSKGroop;
+        public string Commentarii;
+        public void Initialization(Element element)
+        {
+            if(element == null) {  return; }
+
+        }
+    }
+
+
     /// <summary>
     /// Конкретный экземпляр стены
     /// </summary>
@@ -548,7 +567,20 @@ namespace Reinforcement
     public class ECInsulation: IExportStringDoubleData
     {
         public ECWall ECWall;
-        public bool OutWallFromNAmeMaterial = false;//наружная ли стена, при анализе имени стены
+
+        public bool OutWallFromNAmeMaterial=false;
+        public bool InWallFromNAmeMaterial=false;
+
+        public int Number;// номер в цепочку стен
+        public void Initializator(ECWall eCWall)
+        {
+            ECWall = eCWall;
+            LengthInsideM = ECWall.LengthM;
+            OutWallFromNAmeMaterial = InsulationsWalls.InsulationNameWall(eCWall);
+            InWallFromNAmeMaterial = InsulationsWalls.InNameWall(eCWall);
+        }
+        public double LengthInsideM;   // длина по внутренней грани (видимая изнутри)
+
         public List<ExportElement> _exportElements { get; set; } = null;
         public List<ExportElement> GetCalcData()
         {
@@ -558,7 +590,9 @@ namespace Reinforcement
             data.AddRange(
                 new List<ExportElement>() {
                 new ExportElement("Стена_Утепление_Имя_Наружное",OutWallFromNAmeMaterial?1:0,data,EValuesExportData.Wall_Insulation_OutSideWallName ),
-               
+                new ExportElement("Стена_Утепление_Номер в контуре",Number,data,EValuesExportData. Wall_Insulation_Number ),
+
+                new ExportElement("Стена_Утепление_Длина изнутри, м",LengthInsideM,data,EValuesExportData.Wall_Insulation_LengthM ),
             });
             _exportElements = data;
             return data;

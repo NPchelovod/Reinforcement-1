@@ -143,6 +143,7 @@ namespace Reinforcement
             long id = (int)element.Id.Value;
             if (DictECWalls.TryGetValue(id, out ECWall eCWall))
             {
+                //не повторяемся
                 return null;
             }
             //тут заполняем все данные 
@@ -246,6 +247,10 @@ namespace Reinforcement
             {
                 eWallTypes = EWallTypes.AR_Aerocrete;
             }
+            if (name.Contains("Вентфасад"))
+            {
+                eWallTypes = EWallTypes.AR_VentFasad;
+            }
             else if (name.Contains("Бетон"))
             {
                 eWallTypes = EWallTypes.KR_Reinforcement;
@@ -270,6 +275,11 @@ namespace Reinforcement
             {
                 //ненадежно да и ладно, пусть
                 eWallTypes = EWallTypes.AR_Vitrage;
+            }
+            else if (name.Contains("штукатурка"))
+            {
+                //но это может быть просто многослойная стена
+                eWallTypes = EWallTypes.AR_shutkarutorka;
             }
             wt.EWallTypes = eWallTypes;
 
@@ -523,7 +533,7 @@ namespace Reinforcement
         private static void ReadWallOtherData(ECWall eCWall, Wall wall, Element element, Document doc)
         {
             //наружная ли это стена пытаемся определить сразу по названию
-            InsulationsWalls.InsulationNameWall(eCWall);
+            eCWall.ECInsulation.Initializator(eCWall);
             GetRooms(eCWall, wall, element, doc);
         }
 

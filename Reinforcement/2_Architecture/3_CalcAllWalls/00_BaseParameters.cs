@@ -20,6 +20,7 @@ namespace Reinforcement
         AR_VentFasad,
         AR_PGPorGKL,
         AR_Vitrage,
+        AR_shutkarutorka,
     }
     public enum EValuesExportData
     {
@@ -82,7 +83,9 @@ namespace Reinforcement
 
 
         //Теплоизоляционная ли это стена
+        Wall_Insulation_Number,//номер стены в общей цепочку стен наружных
         Wall_Insulation_OutSideWallName, //по имени bool =true если стена наружная
+        Wall_Insulation_LengthM,
         //Wall_LayersCount,//колво слоев у стены
         //Уровень
         //Wall_Level_Name,
@@ -176,6 +179,9 @@ namespace Reinforcement
 
     public static class EValuesGetter
     {
+
+        
+
         /// <summary>
         /// Русские названия числовых параметров армирования (для заголовков экспорта).
         /// </summary>

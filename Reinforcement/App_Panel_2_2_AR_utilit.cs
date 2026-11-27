@@ -12,7 +12,7 @@ namespace Reinforcement
             App_Helper_Button.CreateButton("EC_BIM_OpeningMarks", "Марки\nпроёмов", "Reinforcement.CreateOpeningMarksCommand", Properties.Resources.Hole,
                 "Создаёт марки выбранных проёмов и показывает причины пропусков",
                 "На копии модели выберите окна, двери или семейства проёмов. Требуются Марка, Ширина, Высота и загруженное семейство марки.", panel);
-            App_Helper_Button.CreateButton("Расчет кладки Витя", "Армирование\n кладки ", "Reinforcement.CalculateReinforcementArchitectureWallsCommand", Properties.Resources.rashet_walls2,
+            App_Helper_Button.CreateButton("Расчет кладки Витя", "Армирование\n кладки", "Reinforcement.CalculateReinforcementArchitectureWallsCommand", Properties.Resources.rashet_walls2,
                  "Позволяет создать отчет армирования кладки, старая версия Вити",
                  "Для работы плагина нужно заполнить форму",
                 panel);
@@ -21,8 +21,13 @@ namespace Reinforcement
             //     "Позволяет создать отчет армирования кладки",
             //     "Для работы плагина нужно заполнить форму",
             //    panel);
-            App_Helper_Button.CreateButton("Расчет кладки3", "Армирование\n кладки ", "Reinforcement.AR_Arm_Wall_LoadWPF", Properties.Resources.rashet_walls2,
-                "Позволяет создать отчет армирования кладки с экспортов в эксель",
+            App_Helper_Button.CreateButton("Расчет кладки Никита", "Армирование\n кладки", "Reinforcement.AR_Arm_Wall_LoadWPF", Properties.Resources.rashet_walls2,
+                "Позволяет создать отчет армирования кладки с экспортом в эксель",
+                "Для работы плагина нужно заполнить форму",
+               panel);
+
+            App_Helper_Button.CreateButton("Расчет ЭнергоЭф", "Энергоэффективность\n ЭЭФ", "Reinforcement.CalcInsulationCommand", Properties.Resources.rashet_walls2,
+                "Позволяет создать отчет ЭЭФ с экспортом в эксель",
                 "Для работы плагина нужно заполнить форму",
                panel);
 
